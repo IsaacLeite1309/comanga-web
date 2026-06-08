@@ -75,7 +75,7 @@ const Activate = () => {
               <CheckCircle2 className="h-10 w-10 text-green-500" />
             </div>
             <h2 className="text-2xl font-semibold text-foreground text-center">
-              Conta Ativada!
+              Conta ativada!
             </h2>
             <p className="text-sm text-muted-foreground text-center">
               {message}
@@ -84,7 +84,7 @@ const Activate = () => {
               to="/entrar"
               className="mt-4 w-full h-12 rounded-xl bg-primary text-primary-foreground font-bold text-sm tracking-wide hover:opacity-90 transition-opacity flex items-center justify-center"
             >
-              IR PARA O LOGIN
+              Ir para o Login
             </Link>
           </div>
         )}
@@ -95,7 +95,7 @@ const Activate = () => {
               <XCircle className="h-10 w-10 text-red-500" />
             </div>
             <h2 className="text-2xl font-semibold text-foreground text-center">
-              Falha na Ativação
+              Falha na ativação
             </h2>
             <p className="text-sm text-red-400 text-center">
               {message}
@@ -104,7 +104,7 @@ const Activate = () => {
               to="/entrar"
               className="mt-4 w-full h-12 rounded-xl bg-muted text-muted-foreground font-bold text-sm tracking-wide hover:bg-muted/80 transition-opacity flex items-center justify-center"
             >
-              VOLTAR AO INÍCIO
+              Voltar ao início
             </Link>
           </div>
         )}
