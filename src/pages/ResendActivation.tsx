@@ -82,7 +82,7 @@ const ResendActivation = () => {
           Não recebeu o e-mail? Digite seu e-mail abaixo para enviarmos um novo link de ativação.
         </p>
 
-        <form onSubmit={handleSubmit} className="space-y-4">
+        <form onSubmit={handleSubmit} className="space-y-4" noValidate>
           <div>
             <input
               type="email"
