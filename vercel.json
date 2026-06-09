@@ -3,6 +3,10 @@
     {
       "source": "/api/:path*",
       "destination": "https://comanga-api.onrender.com/api/:path*"
+    },
+    {
+      "source": "/(.*)",
+      "destination": "/index.html"
     }
   ]
 }
