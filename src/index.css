@@ -1,0 +1,59 @@
+@import url('https://fonts.googleapis.com/css2?family=Outfit:wght@300;400;500;600;700&display=swap');
+
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
+
+@layer base {
+  :root {
+    --background: 216 40% 10%;
+    --foreground: 210 40% 92%;
+
+    --card: 217 38% 12%;
+    --card-foreground: 210 40% 92%;
+
+    --popover: 217 38% 12%;
+    --popover-foreground: 210 40% 92%;
+
+    --primary: 203 78% 49%;
+    --primary-foreground: 0 0% 100%;
+
+    --secondary: 218 32% 23%;
+    --secondary-foreground: 210 40% 92%;
+
+    --muted: 218 28% 18%;
+    --muted-foreground: 215 16% 55%;
+
+    --accent: 218 32% 23%;
+    --accent-foreground: 210 40% 92%;
+
+    --destructive: 0 84% 60%;
+    --destructive-foreground: 0 0% 100%;
+
+    --border: 217 20% 22%;
+    --input: 216 40% 10%;
+    --ring: 203 78% 49%;
+
+    --radius: 0.75rem;
+
+    --sidebar-background: 218 32% 23%;
+    --sidebar-foreground: 215 16% 65%;
+    --sidebar-primary: 203 78% 49%;
+    --sidebar-primary-foreground: 0 0% 100%;
+    --sidebar-accent: 218 28% 28%;
+    --sidebar-accent-foreground: 210 40% 92%;
+    --sidebar-border: 217 20% 22%;
+    --sidebar-ring: 203 78% 49%;
+  }
+}
+
+@layer base {
+  * {
+    @apply border-border;
+  }
+
+  body {
+    @apply bg-background text-foreground;
+    font-family: 'Outfit', sans-serif;
+  }
+}
