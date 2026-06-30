@@ -132,4 +132,41 @@ describe("UserProfile", () => {
     expect(toast.success).toHaveBeenCalledWith("Conteúdo +18 ativado.");
     expect(toggle).toHaveAttribute("aria-pressed", "true");
   });
+
+  it("exibe erro generico quando perfil nao carrega por falha de servidor", async () => {
+    vi.mocked(api.get).mockRejectedValueOnce(new Error("servidor indisponivel"));
+
+    render(<UserProfile />);
+
+    await waitFor(() => {
+      expect(toast.error).toHaveBeenCalledWith("Erro ao carregar os dados do perfil.");
+    });
+    expect(logoutMock).not.toHaveBeenCalled();
+  });
+
+  it("exibe erro quando atualizacao da preferencia +18 falha", async () => {
+    vi.mocked(api.get).mockResolvedValueOnce({
+      data: {
+        user: {
+          username: "usuario_teste",
+          email: "usuario@teste.com",
+          conteudo_adulto: true,
+        },
+      },
+    });
+    vi.mocked(api.patch).mockRejectedValueOnce(new Error("falha"));
+
+    render(<UserProfile />);
+
+    const toggle = await screen.findByRole("button", {
+      name: /alternar filtro de conteúdo \+18/i,
+    });
+
+    fireEvent.click(toggle);
+
+    await waitFor(() => {
+      expect(toast.error).toHaveBeenCalledWith("Erro ao atualizar o filtro de conteúdo.");
+    });
+    expect(toggle).toHaveAttribute("aria-pressed", "true");
+  });
 });

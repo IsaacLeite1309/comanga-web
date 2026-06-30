@@ -71,4 +71,16 @@ describe("Activate", () => {
     expect(await screen.findByText("Token de ativação não encontrado na URL.")).toBeInTheDocument();
     expect(api.get).not.toHaveBeenCalled();
   });
+
+  it("exibe erro generico quando nao ha resposta da API", async () => {
+    vi.mocked(api.get).mockRejectedValueOnce(new Error("rede indisponivel"));
+
+    renderActivate("/activate/token-sem-rede");
+
+    await waitFor(() => {
+      expect(api.get).toHaveBeenCalledWith("/auth/activate/token-sem-rede");
+    });
+
+    expect(await screen.findByText("Erro ao conectar com o servidor.")).toBeInTheDocument();
+  });
 });
