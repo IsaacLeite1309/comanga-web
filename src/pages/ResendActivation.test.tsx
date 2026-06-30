@@ -106,4 +106,41 @@ describe("ResendActivation", () => {
     expect(screen.getByText("Informe um e-mail válido.")).toBeInTheDocument();
     expect(api.post).not.toHaveBeenCalled();
   });
+
+  it("bloqueia envio com campo vazio", () => {
+    renderPage();
+
+    fireEvent.click(screen.getByRole("button", { name: /reenviar link/i }));
+
+    expect(screen.getByText("Informe seu e-mail.")).toBeInTheDocument();
+    expect(api.post).not.toHaveBeenCalled();
+  });
+
+  it("limpa mensagem de erro quando usuario volta a digitar", () => {
+    renderPage();
+
+    fireEvent.click(screen.getByRole("button", { name: /reenviar link/i }));
+    expect(screen.getByText("Informe seu e-mail.")).toBeInTheDocument();
+
+    fireEvent.change(screen.getByPlaceholderText("E-mail"), {
+      target: { value: "novo@usuario.com" },
+    });
+
+    expect(screen.queryByText("Informe seu e-mail.")).not.toBeInTheDocument();
+  });
+
+  it("exibe toast generico quando ocorre erro de conexao", async () => {
+    vi.mocked(api.post).mockRejectedValueOnce(new Error("rede indisponivel"));
+
+    renderPage();
+
+    fireEvent.change(screen.getByPlaceholderText("E-mail"), {
+      target: { value: "pendente@usuario.com" },
+    });
+    fireEvent.click(screen.getByRole("button", { name: /reenviar link/i }));
+
+    await waitFor(() => {
+      expect(toast.error).toHaveBeenCalledWith("Erro ao conectar com o servidor.");
+    });
+  });
 });

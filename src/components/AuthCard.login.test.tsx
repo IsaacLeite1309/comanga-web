@@ -113,4 +113,59 @@ describe("AuthCard login", () => {
     expect(await screen.findByText(message)).toBeInTheDocument();
     expect(toast.error).toHaveBeenCalledWith(message);
   });
+
+  it("exibe erro generico quando API retorna status inesperado no login", async () => {
+    vi.mocked(api.post).mockRejectedValueOnce({
+      isAxiosError: true,
+      response: {
+        status: 500,
+        data: { error: "Falha interna" },
+      },
+    });
+
+    renderLogin();
+    fillLoginForm("usuario@teste.com", "SenhaForte123!");
+
+    fireEvent.click(screen.getByRole("button", { name: "ENTRAR" }));
+
+    await waitFor(() => {
+      expect(toast.error).toHaveBeenCalledWith("Erro ao conectar com o servidor.");
+    });
+  });
+
+  it("exibe erro generico quando login falha sem resposta da API", async () => {
+    vi.mocked(api.post).mockRejectedValueOnce(new Error("rede indisponivel"));
+
+    renderLogin();
+    fillLoginForm("usuario@teste.com", "SenhaForte123!");
+
+    fireEvent.click(screen.getByRole("button", { name: "ENTRAR" }));
+
+    await waitFor(() => {
+      expect(toast.error).toHaveBeenCalledWith("Erro ao conectar com o servidor.");
+    });
+  });
+
+  it("bloqueia login com campos vazios antes de chamar API", async () => {
+    renderLogin();
+
+    fireEvent.click(screen.getByRole("button", { name: "ENTRAR" }));
+
+    expect(await screen.findByText("Informe seu e-mail.")).toBeInTheDocument();
+    expect(screen.getByText("Informe sua senha.")).toBeInTheDocument();
+    expect(api.post).not.toHaveBeenCalled();
+  });
+
+  it("limpa erro de campo quando usuario volta a digitar no login", async () => {
+    renderLogin();
+
+    fireEvent.click(screen.getByRole("button", { name: "ENTRAR" }));
+    expect(await screen.findByText("Informe seu e-mail.")).toBeInTheDocument();
+
+    fireEvent.change(screen.getByPlaceholderText("E-mail"), {
+      target: { value: "usuario@teste.com" },
+    });
+
+    expect(screen.queryByText("Informe seu e-mail.")).not.toBeInTheDocument();
+  });
 });
