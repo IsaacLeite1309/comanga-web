@@ -17,6 +17,7 @@ interface AuthContextType {
   loading: boolean;
   login: (userData: User) => void;
   logout: () => void;
+  clearSession: () => void;
 }
 
 const AuthContext = createContext<AuthContextType>({} as AuthContextType);
@@ -45,20 +46,24 @@ export function AuthProvider({ children }: { children: ReactNode }) {
     setUser(userData);
   }
 
+  function clearSession() {
+    setUser(null);
+    navigate("/entrar");
+  }
+
   async function logout() {
     try {
       await api.post("/auth/logout");
     } catch (error) {
       console.error("Erro ao invalidar sessão no back-end", error);
     } finally {
-      setUser(null);
       toast.success("Sessão encerrada com segurança.");
-      navigate("/entrar");
+      clearSession();
     }
   }
 
   return (
-    <AuthContext.Provider value={{ isAuthenticated: !!user, user, loading, login, logout }}>
+    <AuthContext.Provider value={{ isAuthenticated: !!user, user, loading, login, logout, clearSession }}>
       {children}
     </AuthContext.Provider>
   );

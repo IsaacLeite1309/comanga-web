@@ -8,7 +8,7 @@ const Toaster = ({ ...props }: ToasterProps) => {
       theme="dark"
       className="toaster group"
       position="top-right"
-      duration={6000} // Fica na tela por 6 segundos
+      duration={3000}
       toastOptions={{
         classNames: {
           toast:

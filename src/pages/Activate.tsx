@@ -1,6 +1,6 @@
 import { useEffect, useRef, useState } from "react";
 import { useParams, Link } from "react-router-dom";
-import { CheckCircle2, XCircle, Loader2 } from "lucide-react";
+import { Check, XCircle, Loader2 } from "lucide-react";
 import { api } from "@/services/api";
 import { BrandLogo } from "@/components/BrandLogo";
 
@@ -71,8 +71,8 @@ const Activate = () => {
 
         {status === "success" && (
           <div className="flex flex-col items-center gap-4 py-8">
-            <div className="h-16 w-16 rounded-full bg-green-500/10 flex items-center justify-center">
-              <CheckCircle2 className="h-10 w-10 text-green-500" />
+            <div className="h-16 w-16 rounded-full bg-green-500 flex items-center justify-center">
+              <Check className="h-10 w-10 text-white" strokeWidth={3} />
             </div>
             <h2 className="text-2xl font-semibold text-foreground text-center">
               Conta ativada!

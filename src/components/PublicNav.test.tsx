@@ -5,7 +5,8 @@ import { PublicNav } from "@/components/PublicNav";
 
 let authState = {
   isAuthenticated: false,
-  user: null as null | { username: string },
+  loading: false,
+  user: null as null | { username: string; role?: string },
 };
 
 vi.mock("@/contexts/AuthContext", () => ({
@@ -24,6 +25,7 @@ describe("PublicNav", () => {
   beforeEach(() => {
     authState = {
       isAuthenticated: false,
+      loading: false,
       user: null,
     };
   });
@@ -37,9 +39,26 @@ describe("PublicNav", () => {
     expect(screen.getAllByText("Entrar").length).toBeGreaterThan(0);
   });
 
+  it("renderiza menu administrativo para administrador autenticado", () => {
+    authState = {
+      isAuthenticated: true,
+      loading: false,
+      user: { username: "admin", role: "Administrador" },
+    };
+
+    renderPublicNav("/admin/users");
+
+    expect(screen.queryByText("Coleção")).not.toBeInTheDocument();
+    expect(screen.getAllByText("Novo mangá").length).toBeGreaterThan(0);
+    expect(screen.getAllByText("Editar Mangás").length).toBeGreaterThan(0);
+    expect(screen.getAllByText("Gerenciar Opções").length).toBeGreaterThan(0);
+    expect(screen.getAllByText("Gerenciar Usuários").length).toBeGreaterThan(0);
+  });
+
   it("renderiza link de perfil quando o usuario esta autenticado", () => {
     authState = {
       isAuthenticated: true,
+      loading: false,
       user: { username: "isaac" },
     };
 
@@ -55,6 +74,7 @@ describe("PublicNav", () => {
   it("usa rota de perfil vazia quando sessao autenticada ainda nao tem username", () => {
     authState = {
       isAuthenticated: true,
+      loading: false,
       user: null,
     };
 
@@ -64,5 +84,19 @@ describe("PublicNav", () => {
       "href",
       "/perfil/"
     );
+  });
+
+  it("nao renderiza menu de usuario padrao enquanto a sessao esta carregando", () => {
+    authState = {
+      isAuthenticated: false,
+      loading: true,
+      user: null,
+    };
+
+    renderPublicNav("/admin/users");
+
+    expect(screen.queryByText("Coleção")).not.toBeInTheDocument();
+    expect(screen.queryByText("Gerenciar Usuários")).not.toBeInTheDocument();
+    expect(screen.queryByText("Entrar")).not.toBeInTheDocument();
   });
 });
