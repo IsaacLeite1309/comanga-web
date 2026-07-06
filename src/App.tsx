@@ -10,6 +10,8 @@ import Pesquisa from "./pages/Pesquisa.tsx";
 import Checklist from "./pages/Checklist.tsx";
 import Desejos from "./pages/Desejos.tsx";
 import NotFound from "./pages/NotFound.tsx";
+import UserManagement from "./pages/UserManagement.tsx";
+import AdminPlaceholder from "./pages/AdminPlaceholder.tsx";
 import { PublicNav } from "@/components/PublicNav.tsx";
 import { AuthProvider } from "@/contexts/AuthContext";
 import { ProtectedRoute } from "@/components/ProtectedRoute";
@@ -19,9 +21,9 @@ const App = () => (
     <Sonner />
     <BrowserRouter>
       <AuthProvider>
-        <div className="flex min-h-screen w-full bg-background">
+        <div className="flex min-h-screen w-full max-w-full overflow-x-hidden bg-background">
           <PublicNav />
-          <main className="flex-1 flex flex-col md:ml-20 lg:ml-56 pb-16 md:pb-0">
+          <main className="min-w-0 flex-1 flex flex-col md:ml-20 lg:ml-64 pb-16 md:pb-0">
             <Routes>
               <Route path="/" element={<Navigate to="/entrar" replace />} />
               <Route path="/entrar" element={<Index />} />
@@ -42,6 +44,38 @@ const App = () => (
               <Route path="/colecao" element={<Colecao />} />
               <Route path="/checklist" element={<Checklist />} />
               <Route path="/desejos" element={<Desejos />} />
+              <Route
+                path="/admin/novo-manga"
+                element={
+                  <ProtectedRoute>
+                    <AdminPlaceholder title="Novo mangá" />
+                  </ProtectedRoute>
+                }
+              />
+              <Route
+                path="/admin/editar-mangas"
+                element={
+                  <ProtectedRoute>
+                    <AdminPlaceholder title="Editar Mangás" />
+                  </ProtectedRoute>
+                }
+              />
+              <Route
+                path="/admin/opcoes"
+                element={
+                  <ProtectedRoute>
+                    <AdminPlaceholder title="Gerenciar Opções" />
+                  </ProtectedRoute>
+                }
+              />
+              <Route
+                path="/admin/users"
+                element={
+                  <ProtectedRoute>
+                    <UserManagement />
+                  </ProtectedRoute>
+                }
+              />
               
               {/* ADD ALL CUSTOM ROUTES ABOVE THE CATCH-ALL "*" ROUTE */}
               <Route path="*" element={<NotFound />} />
