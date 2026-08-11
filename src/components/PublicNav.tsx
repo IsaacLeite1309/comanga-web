@@ -1,8 +1,7 @@
-import {
+﻿import {
   BookOpen,
   CalendarCheck,
   Heart,
-  Pencil,
   PlusCircle,
   Search,
   SlidersHorizontal,
@@ -32,7 +31,7 @@ const collectorNavItems: NavItem[] = [
 
 const adminNavItems: NavItem[] = [
   { label: "Novo mangá", icon: PlusCircle, href: "/admin/novo-manga" },
-  { label: "Editar Mangás", icon: Pencil, href: "/admin/editar-mangas" },
+  { label: "Gerenciar Mangás", icon: BookOpen, href: "/admin/editar-mangas" },
   { label: "Gerenciar Opções", icon: SlidersHorizontal, href: "/admin/opcoes" },
   { label: "Gerenciar Usuários", icon: Users, href: "/admin/users" },
 ];
@@ -119,7 +118,7 @@ export function PublicNav() {
         <div className="flex flex-col gap-1">
           <div className="flex items-center gap-3 mb-8 px-3">
             <BrandLogo />
-            <span className="text-2xl font-bold text-primary-foreground tracking-wide">Co<span className="text-primary">Mangá</span></span>
+            <span className="text-2xl font-bold text-primary-foreground tracking-wide">Co<span className="text-primary">MangÃ¡</span></span>
           </div>
           {navItems.map((item) => (
             <NavButton key={item.label} item={item} showLabel />
@@ -132,3 +131,4 @@ export function PublicNav() {
     </>
   );
 }
+

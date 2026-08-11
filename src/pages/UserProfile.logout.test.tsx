@@ -1,4 +1,4 @@
-import { fireEvent, render, screen, waitFor } from "@testing-library/react";
+import { fireEvent, render, screen } from "@testing-library/react";
 import { beforeEach, describe, expect, it, vi } from "vitest";
 import UserProfile from "@/pages/UserProfile";
 import { api } from "@/services/api";
@@ -44,11 +44,8 @@ describe("UserProfile logout", () => {
 
     render(<UserProfile />);
 
-    await waitFor(() => {
-      expect(api.get).toHaveBeenCalledWith("/users/me");
-    });
-
-    fireEvent.click(screen.getByRole("button", { name: /sair da conta/i }));
+    expect(api.get).toHaveBeenCalledWith("/users/me");
+    fireEvent.click(await screen.findByRole("button", { name: /sair da conta/i }));
 
     expect(logoutMock).toHaveBeenCalledTimes(1);
   });

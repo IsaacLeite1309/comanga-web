@@ -7,6 +7,7 @@ import { toast } from "sonner";
 let authState = {
   isAuthenticated: false,
   loading: false,
+  user: null as null | { username: string; role?: string },
 };
 
 vi.mock("@/contexts/AuthContext", () => ({
@@ -19,19 +20,20 @@ vi.mock("sonner", () => ({
   },
 }));
 
-function renderProtectedRoute() {
+function renderProtectedRoute(requiredRole?: string) {
   return render(
     <MemoryRouter initialEntries={["/admin"]}>
       <Routes>
         <Route
           path="/admin"
           element={
-            <ProtectedRoute>
+            <ProtectedRoute requiredRole={requiredRole}>
               <div>Área protegida</div>
             </ProtectedRoute>
           }
         />
         <Route path="/entrar" element={<div>Tela de login</div>} />
+        <Route path="/perfil/:username" element={<div>Meu perfil</div>} />
       </Routes>
     </MemoryRouter>
   );
@@ -43,6 +45,7 @@ describe("ProtectedRoute", () => {
     authState = {
       isAuthenticated: false,
       loading: false,
+      user: null,
     };
   });
 
@@ -62,9 +65,39 @@ describe("ProtectedRoute", () => {
     authState = {
       isAuthenticated: true,
       loading: false,
+      user: { username: "admin" },
     };
 
     renderProtectedRoute();
+
+    expect(screen.getByText("Área protegida")).toBeInTheDocument();
+    expect(toast.error).not.toHaveBeenCalled();
+  });
+
+  it("redireciona usuario autenticado sem perfil administrativo", async () => {
+    authState = {
+      isAuthenticated: true,
+      loading: false,
+      user: { username: "isaac", role: "Usuário Padrão" },
+    };
+
+    renderProtectedRoute("Administrador");
+
+    expect(await screen.findByText("Meu perfil")).toBeInTheDocument();
+
+    await waitFor(() => {
+      expect(toast.error).toHaveBeenCalledWith("Acesso negado: Você não tem permissão para acessar esta área.");
+    });
+  });
+
+  it("renderiza rota administrativa quando usuario e administrador", () => {
+    authState = {
+      isAuthenticated: true,
+      loading: false,
+      user: { username: "admin", role: "Administrador" },
+    };
+
+    renderProtectedRoute("Administrador");
 
     expect(screen.getByText("Área protegida")).toBeInTheDocument();
     expect(toast.error).not.toHaveBeenCalled();

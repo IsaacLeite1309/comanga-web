@@ -50,7 +50,7 @@ describe("PublicNav", () => {
 
     expect(screen.queryByText("Coleção")).not.toBeInTheDocument();
     expect(screen.getAllByText("Novo mangá").length).toBeGreaterThan(0);
-    expect(screen.getAllByText("Editar Mangás").length).toBeGreaterThan(0);
+    expect(screen.getAllByText("Gerenciar Mangás").length).toBeGreaterThan(0);
     expect(screen.getAllByText("Gerenciar Opções").length).toBeGreaterThan(0);
     expect(screen.getAllByText("Gerenciar Usuários").length).toBeGreaterThan(0);
   });

@@ -4,6 +4,13 @@ import { isAxiosError } from "axios";
 import { api } from "@/services/api";
 import { useAuth } from "@/contexts/AuthContext";
 import { toast } from "sonner";
+import { useDropdown } from "@/hooks/useDropdown";
+import {
+  getRememberedUserManagementFilters,
+  rememberUserManagementRole,
+  rememberUserManagementSearchTerm,
+  rememberUserManagementStatus,
+} from "./userManagementMemory";
 
 type UserRole = "Administrador" | "Usuário Padrão";
 type UserStatus = "Pendente" | "Ativada" | "Bloqueada";
@@ -29,6 +36,7 @@ interface UsersResponse {
 
 const ROLE_OPTIONS: Array<"Todos" | UserRole> = ["Todos", "Administrador", "Usuário Padrão"];
 const STATUS_OPTIONS: Array<"Todos" | UserStatus> = ["Todos", "Pendente", "Ativada", "Bloqueada"];
+const USERS_PAGE_SIZE = 8;
 
 interface FilterDropdownProps<T extends string> {
   label: string;
@@ -45,18 +53,18 @@ function FilterDropdown<T extends string>({
   getOptionLabel,
   onChange,
 }: FilterDropdownProps<T>) {
-  const [isOpen, setIsOpen] = useState(false);
+  const { isOpen, closeDropdown, toggleDropdown, rootProps } = useDropdown();
 
   function selectOption(option: T) {
     onChange(option);
-    setIsOpen(false);
+    closeDropdown();
   }
 
   return (
-    <div className="relative">
+    <div {...rootProps} className="relative">
       <button
         type="button"
-        onClick={() => setIsOpen((current) => !current)}
+        onClick={toggleDropdown}
         className="flex h-12 w-full items-center justify-between gap-3 rounded-xl border border-border bg-input px-3 text-left text-base font-semibold text-foreground outline-none transition-colors focus:border-primary focus:ring-2 focus:ring-primary/40"
         aria-expanded={isOpen}
         aria-label={label}
@@ -102,6 +110,53 @@ function getStatusClassName(status: UserStatus): string {
   return statusStyles[status];
 }
 
+interface PaginationControlsProps {
+  page: number;
+  totalPages: number;
+  total: number;
+  currentCount: number;
+  onPrevious: () => void;
+  onNext: () => void;
+}
+
+function PaginationControls({
+  page,
+  totalPages,
+  total,
+  currentCount,
+  onPrevious,
+  onNext,
+}: PaginationControlsProps) {
+  return (
+    <div className="flex flex-col gap-3 border-t border-border px-4 py-4 text-sm text-muted-foreground sm:flex-row sm:items-center sm:justify-between">
+      <span>
+        Exibindo {currentCount} de {total} usuários
+      </span>
+      <div className="flex items-center gap-2">
+        <button
+          type="button"
+          onClick={onPrevious}
+          disabled={page <= 1}
+          className="rounded-lg border border-border bg-input px-3 py-2 font-semibold text-foreground transition-colors hover:border-primary hover:text-primary disabled:cursor-not-allowed disabled:opacity-50 disabled:hover:border-border disabled:hover:text-foreground"
+        >
+          Anterior
+        </button>
+        <span className="min-w-16 text-center font-semibold text-foreground">
+          {page} / {totalPages}
+        </span>
+        <button
+          type="button"
+          onClick={onNext}
+          disabled={page >= totalPages}
+          className="rounded-lg border border-border bg-input px-3 py-2 font-semibold text-foreground transition-colors hover:border-primary hover:text-primary disabled:cursor-not-allowed disabled:opacity-50 disabled:hover:border-border disabled:hover:text-foreground"
+        >
+          Próxima
+        </button>
+      </div>
+    </div>
+  );
+}
+
 interface RoleDropdownProps {
   label: string;
   value: UserRole;
@@ -110,8 +165,8 @@ interface RoleDropdownProps {
 }
 
 function RoleDropdown({ label, value, disabled, onChange }: RoleDropdownProps) {
-  const [isOpen, setIsOpen] = useState(false);
-  const [menuPosition, setMenuPosition] = useState({ top: 0, left: 0, width: 176 });
+  const { isOpen, closeDropdown, toggleDropdown, rootProps } = useDropdown();
+  const [menuPosition, setMenuPosition] = useState({ top: 0, left: 0, width: 160 });
   const buttonRef = useRef<HTMLButtonElement | null>(null);
   const options: UserRole[] = ["Administrador", "Usuário Padrão"];
 
@@ -128,22 +183,22 @@ function RoleDropdown({ label, value, disabled, onChange }: RoleDropdownProps) {
       });
     }
 
-    setIsOpen((current) => !current);
+    toggleDropdown();
   }
 
   function selectOption(option: UserRole) {
     onChange(option);
-    setIsOpen(false);
+    closeDropdown();
   }
 
   return (
-    <>
+    <div {...rootProps}>
       <button
         ref={buttonRef}
         type="button"
         disabled={disabled}
         onClick={toggleMenu}
-        className="flex h-10 w-full min-w-44 items-center justify-between gap-3 rounded-lg border border-border bg-input px-3 text-left text-sm font-semibold text-foreground outline-none transition-colors focus:border-primary focus:ring-2 focus:ring-primary/40 disabled:cursor-not-allowed disabled:opacity-50"
+        className="flex h-10 w-40 items-center justify-between gap-3 rounded-lg border border-border bg-input px-3 text-left text-sm font-semibold text-foreground outline-none transition-colors focus:border-primary focus:ring-2 focus:ring-primary/40 disabled:cursor-not-allowed disabled:opacity-50"
         aria-expanded={isOpen}
         aria-label={label}
       >
@@ -153,7 +208,7 @@ function RoleDropdown({ label, value, disabled, onChange }: RoleDropdownProps) {
 
       {isOpen && !disabled && (
         <div
-          className="fixed z-50 min-w-44 overflow-hidden rounded-lg border border-primary bg-background shadow-2xl"
+          className="fixed z-50 overflow-hidden rounded-lg border border-primary bg-background shadow-2xl"
           style={{
             top: menuPosition.top,
             left: menuPosition.left,
@@ -181,18 +236,26 @@ function RoleDropdown({ label, value, disabled, onChange }: RoleDropdownProps) {
           })}
         </div>
       )}
-    </>
+    </div>
   );
 }
 
 const UserManagement = () => {
   const { user: currentUser } = useAuth();
+  const rememberedFilters = getRememberedUserManagementFilters();
   const [users, setUsers] = useState<AdminUser[]>([]);
-  const [searchTerm, setSearchTerm] = useState("");
-  const [debouncedTerm, setDebouncedTerm] = useState("");
-  const [roleFilter, setRoleFilter] = useState<"Todos" | UserRole>("Todos");
-  const [statusFilter, setStatusFilter] = useState<"Todos" | UserStatus>("Todos");
+  const [searchTerm, setSearchTerm] = useState(rememberedFilters.searchTerm);
+  const [debouncedTerm, setDebouncedTerm] = useState(rememberedFilters.searchTerm.trim());
+  const [roleFilter, setRoleFilter] = useState<"Todos" | UserRole>(rememberedFilters.role as "Todos" | UserRole);
+  const [statusFilter, setStatusFilter] = useState<"Todos" | UserStatus>(rememberedFilters.status as "Todos" | UserStatus);
   const [order, setOrder] = useState<SortOrder>("ASC");
+  const [page, setPage] = useState(1);
+  const [pagination, setPagination] = useState({
+    page: 1,
+    limit: USERS_PAGE_SIZE,
+    total: 0,
+    totalPages: 1,
+  });
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState("");
   const [updatingUserId, setUpdatingUserId] = useState<string | null>(null);
@@ -205,14 +268,18 @@ const UserManagement = () => {
     return () => window.clearTimeout(timer);
   }, [searchTerm]);
 
+  useEffect(() => {
+    setPage(1);
+  }, [debouncedTerm, roleFilter, statusFilter, order]);
+
   const params = useMemo(() => ({
     ...(debouncedTerm ? { term: debouncedTerm } : {}),
     ...(roleFilter !== "Todos" ? { role: roleFilter } : {}),
     ...(statusFilter !== "Todos" ? { status: statusFilter } : {}),
     order,
-    page: 1,
-    limit: 50,
-  }), [debouncedTerm, roleFilter, statusFilter, order]);
+    page,
+    limit: USERS_PAGE_SIZE,
+  }), [debouncedTerm, roleFilter, statusFilter, order, page]);
 
   useEffect(() => {
     async function fetchUsers() {
@@ -222,6 +289,7 @@ const UserManagement = () => {
       try {
         const response = await api.get<UsersResponse>("/admin/users", { params });
         setUsers(response.data.users);
+        setPagination(response.data.pagination);
       } catch (requestError) {
         if (isAxiosError(requestError) && requestError.response?.status === 403) {
           setError("Acesso negado: você não possui permissão para gerenciar usuários.");
@@ -268,6 +336,24 @@ const UserManagement = () => {
     setOrder((current) => current === "ASC" ? "DESC" : "ASC");
   }
 
+  function handleRoleFilterChange(role: "Todos" | UserRole) {
+    rememberUserManagementRole(role);
+    setRoleFilter(role);
+  }
+
+  function handleSearchTermChange(term: string) {
+    rememberUserManagementSearchTerm(term);
+    setSearchTerm(term);
+  }
+
+  function handleStatusFilterChange(status: "Todos" | UserStatus) {
+    rememberUserManagementStatus(status);
+    setStatusFilter(status);
+  }
+
+  const totalPages = Math.max(1, pagination.totalPages);
+  const showPagination = !loading && !error && users.length > 0;
+
   return (
     <div className="flex-1 min-w-0 px-3 py-6 sm:px-4 sm:py-8">
       <div className="mx-auto w-full max-w-6xl space-y-6">
@@ -284,7 +370,7 @@ const UserManagement = () => {
             <Search className="absolute left-3 top-1/2 h-5 w-5 -translate-y-1/2 text-muted-foreground" />
             <input
               value={searchTerm}
-              onChange={(event) => setSearchTerm(event.target.value)}
+              onChange={(event) => handleSearchTermChange(event.target.value)}
               placeholder="Buscar por usuário ou e-mail"
               className="h-12 w-full rounded-xl border border-border bg-input pl-11 pr-4 text-base text-foreground outline-none transition-colors focus:border-primary focus:ring-2 focus:ring-primary/40"
             />
@@ -295,7 +381,7 @@ const UserManagement = () => {
             value={roleFilter}
             options={ROLE_OPTIONS}
             getOptionLabel={(role) => role === "Todos" ? "Todos os níveis" : role}
-            onChange={setRoleFilter}
+            onChange={handleRoleFilterChange}
           />
 
           <FilterDropdown
@@ -303,7 +389,7 @@ const UserManagement = () => {
             value={statusFilter}
             options={STATUS_OPTIONS}
             getOptionLabel={(status) => status === "Todos" ? "Todos os status" : status}
-            onChange={setStatusFilter}
+            onChange={handleStatusFilterChange}
           />
         </div>
 
@@ -368,6 +454,19 @@ const UserManagement = () => {
               </article>
             );
           })}
+
+          {showPagination && (
+            <div className="overflow-hidden rounded-xl border border-border bg-card">
+              <PaginationControls
+                page={page}
+                totalPages={totalPages}
+                total={pagination.total}
+                currentCount={users.length}
+                onPrevious={() => setPage((current) => Math.max(1, current - 1))}
+                onNext={() => setPage((current) => Math.min(totalPages, current + 1))}
+              />
+            </div>
+          )}
         </div>
 
         <div className="hidden overflow-hidden rounded-xl border border-border bg-card md:block">
@@ -379,9 +478,9 @@ const UserManagement = () => {
                     <button
                       type="button"
                       onClick={toggleOrder}
-                      className="inline-flex items-center gap-2 font-bold text-foreground"
+                      className="inline-flex items-center gap-2 font-bold text-muted-foreground"
                     >
-                      Usuário
+                      USUÁRIO
                       {order === "ASC" ? <ArrowDownAZ className="h-4 w-4" /> : <ArrowUpAZ className="h-4 w-4" />}
                     </button>
                   </th>
@@ -430,7 +529,7 @@ const UserManagement = () => {
                       <td className="px-4 py-3 font-semibold">{adminUser.username}</td>
                       <td className="px-4 py-3 text-muted-foreground">{adminUser.email}</td>
                       <td className="px-4 py-3">
-                        <div className="min-w-44">
+                        <div className="w-40">
                           <RoleDropdown
                             label={`Nível de acesso de ${adminUser.username}`}
                             value={adminUser.role}
@@ -450,6 +549,16 @@ const UserManagement = () => {
               </tbody>
             </table>
           </div>
+          {showPagination && (
+            <PaginationControls
+              page={page}
+              totalPages={totalPages}
+              total={pagination.total}
+              currentCount={users.length}
+              onPrevious={() => setPage((current) => Math.max(1, current - 1))}
+              onNext={() => setPage((current) => Math.min(totalPages, current + 1))}
+            />
+          )}
         </div>
       </div>
     </div>

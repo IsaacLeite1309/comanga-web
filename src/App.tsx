@@ -11,10 +11,27 @@ import Checklist from "./pages/Checklist.tsx";
 import Desejos from "./pages/Desejos.tsx";
 import NotFound from "./pages/NotFound.tsx";
 import UserManagement from "./pages/UserManagement.tsx";
-import AdminPlaceholder from "./pages/AdminPlaceholder.tsx";
+import AdminOptions from "./pages/AdminOptions.tsx";
+import NewManga from "./pages/NewManga.tsx";
+import EditMangas from "./pages/EditMangas.tsx";
+import EditWork from "./pages/EditWork.tsx";
+import EditWorkForm from "./pages/EditWorkForm.tsx";
+import EditionForm from "./pages/EditionForm.tsx";
+import EditionDetails from "./pages/EditionDetails.tsx";
+import VolumeDetails from "./pages/VolumeDetails.tsx";
+import VolumeForm from "./pages/VolumeForm.tsx";
+import PostCreateActions from "./pages/PostCreateActions.tsx";
 import { PublicNav } from "@/components/PublicNav.tsx";
 import { AuthProvider } from "@/contexts/AuthContext";
 import { ProtectedRoute } from "@/components/ProtectedRoute";
+
+function AdminRoute({ children }: { children: React.ReactNode }) {
+  return (
+    <ProtectedRoute requiredRole="Administrador">
+      {children}
+    </ProtectedRoute>
+  );
+}
 
 const App = () => (
   <TooltipProvider>
@@ -47,33 +64,105 @@ const App = () => (
               <Route
                 path="/admin/novo-manga"
                 element={
-                  <ProtectedRoute>
-                    <AdminPlaceholder title="Novo mangá" />
-                  </ProtectedRoute>
+                  <AdminRoute>
+                    <NewManga />
+                  </AdminRoute>
                 }
               />
               <Route
                 path="/admin/editar-mangas"
                 element={
-                  <ProtectedRoute>
-                    <AdminPlaceholder title="Editar Mangás" />
-                  </ProtectedRoute>
+                  <AdminRoute>
+                    <EditMangas />
+                  </AdminRoute>
+                }
+              />
+              <Route
+                path="/admin/editar-mangas/obras/:workSlug"
+                element={
+                  <AdminRoute>
+                    <EditWork />
+                  </AdminRoute>
+                }
+              />
+              <Route
+                path="/admin/editar-mangas/obras/:workSlug/editar"
+                element={
+                  <AdminRoute>
+                    <EditWorkForm />
+                  </AdminRoute>
+                }
+              />
+              <Route
+                path="/admin/editar-mangas/obras/:workSlug/edicoes/nova"
+                element={
+                  <AdminRoute>
+                    <EditionForm />
+                  </AdminRoute>
+                }
+              />
+              <Route
+                path="/admin/editar-mangas/obras/:workSlug/edicoes/:editionId"
+                element={
+                  <AdminRoute>
+                    <EditionDetails />
+                  </AdminRoute>
+                }
+              />
+              <Route
+                path="/admin/editar-mangas/obras/:workSlug/edicoes/:editionId/volumes/novo"
+                element={
+                  <AdminRoute>
+                    <VolumeForm />
+                  </AdminRoute>
+                }
+              />
+              <Route
+                path="/admin/editar-mangas/obras/:workSlug/edicoes/:editionId/volumes/:volumeId"
+                element={
+                  <AdminRoute>
+                    <VolumeDetails />
+                  </AdminRoute>
+                }
+              />
+              <Route
+                path="/admin/editar-mangas/obras/:workSlug/edicoes/:editionId/volumes/:volumeId/editar"
+                element={
+                  <AdminRoute>
+                    <VolumeForm />
+                  </AdminRoute>
+                }
+              />
+              <Route
+                path="/admin/editar-mangas/obras/:workSlug/edicoes/:editionId/editar"
+                element={
+                  <AdminRoute>
+                    <EditionForm />
+                  </AdminRoute>
+                }
+              />
+              <Route
+                path="/admin/pos-cadastro"
+                element={
+                  <AdminRoute>
+                    <PostCreateActions />
+                  </AdminRoute>
                 }
               />
               <Route
                 path="/admin/opcoes"
                 element={
-                  <ProtectedRoute>
-                    <AdminPlaceholder title="Gerenciar Opções" />
-                  </ProtectedRoute>
+                  <AdminRoute>
+                    <AdminOptions />
+                  </AdminRoute>
                 }
               />
               <Route
                 path="/admin/users"
                 element={
-                  <ProtectedRoute>
+                  <AdminRoute>
                     <UserManagement />
-                  </ProtectedRoute>
+                  </AdminRoute>
                 }
               />
               
