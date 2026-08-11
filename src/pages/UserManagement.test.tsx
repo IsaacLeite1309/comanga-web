@@ -1,6 +1,7 @@
 import { fireEvent, render, screen, waitFor } from "@testing-library/react";
 import { beforeEach, describe, expect, it, vi } from "vitest";
 import UserManagement from "@/pages/UserManagement";
+import { resetUserManagementMemoryForTests } from "@/pages/userManagementMemory";
 import { api } from "@/services/api";
 import { toast } from "sonner";
 
@@ -45,15 +46,16 @@ function mockUsersResponse(users = [
     role: "Usuário Padrão",
     status: "Ativada",
   },
-]) {
+], paginationOverrides = {}) {
   vi.mocked(api.get).mockResolvedValueOnce({
     data: {
       users,
       pagination: {
         page: 1,
-        limit: 50,
+        limit: 8,
         total: users.length,
         totalPages: 1,
+        ...paginationOverrides,
       },
     },
   });
@@ -61,6 +63,7 @@ function mockUsersResponse(users = [
 
 describe("UserManagement", () => {
   beforeEach(() => {
+    resetUserManagementMemoryForTests();
     vi.clearAllMocks();
   });
 
@@ -86,7 +89,7 @@ describe("UserManagement", () => {
 
     await waitFor(() => {
       expect(api.get).toHaveBeenCalledWith("/admin/users", expect.objectContaining({
-        params: expect.objectContaining({ order: "ASC" }),
+        params: expect.objectContaining({ order: "ASC", page: 1, limit: 8 }),
       }));
     });
 
@@ -115,6 +118,34 @@ describe("UserManagement", () => {
     render(<UserManagement />);
 
     expect((await screen.findAllByText("Nenhum usuário encontrado com os filtros aplicados."))[0]).toBeInTheDocument();
+  });
+
+  it("pagina usuarios com oito registros por pagina", async () => {
+    mockUsersResponse(undefined, { total: 12, totalPages: 2 });
+    mockUsersResponse([
+      {
+        id: "user-2",
+        username: "joao",
+        email: "joao@teste.local",
+        role: "Usuário Padrão",
+        status: "Ativada",
+      },
+    ], { page: 2, total: 12, totalPages: 2 });
+
+    render(<UserManagement />);
+
+    await waitFor(() => {
+      expect(screen.getAllByText((content) => content.includes("Exibindo 2 de 12"))[0]).toBeInTheDocument();
+    });
+
+    fireEvent.click(screen.getAllByRole("button", { name: /pr.xima/i })[0]);
+
+    await waitFor(() => {
+      expect(api.get).toHaveBeenCalledWith("/admin/users", expect.objectContaining({
+        params: expect.objectContaining({ page: 2, limit: 8 }),
+      }));
+    });
+    expect((await screen.findAllByText("joao"))[0]).toBeInTheDocument();
   });
 
   it("exibe acesso negado quando API retorna 403", async () => {
