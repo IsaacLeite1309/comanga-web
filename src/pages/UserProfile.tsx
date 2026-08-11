@@ -21,6 +21,7 @@ const UserProfile = () => {
   const [deletePassword, setDeletePassword] = useState("");
   const [deleteError, setDeleteError] = useState("");
   const [isDeleting, setIsDeleting] = useState(false);
+  const [isLoggingOut, setIsLoggingOut] = useState(false);
   const [isAdvancedOpen, setIsAdvancedOpen] = useState(false);
   const [showDeletePassword, setShowDeletePassword] = useState(false);
 
@@ -77,6 +78,13 @@ const UserProfile = () => {
     setDeletePassword("");
     setDeleteError("");
     setShowDeletePassword(false);
+  }
+
+  async function handleLogout() {
+    if (isLoggingOut) return;
+
+    setIsLoggingOut(true);
+    await logout();
   }
 
   useEffect(() => {
@@ -208,11 +216,16 @@ const UserProfile = () => {
             </div>
 
             <button
-              onClick={logout}
-              className="w-full flex items-center justify-center gap-2 mt-8 px-4 py-3 rounded-xl bg-red-500 text-white hover:bg-red-600 font-bold transition-colors"
+              onClick={handleLogout}
+              disabled={isLoggingOut}
+              className="w-full flex items-center justify-center gap-2 mt-8 px-4 py-3 rounded-xl bg-red-500 text-white hover:bg-red-600 font-bold transition-colors disabled:cursor-not-allowed disabled:opacity-60"
             >
-              <LogOut className="h-5 w-5" />
-              SAIR DA CONTA
+              {isLoggingOut ? (
+                <Loader2 className="h-5 w-5 animate-spin" />
+              ) : (
+                <LogOut className="h-5 w-5" />
+              )}
+              {isLoggingOut ? "SAINDO..." : "SAIR DA CONTA"}
             </button>
           </div>
         ) : (
