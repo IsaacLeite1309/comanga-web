@@ -192,6 +192,7 @@ describe("NewManga", () => {
       data: {
         work: {
           id: 1,
+          slug: "naruto",
           title: "Naruto",
         },
       },
@@ -239,6 +240,7 @@ describe("NewManga", () => {
       data: {
         work: {
           id: 1,
+          slug: "naruto",
           title: "Naruto",
         },
       },
@@ -361,7 +363,7 @@ describe("NewManga", () => {
   });
 
   it("desabilita demografia e revista quando lancamento direto esta ativo", async () => {
-    vi.mocked(api.post).mockResolvedValueOnce({ data: { work: { id: 1, title: "Naruto" } } });
+    vi.mocked(api.post).mockResolvedValueOnce({ data: { work: { id: 1, slug: "naruto", title: "Naruto" } } });
 
     renderNewManga();
 
@@ -603,7 +605,7 @@ describe("NewManga", () => {
   }, 30000);
 
   it("salva publicacao em andamento sem fim nem total de volumes", async () => {
-    vi.mocked(api.post).mockResolvedValueOnce({ data: { work: { id: 1, title: "Naruto" } } });
+    vi.mocked(api.post).mockResolvedValueOnce({ data: { work: { id: 1, slug: "naruto", title: "Naruto" } } });
     renderNewManga();
 
     expect(await screen.findByRole("heading", { name: /novo mang/i })).toBeInTheDocument();

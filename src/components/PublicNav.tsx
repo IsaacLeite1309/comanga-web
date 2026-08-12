@@ -118,7 +118,7 @@ export function PublicNav() {
         <div className="flex flex-col gap-1">
           <div className="flex items-center gap-3 mb-8 px-3">
             <BrandLogo />
-            <span className="text-2xl font-bold text-primary-foreground tracking-wide">Co<span className="text-primary">MangÃ¡</span></span>
+            <span className="text-2xl font-bold text-primary-foreground tracking-wide">Co<span className="text-primary">Mangá</span></span>
           </div>
           {navItems.map((item) => (
             <NavButton key={item.label} item={item} showLabel />

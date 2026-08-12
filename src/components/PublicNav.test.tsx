@@ -31,8 +31,9 @@ describe("PublicNav", () => {
   });
 
   it("renderiza links principais e destaca entrada para visitante", () => {
-    renderPublicNav("/entrar");
+    const { container } = renderPublicNav("/entrar");
 
+    expect(container).toHaveTextContent("CoMangá");
     expect(screen.getAllByText("Pesquisar").length).toBeGreaterThan(0);
     expect(screen.getAllByText("Checklists").length).toBeGreaterThan(0);
     expect(screen.getAllByText("Lista de Desejos").length).toBeGreaterThan(0);

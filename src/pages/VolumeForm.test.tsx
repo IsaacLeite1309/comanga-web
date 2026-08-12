@@ -43,7 +43,7 @@ describe("VolumeForm", () => {
     renderVolumeForm();
 
     fireEvent.change(screen.getByLabelText(/n.*mero do volume/i), { target: { value: "0" } });
-    fireEvent.click(screen.getByRole("button", { name: /^volume único$/i }));
+    fireEvent.click(screen.getByRole("switch", { name: /^volume único$/i }));
     fireEvent.change(screen.getByLabelText(/^data de publica/i), { target: { value: "2026-01-10" } });
     fireEvent.change(screen.getByLabelText(/pre.*o de capa/i), { target: { value: "39.9" } });
     fireEvent.change(screen.getByLabelText(/n.*mero de p.*ginas/i), { target: { value: "208" } });

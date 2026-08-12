@@ -2,28 +2,20 @@ import { useEffect, useState } from "react";
 import { useLocation, useParams } from "react-router-dom";
 import { Loader2 } from "lucide-react";
 import { api } from "@/services/api";
+import { getApiError } from "@/lib/apiError";
+import { workAdminPath } from "@/lib/catalogPaths";
 import NewManga from "./NewManga";
 
 interface LocationState {
   workId?: number;
 }
 
-interface WorksResponse {
-  works: Array<{
+interface WorkResponse {
+  work: {
     id: number;
+    slug: string;
     title: string;
-  }>;
-}
-
-function normalizeTitle(value: string) {
-  return value
-    .normalize("NFD")
-    .replace(/[\u0300-\u036f]/g, "")
-    .toLowerCase();
-}
-
-function buildWorkPath(workSlug = "") {
-  return `/admin/editar-mangas/obras/${encodeURIComponent(decodeURIComponent(workSlug))}`;
+  };
 }
 
 const EditWorkForm = () => {
@@ -38,41 +30,24 @@ const EditWorkForm = () => {
     if (state?.workId || !workSlug) return;
 
     let isMounted = true;
-    const workTitle = decodeURIComponent(workSlug);
-
-    async function resolveWorkIdByTitle() {
+    async function resolveWorkIdBySlug() {
       setLoading(true);
       setError("");
 
       try {
-        const response = await api.get<WorksResponse>("/admin/works", {
-          params: {
-            term: workTitle,
-            order: "ASC",
-            page: 1,
-            limit: 50,
-          },
-        });
-        const matchedWork = response.data.works.find((work) => (
-          normalizeTitle(work.title) === normalizeTitle(workTitle)
-        ));
+        const response = await api.get<WorkResponse>(`/admin/works/slug/${encodeURIComponent(workSlug)}`);
 
         if (!isMounted) return;
 
-        if (!matchedWork) {
-          setError("Obra não encontrada.");
-          return;
-        }
-
-        setResolvedWorkId(String(matchedWork.id));
-      } catch {
-        if (isMounted) setError("Erro ao carregar Obra para edição.");
+        setResolvedWorkId(String(response.data.work.id));
+      } catch (requestError) {
+        if (isMounted) setError(getApiError(requestError, "Erro ao carregar Obra para edição."));
       } finally {
         if (isMounted) setLoading(false);
       }
     }
 
-    resolveWorkIdByTitle();
+    resolveWorkIdBySlug();
 
     return () => {
       isMounted = false;
@@ -96,7 +71,7 @@ const EditWorkForm = () => {
     );
   }
 
-  return <NewManga mode="edit" workId={resolvedWorkId} returnPath={buildWorkPath(workSlug || "")} />;
+  return <NewManga mode="edit" workId={resolvedWorkId} returnPath={workAdminPath(workSlug || "")} />;
 };
 
 export default EditWorkForm;
