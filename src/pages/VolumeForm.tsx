@@ -1,11 +1,17 @@
-import { useEffect, useId, useMemo, useState } from "react";
+import { useEffect, useMemo, useState } from "react";
 import { Link, useLocation, useNavigate, useParams } from "react-router-dom";
-import { ArrowLeft, ChevronDown, Loader2, RotateCcw, Save } from "lucide-react";
-import { isAxiosError } from "axios";
+import { ArrowLeft, Loader2, RotateCcw, Save } from "lucide-react";
 import { toast } from "sonner";
 import { api } from "@/services/api";
-import { useDropdown } from "@/hooks/useDropdown";
 import { UnsavedChangesPrompt } from "@/hooks/useUnsavedChangesWarning";
+import { SearchableSelect } from "@/components/forms/SearchableSelect";
+import { InputField, SelectField, ToggleField } from "@/components/forms/FormFields";
+import { getApiError } from "@/lib/apiError";
+import {
+  editionAdminPath,
+  newVolumeAdminPath,
+  volumeAdminPath,
+} from "@/lib/catalogPaths";
 
 interface LocationState {
   workId?: number;
@@ -86,18 +92,6 @@ const volumeSteps: Array<{ id: VolumeStep; title: string }> = [
   { id: "media", title: "Capa e sinopse" },
 ];
 
-function getApiError(error: unknown, fallback: string) {
-  if (isAxiosError(error) && error.response?.data?.error) {
-    return error.response.data.error;
-  }
-
-  return fallback;
-}
-
-function buildEditionPath(workSlug = "", editionId = "") {
-  return `/admin/editar-mangas/obras/${encodeURIComponent(decodeURIComponent(workSlug))}/edicoes/${editionId}`;
-}
-
 function isAbsoluteUrl(value: string) {
   if (!value) return true;
 
@@ -135,7 +129,7 @@ const VolumeForm = () => {
   const navigate = useNavigate();
   const state = location.state as LocationState | null;
   const isEditing = Boolean(volumeId);
-  const editionPath = useMemo(() => buildEditionPath(workSlug, editionId), [workSlug, editionId]);
+  const editionPath = useMemo(() => editionAdminPath(workSlug, editionId), [workSlug, editionId]);
   const [form, setForm] = useState<FormState>(emptyForm);
   const [currentStep, setCurrentStep] = useState<VolumeStep>("details");
   const [loading, setLoading] = useState(isEditing);
@@ -333,12 +327,12 @@ const VolumeForm = () => {
             actions: [
               {
                 label: "Gerenciar este Volume",
-                to: `${editionPath}/volumes/${response.data.volume.id}`,
+                to: volumeAdminPath(workSlug, editionId || state?.editionId || "", response.data.volume.id),
                 state: { workId: state?.workId, editionId: state?.editionId || Number(editionId), volumeId: response.data.volume.id },
               },
               {
                 label: "Cadastrar novo Volume",
-                to: `${editionPath}/volumes/novo`,
+                to: newVolumeAdminPath(workSlug, editionId || state?.editionId || ""),
                 state: { workId: state?.workId, editionId: state?.editionId || Number(editionId) },
               },
             ],
@@ -588,167 +582,6 @@ const VolumeForm = () => {
   );
 };
 
-function InputField({
-  label,
-  value,
-  onChange,
-  type = "text",
-  step,
-  required = false,
-  invalid = false,
-  errorMessage,
-  placeholder,
-}: {
-  label: string;
-  value: string;
-  onChange: (value: string) => void;
-  type?: string;
-  step?: string;
-  required?: boolean;
-  invalid?: boolean;
-  errorMessage?: string;
-  placeholder?: string;
-}) {
-  const inputId = useId();
-
-  return (
-    <div>
-      <label htmlFor={inputId} className="mb-2 block text-xs font-bold uppercase tracking-wide text-muted-foreground">
-        {label} {required && <span className="text-red-400">*</span>}
-      </label>
-      <input
-        id={inputId}
-        value={value}
-        onChange={(event) => onChange(event.target.value)}
-        type={type}
-        step={step}
-        placeholder={placeholder}
-        className={`h-12 w-full rounded-xl border bg-input px-4 text-base font-semibold text-foreground outline-none transition-colors placeholder:text-muted-foreground focus:border-primary ${
-          invalid ? "border-red-500" : "border-border"
-        }`}
-      />
-      {invalid && errorMessage && (
-        <p className="mt-2 text-sm font-semibold text-red-400">{errorMessage}</p>
-      )}
-    </div>
-  );
-}
-
-function ToggleField({
-  label,
-  checked,
-  onChange,
-}: {
-  label: string;
-  checked: boolean;
-  onChange: (checked: boolean) => void;
-}) {
-  return (
-    <div className="flex min-w-0 items-center gap-3">
-      <button
-        type="button"
-        aria-label={label}
-        aria-pressed={checked}
-        onClick={() => onChange(!checked)}
-        className={`relative h-6 w-11 shrink-0 rounded-full border transition-colors ${
-          checked ? "border-primary bg-primary" : "border-border bg-muted"
-        }`}
-      >
-        <span
-          className={`absolute left-0.5 top-0.5 h-5 w-5 rounded-full bg-white transition-transform ${
-            checked ? "translate-x-5" : "translate-x-0"
-          }`}
-        />
-      </button>
-      <span className="text-sm font-semibold text-muted-foreground">{label}</span>
-    </div>
-  );
-}
-
-function SelectField({
-  label,
-  value,
-  onChange,
-  options,
-}: {
-  label: string;
-  value: string;
-  onChange: (value: string) => void;
-  options: Array<{ value: string; label: string }>;
-}) {
-  const inputId = useId();
-
-  return (
-    <div>
-      <label id={inputId} className="mb-2 block text-xs font-bold uppercase tracking-wide text-muted-foreground">
-        {label}
-      </label>
-      <DropdownSelect ariaLabelledBy={inputId} value={value} onChange={onChange} options={options} />
-    </div>
-  );
-}
-
-function DropdownSelect({
-  ariaLabel,
-  ariaLabelledBy,
-  value,
-  onChange,
-  options,
-}: {
-  ariaLabel?: string;
-  ariaLabelledBy?: string;
-  value: string;
-  onChange: (value: string) => void;
-  options: Array<{ value: string; label: string }>;
-}) {
-  const { isOpen, closeDropdown, toggleDropdown, rootProps } = useDropdown();
-  const selectedOption = options.find((option) => option.value === value);
-
-  return (
-    <div className="relative" {...rootProps}>
-      <button
-        type="button"
-        aria-label={ariaLabel}
-        aria-labelledby={ariaLabelledBy}
-        aria-expanded={isOpen}
-        onClick={toggleDropdown}
-        className={`flex h-12 w-full items-center justify-between gap-3 rounded-xl border bg-input px-4 text-left text-base font-semibold text-foreground outline-none transition-colors ${
-          isOpen ? "border-primary ring-2 ring-primary/30" : "border-border"
-        }`}
-      >
-        <span className={selectedOption ? "truncate" : "truncate text-muted-foreground"}>
-          {selectedOption?.label || "Selecione"}
-        </span>
-        <ChevronDown className={`h-4 w-4 shrink-0 text-muted-foreground transition-transform ${isOpen ? "rotate-180" : ""}`} />
-      </button>
-
-      {isOpen && (
-        <div className="absolute z-40 mt-1 max-h-72 w-full overflow-y-auto rounded-xl border border-primary bg-input py-1 shadow-xl">
-          {options.map((option) => {
-            const selected = option.value === value;
-            return (
-              <button
-                key={option.value}
-                type="button"
-                onClick={() => {
-                  onChange(option.value);
-                  closeDropdown();
-                }}
-                className={`flex h-11 w-full items-center justify-between px-4 text-left text-base font-bold transition-colors ${
-                  selected ? "bg-primary text-primary-foreground" : "text-foreground hover:bg-primary/20"
-                }`}
-              >
-                <span className="truncate">{option.label}</span>
-                {selected && <span aria-hidden="true">✓</span>}
-              </button>
-            );
-          })}
-        </div>
-      )}
-    </div>
-  );
-}
-
 function ReleaseDateField({
   precision,
   value,
@@ -770,11 +603,12 @@ function ReleaseDateField({
         Data de publicação <span className="text-red-400">*</span>
       </label>
       <div className="grid gap-3 sm:grid-cols-[170px_1fr]">
-        <DropdownSelect
+        <SearchableSelect
           ariaLabel="Precisão da data de publicação"
           value={precision}
           onChange={(nextValue) => onPrecisionChange(nextValue as ReleaseDatePrecision)}
           options={RELEASE_PRECISION_OPTIONS}
+          className=""
         />
         <input
           aria-label="Data de publicação"

@@ -1,10 +1,19 @@
 ﻿import { useEffect, useMemo, useState } from "react";
 import type React from "react";
 import { Link, useLocation, useParams } from "react-router-dom";
-import { ArrowLeft, Globe2, LayoutGrid, List, Loader2, Lock, Pencil, Plus, Settings, Trash2 } from "lucide-react";
-import { isAxiosError } from "axios";
+import { ArrowLeft, LayoutGrid, List, Loader2, Pencil, Plus, Settings, Trash2 } from "lucide-react";
 import { toast } from "sonner";
 import { api } from "@/services/api";
+import { getApiError } from "@/lib/apiError";
+import {
+  editionEditAdminPath,
+  newVolumeAdminPath,
+  volumeAdminPath,
+  workAdminPath,
+} from "@/lib/catalogPaths";
+import { VisibilityIcon } from "@/components/catalog/CatalogVisibility";
+import { visibilityActionClassName } from "@/components/catalog/catalogVisibilityStyles";
+import type { CatalogVisibility } from "@/types/catalog";
 
 interface LocationState {
   workId?: number;
@@ -21,7 +30,7 @@ interface Edition {
   workId: number;
   chronologicalNumber: number;
   coverUrl?: string | null;
-  visibility: string;
+  visibility: CatalogVisibility;
   brazilianPublisher: OptionValue | null;
   editionType: OptionValue | null;
   coverType: OptionValue | null;
@@ -51,7 +60,7 @@ interface Volume {
   isbn13?: string | null;
   affiliateLink?: string | null;
   synopsis?: string | null;
-  visibility: string;
+  visibility: CatalogVisibility;
 }
 
 interface VolumesResponse {
@@ -59,18 +68,6 @@ interface VolumesResponse {
   pagination: {
     total: number;
   };
-}
-
-function getApiError(error: unknown, fallback: string) {
-  if (isAxiosError(error) && error.response?.data?.error) {
-    return error.response.data.error;
-  }
-
-  return fallback;
-}
-
-function buildWorkPath(workSlug = "") {
-  return `/admin/editar-mangas/obras/${encodeURIComponent(decodeURIComponent(workSlug))}`;
 }
 
 function formatEditionNumber(chronologicalNumber: number) {
@@ -102,27 +99,11 @@ function getPublicationStatusLabel(status: Edition["brazilPublicationStatus"]) {
   return typeof status === "string" ? status : status?.label || "-";
 }
 
-function isPublicVisibility(visibility: string) {
-  return visibility !== "Privado";
-}
-
-function visibilityActionClassName(visibility: string) {
-  return isPublicVisibility(visibility)
-    ? "border-green-500/40 bg-green-500/15 text-green-300"
-    : "border-yellow-500/40 bg-yellow-500/15 text-yellow-300";
-}
-
-function VisibilityIcon({ visibility, className = "h-3.5 w-3.5" }: { visibility: string; className?: string }) {
-  const Icon = isPublicVisibility(visibility) ? Globe2 : Lock;
-
-  return <Icon className={className} />;
-}
-
 const EditionDetails = () => {
   const { workSlug = "", editionId = "" } = useParams();
   const location = useLocation();
   const state = location.state as LocationState | null;
-  const workPath = useMemo(() => buildWorkPath(workSlug), [workSlug]);
+  const workPath = useMemo(() => workAdminPath(workSlug), [workSlug]);
   const [edition, setEdition] = useState<Edition | null>(null);
   const [volumes, setVolumes] = useState<Volume[]>([]);
   const [loading, setLoading] = useState(true);
@@ -254,7 +235,7 @@ const EditionDetails = () => {
 
               <div className="mt-6 flex justify-end">
                 <Link
-                  to={`${workPath}/edicoes/${edition.id}/editar`}
+                  to={editionEditAdminPath(workSlug, edition.id)}
                   state={{ workId: state?.workId || edition.workId, editionId: edition.id }}
                   className="inline-flex h-11 items-center justify-center gap-2 rounded-xl bg-primary px-5 text-sm font-bold text-primary-foreground transition-opacity hover:opacity-90"
                 >
@@ -292,7 +273,7 @@ const EditionDetails = () => {
                 </button>
               </div>
               <Link
-                to={`${workPath}/edicoes/${edition.id}/volumes/novo`}
+                to={newVolumeAdminPath(workSlug, edition.id)}
                 state={{ workId: state?.workId || edition.workId, editionId: edition.id }}
                 className="inline-flex h-10 items-center justify-center gap-2 rounded-lg bg-primary px-4 text-sm font-bold text-primary-foreground transition-opacity hover:opacity-90"
               >
@@ -327,7 +308,7 @@ const EditionDetails = () => {
                       <VisibilityIcon visibility={volume.visibility} />
                     </button>
                     <Link
-                      to={`${workPath}/edicoes/${edition.id}/volumes/${volume.id}`}
+                      to={volumeAdminPath(workSlug, edition.id, volume.id)}
                       state={{ workId: state?.workId || edition.workId, editionId: edition.id, volumeId: volume.id }}
                       aria-label={`Gerenciar ${formatVolumeNumber(volume.number, volume.singleVolume)}`}
                       className="inline-flex h-8 items-center justify-center rounded-md border border-border bg-card text-foreground transition-colors hover:border-primary hover:text-primary"
@@ -411,7 +392,7 @@ const EditionDetails = () => {
                       {volume.visibility}
                     </span>
                     <Link
-                      to={`${workPath}/edicoes/${edition.id}/volumes/${volume.id}`}
+                      to={volumeAdminPath(workSlug, edition.id, volume.id)}
                       state={{ workId: state?.workId || edition.workId, editionId: edition.id, volumeId: volume.id }}
                       aria-label={`Gerenciar ${formatVolumeNumber(volume.number, volume.singleVolume)}`}
                       className="inline-flex h-10 w-10 items-center justify-center rounded-lg border border-border bg-input text-foreground transition-colors hover:border-primary hover:text-primary md:justify-self-center"

@@ -23,6 +23,7 @@ vi.mock("sonner", () => ({
 const workDetail = {
   work: {
     id: 10,
+    slug: "naruto",
     title: "Naruto",
     originalTitle: "Naruto",
     coverUrl: "https://cdn.comanga.test/naruto.jpg",
@@ -57,14 +58,10 @@ const editionsResponse = {
   },
 };
 
-function renderEditWork(withState = true) {
+function renderEditWork() {
   return render(
     <MemoryRouter
-      initialEntries={[
-        withState
-          ? { pathname: "/admin/editar-mangas/obras/Naruto", state: { workId: 10 } }
-          : "/admin/editar-mangas/obras/Naruto",
-      ]}
+      initialEntries={["/admin/editar-mangas/obras/naruto"]}
     >
       <Routes>
         <Route path="/admin/editar-mangas/obras/:workSlug" element={<EditWork />} />
@@ -94,29 +91,24 @@ describe("EditWork", () => {
     expect(screen.getByText("Mangá")).toBeInTheDocument();
     expect(screen.getAllByText("1ª Edição")[0]).toBeInTheDocument();
     expect(screen.getAllByText("0 volumes")[0]).toBeInTheDocument();
-    expect(screen.getByRole("link", { name: /editar obra/i })).toHaveAttribute("href", "/admin/editar-mangas/obras/Naruto/editar");
-    expect(screen.getByRole("link", { name: /adicionar edição/i })).toHaveAttribute("href", "/admin/editar-mangas/obras/Naruto/edicoes/nova");
-    expect(screen.getByRole("link", { name: /gerenciar 1ª edição/i })).toHaveAttribute("href", "/admin/editar-mangas/obras/Naruto/edicoes/20");
+    expect(screen.getByRole("link", { name: /editar obra/i })).toHaveAttribute("href", "/admin/editar-mangas/obras/naruto/editar");
+    expect(screen.getByRole("link", { name: /adicionar edição/i })).toHaveAttribute("href", "/admin/editar-mangas/obras/naruto/edicoes/nova");
+    expect(screen.getByRole("link", { name: /gerenciar 1ª edição/i })).toHaveAttribute("href", "/admin/editar-mangas/obras/naruto/edicoes/20");
   });
 
-  it("resolve o id da obra pelo nome quando a pagina e recarregada", async () => {
+  it("resolve a obra diretamente pelo slug quando a pagina e recarregada", async () => {
     vi.mocked(api.get)
-      .mockResolvedValueOnce({ data: { works: [{ id: 10, title: "Naruto" }] } })
       .mockResolvedValueOnce({ data: workDetail })
       .mockResolvedValueOnce({ data: editionsResponse });
 
-    renderEditWork(false);
+    renderEditWork();
 
     expect(await screen.findByRole("heading", { name: "Naruto" })).toBeInTheDocument();
-    expect(api.get).toHaveBeenCalledWith("/admin/works", {
-      params: {
-        term: "Naruto",
-        order: "ASC",
-        page: 1,
-        limit: 50,
-      },
+    expect(api.get).toHaveBeenCalledWith("/admin/works/slug/naruto");
+    expect(api.get).toHaveBeenCalledWith("/admin/works/10/editions", {
+      params: { order: "DESC", page: 1, limit: 50 },
     });
-    expect(api.get).toHaveBeenCalledWith("/admin/works/10");
+    expect(api.get).not.toHaveBeenCalledWith("/admin/works", expect.anything());
   });
 
   it("volta para a listagem geral de obras", async () => {
@@ -226,12 +218,23 @@ describe("EditWork", () => {
   });
 
   it("exibe erro amigavel quando os dados da obra nao carregam", async () => {
-    vi.mocked(api.get)
-      .mockRejectedValueOnce(new Error("Falha de rede"))
-      .mockResolvedValueOnce({ data: editionsResponse });
+    vi.mocked(api.get).mockRejectedValueOnce(new Error("Falha de rede"));
 
     renderEditWork();
 
     expect(await screen.findByText("Falha de rede")).toBeInTheDocument();
+  });
+
+  it("preserva a rota por slug e exibe o 404 seguro sem consultar Edições", async () => {
+    vi.mocked(api.get).mockRejectedValueOnce({
+      isAxiosError: true,
+      response: { status: 404, data: { error: "Obra não encontrada." } },
+    });
+
+    renderEditWork();
+
+    expect(await screen.findByText("Obra não encontrada.")).toBeInTheDocument();
+    expect(api.get).toHaveBeenCalledTimes(1);
+    expect(api.get).toHaveBeenCalledWith("/admin/works/slug/naruto");
   });
 });

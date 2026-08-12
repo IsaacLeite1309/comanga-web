@@ -1,9 +1,9 @@
 ﻿import { FormEvent, useCallback, useEffect, useMemo, useState } from "react";
-import { ArrowDownAZ, ArrowUpAZ, Check, ChevronDown, Edit3, Loader2, Plus, Save, Search, Trash2, X } from "lucide-react";
-import { isAxiosError } from "axios";
+import { ArrowDownAZ, ArrowUpAZ, Edit3, Loader2, Plus, Save, Search, Trash2, X } from "lucide-react";
 import { toast } from "sonner";
 import { api } from "@/services/api";
-import { useDropdown } from "@/hooks/useDropdown";
+import { SearchableSelect } from "@/components/forms/SearchableSelect";
+import { getApiError } from "@/lib/apiError";
 import {
   getRememberedAdminOptionsCategory,
   getRememberedAdminOptionsCountryIds,
@@ -97,14 +97,6 @@ function parseNewValueLabels(label: string, categorySlug: string) {
   return label.split(",").map((item) => item.trim()).filter(Boolean);
 }
 
-function getApiError(error: unknown, fallback: string) {
-  if (isAxiosError(error) && error.response?.data?.error) {
-    return error.response.data.error;
-  }
-
-  return fallback;
-}
-
 interface CategoryDropdownProps {
   label: string;
   value: string;
@@ -120,60 +112,16 @@ function CategoryDropdown({
   onChange,
   emptyMessage = "Nenhuma categoria encontrada.",
 }: CategoryDropdownProps) {
-  const { isOpen, closeDropdown, toggleDropdown, rootProps } = useDropdown();
-  const selectedOption = options.find((option) => option.slug === value);
-
-  function selectOption(option: OptionCategory) {
-    onChange(option.slug);
-    closeDropdown();
-  }
-
   return (
-    <div {...rootProps} className="relative">
-      <button
-        type="button"
-        onClick={toggleDropdown}
-        className="mt-2 flex h-12 w-full items-center justify-between gap-3 rounded-xl border border-border bg-input px-3 text-left text-base font-semibold text-foreground outline-none transition-colors focus:border-primary focus:ring-2 focus:ring-primary/40"
-        aria-expanded={isOpen}
-        aria-label={label}
-      >
-        <span className={`truncate ${selectedOption ? "" : "text-muted-foreground"}`}>
-          {selectedOption?.name || "Selecione"}
-        </span>
-        <ChevronDown className={`h-4 w-4 shrink-0 text-muted-foreground transition-transform ${isOpen ? "rotate-180" : ""}`} />
-      </button>
-
-      {isOpen && (
-        <div className="absolute left-0 top-[calc(100%+4px)] z-30 w-full overflow-hidden rounded-lg border border-primary bg-background shadow-2xl">
-          <div className="max-h-72 overflow-y-auto">
-          {options.map((option) => {
-            const selected = option.slug === value;
-
-            return (
-              <button
-                key={option.slug}
-                type="button"
-                onClick={() => selectOption(option)}
-                className={`flex w-full items-center justify-between gap-2 px-3 py-2 text-left text-base font-semibold transition-colors ${
-                  selected
-                    ? "bg-primary text-primary-foreground"
-                    : "text-foreground hover:bg-primary hover:text-primary-foreground"
-                }`}
-              >
-                <span>{option.name}</span>
-                {selected && <Check className="h-4 w-4" />}
-              </button>
-            );
-          })}
-          {options.length === 0 && (
-            <div className="px-3 py-4 text-sm font-semibold text-muted-foreground">
-              {emptyMessage}
-            </div>
-          )}
-          </div>
-        </div>
-      )}
-    </div>
+    <SearchableSelect
+      ariaLabel={label}
+      value={value}
+      options={options.map((option) => ({ value: option.slug, label: option.name }))}
+      onChange={onChange}
+      emptyMessage={emptyMessage}
+      placeholder="Selecione"
+      maxVisibleItems={7}
+    />
   );
 }
 

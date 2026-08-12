@@ -1,13 +1,18 @@
 ﻿import { useEffect, useMemo, useState } from "react";
-import { Link, useLocation, useParams } from "react-router-dom";
-import { ArrowLeft, Globe2, LayoutGrid, List, Loader2, Lock, Pencil, Plus, Settings, Trash2 } from "lucide-react";
-import { isAxiosError } from "axios";
+import { Link, useParams } from "react-router-dom";
+import { ArrowLeft, LayoutGrid, List, Loader2, Pencil, Plus, Settings, Trash2 } from "lucide-react";
 import { toast } from "sonner";
 import { api } from "@/services/api";
-
-interface LocationState {
-  workId?: number;
-}
+import { getApiError } from "@/lib/apiError";
+import {
+  editionAdminPath,
+  newEditionAdminPath,
+  workAdminPath,
+  workEditAdminPath,
+} from "@/lib/catalogPaths";
+import { CatalogVisibilityAction } from "@/components/catalog/CatalogVisibility";
+import { visibilityActionClassName } from "@/components/catalog/catalogVisibilityStyles";
+import { EmptyState, LoadingState } from "@/components/shared/AsyncState";
 
 interface OptionValue {
   id: number | string;
@@ -16,6 +21,7 @@ interface OptionValue {
 
 interface WorkDetail {
   id: number;
+  slug: string;
   title: string;
   originalTitle?: string | null;
   coverUrl?: string | null;
@@ -30,13 +36,6 @@ interface WorkDetail {
 
 interface WorkDetailResponse {
   work: WorkDetail;
-}
-
-interface WorksResponse {
-  works: Array<{
-    id: number;
-    title: string;
-  }>;
 }
 
 interface Edition {
@@ -58,37 +57,6 @@ interface EditionsResponse {
   };
 }
 
-function normalizeTitle(value: string) {
-  return value
-    .normalize("NFD")
-    .replace(/[\u0300-\u036f]/g, "")
-    .toLowerCase();
-}
-
-function getApiError(error: unknown, fallback: string) {
-  if (isAxiosError(error) && error.response?.data?.error) {
-    return error.response.data.error;
-  }
-
-  return fallback;
-}
-
-function visibilityActionClassName(visibility: "Privado" | "Público") {
-  return visibility === "Público"
-    ? "border-green-500/40 bg-green-500/15 text-green-300 hover:border-green-400 hover:bg-green-500/25"
-    : "border-yellow-500/40 bg-yellow-500/15 text-yellow-300 hover:border-yellow-400 hover:bg-yellow-500/25";
-}
-
-function VisibilityIcon({ visibility, className = "h-3.5 w-3.5" }: { visibility: "Privado" | "Público"; className?: string }) {
-  const Icon = visibility === "Público" ? Globe2 : Lock;
-
-  return <Icon className={className} />;
-}
-
-function buildWorkPath(workSlug = "") {
-  return `/admin/editar-mangas/obras/${encodeURIComponent(decodeURIComponent(workSlug))}`;
-}
-
 function formatEditionNumber(chronologicalNumber: number) {
   return `${chronologicalNumber}ª Edição`;
 }
@@ -104,9 +72,6 @@ function getPublicationStatusLabel(status: Edition["brazilPublicationStatus"]) {
 
 const EditWork = () => {
   const { workSlug = "" } = useParams();
-  const location = useLocation();
-  const state = location.state as LocationState | null;
-  const [resolvedWorkId, setResolvedWorkId] = useState(state?.workId ? String(state.workId) : "");
   const [work, setWork] = useState<WorkDetail | null>(null);
   const [editions, setEditions] = useState<Edition[]>([]);
   const [loading, setLoading] = useState(true);
@@ -117,7 +82,7 @@ const EditWork = () => {
   const [isMobileGrid, setIsMobileGrid] = useState(false);
   const [error, setError] = useState("");
 
-  const workPath = useMemo(() => buildWorkPath(workSlug), [workSlug]);
+  const workPath = useMemo(() => workAdminPath(workSlug), [workSlug]);
   const showGridView = editions.length > 0 && (isMobileGrid || viewMode === "grid");
   const showListView = !showGridView;
 
@@ -133,50 +98,27 @@ const EditWork = () => {
 
   useEffect(() => {
     let isMounted = true;
-    const workTitle = decodeURIComponent(workSlug);
-    const initialResolvedWorkId = state?.workId ? String(state.workId) : "";
-
-    async function resolveWorkIdByTitle() {
-      if (initialResolvedWorkId || !workSlug) return initialResolvedWorkId;
-
-      const response = await api.get<WorksResponse>("/admin/works", {
-        params: {
-          term: workTitle,
-          order: "ASC",
-          page: 1,
-          limit: 50,
-        },
-      });
-      const matchedWork = response.data.works.find((candidate) => (
-        normalizeTitle(candidate.title) === normalizeTitle(workTitle)
-      ));
-
-      if (!matchedWork) {
-        throw new Error("Obra não encontrada.");
-      }
-
-      if (isMounted) setResolvedWorkId(String(matchedWork.id));
-      return String(matchedWork.id);
-    }
 
     async function loadWorkHub() {
       setLoading(true);
       setError("");
 
       try {
-        const workId = await resolveWorkIdByTitle();
-        if (!workId) return;
+        if (!workSlug) throw new Error("Obra não encontrada.");
 
-        const [workResponse, editionsResponse] = await Promise.all([
-          api.get<WorkDetailResponse>(`/admin/works/${workId}`),
-          api.get<EditionsResponse>(`/admin/works/${workId}/editions`, {
-            params: { order: "DESC", page: 1, limit: 50 },
-          }),
-        ]);
+        const workResponse = await api.get<WorkDetailResponse>(
+          `/admin/works/slug/${encodeURIComponent(workSlug)}`,
+        );
+        const loadedWork = workResponse.data.work;
+
+        const editionsResponse = await api.get<EditionsResponse>(
+          `/admin/works/${loadedWork.id}/editions`,
+          { params: { order: "DESC", page: 1, limit: 50 } },
+        );
 
         if (!isMounted) return;
 
-        setWork(workResponse.data.work);
+        setWork(loadedWork);
         setEditions(editionsResponse.data.editions);
       } catch (loadError) {
         if (!isMounted) return;
@@ -191,7 +133,7 @@ const EditWork = () => {
     return () => {
       isMounted = false;
     };
-  }, [state?.workId, workSlug]);
+  }, [workSlug]);
 
   async function toggleEditionVisibility(edition: Edition) {
     const nextVisibility = edition.visibility === "Público" ? "Privado" : "Público";
@@ -231,15 +173,10 @@ const EditWork = () => {
   }
 
   if (loading) {
-    return (
-      <div className="flex flex-1 items-center justify-center px-4 py-10 text-muted-foreground">
-        <Loader2 className="mr-2 h-5 w-5 animate-spin text-primary" />
-        Carregando dados da Obra...
-      </div>
-    );
+    return <LoadingState message="Carregando dados da Obra..." fullPage />;
   }
 
-  if (error || !work || !resolvedWorkId) {
+  if (error || !work) {
     return (
       <div className="flex flex-1 items-center justify-center px-4 py-10 text-sm font-semibold text-red-300">
         {error || "Obra não encontrada."}
@@ -292,7 +229,7 @@ const EditWork = () => {
 
               <div className="mt-6 flex justify-end">
                 <Link
-                  to={`${workPath}/editar`}
+                  to={workEditAdminPath(workSlug)}
                   state={{ workId: work.id }}
                   className="inline-flex h-11 items-center justify-center gap-2 rounded-xl bg-primary px-5 text-sm font-bold text-primary-foreground transition-opacity hover:opacity-90"
                 >
@@ -330,7 +267,7 @@ const EditWork = () => {
                 </button>
               </div>
               <Link
-                to={`${workPath}/edicoes/nova`}
+                to={newEditionAdminPath(workSlug)}
                 state={{ workId: work.id }}
                 className="inline-flex h-10 items-center justify-center gap-2 rounded-lg bg-primary px-4 text-sm font-bold text-primary-foreground transition-opacity hover:opacity-90"
               >
@@ -357,17 +294,16 @@ const EditWork = () => {
                     {formatEditionNumber(edition.chronologicalNumber)}
                   </h3>
                   <div className="mt-2 grid grid-cols-3 gap-1.5">
-                    <button
-                      type="button"
+                    <CatalogVisibilityAction
+                      visibility={edition.visibility}
+                      ariaLabel={`Alterar visibilidade da ${formatEditionNumber(edition.chronologicalNumber)}`}
                       onClick={() => toggleEditionVisibility(edition)}
-                      disabled={updatingVisibilityId === edition.id}
-                      aria-label={`Alterar visibilidade da ${formatEditionNumber(edition.chronologicalNumber)}`}
-                      className={visibilityActionClassName(edition.visibility) + " inline-flex h-8 items-center justify-center rounded-md border transition-colors disabled:opacity-50"}
-                    >
-                      {updatingVisibilityId === edition.id ? <Loader2 className="h-3.5 w-3.5 animate-spin" /> : <VisibilityIcon visibility={edition.visibility} />}
-                    </button>
+                      loading={updatingVisibilityId === edition.id}
+                      showLabel={false}
+                      className="h-8 w-full rounded-md"
+                    />
                     <Link
-                      to={`${workPath}/edicoes/${edition.id}`}
+                      to={editionAdminPath(workSlug, edition.id)}
                       state={{ workId: work.id, editionId: edition.id }}
                       aria-label={`Gerenciar ${formatEditionNumber(edition.chronologicalNumber)}`}
                       className="inline-flex h-8 items-center justify-center rounded-md border border-border bg-card text-foreground transition-colors hover:border-primary hover:text-primary"
@@ -403,9 +339,7 @@ const EditWork = () => {
             </div>
 
             {editions.length === 0 ? (
-              <p className="px-4 py-10 text-center text-sm font-semibold text-muted-foreground">
-                Nenhuma Edição cadastrada. Cadastre uma edição para começar a detalhar esta Obra.
-              </p>
+              <EmptyState message="Nenhuma Edição cadastrada. Cadastre uma edição para começar a detalhar esta Obra." />
             ) : (
               editions.map((edition) => (
                 <article
@@ -448,39 +382,24 @@ const EditWork = () => {
                   <p className="hidden text-sm font-semibold text-muted-foreground md:block">{formatVolumesCount(edition.volumesCount)}</p>
 
                   <div className="hidden justify-self-start md:block">
-                    <button
-                      type="button"
+                    <CatalogVisibilityAction
+                      visibility={edition.visibility}
+                      ariaLabel={`Alterar visibilidade da ${formatEditionNumber(edition.chronologicalNumber)}`}
                       onClick={() => toggleEditionVisibility(edition)}
-                      disabled={updatingVisibilityId === edition.id}
-                      aria-label={`Alterar visibilidade da ${formatEditionNumber(edition.chronologicalNumber)}`}
-                      className={visibilityActionClassName(edition.visibility) + " inline-flex h-10 min-w-[118px] items-center justify-center gap-2 rounded-lg border px-3 text-sm font-bold transition-colors disabled:opacity-50"}
-                    >
-                      {updatingVisibilityId === edition.id ? (
-                        <Loader2 className="h-3.5 w-3.5 animate-spin" />
-                      ) : (
-                        <VisibilityIcon visibility={edition.visibility} />
-                      )}
-                      {edition.visibility}
-                    </button>
+                      loading={updatingVisibilityId === edition.id}
+                    />
                   </div>
 
                   <div className="flex items-center justify-start gap-2 md:contents">
-                    <button
-                      type="button"
+                    <CatalogVisibilityAction
+                      visibility={edition.visibility}
+                      ariaLabel={`Alterar visibilidade compacta da ${formatEditionNumber(edition.chronologicalNumber)}`}
                       onClick={() => toggleEditionVisibility(edition)}
-                      disabled={updatingVisibilityId === edition.id}
-                      aria-label={`Alterar visibilidade compacta da ${formatEditionNumber(edition.chronologicalNumber)}`}
-                      className={visibilityActionClassName(edition.visibility) + " inline-flex items-center gap-1.5 rounded-lg border px-2 py-1 text-xs font-bold disabled:opacity-50 md:hidden"}
-                    >
-                      {updatingVisibilityId === edition.id ? (
-                        <Loader2 className="h-3.5 w-3.5 animate-spin" />
-                      ) : (
-                        <VisibilityIcon visibility={edition.visibility} className="h-3.5 w-3.5" />
-                      )}
-                      {edition.visibility}
-                    </button>
+                      loading={updatingVisibilityId === edition.id}
+                      className="h-7 min-w-0 px-2 text-xs md:hidden"
+                    />
                     <Link
-                      to={`${workPath}/edicoes/${edition.id}`}
+                      to={editionAdminPath(workSlug, edition.id)}
                       state={{ workId: work.id, editionId: edition.id }}
                       aria-label={`Gerenciar ${formatEditionNumber(edition.chronologicalNumber)}`}
                       className="inline-flex h-10 w-10 items-center justify-center rounded-lg border border-border bg-input text-foreground transition-colors hover:border-primary hover:text-primary md:justify-self-center"

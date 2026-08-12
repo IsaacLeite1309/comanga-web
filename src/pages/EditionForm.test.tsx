@@ -127,14 +127,13 @@ describe("EditionForm", () => {
     expect(toast.success).toHaveBeenCalledWith("Edição atualizada com sucesso.");
   });
 
-  it("resolve a obra pelo titulo quando a rota e recarregada", async () => {
+  it("resolve a obra diretamente pelo slug quando a rota e recarregada", async () => {
     vi.mocked(api.get)
-      .mockResolvedValueOnce({ data: { works: [{ id: 10, title: "Naruto" }] } })
-      .mockResolvedValueOnce({ data: editionOptions })
+      .mockResolvedValueOnce({ data: { work: { id: 10, slug: "naruto", title: "Naruto" } } })
       .mockResolvedValueOnce({ data: editionOptions });
 
     render(
-      <MemoryRouter initialEntries={["/admin/editar-mangas/obras/Naruto/edicoes/nova"]}>
+      <MemoryRouter initialEntries={["/admin/editar-mangas/obras/naruto/edicoes/nova"]}>
         <Routes>
           <Route path="/admin/editar-mangas/obras/:workSlug/edicoes/nova" element={<EditionForm />} />
         </Routes>
@@ -142,13 +141,15 @@ describe("EditionForm", () => {
     );
 
     expect(await screen.findByRole("heading", { name: /nova edi/i })).toBeInTheDocument();
-    expect(api.get).toHaveBeenCalledWith("/admin/works", {
-      params: { term: "Naruto", order: "ASC", page: 1, limit: 50 },
-    });
+    expect(api.get).toHaveBeenCalledWith("/admin/works/slug/naruto");
+    expect(api.get).not.toHaveBeenCalledWith("/admin/works", expect.anything());
   });
 
   it("informa quando a obra da URL nao existe", async () => {
-    vi.mocked(api.get).mockResolvedValueOnce({ data: { works: [] } });
+    vi.mocked(api.get).mockRejectedValueOnce({
+      isAxiosError: true,
+      response: { data: { error: "Obra não encontrada." } },
+    });
 
     render(
       <MemoryRouter initialEntries={["/admin/editar-mangas/obras/Inexistente/edicoes/nova"]}>

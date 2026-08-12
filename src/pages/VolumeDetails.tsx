@@ -1,9 +1,13 @@
 import { useEffect, useMemo, useState } from "react";
 import type React from "react";
 import { Link, useLocation, useParams } from "react-router-dom";
-import { ArrowLeft, Calendar, DollarSign, FileText, Globe2, Hash, Loader2, Lock, Pencil } from "lucide-react";
-import { isAxiosError } from "axios";
+import { ArrowLeft, Calendar, DollarSign, FileText, Hash, Loader2, Pencil } from "lucide-react";
 import { api } from "@/services/api";
+import { getApiError } from "@/lib/apiError";
+import { editionAdminPath, volumeEditAdminPath } from "@/lib/catalogPaths";
+import { VisibilityIcon } from "@/components/catalog/CatalogVisibility";
+import { visibilityActionClassName } from "@/components/catalog/catalogVisibilityStyles";
+import type { CatalogVisibility } from "@/types/catalog";
 
 interface LocationState {
   workId?: number;
@@ -28,23 +32,11 @@ interface Volume {
   isbn13?: string | null;
   affiliateLink?: string | null;
   synopsis?: string | null;
-  visibility: string;
+  visibility: CatalogVisibility;
 }
 
 interface VolumeResponse {
   volume: Volume;
-}
-
-function getApiError(error: unknown, fallback: string) {
-  if (isAxiosError(error) && error.response?.data?.error) {
-    return error.response.data.error;
-  }
-
-  return fallback;
-}
-
-function buildEditionPath(workSlug = "", editionId = "") {
-  return `/admin/editar-mangas/obras/${encodeURIComponent(decodeURIComponent(workSlug))}/edicoes/${editionId}`;
 }
 
 function formatVolumeNumber(number: number, singleVolume?: boolean | null) {
@@ -79,27 +71,11 @@ function formatReleaseDate(volume: Volume) {
   return "-";
 }
 
-function isPublicVisibility(visibility: string) {
-  return visibility !== "Privado";
-}
-
-function visibilityActionClassName(visibility: string) {
-  return isPublicVisibility(visibility)
-    ? "border-green-500/40 bg-green-500/15 text-green-300"
-    : "border-yellow-500/40 bg-yellow-500/15 text-yellow-300";
-}
-
-function VisibilityIcon({ visibility, className = "h-4 w-4" }: { visibility: string; className?: string }) {
-  const Icon = isPublicVisibility(visibility) ? Globe2 : Lock;
-
-  return <Icon className={className} />;
-}
-
 const VolumeDetails = () => {
   const { workSlug = "", editionId = "", volumeId = "" } = useParams();
   const location = useLocation();
   const state = location.state as LocationState | null;
-  const editionPath = useMemo(() => buildEditionPath(workSlug, editionId), [workSlug, editionId]);
+  const editionPath = useMemo(() => editionAdminPath(workSlug, editionId), [workSlug, editionId]);
   const [volume, setVolume] = useState<Volume | null>(null);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState("");
@@ -197,7 +173,7 @@ const VolumeDetails = () => {
 
               <div className="mt-6 flex justify-end">
                 <Link
-                  to={`${editionPath}/volumes/${volume.id}/editar`}
+                  to={volumeEditAdminPath(workSlug, editionId, volume.id)}
                   state={{ workId: state?.workId, editionId: state?.editionId || volume.editionId, volumeId: volume.id }}
                   className="inline-flex h-11 items-center justify-center gap-2 rounded-xl bg-primary px-5 text-sm font-bold text-primary-foreground transition-opacity hover:opacity-90"
                 >

@@ -1,11 +1,19 @@
 ﻿import { FormEvent, KeyboardEvent, useEffect, useMemo, useRef, useState } from "react";
-import { ArrowLeft, Check, ChevronDown, ChevronUp, Loader2, Plus, RotateCcw, Save, Trash2 } from "lucide-react";
+import { ArrowLeft, Loader2, Plus, RotateCcw, Save, Trash2 } from "lucide-react";
 import { useNavigate } from "react-router-dom";
-import { isAxiosError } from "axios";
 import { toast } from "sonner";
 import { api } from "@/services/api";
-import { useDropdown } from "@/hooks/useDropdown";
 import { UnsavedChangesPrompt } from "@/hooks/useUnsavedChangesWarning";
+import { MultiSelect as MultiSelectDropdown } from "@/components/forms/MultiSelect";
+import { InputField, SelectField, ToggleField, YearSelectField } from "@/components/forms/FormFields";
+import { getApiError } from "@/lib/apiError";
+import { workAdminPath } from "@/lib/catalogPaths";
+import {
+  NATIVE_AUTHOR_ROLE_OPTIONS,
+  NATIVE_COUNTRY_OPTIONS,
+  NATIVE_DEMOGRAPHY_OPTIONS,
+  NATIVE_ORIGINAL_STATUS_OPTIONS,
+} from "@/features/admin-catalog/domain/workOptions";
 import {
   emptyNewMangaDraft,
   getRememberedNewMangaDraft,
@@ -40,6 +48,7 @@ interface WorkFormOptionsResponse {
 interface WorkDetailResponse {
   work: {
     id: number;
+    slug: string;
     title: string;
     originalTitle?: string | null;
     coverUrl?: string | null;
@@ -67,7 +76,6 @@ export interface AuthorField {
   roles: string[];
 }
 
-const DROPDOWN_MAX_VISIBLE_ITEMS = 6;
 type NewMangaStep = "identification" | "authors" | "publication";
 type NewMangaProps = {
   mode?: "create" | "edit";
@@ -83,37 +91,6 @@ const emptyOptions = {
   originalPublishers: [] as OptionValue[],
 };
 
-
-const NATIVE_AUTHOR_ROLE_OPTIONS: OptionValue[] = [
-  { id: "História e Arte", value: "História e Arte", label: "História e Arte" },
-  { id: "História", value: "História", label: "História" },
-  { id: "Arte", value: "Arte", label: "Arte" },
-  { id: "Criador Original", value: "Criador Original", label: "Criador Original" },
-  { id: "História Original", value: "História Original", label: "História Original" },
-  { id: "Ilustrador", value: "Ilustrador", label: "Ilustrador" },
-];
-
-const NATIVE_COUNTRY_OPTIONS: OptionValue[] = [
-  { id: "Japão", value: "Japão", label: "Japão" },
-  { id: "Coreia do Sul", value: "Coreia do Sul", label: "Coreia do Sul" },
-  { id: "China", value: "China", label: "China" },
-  { id: "Taiwan", value: "Taiwan", label: "Taiwan" },
-];
-
-const NATIVE_ORIGINAL_STATUS_OPTIONS: OptionValue[] = [
-  { id: "Completo", value: "Completo", label: "Completo" },
-  { id: "Em andamento", value: "Em andamento", label: "Em andamento" },
-  { id: "Em hiato", value: "Em hiato", label: "Em hiato" },
-  { id: "Cancelado", value: "Cancelado", label: "Cancelado" },
-];
-
-const NATIVE_DEMOGRAPHY_OPTIONS: OptionValue[] = [
-  { id: "Shonen", value: "Shonen", label: "Shonen" },
-  { id: "Shoujo", value: "Shoujo", label: "Shoujo" },
-  { id: "Seinen", value: "Seinen", label: "Seinen" },
-  { id: "Josei", value: "Josei", label: "Josei" },
-  { id: "Kodomo", value: "Kodomo", label: "Kodomo" },
-];
 
 function normalizeSearchText(value: string) {
   return value
@@ -131,10 +108,6 @@ function findOptionByLabels(options: OptionValue[], labels: string[]) {
 
 function getOptionValue(option: OptionValue) {
   return option.value ?? String(option.id);
-}
-
-function getMultiSelectOptionValue(option: OptionValue) {
-  return typeof option.id === "number" ? option.id : getOptionValue(option);
 }
 
 function buildOrderedPayload(ids: number[]) {
@@ -162,14 +135,6 @@ function getDefaultWorkTypeLabels(countryName = "") {
   if (normalizedCountry.includes("china") || normalizedCountry.includes("taiwan")) return ["manhua"];
 
   return ["manga", "mangá"];
-}
-
-function getApiError(error: unknown, fallback: string) {
-  if (isAxiosError(error) && error.response?.data?.error) {
-    return error.response.data.error;
-  }
-
-  return fallback;
 }
 
 const NewManga = ({ mode = "create", workId, returnPath = "/admin/editar-mangas" }: NewMangaProps) => {
@@ -916,7 +881,7 @@ const NewManga = ({ mode = "create", workId, returnPath = "/admin/editar-mangas"
       setBaselineSignature(currentDraftSignature);
 
       const createdWork = response.data.work;
-      const workSlug = encodeURIComponent(createdWork.title);
+      const workPath = workAdminPath(createdWork.slug);
 
       navigate("/admin/pos-cadastro", {
         state: {
@@ -925,7 +890,7 @@ const NewManga = ({ mode = "create", workId, returnPath = "/admin/editar-mangas"
           actions: [
             {
               label: "Gerenciar esta Obra",
-              to: `/admin/editar-mangas/obras/${workSlug}`,
+              to: workPath,
               state: { workId: createdWork.id },
             },
             {
@@ -934,7 +899,7 @@ const NewManga = ({ mode = "create", workId, returnPath = "/admin/editar-mangas"
             },
             {
               label: "Cadastrar Edição para esta Obra",
-              to: `/admin/editar-mangas/obras/${workSlug}/edicoes/nova`,
+              to: `${workPath}/edicoes/nova`,
               state: { workId: createdWork.id },
             },
           ],
@@ -1299,561 +1264,6 @@ const NewManga = ({ mode = "create", workId, returnPath = "/admin/editar-mangas"
     </div>
   );
 };
-
-function InputField({
-  label,
-  value,
-  onChange,
-  type = "text",
-  required = false,
-  disabled = false,
-  invalid = false,
-  errorMessage = "",
-  placeholder = "",
-}: {
-  label: string;
-  value: string;
-  onChange: (value: string) => void;
-  type?: string;
-  required?: boolean;
-  disabled?: boolean;
-  invalid?: boolean;
-  errorMessage?: string;
-  placeholder?: string;
-}) {
-  return (
-    <label className="min-w-0">
-      <span className="text-xs font-bold uppercase tracking-wide text-muted-foreground">
-        {label}{required ? <span className="text-red-400"> *</span> : ""}
-      </span>
-      <input
-        type={type}
-        aria-label={label}
-        value={value}
-        onChange={(event) => onChange(event.target.value)}
-        disabled={disabled}
-        placeholder={disabled ? "Incompatível" : placeholder}
-        className={`mt-2 h-12 w-full rounded-xl border bg-input px-3 text-base font-semibold text-foreground outline-none transition-colors placeholder:text-muted-foreground focus:ring-2 disabled:cursor-not-allowed disabled:opacity-60 ${
-          invalid
-            ? "border-red-500 focus:border-red-500 focus:ring-red-500/30"
-            : "border-border focus:border-primary focus:ring-primary/40"
-        }`}
-      />
-      {invalid && errorMessage && (
-        <p className="mt-2 text-sm font-semibold text-red-400">{errorMessage}</p>
-      )}
-    </label>
-  );
-}
-
-function SelectField({
-  label,
-  value,
-  onChange,
-  onOpen,
-  options,
-  required = false,
-  disabled = false,
-  placeholder = "Selecione",
-  invalid = false,
-  errorMessage = "",
-  searchable = false,
-}: {
-  label: string;
-  value: string;
-  onChange: (value: string) => void;
-  onOpen?: () => void;
-  options: OptionValue[];
-  required?: boolean;
-  disabled?: boolean;
-  placeholder?: string;
-  invalid?: boolean;
-  errorMessage?: string;
-  searchable?: boolean;
-}) {
-  return (
-    <div className="min-w-0">
-      <span className="text-xs font-bold uppercase tracking-wide text-muted-foreground">
-        {label}{required ? <span className="text-red-400"> *</span> : ""}
-      </span>
-      <SingleSelectDropdown
-        label={label}
-        value={value}
-        onChange={onChange}
-        onOpen={onOpen}
-        options={options}
-        disabled={disabled}
-        placeholder={disabled ? "Incompatível" : placeholder}
-        invalid={invalid}
-        searchable={searchable}
-      />
-      {invalid && errorMessage && (
-        <p className="mt-2 text-sm font-semibold text-red-400">{errorMessage}</p>
-      )}
-    </div>
-  );
-}
-
-function YearSelectField({
-  label,
-  value,
-  onChange,
-  onOpen,
-  required = false,
-  disabled = false,
-  invalid = false,
-  errorMessage = "",
-  searchable = false,
-}: {
-  label: string;
-  value: string;
-  onChange: (value: string) => void;
-  onOpen?: () => void;
-  required?: boolean;
-  disabled?: boolean;
-  invalid?: boolean;
-  errorMessage?: string;
-  searchable?: boolean;
-}) {
-  const currentYear = new Date().getFullYear() + 1;
-  const years = Array.from({ length: currentYear - 1899 }, (_, index) => String(currentYear - index));
-  const yearOptions = years.map((year) => ({ id: Number(year), label: year }));
-
-  return (
-    <div className="min-w-0">
-      <span className="text-xs font-bold uppercase tracking-wide text-muted-foreground">
-        {label}{required ? <span className="text-red-400"> *</span> : ""}
-      </span>
-      <SingleSelectDropdown
-        label={label}
-        value={value}
-        onChange={onChange}
-        onOpen={onOpen}
-        options={yearOptions}
-        placeholder={disabled ? "Incompatível" : "Selecione"}
-        maxVisibleItems={DROPDOWN_MAX_VISIBLE_ITEMS}
-        disabled={disabled}
-        invalid={invalid}
-        searchable={searchable}
-      />
-      {invalid && errorMessage && (
-        <p className="mt-2 text-sm font-semibold text-red-400">{errorMessage}</p>
-      )}
-    </div>
-  );
-}
-
-function SingleSelectDropdown({
-  label,
-  value,
-  onChange,
-  onOpen,
-  options,
-  disabled = false,
-  placeholder = "Selecione",
-  maxVisibleItems = DROPDOWN_MAX_VISIBLE_ITEMS,
-  invalid = false,
-  searchable = false,
-}: {
-  label: string;
-  value: string;
-  onChange: (value: string) => void;
-  onOpen?: () => void;
-  options: OptionValue[];
-  disabled?: boolean;
-  placeholder?: string;
-  maxVisibleItems?: number;
-  invalid?: boolean;
-  searchable?: boolean;
-}) {
-  const { isOpen, closeDropdown, toggleDropdown, rootProps } = useDropdown();
-  const [searchTerm, setSearchTerm] = useState("");
-  const searchInputRef = useRef<HTMLInputElement>(null);
-  const selectedOption = options.find((option) => getOptionValue(option) === value);
-  const maxHeight = maxVisibleItems * 44;
-  const filteredOptions = searchable && searchTerm.trim()
-    ? options.filter((option) => normalizeSearchText(option.label).includes(normalizeSearchText(searchTerm)))
-    : options;
-
-  useEffect(() => {
-    if (isOpen && searchable) {
-      searchInputRef.current?.focus();
-    }
-
-    if (!isOpen) {
-      setSearchTerm("");
-    }
-  }, [isOpen, searchable]);
-
-  function handleChange(nextValue: string) {
-    onChange(nextValue);
-    setSearchTerm("");
-    closeDropdown();
-  }
-
-  function handleToggleDropdown() {
-    if (!isOpen) onOpen?.();
-    toggleDropdown();
-  }
-
-  return (
-    <div {...rootProps} className="relative mt-2 min-w-0">
-      {isOpen && searchable && !disabled ? (
-        <div className={`flex h-12 w-full items-center justify-between gap-3 rounded-xl border bg-input px-3 text-base font-semibold text-foreground outline-none transition-colors focus-within:ring-2 ${
-          invalid
-            ? "border-red-500 focus-within:border-red-500 focus-within:ring-red-500/30"
-            : "border-primary focus-within:border-primary focus-within:ring-primary/40"
-        }`}>
-          <input
-            ref={searchInputRef}
-            data-comanga-dropdown-search="true"
-            aria-label={label}
-            value={searchTerm}
-            onChange={(event) => setSearchTerm(event.target.value)}
-            onKeyDown={(event) => {
-              if (event.key === "Enter") {
-                event.preventDefault();
-                closeDropdown();
-              }
-            }}
-            placeholder="Digite para buscar..."
-            className="min-w-0 flex-1 bg-transparent text-base font-semibold text-foreground outline-none placeholder:text-muted-foreground"
-          />
-          <button
-            type="button"
-            aria-label={`Fechar ${label}`}
-            onClick={closeDropdown}
-            className="-mr-1 inline-flex h-8 w-8 shrink-0 items-center justify-center rounded-md text-muted-foreground"
-          >
-            <ChevronDown className="h-4 w-4 rotate-180 transition-transform" />
-          </button>
-        </div>
-      ) : (
-        <button
-          type="button"
-          aria-label={label}
-          aria-expanded={isOpen}
-          disabled={disabled}
-          onClick={handleToggleDropdown}
-          className={`flex h-12 w-full items-center justify-between gap-3 rounded-xl border bg-input px-3 text-left text-base font-semibold text-foreground outline-none transition-colors focus:ring-2 disabled:cursor-not-allowed disabled:opacity-60 ${
-            invalid
-              ? "border-red-500 focus:border-red-500 focus:ring-red-500/30"
-              : "border-border focus:border-primary focus:ring-primary/40"
-          }`}
-        >
-          <span className={`truncate ${selectedOption ? "" : "text-muted-foreground"}`}>
-            {selectedOption?.label || placeholder}
-          </span>
-          <ChevronDown className={`h-4 w-4 shrink-0 text-muted-foreground transition-transform ${isOpen ? "rotate-180" : ""}`} />
-        </button>
-      )}
-
-      {isOpen && !disabled && (
-        <div
-          className="absolute left-0 top-[calc(100%+4px)] z-40 w-full overflow-y-auto rounded-lg border border-primary bg-background shadow-2xl"
-          style={{ maxHeight }}
-        >
-          {!searchable && (
-            <button
-              type="button"
-              onClick={() => handleChange("")}
-              className={`flex h-11 w-full items-center justify-between gap-2 px-3 text-left text-sm font-semibold transition-colors ${
-                value === ""
-                  ? "bg-primary text-primary-foreground"
-                  : "text-foreground hover:bg-primary hover:text-primary-foreground"
-              }`}
-            >
-              <span>{placeholder}</span>
-              {value === "" && <Check className="h-4 w-4" />}
-            </button>
-          )}
-          {filteredOptions.length === 0 && (
-            <div className="px-3 py-4 text-sm font-semibold text-muted-foreground">
-              Nenhum resultado encontrado.
-            </div>
-          )}
-          {filteredOptions.map((option) => {
-            const optionValue = getOptionValue(option);
-            const selected = optionValue === value;
-
-            return (
-              <button
-                key={option.id}
-                type="button"
-                onClick={() => handleChange(optionValue)}
-                className={`flex h-11 w-full items-center justify-between gap-2 px-3 text-left text-sm font-semibold transition-colors ${
-                  selected
-                    ? "bg-primary text-primary-foreground"
-                    : "text-foreground hover:bg-primary hover:text-primary-foreground"
-                }`}
-              >
-                <span>{option.label}</span>
-                {selected && <Check className="h-4 w-4" />}
-              </button>
-            );
-          })}
-        </div>
-      )}
-    </div>
-  );
-}
-
-function ToggleField({
-  label,
-  checked,
-  onChange,
-  disabled = false,
-  className = "",
-}: {
-  label: string;
-  checked: boolean;
-  onChange: (checked: boolean) => void;
-  disabled?: boolean;
-  className?: string;
-}) {
-  return (
-    <div className={`flex min-w-0 items-center gap-3 ${className}`}>
-      <button
-        type="button"
-        role="switch"
-        aria-checked={checked}
-        aria-label={label}
-        disabled={disabled}
-        onClick={() => onChange(!checked)}
-        className={`relative h-6 w-11 shrink-0 rounded-full border transition-colors disabled:cursor-not-allowed disabled:opacity-80 ${
-          checked ? "border-primary bg-primary" : "border-border bg-muted"
-        }`}
-      >
-        <span
-          className={`absolute left-0.5 top-0.5 h-5 w-5 rounded-full bg-white transition-transform ${
-            checked ? "translate-x-5" : "translate-x-0"
-          }`}
-        />
-      </button>
-      <span className="min-w-0 text-sm font-medium text-muted-foreground">{label}</span>
-    </div>
-  );
-}
-
-function MultiSelectDropdown({
-  label,
-  options,
-  selectedIds,
-  onToggle,
-  onOpen,
-  emptyMessage = "Nenhum valor cadastrado para esta lista.",
-  disabled = false,
-  disabledMessage = "Campo desabilitado.",
-  required = false,
-  invalid = false,
-  errorMessage = "",
-  searchable = false,
-  reorderable = false,
-  onMove,
-}: {
-  label: string;
-  options: OptionValue[];
-  selectedIds: Array<number | string>;
-  onToggle: (id: number | string) => void;
-  onOpen?: () => void;
-  emptyMessage?: string;
-  disabled?: boolean;
-  disabledMessage?: string;
-  required?: boolean;
-  invalid?: boolean;
-  errorMessage?: string;
-  searchable?: boolean;
-  reorderable?: boolean;
-  onMove?: (fromIndex: number, toIndex: number) => void;
-}) {
-  const { isOpen, closeDropdown, toggleDropdown, rootProps } = useDropdown();
-  const [searchTerm, setSearchTerm] = useState("");
-  const searchInputRef = useRef<HTMLInputElement>(null);
-  const selectedOptions = selectedIds.flatMap((selectedId) => {
-    const option = options.find((candidate) => getMultiSelectOptionValue(candidate) === selectedId);
-    return option ? [option] : [];
-  });
-  const filteredOptions = searchable && searchTerm.trim()
-    ? options.filter((option) => (
-        normalizeSearchText(option.label).includes(normalizeSearchText(searchTerm))
-      ))
-    : options;
-  const summary = selectedOptions.length > 0
-    ? selectedOptions.map((option) => option.label).join(", ")
-    : disabled
-      ? disabledMessage
-      : "Selecione";
-  const visibleChips = selectedOptions.slice(0, 3);
-  const hiddenChipCount = Math.max(selectedOptions.length - visibleChips.length, 0);
-
-  useEffect(() => {
-    if (isOpen && searchable) {
-      searchInputRef.current?.focus();
-    }
-
-    if (!isOpen) {
-      setSearchTerm("");
-    }
-  }, [isOpen, searchable]);
-
-  function handleToggleDropdown() {
-    if (!isOpen) onOpen?.();
-    toggleDropdown();
-  }
-
-  return (
-    <div {...rootProps} className="min-w-0">
-      <div className="relative min-w-0">
-        <span className="text-xs font-bold uppercase tracking-wide text-muted-foreground">
-          {label}{required ? <span className="text-red-400"> *</span> : ""}
-        </span>
-        {isOpen && searchable && !disabled ? (
-          <div className={`mt-2 flex min-h-12 w-full items-center justify-between gap-3 rounded-xl border bg-input px-3 py-2 text-base font-semibold text-foreground outline-none transition-colors focus-within:ring-2 ${
-            invalid
-              ? "border-red-500 focus-within:border-red-500 focus-within:ring-red-500/30"
-              : "border-primary focus-within:border-primary focus-within:ring-primary/40"
-          }`}>
-            <input
-              ref={searchInputRef}
-              data-comanga-dropdown-search="true"
-              aria-label={`Selecionar ${label}`}
-              value={searchTerm}
-              onChange={(event) => setSearchTerm(event.target.value)}
-              onKeyDown={(event) => {
-                if (event.key === "Enter") {
-                  event.preventDefault();
-                  closeDropdown();
-                }
-              }}
-              placeholder="Digite para buscar..."
-              className="min-w-0 flex-1 bg-transparent text-base font-semibold text-foreground outline-none placeholder:text-muted-foreground"
-            />
-            <button
-              type="button"
-              aria-label={`Fechar ${label}`}
-              onClick={closeDropdown}
-              className="-mr-1 inline-flex h-8 w-8 shrink-0 items-center justify-center rounded-md text-muted-foreground"
-            >
-              <ChevronDown className="h-4 w-4 rotate-180 transition-transform" />
-            </button>
-          </div>
-        ) : (
-          <button
-            type="button"
-            disabled={disabled}
-            onClick={handleToggleDropdown}
-            className={`mt-2 flex min-h-12 w-full items-center justify-between gap-3 rounded-xl border bg-input px-3 py-2 text-left text-base font-semibold text-foreground outline-none transition-colors focus:ring-2 disabled:cursor-not-allowed disabled:opacity-60 ${
-              invalid
-                ? "border-red-500 focus:border-red-500 focus:ring-red-500/30"
-                : "border-border focus:border-primary focus:ring-primary/40"
-            }`}
-            aria-expanded={isOpen}
-            aria-label={`Selecionar ${label}`}
-          >
-            {searchable && selectedOptions.length > 0 ? (
-              <span className="flex min-w-0 flex-1 flex-wrap gap-1.5">
-                {visibleChips.map((option) => (
-                  <span key={option.id} className="max-w-full truncate rounded-md bg-primary/15 px-2 py-1 text-xs font-bold text-primary">
-                    {option.label}
-                  </span>
-                ))}
-                {hiddenChipCount > 0 && (
-                  <span className="rounded-md bg-muted px-2 py-1 text-xs font-bold text-muted-foreground">
-                    +{hiddenChipCount}
-                  </span>
-                )}
-              </span>
-            ) : (
-              <span className={`truncate ${selectedOptions.length > 0 ? "" : "text-muted-foreground"}`}>
-                {summary}
-              </span>
-            )}
-            <ChevronDown className={`h-4 w-4 shrink-0 text-muted-foreground transition-transform ${isOpen ? "rotate-180" : ""}`} />
-          </button>
-        )}
-
-        {isOpen && (
-          <div
-            className="absolute left-0 top-[calc(100%+4px)] z-30 w-full overflow-y-auto rounded-lg border border-primary bg-background shadow-2xl"
-            style={{ maxHeight: DROPDOWN_MAX_VISIBLE_ITEMS * 40 }}
-          >
-            {options.length === 0 && (
-              <div className="px-3 py-4 text-sm font-semibold text-muted-foreground">
-                {emptyMessage}
-              </div>
-            )}
-            {options.length > 0 && filteredOptions.length === 0 && (
-              <div className="px-3 py-4 text-sm font-semibold text-muted-foreground">
-                Nenhum resultado encontrado.
-              </div>
-            )}
-            {filteredOptions.map((option) => {
-              const optionValue = getMultiSelectOptionValue(option);
-              const selected = selectedIds.includes(optionValue);
-
-              return (
-                <button
-                  key={optionValue}
-                  type="button"
-                  onClick={() => onToggle(optionValue)}
-                  onKeyDown={(event) => {
-                    if (event.key === "Enter") {
-                      event.preventDefault();
-                      closeDropdown();
-                    }
-                  }}
-                  className={`flex w-full items-center justify-between gap-2 px-3 py-2 text-left text-sm font-semibold transition-colors ${
-                    selected
-                      ? "bg-primary text-primary-foreground"
-                      : "text-foreground hover:bg-primary hover:text-primary-foreground"
-                  }`}
-                >
-                  <span>{option.label}</span>
-                  {selected && <Check className="h-4 w-4" />}
-                </button>
-              );
-            })}
-          </div>
-        )}
-      </div>
-      {reorderable && onMove && selectedOptions.length > 1 && (
-        <div className="mt-2 space-y-2">
-          {selectedOptions.map((option, index) => (
-            <div
-              key={getMultiSelectOptionValue(option)}
-              className="flex items-center justify-between gap-2 rounded-lg border border-border bg-input px-3 py-2"
-            >
-              <span className="min-w-0 truncate text-sm font-semibold text-foreground">{option.label}</span>
-              <div className="flex shrink-0 items-center gap-1">
-                <button
-                  type="button"
-                  aria-label={`Mover ${option.label} para cima`}
-                  disabled={index === 0}
-                  onClick={() => onMove(index, index - 1)}
-                  className="inline-flex h-8 w-8 items-center justify-center rounded-md border border-border text-muted-foreground transition-colors hover:border-primary hover:text-primary disabled:cursor-not-allowed disabled:opacity-40"
-                >
-                  <ChevronUp className="h-4 w-4" />
-                </button>
-                <button
-                  type="button"
-                  aria-label={`Mover ${option.label} para baixo`}
-                  disabled={index === selectedOptions.length - 1}
-                  onClick={() => onMove(index, index + 1)}
-                  className="inline-flex h-8 w-8 items-center justify-center rounded-md border border-border text-muted-foreground transition-colors hover:border-primary hover:text-primary disabled:cursor-not-allowed disabled:opacity-40"
-                >
-                  <ChevronDown className="h-4 w-4" />
-                </button>
-              </div>
-            </div>
-          ))}
-        </div>
-      )}
-      {invalid && errorMessage && (
-        <p className="mt-2 text-sm font-semibold text-red-400">{errorMessage}</p>
-      )}
-    </div>
-  );
-}
 
 export default NewManga;
 

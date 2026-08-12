@@ -14,7 +14,7 @@ vi.mock("@/pages/NewManga", () => ({
   ),
 }));
 
-function renderPage(withState = false, slug = "Jo%C3%A3o") {
+function renderPage(withState = false, slug = "joao") {
   return render(
     <MemoryRouter initialEntries={[
       withState
@@ -31,38 +31,41 @@ function renderPage(withState = false, slug = "Jo%C3%A3o") {
 describe("EditWorkForm", () => {
   beforeEach(() => vi.clearAllMocks());
 
-  it("usa o id recebido pela navegacao sem consultar a listagem", () => {
-    renderPage(true, "Naruto");
+  it("usa o id recebido pela navegacao sem consultar a API", () => {
+    renderPage(true, "naruto");
 
-    expect(screen.getByText("edit|42|/admin/editar-mangas/obras/Naruto")).toBeInTheDocument();
+    expect(screen.getByText("edit|42|/admin/editar-mangas/obras/naruto")).toBeInTheDocument();
     expect(api.get).not.toHaveBeenCalled();
   });
 
-  it("resolve o id por titulo normalizado ao recarregar a rota", async () => {
-    vi.mocked(api.get).mockResolvedValueOnce({ data: { works: [{ id: 7, title: "Joao" }] } });
+  it("resolve o id diretamente pelo slug ao recarregar a rota", async () => {
+    vi.mocked(api.get).mockResolvedValueOnce({
+      data: { work: { id: 7, slug: "joao", title: "João" } },
+    });
 
-    renderPage();
+    renderPage(false, "joao");
 
     expect(screen.getByText(/carregando dados da obra/i)).toBeInTheDocument();
-    expect(await screen.findByText("edit|7|/admin/editar-mangas/obras/Jo%C3%A3o")).toBeInTheDocument();
-    expect(api.get).toHaveBeenCalledWith("/admin/works", {
-      params: { term: "João", order: "ASC", page: 1, limit: 50 },
-    });
+    expect(await screen.findByText("edit|7|/admin/editar-mangas/obras/joao")).toBeInTheDocument();
+    expect(api.get).toHaveBeenCalledWith("/admin/works/slug/joao");
   });
 
-  it("informa quando nenhuma obra corresponde ao titulo", async () => {
-    vi.mocked(api.get).mockResolvedValueOnce({ data: { works: [] } });
+  it("informa quando o slug nao corresponde a uma obra", async () => {
+    vi.mocked(api.get).mockRejectedValueOnce({
+      isAxiosError: true,
+      response: { status: 404, data: { error: "Obra não encontrada." } },
+    });
 
-    renderPage(false, "Inexistente");
+    renderPage(false, "inexistente");
 
-    expect(await screen.findByText(/obra n.o encontrada/i)).toBeInTheDocument();
+    expect(await screen.findByText(/obra não encontrada/i)).toBeInTheDocument();
   });
 
   it("exibe erro amigavel quando a consulta falha", async () => {
     vi.mocked(api.get).mockRejectedValueOnce(new Error("falha"));
 
-    renderPage(false, "Inexistente");
+    renderPage(false, "inexistente");
 
-    expect(await screen.findByText(/erro ao carregar obra para edi..o/i)).toBeInTheDocument();
+    expect(await screen.findByText(/erro ao carregar obra para edição/i)).toBeInTheDocument();
   });
 });
