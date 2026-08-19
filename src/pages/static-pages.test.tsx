@@ -12,6 +12,18 @@ vi.mock("@/components/AuthCard", () => ({
   AuthCard: () => <div>Cartão de autenticação</div>,
 }));
 
+vi.mock("@/features/public-catalog/publicCatalogService", () => ({
+  getPublicCatalogOptions: vi.fn().mockResolvedValue({}),
+  listPublicWorks: vi.fn().mockResolvedValue({
+    works: [],
+    pagination: { page: 1, limit: 24, total: 0, totalPages: 1 },
+  }),
+  listPublicEditions: vi.fn().mockResolvedValue({
+    editions: [],
+    pagination: { page: 1, limit: 24, total: 0, totalPages: 1 },
+  }),
+}));
+
 describe("paginas estaticas", () => {
   beforeEach(() => {
     vi.spyOn(console, "error").mockImplementation(() => {});
@@ -40,9 +52,13 @@ describe("paginas estaticas", () => {
   });
 
   it("renderiza a pagina de pesquisa", () => {
-    render(<Pesquisa />);
+    render(
+      <MemoryRouter>
+        <Pesquisa />
+      </MemoryRouter>,
+    );
 
-    expect(screen.getByRole("heading", { name: "Pesquisar Obras" })).toBeInTheDocument();
+    expect(screen.getByRole("heading", { name: "Pesquisar" })).toBeInTheDocument();
   });
 
   it("renderiza a pagina inicial com o card de autenticacao", () => {

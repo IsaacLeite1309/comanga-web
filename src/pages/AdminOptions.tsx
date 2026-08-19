@@ -7,10 +7,12 @@ import { getApiError } from "@/lib/apiError";
 import {
   getRememberedAdminOptionsCategory,
   getRememberedAdminOptionsCountryIds,
+  getRememberedAdminOptionsForm,
   getRememberedAdminOptionsNewValue,
   getRememberedAdminOptionsSearchTerm,
   rememberAdminOptionsCategory,
   rememberAdminOptionsCountryIds,
+  rememberAdminOptionsForm,
   rememberAdminOptionsNewValue,
   rememberAdminOptionsSearchTerm,
 } from "./adminOptionsMemory";
@@ -67,7 +69,6 @@ const CATEGORIES: OptionCategory[] = [
   { slug: "tipos-edicao", name: "Tipo de edição", form: "edicao" },
   { slug: "tipos-capa", name: "Acabamento", form: "edicao" },
   { slug: "formatos-fisicos", name: "Formato", form: "edicao" },
-  { slug: "miolos", name: "Miolo", form: "edicao" },
 ];
 
 const COUNTRY_CATEGORY_SLUG = "paises-origem";
@@ -127,7 +128,7 @@ function CategoryDropdown({
 
 const AdminOptions = () => {
   const [selectedForm, setSelectedForm] = useState<OptionForm>(() => (
-    getCategoryForm(getRememberedAdminOptionsCategory()) || "obra"
+    getCategoryForm(getRememberedAdminOptionsCategory()) || getRememberedAdminOptionsForm()
   ));
   const [selectedCategory, setSelectedCategory] = useState(getRememberedAdminOptionsCategory);
   const [values, setValues] = useState<DomainOptionValue[]>([]);
@@ -205,6 +206,7 @@ const AdminOptions = () => {
     const nextForm = formSlug as OptionForm;
 
     setSelectedForm(nextForm);
+    rememberAdminOptionsForm(nextForm);
     rememberAdminOptionsCategory("");
     setSelectedCategory("");
     setValues([]);

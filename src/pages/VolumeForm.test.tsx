@@ -4,6 +4,7 @@ import { beforeEach, describe, expect, it, vi } from "vitest";
 import VolumeForm from "@/pages/VolumeForm";
 import { api } from "@/services/api";
 import { toast } from "sonner";
+import { resetVolumeDraftMemoryForTests } from "@/pages/volumeDraftMemory";
 
 vi.mock("@/services/api", () => ({
   api: {
@@ -35,6 +36,24 @@ function renderVolumeForm(path = "/admin/editar-mangas/obras/Naruto/edicoes/20/v
 describe("VolumeForm", () => {
   beforeEach(() => {
     vi.clearAllMocks();
+    resetVolumeDraftMemoryForTests();
+  });
+
+  it("preserva o rascunho e a etapa de um novo volume durante a navegacao SPA", () => {
+    const firstRender = renderVolumeForm();
+
+    fireEvent.change(screen.getByLabelText(/n.*mero do volume/i), { target: { value: "4" } });
+    fireEvent.change(screen.getByLabelText(/^data de publica/i), { target: { value: "2026-08-18" } });
+    fireEvent.click(screen.getByRole("button", { name: /continuar/i }));
+    fireEvent.change(screen.getByLabelText(/url da capa/i), {
+      target: { value: "https://cdn.comanga.test/rascunho-volume.jpg" },
+    });
+    firstRender.unmount();
+
+    renderVolumeForm();
+
+    expect(screen.getByLabelText(/url da capa/i)).toHaveValue("https://cdn.comanga.test/rascunho-volume.jpg");
+    expect(screen.getByRole("button", { name: /etapa 2/i })).toHaveClass("bg-primary");
   });
 
   it("cadastra volume enviando os dados para a API da edicao", async () => {
@@ -48,7 +67,7 @@ describe("VolumeForm", () => {
     fireEvent.change(screen.getByLabelText(/pre.*o de capa/i), { target: { value: "39.9" } });
     fireEvent.change(screen.getByLabelText(/n.*mero de p.*ginas/i), { target: { value: "208" } });
     fireEvent.change(screen.getByLabelText(/isbn-10/i), { target: { value: "123456789X" } });
-    fireEvent.change(screen.getByLabelText(/isbn-13/i), { target: { value: "9781234567890" } });
+    fireEvent.change(screen.getByLabelText(/isbn-13/i), { target: { value: "9781234567897" } });
     fireEvent.click(screen.getByRole("button", { name: /continuar/i }));
     fireEvent.change(screen.getByLabelText(/url da capa/i), { target: { value: "https://cdn.comanga.test/volume-1.jpg" } });
     fireEvent.click(screen.getByRole("button", { name: /salvar/i }));
@@ -66,7 +85,7 @@ describe("VolumeForm", () => {
         releaseDay: 10,
         coverUrl: "https://cdn.comanga.test/volume-1.jpg",
         isbn10: "123456789X",
-        isbn13: "9781234567890",
+        isbn13: "9781234567897",
       }));
     });
   });

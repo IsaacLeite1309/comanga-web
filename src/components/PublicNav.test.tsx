@@ -54,6 +54,7 @@ describe("PublicNav", () => {
     expect(screen.getAllByText("Gerenciar Mangás").length).toBeGreaterThan(0);
     expect(screen.getAllByText("Gerenciar Opções").length).toBeGreaterThan(0);
     expect(screen.getAllByText("Gerenciar Usuários").length).toBeGreaterThan(0);
+    expect(screen.getAllByRole("link", { name: /pesquisar/i })[0]).toHaveAttribute("href", "/pesquisa");
   });
 
   it("renderiza link de perfil quando o usuario esta autenticado", () => {

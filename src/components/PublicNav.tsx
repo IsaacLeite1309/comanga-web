@@ -30,6 +30,7 @@ const collectorNavItems: NavItem[] = [
 ];
 
 const adminNavItems: NavItem[] = [
+  { label: "Pesquisar", icon: Search, href: "/pesquisa" },
   { label: "Novo mangá", icon: PlusCircle, href: "/admin/novo-manga" },
   { label: "Gerenciar Mangás", icon: BookOpen, href: "/admin/editar-mangas" },
   { label: "Gerenciar Opções", icon: SlidersHorizontal, href: "/admin/opcoes" },

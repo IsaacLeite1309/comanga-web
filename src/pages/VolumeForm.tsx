@@ -12,6 +12,14 @@ import {
   newVolumeAdminPath,
   volumeAdminPath,
 } from "@/lib/catalogPaths";
+import {
+  emptyVolumeDraft,
+  getRememberedVolumeDraft,
+  rememberVolumeDraft,
+  resetVolumeDraftMemory,
+  type RememberedVolumeStep,
+  type VolumeDraft,
+} from "./volumeDraftMemory";
 
 interface LocationState {
   workId?: number;
@@ -43,24 +51,8 @@ interface VolumeResponse {
 }
 
 type ReleaseDatePrecision = "Completa" | "Mes e ano" | "Ano";
-type VolumeStep = "details" | "media";
-
-interface FormState {
-  number: string;
-  singleVolume: boolean;
-  coverUrl: string;
-  pages: string;
-  price: string;
-  priceCurrency: string;
-  releaseDatePrecision: ReleaseDatePrecision;
-  releaseYear: string;
-  releaseMonth: string;
-  releaseDay: string;
-  isbn10: string;
-  isbn13: string;
-  affiliateLink: string;
-  synopsis: string;
-}
+type VolumeStep = RememberedVolumeStep;
+type FormState = VolumeDraft;
 
 const PRICE_CURRENCY_OPTIONS = ["R$", "CR$", "Cr$", "NCz$", "Cz$"];
 
@@ -70,22 +62,7 @@ const RELEASE_PRECISION_OPTIONS: Array<{ value: ReleaseDatePrecision; label: str
   { value: "Ano", label: "Apenas ano" },
 ];
 
-const emptyForm: FormState = {
-  number: "",
-  singleVolume: false,
-  coverUrl: "",
-  pages: "",
-  price: "",
-  priceCurrency: "R$",
-  releaseDatePrecision: "Completa",
-  releaseYear: "",
-  releaseMonth: "",
-  releaseDay: "",
-  isbn10: "",
-  isbn13: "",
-  affiliateLink: "",
-  synopsis: "",
-};
+const emptyForm = emptyVolumeDraft;
 
 const volumeSteps: Array<{ id: VolumeStep; title: string }> = [
   { id: "details", title: "Dados do Volume" },
@@ -129,9 +106,11 @@ const VolumeForm = () => {
   const navigate = useNavigate();
   const state = location.state as LocationState | null;
   const isEditing = Boolean(volumeId);
+  const draftKey = `${workSlug.toLocaleLowerCase("pt-BR")}:${editionId || state?.editionId || ""}`;
+  const rememberedDraft = useMemo(() => getRememberedVolumeDraft(draftKey), [draftKey]);
   const editionPath = useMemo(() => editionAdminPath(workSlug, editionId), [workSlug, editionId]);
-  const [form, setForm] = useState<FormState>(emptyForm);
-  const [currentStep, setCurrentStep] = useState<VolumeStep>("details");
+  const [form, setForm] = useState<FormState>(() => (isEditing ? emptyForm : rememberedDraft.form));
+  const [currentStep, setCurrentStep] = useState<VolumeStep>(() => (isEditing ? "details" : rememberedDraft.currentStep));
   const [loading, setLoading] = useState(isEditing);
   const [saving, setSaving] = useState(false);
   const [invalidFields, setInvalidFields] = useState<string[]>([]);
@@ -140,6 +119,10 @@ const VolumeForm = () => {
   const formSignature = useMemo(() => JSON.stringify(form), [form]);
 
   const hasUnsavedChanges = Boolean(baselineSignature) && formSignature !== baselineSignature && !saving;
+
+  useEffect(() => {
+    if (!isEditing) rememberVolumeDraft(draftKey, { form, currentStep });
+  }, [currentStep, draftKey, form, isEditing]);
 
   useEffect(() => {
     let isMounted = true;
@@ -319,6 +302,7 @@ const VolumeForm = () => {
       } else {
         const response = await api.post<VolumeResponse>(`/admin/editions/${editionId || state?.editionId}/volumes`, buildPayload());
         toast.success("Volume cadastrado com sucesso.");
+        resetVolumeDraftMemory(draftKey);
         setBaselineSignature(formSignature);
         navigate("/admin/pos-cadastro", {
           state: {
@@ -534,6 +518,8 @@ const VolumeForm = () => {
               type="button"
               onClick={() => {
                 setForm(emptyForm);
+                setCurrentStep("details");
+                resetVolumeDraftMemory(draftKey);
                 setInvalidFields([]);
                 setBaselineSignature(JSON.stringify(emptyForm));
               }}
