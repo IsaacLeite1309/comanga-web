@@ -12,6 +12,12 @@ import {
   newVolumeAdminPath,
   workAdminPath,
 } from "@/lib/catalogPaths";
+import {
+  emptyEditionDraft,
+  getRememberedEditionDraft,
+  rememberEditionDraft,
+  resetEditionDraftMemory,
+} from "./editionDraftMemory";
 
 interface LocationState {
   workId?: number;
@@ -56,16 +62,6 @@ interface WorkResponse {
   };
 }
 
-const emptyDraft = {
-  brazilianPublisherId: "",
-  editionTypeId: "",
-  coverTypeId: "",
-  formatId: "",
-  chronologicalNumber: "",
-  brazilPublicationStatus: "",
-  coverUrl: "",
-};
-
 const EDITION_NUMBER_OPTIONS: OptionValue[] = Array.from({ length: 10 }, (_, index) => ({
   id: String(index + 1),
   label: `${index + 1}ª Edição`,
@@ -83,10 +79,13 @@ const EditionForm = () => {
   const location = useLocation();
   const navigate = useNavigate();
   const state = location.state as LocationState | null;
+  const draftKey = workSlug.toLocaleLowerCase("pt-BR");
   const routedWorkId = state?.workId ? String(state.workId) : "";
   const [workId, setWorkId] = useState(routedWorkId);
   const [options, setOptions] = useState<EditionFormOptionsResponse["options"] | null>(null);
-  const [draft, setDraft] = useState(emptyDraft);
+  const [draft, setDraft] = useState(() => (
+    editionId ? emptyEditionDraft : getRememberedEditionDraft(draftKey)
+  ));
   const [loading, setLoading] = useState(true);
   const [saving, setSaving] = useState(false);
   const [error, setError] = useState("");
@@ -108,6 +107,10 @@ const EditionForm = () => {
   }, [draft.coverUrl]);
 
   const hasUnsavedChanges = Boolean(baselineSignature) && draftSignature !== baselineSignature && !saving;
+
+  useEffect(() => {
+    if (!isEditMode) rememberEditionDraft(draftKey, draft);
+  }, [draft, draftKey, isEditMode]);
 
   useEffect(() => {
     let isMounted = true;
@@ -165,7 +168,7 @@ const EditionForm = () => {
             ? editionResponse.data.edition.brazilPublicationStatus
             : editionResponse.data.edition.brazilPublicationStatus?.label || "",
           coverUrl: editionResponse.data.edition.coverUrl || "",
-        } : emptyDraft));
+        } : emptyEditionDraft));
       } catch (loadError) {
         if (!isMounted) return;
         setError(getApiError(loadError, loadError instanceof Error ? loadError.message : "Erro ao carregar formulário da Edição."));
@@ -226,6 +229,7 @@ const EditionForm = () => {
       } else {
         const response = await api.post<EditionResponse>(`/admin/works/${workId}/editions`, buildPayload());
         toast.success("Edição cadastrada com sucesso.");
+        resetEditionDraftMemory(draftKey);
         setBaselineSignature(draftSignature);
         navigate("/admin/pos-cadastro", {
           state: {

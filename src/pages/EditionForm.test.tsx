@@ -4,6 +4,7 @@ import { beforeEach, describe, expect, it, vi } from "vitest";
 import EditionForm from "@/pages/EditionForm";
 import { api } from "@/services/api";
 import { toast } from "sonner";
+import { resetEditionDraftMemoryForTests } from "@/pages/editionDraftMemory";
 
 vi.mock("@/services/api", () => ({
   api: {
@@ -50,6 +51,24 @@ function chooseDropdown(label: RegExp, optionName: RegExp) {
 describe("EditionForm", () => {
   beforeEach(() => {
     vi.clearAllMocks();
+    resetEditionDraftMemoryForTests();
+  });
+
+  it("preserva o rascunho de uma nova edicao durante a navegacao SPA", async () => {
+    vi.mocked(api.get).mockResolvedValue({ data: editionOptions });
+    const firstRender = renderEditionForm();
+
+    await screen.findByRole("heading", { name: /nova edição/i });
+    chooseDropdown(/editora brasileira/i, /panini/i);
+    fireEvent.change(screen.getByLabelText(/url da capa da edição/i), {
+      target: { value: "https://cdn.comanga.test/rascunho-edicao.jpg" },
+    });
+    firstRender.unmount();
+
+    renderEditionForm();
+
+    expect(await screen.findByLabelText(/url da capa da edição/i)).toHaveValue("https://cdn.comanga.test/rascunho-edicao.jpg");
+    expect(screen.getByLabelText(/editora brasileira/i)).toHaveTextContent("Panini");
   });
 
   it("cadastra uma nova edição vinculada à Obra atual", async () => {
