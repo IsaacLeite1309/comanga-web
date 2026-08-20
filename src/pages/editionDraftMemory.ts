@@ -5,7 +5,9 @@ export interface EditionDraft {
   formatId: string;
   chronologicalNumber: string;
   brazilPublicationStatus: string;
+  coverAssetId: string;
   coverUrl: string;
+  coverPending: boolean;
 }
 
 export const emptyEditionDraft: EditionDraft = {
@@ -15,7 +17,9 @@ export const emptyEditionDraft: EditionDraft = {
   formatId: "",
   chronologicalNumber: "",
   brazilPublicationStatus: "",
+  coverAssetId: "",
   coverUrl: "",
+  coverPending: false,
 };
 
 const rememberedDrafts = new Map<string, EditionDraft>();

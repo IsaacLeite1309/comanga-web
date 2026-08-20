@@ -14,6 +14,34 @@ vi.mock("@/services/api", () => ({
   },
 }));
 
+vi.mock("@/features/admin-media", () => ({
+  CoverImportField: ({ label, value, onChange }: {
+    label: string;
+    value: { assetId: string; coverUrl: string; pending: boolean } | null;
+    onChange: (value: { assetId: string; coverUrl: string; pending: boolean } | null) => void;
+  }) => (
+    <div>
+      <input
+        aria-label={`URL da ${label}`}
+        value={value?.coverUrl || ""}
+        onChange={(event) => {
+          try {
+            const url = new URL(event.target.value);
+            onChange(url.protocol === "https:" ? {
+              assetId: "7f28c7f0-c94f-46e8-b61c-6ea716f8f28e",
+              coverUrl: event.target.value,
+              pending: true,
+            } : null);
+          } catch {
+            onChange(null);
+          }
+        }}
+      />
+      {value?.coverUrl && <img src={value.coverUrl} alt={`Prévia da ${label}`} />}
+    </div>
+  ),
+}));
+
 vi.mock("sonner", () => ({
   toast: {
     success: vi.fn(),
@@ -102,7 +130,7 @@ describe("EditionForm", () => {
         formatId: 33,
         chronologicalNumber: 1,
         brazilPublicationStatus: "Completo",
-        coverUrl: "https://cdn.comanga.test/edicao.jpg",
+        coverAssetId: "7f28c7f0-c94f-46e8-b61c-6ea716f8f28e",
       }));
     });
     expect(toast.success).toHaveBeenCalledWith("Edição cadastrada com sucesso.");
@@ -118,6 +146,7 @@ describe("EditionForm", () => {
             id: 50,
             workId: 10,
             chronologicalNumber: 2,
+            coverAssetId: null,
             coverUrl: null,
             brazilianPublisher: { id: 30, label: "Panini" },
             editionType: { id: 31, label: "Tankobon" },
@@ -141,7 +170,7 @@ describe("EditionForm", () => {
     await waitFor(() => expect(api.patch).toHaveBeenCalledWith("/admin/editions/50", expect.objectContaining({
       chronologicalNumber: 2,
       brazilPublicationStatus: "Em andamento",
-      coverUrl: "https://cdn.comanga.test/edicao-2.jpg",
+      coverAssetId: "7f28c7f0-c94f-46e8-b61c-6ea716f8f28e",
     })));
     expect(toast.success).toHaveBeenCalledWith("Edição atualizada com sucesso.");
   });
@@ -213,7 +242,6 @@ describe("EditionForm", () => {
     fireEvent.change(screen.getByLabelText(/url da capa da edi/i), { target: { value: "arquivo-local" } });
 
     expect(screen.queryByAltText(/pr.*via da capa da edi/i)).not.toBeInTheDocument();
-    expect(screen.getByText(/pr.*via/i)).toBeInTheDocument();
   });
 
   it("exibe a mensagem da API quando o cadastro falha", async () => {

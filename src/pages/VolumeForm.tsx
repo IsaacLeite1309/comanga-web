@@ -6,6 +6,7 @@ import { api } from "@/services/api";
 import { UnsavedChangesPrompt } from "@/hooks/useUnsavedChangesWarning";
 import { SearchableSelect } from "@/components/forms/SearchableSelect";
 import { InputField, SelectField, ToggleField } from "@/components/forms/FormFields";
+import { CoverImportField } from "@/features/admin-media";
 import { getApiError } from "@/lib/apiError";
 import {
   editionAdminPath,
@@ -32,6 +33,7 @@ interface Volume {
   editionId: number;
   number: number;
   singleVolume?: boolean | null;
+  coverAssetId?: string | null;
   coverUrl?: string | null;
   pages?: number | null;
   price?: number | null;
@@ -142,7 +144,9 @@ const VolumeForm = () => {
         setForm({
           number: String(volume.number ?? ""),
           singleVolume: Boolean(volume.singleVolume),
+          coverAssetId: volume.coverAssetId || "",
           coverUrl: volume.coverUrl || "",
+          coverPending: false,
           pages: volume.pages ? String(volume.pages) : "",
           price: volume.price !== null && volume.price !== undefined ? String(volume.price) : "",
           priceCurrency: volume.priceCurrency || "R$",
@@ -158,7 +162,9 @@ const VolumeForm = () => {
         setBaselineSignature(JSON.stringify({
           number: String(volume.number ?? ""),
           singleVolume: Boolean(volume.singleVolume),
+          coverAssetId: volume.coverAssetId || "",
           coverUrl: volume.coverUrl || "",
+          coverPending: false,
           pages: volume.pages ? String(volume.pages) : "",
           price: volume.price !== null && volume.price !== undefined ? String(volume.price) : "",
           priceCurrency: volume.priceCurrency || "R$",
@@ -226,7 +232,7 @@ const VolumeForm = () => {
     const invalid: string[] = [];
 
     if (form.number === "" || Number(form.number) < 0) invalid.push("number");
-    if (!form.coverUrl || !isAbsoluteUrl(form.coverUrl)) invalid.push("coverUrl");
+    if (!form.coverAssetId) invalid.push("coverAssetId");
     if (form.affiliateLink && !isAbsoluteUrl(form.affiliateLink)) invalid.push("affiliateLink");
     if (form.pages && Number(form.pages) <= 0) invalid.push("pages");
     if (form.price && Number(form.price) < 0) invalid.push("price");
@@ -274,7 +280,7 @@ const VolumeForm = () => {
     return {
       number: Number(form.number),
       singleVolume: form.singleVolume,
-      coverUrl: form.coverUrl || null,
+      coverAssetId: form.coverAssetId || null,
       pages: form.pages ? Number(form.pages) : null,
       price: form.price ? Number(form.price) : null,
       priceCurrency: form.priceCurrency,
@@ -475,26 +481,25 @@ const VolumeForm = () => {
               </div>
             ) : (
               <>
-                <div className="grid gap-4 md:grid-cols-[120px_1fr]">
-                  <div className="aspect-[2/3] w-28 overflow-hidden rounded-xl border border-border bg-input">
-                    {form.coverUrl && isAbsoluteUrl(form.coverUrl) ? (
-                      <img src={form.coverUrl} alt="Prévia da capa do Volume" className="h-full w-full object-cover" />
-                    ) : (
-                      <div className="flex h-full w-full items-center justify-center px-3 text-center text-xs font-semibold text-muted-foreground">
-                        Prévia
-                      </div>
-                    )}
-                  </div>
-                  <InputField
-                    label="URL da capa"
-                    value={form.coverUrl}
-                    onChange={(value) => updateField("coverUrl", value)}
-                    required
-                    invalid={invalidFields.includes("coverUrl")}
-                    errorMessage="Informe uma URL absoluta válida."
-                    placeholder="Digite"
-                  />
-                </div>
+                <CoverImportField
+                  label="Capa do Volume"
+                  required
+                  invalid={invalidFields.includes("coverAssetId")}
+                  value={form.coverAssetId ? {
+                    assetId: form.coverAssetId,
+                    coverUrl: form.coverUrl,
+                    pending: form.coverPending,
+                  } : null}
+                  onChange={(cover) => {
+                    setForm((current) => ({
+                      ...current,
+                      coverAssetId: cover?.assetId || "",
+                      coverUrl: cover?.coverUrl || "",
+                      coverPending: cover?.pending || false,
+                    }));
+                    setInvalidFields((current) => current.filter((field) => field !== "coverAssetId"));
+                  }}
+                />
 
                 <div>
                   <label className="mb-2 block text-xs font-bold uppercase tracking-wide text-muted-foreground">

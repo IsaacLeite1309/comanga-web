@@ -7,7 +7,9 @@ export type RememberedNewMangaDraft = {
   originalPublicationStartYear: string;
   originalPublicationEndYear: string;
   originalVolumeCount: string;
+  coverAssetId: string;
   coverUrl: string;
+  coverPending: boolean;
   typeId: string;
   country: string;
   originalPublisherIds: number[];
@@ -27,7 +29,9 @@ export const emptyNewMangaDraft: RememberedNewMangaDraft = {
   originalPublicationStartYear: "",
   originalPublicationEndYear: "",
   originalVolumeCount: "",
+  coverAssetId: "",
   coverUrl: "",
+  coverPending: false,
   typeId: "",
   country: "",
   originalPublisherIds: [],

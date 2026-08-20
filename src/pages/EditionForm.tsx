@@ -5,6 +5,7 @@ import { toast } from "sonner";
 import { api } from "@/services/api";
 import { UnsavedChangesPrompt } from "@/hooks/useUnsavedChangesWarning";
 import { SearchableSelect } from "@/components/forms/SearchableSelect";
+import { CoverImportField } from "@/features/admin-media";
 import { getApiError } from "@/lib/apiError";
 import {
   editionAdminPath,
@@ -42,6 +43,7 @@ interface Edition {
   id: number;
   workId: number;
   chronologicalNumber: number;
+  coverAssetId?: string | null;
   coverUrl?: string | null;
   brazilianPublisher: OptionValue | null;
   editionType: OptionValue | null;
@@ -93,19 +95,6 @@ const EditionForm = () => {
   const isEditMode = Boolean(editionId);
   const workPath = useMemo(() => workAdminPath(workSlug), [workSlug]);
   const draftSignature = useMemo(() => JSON.stringify(draft), [draft]);
-  const coverPreviewUrl = useMemo(() => {
-    const trimmedUrl = draft.coverUrl.trim();
-
-    if (!trimmedUrl) return "";
-
-    try {
-      const parsedUrl = new URL(trimmedUrl);
-      return ["http:", "https:"].includes(parsedUrl.protocol) ? parsedUrl.toString() : "";
-    } catch {
-      return "";
-    }
-  }, [draft.coverUrl]);
-
   const hasUnsavedChanges = Boolean(baselineSignature) && draftSignature !== baselineSignature && !saving;
 
   useEffect(() => {
@@ -154,7 +143,9 @@ const EditionForm = () => {
             brazilPublicationStatus: typeof edition.brazilPublicationStatus === "string"
               ? edition.brazilPublicationStatus
               : edition.brazilPublicationStatus?.label || "",
+            coverAssetId: edition.coverAssetId || "",
             coverUrl: edition.coverUrl || "",
+            coverPending: false,
           });
         }
 
@@ -167,7 +158,9 @@ const EditionForm = () => {
           brazilPublicationStatus: typeof editionResponse.data.edition.brazilPublicationStatus === "string"
             ? editionResponse.data.edition.brazilPublicationStatus
             : editionResponse.data.edition.brazilPublicationStatus?.label || "",
+          coverAssetId: editionResponse.data.edition.coverAssetId || "",
           coverUrl: editionResponse.data.edition.coverUrl || "",
+          coverPending: false,
         } : emptyEditionDraft));
       } catch (loadError) {
         if (!isMounted) return;
@@ -196,7 +189,7 @@ const EditionForm = () => {
       formatId: Number(draft.formatId),
       chronologicalNumber: Number(draft.chronologicalNumber),
       brazilPublicationStatus: draft.brazilPublicationStatus,
-      coverUrl: draft.coverUrl.trim() || null,
+      coverAssetId: draft.coverAssetId || null,
     };
   }
 
@@ -311,28 +304,20 @@ const EditionForm = () => {
           <EditionSelect label="Número da edição" value={draft.chronologicalNumber} onChange={(value) => updateDraft("chronologicalNumber", value)} options={EDITION_NUMBER_OPTIONS} />
           <EditionSelect label="Status de publicação" value={draft.brazilPublicationStatus} onChange={(value) => updateDraft("brazilPublicationStatus", value)} options={EDITION_PUBLICATION_STATUS_OPTIONS} />
           <div className="md:col-span-3">
-            <span className="text-xs font-bold uppercase tracking-wide text-muted-foreground">
-              URL da capa da edição
-            </span>
-            <div className="mt-2 grid gap-3 sm:grid-cols-[96px_1fr] sm:items-start">
-              <div className="flex aspect-[2/3] w-24 items-center justify-center overflow-hidden rounded-xl border border-border bg-input text-xs font-bold uppercase text-muted-foreground">
-                {coverPreviewUrl ? (
-                  <img
-                    src={coverPreviewUrl}
-                    alt="Prévia da capa da edição"
-                    className="h-full w-full object-cover"
-                  />
-                ) : (
-                  "Prévia"
-                )}
-              </div>
-              <EditionInput
-                label="URL da capa da edição"
-                value={draft.coverUrl}
-                onChange={(value) => updateDraft("coverUrl", value)}
-                hideLabel
-              />
-            </div>
+            <CoverImportField
+              label="Capa da Edição"
+              value={draft.coverAssetId ? {
+                assetId: draft.coverAssetId,
+                coverUrl: draft.coverUrl,
+                pending: draft.coverPending,
+              } : null}
+              onChange={(cover) => setDraft((current) => ({
+                ...current,
+                coverAssetId: cover?.assetId || "",
+                coverUrl: cover?.coverUrl || "",
+                coverPending: cover?.pending || false,
+              }))}
+            />
           </div>
         </section>
 

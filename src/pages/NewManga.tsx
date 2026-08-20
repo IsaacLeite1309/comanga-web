@@ -8,6 +8,7 @@ import { MultiSelect as MultiSelectDropdown } from "@/components/forms/MultiSele
 import { InputField, SelectField, ToggleField, YearSelectField } from "@/components/forms/FormFields";
 import { getApiError } from "@/lib/apiError";
 import { workAdminPath } from "@/lib/catalogPaths";
+import { CoverImportField } from "@/features/admin-media";
 import {
   NATIVE_AUTHOR_ROLE_OPTIONS,
   NATIVE_COUNTRY_OPTIONS,
@@ -51,6 +52,7 @@ interface WorkDetailResponse {
     slug: string;
     title: string;
     originalTitle?: string | null;
+    coverAssetId?: string | null;
     coverUrl?: string | null;
     country?: string | null;
     type?: OptionValue | null;
@@ -157,7 +159,9 @@ const NewManga = ({ mode = "create", workId, returnPath = "/admin/editar-mangas"
   const [originalPublicationStartYear, setOriginalPublicationStartYear] = useState(rememberedDraft.originalPublicationStartYear);
   const [originalPublicationEndYear, setOriginalPublicationEndYear] = useState(rememberedDraft.originalPublicationEndYear);
   const [originalVolumeCount, setOriginalVolumeCount] = useState(rememberedDraft.originalVolumeCount);
+  const [coverAssetId, setCoverAssetId] = useState(rememberedDraft.coverAssetId);
   const [coverUrl, setCoverUrl] = useState(rememberedDraft.coverUrl);
+  const [coverPending, setCoverPending] = useState(rememberedDraft.coverPending);
   const [typeId, setTypeId] = useState(rememberedDraft.typeId);
   const [country, setCountry] = useState(rememberedDraft.country);
   const [originalPublisherIds, setOriginalPublisherIds] = useState<number[]>(rememberedDraft.originalPublisherIds);
@@ -199,23 +203,15 @@ const NewManga = ({ mode = "create", workId, returnPath = "/admin/editar-mangas"
     [genreIds, options.genres]
   );
   const hasHentaiGenre = selectedGenreNames.some((genre) => normalizeSearchText(genre) === "hentai");
-  const coverPreviewUrl = useMemo(() => {
-    if (!coverUrl.trim()) return "";
-
-    try {
-      const parsedUrl = new URL(coverUrl.trim());
-      return ["http:", "https:"].includes(parsedUrl.protocol) ? parsedUrl.toString() : "";
-    } catch {
-      return "";
-    }
-  }, [coverUrl]);
   const currentDraftSignature = useMemo(() => JSON.stringify({
     title,
     originalTitle,
     originalPublicationStartYear,
     originalPublicationEndYear,
     originalVolumeCount,
+    coverAssetId,
     coverUrl,
+    coverPending,
     typeId,
     country,
     originalPublisherIds,
@@ -230,6 +226,8 @@ const NewManga = ({ mode = "create", workId, returnPath = "/admin/editar-mangas"
     adultContent,
     authors,
     country,
+    coverAssetId,
+    coverPending,
     coverUrl,
     demographies,
     effectiveDirectRelease,
@@ -289,7 +287,9 @@ const NewManga = ({ mode = "create", workId, returnPath = "/admin/editar-mangas"
           setOriginalPublicationStartYear(work.originalPublicationStartYear ? String(work.originalPublicationStartYear) : "");
           setOriginalPublicationEndYear(work.originalPublicationEndYear ? String(work.originalPublicationEndYear) : "");
           setOriginalVolumeCount(work.originalVolumeCount ? String(work.originalVolumeCount) : "");
+          setCoverAssetId(work.coverAssetId || "");
           setCoverUrl(work.coverUrl || "");
+          setCoverPending(false);
           setTypeId(work.type?.id ? String(work.type.id) : "");
           setCountry(work.country || "");
           setOriginalPublisherIds(work.originalPublishers.map((publisher) => Number(publisher.id)));
@@ -449,7 +449,9 @@ const NewManga = ({ mode = "create", workId, returnPath = "/admin/editar-mangas"
       originalPublicationStartYear,
       originalPublicationEndYear,
       originalVolumeCount,
+      coverAssetId,
       coverUrl,
+      coverPending,
       typeId,
       country,
       originalPublisherIds,
@@ -465,6 +467,8 @@ const NewManga = ({ mode = "create", workId, returnPath = "/admin/editar-mangas"
     adultContent,
     authors,
     country,
+    coverAssetId,
+    coverPending,
     coverUrl,
     currentStep,
     demographies,
@@ -568,7 +572,9 @@ const NewManga = ({ mode = "create", workId, returnPath = "/admin/editar-mangas"
     setOriginalPublicationStartYear("");
     setOriginalPublicationEndYear("");
     setOriginalVolumeCount("");
+    setCoverAssetId("");
     setCoverUrl("");
+    setCoverPending(false);
     setTypeId("");
     setCountry("");
     setOriginalPublisherIds([]);
@@ -589,7 +595,9 @@ const NewManga = ({ mode = "create", workId, returnPath = "/admin/editar-mangas"
       originalPublicationStartYear: "",
       originalPublicationEndYear: "",
       originalVolumeCount: "",
+      coverAssetId: "",
       coverUrl: "",
+      coverPending: false,
       typeId: "",
       country: "",
       originalPublisherIds: [],
@@ -609,10 +617,6 @@ const NewManga = ({ mode = "create", workId, returnPath = "/admin/editar-mangas"
 
   function getFieldErrorMessage(fieldName: string) {
     if (!isInvalidField(fieldName)) return "";
-
-    if (fieldName === "coverUrl" && coverUrl.trim()) {
-      return "Informe uma URL absoluta válida para a capa.";
-    }
 
     if (fieldName === "originalVolumeCount" && originalVolumeCount && Number(originalVolumeCount) <= 0) {
       return "Informe um número maior que zero.";
@@ -636,19 +640,7 @@ const NewManga = ({ mode = "create", workId, returnPath = "/admin/editar-mangas"
     if (!originalTitle.trim()) fields.push("originalTitle");
     if (!country) fields.push("country");
     if (!typeId) fields.push("typeId");
-    if (!coverUrl.trim()) fields.push("coverUrl");
-
-    if (coverUrl.trim()) {
-      try {
-        const parsedUrl = new URL(coverUrl.trim());
-
-        if (!["http:", "https:"].includes(parsedUrl.protocol)) {
-          fields.push("coverUrl");
-        }
-      } catch {
-        fields.push("coverUrl");
-      }
-    }
+    if (!coverAssetId) fields.push("coverAssetId");
 
     return [...new Set(fields)];
   }
@@ -685,18 +677,9 @@ const NewManga = ({ mode = "create", workId, returnPath = "/admin/editar-mangas"
       || !originalTitle.trim()
       || !country
       || !typeId
-      || !coverUrl.trim()
+      || !coverAssetId
     ) {
       return "Preencha os campos obrigatórios da etapa de Identificação.";
-    }
-
-    try {
-      const parsedUrl = new URL(coverUrl.trim());
-      if (!["http:", "https:"].includes(parsedUrl.protocol)) {
-        return "Informe uma URL absoluta válida para a capa.";
-      }
-    } catch {
-      return "Informe uma URL absoluta válida para a capa.";
     }
 
     return "";
@@ -785,7 +768,7 @@ const NewManga = ({ mode = "create", workId, returnPath = "/admin/editar-mangas"
       || originalPublisherIds.length === 0
       || !originalPublicationStatus
       || !originalPublicationStartYear
-      || !coverUrl.trim()
+      || !coverAssetId
       || authors.some((author) => !author.authorId || author.roles.length === 0)
       || genreIds.length === 0
       || (!demographyDisabled && demographies.length === 0)
@@ -794,15 +777,6 @@ const NewManga = ({ mode = "create", workId, returnPath = "/admin/editar-mangas"
 
     if (hasMissingBaseFields) {
       return "Preencha os campos obrigatórios da Obra.";
-    }
-
-    try {
-      const parsedUrl = new URL(coverUrl.trim());
-      if (!["http:", "https:"].includes(parsedUrl.protocol)) {
-        return "Informe uma URL absoluta válida para a capa.";
-      }
-    } catch {
-      return "Informe uma URL absoluta válida para a capa.";
     }
 
     const authorIds = authors.map((author) => author.authorId);
@@ -851,7 +825,7 @@ const NewManga = ({ mode = "create", workId, returnPath = "/admin/editar-mangas"
         originalPublicationStartYear: originalPublicationStartYear ? Number(originalPublicationStartYear) : null,
         originalPublicationEndYear: !isOpenOriginalPublication && originalPublicationEndYear ? Number(originalPublicationEndYear) : null,
         originalVolumeCount: !isOpenOriginalPublication && originalVolumeCount ? Number(originalVolumeCount) : null,
-        coverUrl: coverUrl.trim() || null,
+        coverAssetId: coverAssetId || null,
         typeId: Number(typeId),
         country,
         originalPublisherIds: buildOrderedPayload(originalPublisherIds),
@@ -1016,41 +990,20 @@ const NewManga = ({ mode = "create", workId, returnPath = "/admin/editar-mangas"
               <InputField label="Título original" value={originalTitle} onChange={(value) => { setOriginalTitle(value); clearInvalidField("originalTitle"); }} required invalid={isInvalidField("originalTitle")} errorMessage={getFieldErrorMessage("originalTitle")} placeholder="Digite" />
               <SelectField label="País de origem" value={country} onChange={(value) => { setCountry(value); clearInvalidFields(["country", "typeId"]); }} onOpen={() => clearInvalidField("country")} options={NATIVE_COUNTRY_OPTIONS} required invalid={isInvalidField("country")} errorMessage={getFieldErrorMessage("country")} searchable />
               <SelectField label="Tipo de obra" value={typeId} onChange={(value) => { setTypeId(value); clearInvalidField("typeId"); }} onOpen={() => clearInvalidField("typeId")} options={options.workTypes} required disabled={!country} placeholder={country ? "Selecione" : "Selecione o país primeiro"} invalid={isInvalidField("typeId")} errorMessage={getFieldErrorMessage("typeId")} searchable />
-              <label className="md:col-span-2">
-                <span className="text-xs font-bold uppercase tracking-wide text-muted-foreground">URL da capa <span className="text-red-400">*</span></span>
-                <div className="mt-2 grid gap-3 sm:grid-cols-[96px_1fr]">
-                  <div className="flex h-32 w-24 items-center justify-center overflow-hidden rounded-xl border border-border bg-input text-center text-xs font-semibold text-muted-foreground">
-                    {coverPreviewUrl ? (
-                      <img
-                        src={coverPreviewUrl}
-                        alt="Prévia da capa"
-                        className="h-full w-full object-cover"
-                      />
-                    ) : (
-                      "Prévia"
-                    )}
-                  </div>
-                  <div>
-                    <input
-                      aria-label="URL da capa"
-                      value={coverUrl}
-                      onChange={(event) => {
-                        setCoverUrl(event.target.value);
-                        clearInvalidField("coverUrl");
-                      }}
-                      placeholder="Digite"
-                      className={`h-12 w-full rounded-xl border bg-input px-3 text-base text-foreground outline-none transition-colors focus:ring-2 ${
-                        isInvalidField("coverUrl")
-                          ? "border-red-500 focus:border-red-500 focus:ring-red-500/30"
-                          : "border-border focus:border-primary focus:ring-primary/40"
-                      }`}
-                    />
-                    {isInvalidField("coverUrl") && (
-                      <p className="mt-2 text-sm font-semibold text-red-400">{getFieldErrorMessage("coverUrl")}</p>
-                    )}
-                  </div>
-                </div>
-              </label>
+              <div className="md:col-span-2">
+                <CoverImportField
+                  label="Capa da Obra"
+                  required
+                  invalid={isInvalidField("coverAssetId")}
+                  value={coverAssetId ? { assetId: coverAssetId, coverUrl, pending: coverPending } : null}
+                  onChange={(cover) => {
+                    setCoverAssetId(cover?.assetId || "");
+                    setCoverUrl(cover?.coverUrl || "");
+                    setCoverPending(cover?.pending || false);
+                    clearInvalidField("coverAssetId");
+                  }}
+                />
+              </div>
             </section>
 
           </>
