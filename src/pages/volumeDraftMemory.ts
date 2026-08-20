@@ -3,7 +3,9 @@ export type RememberedVolumeStep = "details" | "media";
 export interface VolumeDraft {
   number: string;
   singleVolume: boolean;
+  coverAssetId: string;
   coverUrl: string;
+  coverPending: boolean;
   pages: string;
   price: string;
   priceCurrency: string;
@@ -20,7 +22,9 @@ export interface VolumeDraft {
 export const emptyVolumeDraft: VolumeDraft = {
   number: "",
   singleVolume: false,
+  coverAssetId: "",
   coverUrl: "",
+  coverPending: false,
   pages: "",
   price: "",
   priceCurrency: "R$",

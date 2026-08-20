@@ -14,6 +14,35 @@ vi.mock("@/services/api", () => ({
   },
 }));
 
+vi.mock("@/features/admin-media", () => ({
+  CoverImportField: ({ label, value, onChange, invalid }: {
+    label: string;
+    value: { assetId: string; coverUrl: string; pending: boolean } | null;
+    onChange: (value: { assetId: string; coverUrl: string; pending: boolean } | null) => void;
+    invalid?: boolean;
+  }) => (
+    <div>
+      <input
+        aria-label={`URL da ${label}`}
+        value={value?.coverUrl || ""}
+        onChange={(event) => {
+          try {
+            const url = new URL(event.target.value);
+            onChange(url.protocol === "https:" ? {
+              assetId: "7f28c7f0-c94f-46e8-b61c-6ea716f8f28e",
+              coverUrl: event.target.value,
+              pending: true,
+            } : null);
+          } catch {
+            onChange(null);
+          }
+        }}
+      />
+      {invalid && <span>Importe uma capa válida antes de continuar.</span>}
+    </div>
+  ),
+}));
+
 vi.mock("sonner", () => ({
   toast: {
     success: vi.fn(),
@@ -83,7 +112,7 @@ describe("VolumeForm", () => {
         releaseYear: 2026,
         releaseMonth: 1,
         releaseDay: 10,
-        coverUrl: "https://cdn.comanga.test/volume-1.jpg",
+        coverAssetId: "7f28c7f0-c94f-46e8-b61c-6ea716f8f28e",
         isbn10: "123456789X",
         isbn13: "9781234567897",
       }));
@@ -108,19 +137,19 @@ describe("VolumeForm", () => {
     expect(screen.queryByLabelText(/url da capa/i)).not.toBeInTheDocument();
   });
 
-  it("nao mostra erro de url da capa ao continuar a partir da etapa de dados", () => {
+  it("so exige a capa importada ao salvar na etapa de capa", () => {
     renderVolumeForm();
 
     fireEvent.change(screen.getByLabelText(/n.*mero do volume/i), { target: { value: "1" } });
     fireEvent.change(screen.getByLabelText(/^data de publica/i), { target: { value: "2026-01-10" } });
     fireEvent.click(screen.getByRole("button", { name: /continuar/i }));
     fireEvent.click(screen.getByRole("button", { name: /salvar/i }));
-    expect(screen.getByText(/url absoluta/i)).toBeInTheDocument();
+    expect(screen.getByText(/importe uma capa v.*lida/i)).toBeInTheDocument();
 
     fireEvent.click(screen.getByRole("button", { name: /voltar/i }));
     fireEvent.click(screen.getByRole("button", { name: /continuar/i }));
 
-    expect(screen.queryByText(/url absoluta/i)).not.toBeInTheDocument();
+    expect(screen.queryByText(/importe uma capa v.*lida/i)).not.toBeInTheDocument();
   });
 
   it("carrega e atualiza um volume existente com dados opcionais vazios", async () => {
@@ -131,6 +160,7 @@ describe("VolumeForm", () => {
           editionId: 20,
           number: 2,
           singleVolume: false,
+          coverAssetId: "7f28c7f0-c94f-46e8-b61c-6ea716f8f28e",
           coverUrl: "https://cdn.comanga.test/volume-2.jpg",
           pages: null,
           price: null,
@@ -194,7 +224,7 @@ describe("VolumeForm", () => {
     })));
   });
 
-  it("valida URLs e valores numericos antes de salvar", () => {
+  it("valida a capa importada, o link afiliado e valores numericos antes de salvar", () => {
     renderVolumeForm();
 
     fireEvent.change(screen.getByLabelText(/n.*mero do volume/i), { target: { value: "1" } });
@@ -206,7 +236,7 @@ describe("VolumeForm", () => {
     fireEvent.change(screen.getByLabelText(/url da capa/i), { target: { value: "capa-invalida" } });
     fireEvent.click(screen.getByRole("button", { name: /salvar/i }));
 
-    expect(screen.getByText(/informe uma url absoluta v.lida/i)).toBeInTheDocument();
+    expect(screen.getByText(/importe uma capa v.*lida/i)).toBeInTheDocument();
     expect(api.post).not.toHaveBeenCalled();
   });
 
