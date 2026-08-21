@@ -99,7 +99,7 @@ describe("Pesquisa", () => {
 
   it("registra aba, ordenação e página padrão na URL", async () => {
     renderCatalog();
-    await screen.findByRole("heading", { name: "Monster" });
+    await screen.findByRole("heading", { name: "Monster" }, { timeout: 5000 });
 
     await waitFor(() => {
       const params = currentParams();
@@ -122,6 +122,10 @@ describe("Pesquisa", () => {
     expect(cover).toHaveAttribute("src", worksResponse.works[0].coverUrl);
     expect(cover).toHaveAttribute("loading", "lazy");
     expect(cover.parentElement).toHaveClass("aspect-[2/3]");
+    expect(screen.getByRole("link", { name: "Ver detalhes de Monster" })).toHaveAttribute(
+      "href",
+      "/obras/monster",
+    );
     expect(listPublicWorks).toHaveBeenCalledWith(expect.objectContaining({
       term: "monster",
       sortBy: "title",

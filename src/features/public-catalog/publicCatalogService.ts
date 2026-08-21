@@ -3,6 +3,7 @@ import type {
   PublicCatalogOptions,
   PublicEditionsQuery,
   PublicEditionsResponse,
+  PublicWorkDetailsResponse,
   PublicWorksQuery,
   PublicWorksResponse,
 } from "@/features/public-catalog/publicCatalogTypes";
@@ -36,4 +37,9 @@ export async function listPublicEditions(query: PublicEditionsQuery) {
 export async function getPublicCatalogOptions() {
   const response = await api.get<{ options: PublicCatalogOptions }>("/public/catalog-options");
   return response.data.options;
+}
+
+export async function getPublicWorkDetails(slug: string) {
+  const response = await api.get<PublicWorkDetailsResponse>(`/public/works/${encodeURIComponent(slug)}`);
+  return response.data.work;
 }
