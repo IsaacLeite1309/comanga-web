@@ -3,6 +3,7 @@ import type {
   PublicCatalogOptions,
   PublicEditionsQuery,
   PublicEditionsResponse,
+  PublicEditionDetailsResponse,
   PublicWorkDetailsResponse,
   PublicWorksQuery,
   PublicWorksResponse,
@@ -42,4 +43,14 @@ export async function getPublicCatalogOptions() {
 export async function getPublicWorkDetails(slug: string) {
   const response = await api.get<PublicWorkDetailsResponse>(`/public/works/${encodeURIComponent(slug)}`);
   return response.data.work;
+}
+
+export async function getPublicEditionDetails(
+  editionId: number,
+  query: { page: number; limit: number },
+) {
+  const response = await api.get<PublicEditionDetailsResponse>(`/public/editions/${editionId}`, {
+    params: query,
+  });
+  return response.data;
 }

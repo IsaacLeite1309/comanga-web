@@ -3,8 +3,6 @@ import {
   AlertCircle,
   BookOpen,
   Box,
-  ChevronLeft,
-  ChevronRight,
   Filter,
   Search,
   SlidersHorizontal,
@@ -30,6 +28,7 @@ import type {
   WorkSort,
 } from "@/features/public-catalog/publicCatalogTypes";
 import { CatalogCover } from "@/features/public-catalog/CatalogCover";
+import { CatalogPagination } from "@/features/public-catalog/CatalogPagination";
 
 const PAGE_SIZE = 24;
 const EMPTY_OPTIONS: PublicCatalogOptions = {
@@ -163,42 +162,6 @@ function FilterField({
         placeholder="Todos"
       />
     </div>
-  );
-}
-
-function Pagination({
-  pagination,
-  onPageChange,
-}: {
-  pagination: PublicPagination;
-  onPageChange: (page: number) => void;
-}) {
-  if (pagination.totalPages <= 1) return null;
-
-  return (
-    <nav className="mt-10 flex flex-col items-center justify-center gap-3 sm:flex-row" aria-label="Paginação do catálogo">
-      <button
-        type="button"
-        onClick={() => onPageChange(pagination.page - 1)}
-        disabled={pagination.page <= 1}
-        className="inline-flex h-10 items-center gap-2 rounded-lg border border-border bg-input px-4 text-sm font-bold text-foreground transition-colors hover:border-primary hover:text-primary disabled:cursor-not-allowed disabled:opacity-40"
-      >
-        <ChevronLeft className="h-4 w-4" aria-hidden="true" />
-        Anterior
-      </button>
-      <span className="min-w-28 text-center text-sm font-semibold text-muted-foreground">
-        Página {pagination.page} de {pagination.totalPages}
-      </span>
-      <button
-        type="button"
-        onClick={() => onPageChange(pagination.page + 1)}
-        disabled={pagination.page >= pagination.totalPages}
-        className="inline-flex h-10 items-center gap-2 rounded-lg border border-border bg-input px-4 text-sm font-bold text-foreground transition-colors hover:border-primary hover:text-primary disabled:cursor-not-allowed disabled:opacity-40"
-      >
-        Próxima
-        <ChevronRight className="h-4 w-4" aria-hidden="true" />
-      </button>
-    </nav>
   );
 }
 
@@ -653,7 +616,7 @@ const Pesquisa = () => {
                   ? works.map((work) => <WorkCard key={work.id} work={work} />)
                   : editions.map((edition) => <EditionCard key={edition.id} edition={edition} />)}
               </section>
-              <Pagination pagination={pagination} onPageChange={changePage} />
+              <CatalogPagination pagination={pagination} onPageChange={changePage} />
             </>
           )}
         </div>

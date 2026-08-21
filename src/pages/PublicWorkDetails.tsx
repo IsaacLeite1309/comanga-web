@@ -11,6 +11,7 @@ import type {
 } from "@/features/public-catalog/publicCatalogTypes";
 import { LoadingState } from "@/components/shared/AsyncState";
 import { getApiError } from "@/lib/apiError";
+import { formatPublicReleaseDate, publicVolumeLabel } from "@/features/public-catalog/publicCatalogFormatters";
 
 function optionLabels(options: PublicOption[]) {
   return options.map(({ label }) => label).join(", ");
@@ -23,23 +24,6 @@ function publicationPeriod(work: PublicWorkDetailsData) {
   if (start) return `${start}–`;
   if (end) return String(end);
   return "Não informado";
-}
-
-function volumeLabel(volume: PublicVolumePreview) {
-  return volume.singleVolume ? "Volume único" : `Volume ${volume.number}`;
-}
-
-function releaseDate(volume: PublicVolumePreview) {
-  if (!volume.releaseYear) return "Data não informada";
-  if (volume.releaseDatePrecision === "Completa" && volume.releaseMonth && volume.releaseDay) {
-    return [volume.releaseDay, volume.releaseMonth, volume.releaseYear]
-      .map((value) => String(value).padStart(2, "0"))
-      .join("/");
-  }
-  if (volume.releaseMonth) {
-    return `${String(volume.releaseMonth).padStart(2, "0")}/${volume.releaseYear}`;
-  }
-  return String(volume.releaseYear);
 }
 
 function MetaItem({ label, value }: { label: string; value: string | number | null | undefined }) {
@@ -65,7 +49,7 @@ function Tags({ items }: { items: string[] }) {
 }
 
 function VolumePreview({ volume, workTitle }: { volume: PublicVolumePreview; workTitle: string }) {
-  const label = volumeLabel(volume);
+  const label = publicVolumeLabel(volume);
   return (
     <article className="min-w-0">
       <CatalogCover
@@ -74,7 +58,7 @@ function VolumePreview({ volume, workTitle }: { volume: PublicVolumePreview; wor
         alt={`Capa de ${label} de ${workTitle}`}
       />
       <h4 className="mt-2 truncate text-sm font-bold text-foreground">{label}</h4>
-      <p className="text-xs text-muted-foreground">{releaseDate(volume)}</p>
+      <p className="text-xs text-muted-foreground">{formatPublicReleaseDate(volume)}</p>
     </article>
   );
 }
