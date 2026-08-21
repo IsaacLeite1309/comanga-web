@@ -2,6 +2,7 @@ import { beforeEach, describe, expect, it, vi } from "vitest";
 import { api } from "@/services/api";
 import {
   getPublicCatalogOptions,
+  getPublicWorkDetails,
   listPublicEditions,
   listPublicWorks,
 } from "@/features/public-catalog/publicCatalogService";
@@ -79,5 +80,13 @@ describe("publicCatalogService", () => {
 
     await expect(getPublicCatalogOptions()).resolves.toEqual(options);
     expect(api.get).toHaveBeenCalledWith("/public/catalog-options");
+  });
+
+  it("carrega os detalhes públicos de uma Obra pelo slug estável", async () => {
+    const work = { id: 1, slug: "monster", title: "Monster", editions: [] };
+    vi.mocked(api.get).mockResolvedValueOnce({ data: { work } });
+
+    await expect(getPublicWorkDetails("monster deluxe")).resolves.toEqual(work);
+    expect(api.get).toHaveBeenCalledWith("/public/works/monster%20deluxe");
   });
 });

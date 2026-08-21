@@ -4,7 +4,7 @@ import NotFound from "./pages/NotFound.tsx";
 import { ActivatePage, AuthPage, ResendActivationPage } from "@/features/auth";
 import { ChecklistPage, CollectionPage } from "@/features/collection";
 import { ProfilePage } from "@/features/profile";
-import { PublicCatalogPage } from "@/features/public-catalog";
+import { PublicCatalogPage, PublicWorkDetailsPage } from "@/features/public-catalog";
 import { WishlistPage } from "@/features/wishlist";
 import { AdminUsersPage } from "@/features/admin-users";
 import {
@@ -56,6 +56,7 @@ const App = () => (
               />
               
               <Route path="/pesquisa" element={<PublicCatalogPage />} />
+              <Route path="/obras/:slug" element={<PublicWorkDetailsPage />} />
               <Route path="/colecao" element={<CollectionPage />} />
               <Route path="/checklist" element={<ChecklistPage />} />
               <Route path="/desejos" element={<WishlistPage />} />

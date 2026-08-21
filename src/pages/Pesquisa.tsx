@@ -9,7 +9,7 @@ import {
   Search,
   SlidersHorizontal,
 } from "lucide-react";
-import { useSearchParams } from "react-router-dom";
+import { Link, useSearchParams } from "react-router-dom";
 import { MultiSelect } from "@/components/forms/MultiSelect";
 import { SearchableSelect, type SelectOption } from "@/components/forms/SearchableSelect";
 import { EmptyState, LoadingState } from "@/components/shared/AsyncState";
@@ -29,6 +29,7 @@ import type {
   PublicWorkSummary,
   WorkSort,
 } from "@/features/public-catalog/publicCatalogTypes";
+import { CatalogCover } from "@/features/public-catalog/CatalogCover";
 
 const PAGE_SIZE = 24;
 const EMPTY_OPTIONS: PublicCatalogOptions = {
@@ -86,39 +87,21 @@ function volumesCount(total: number) {
   return `${total} ${total === 1 ? "Volume" : "Volumes"}`;
 }
 
-function CatalogCover({ src, alt }: { src?: string | null; alt: string }) {
-  const [failed, setFailed] = useState(false);
-
-  return (
-    <div className="aspect-[2/3] overflow-hidden rounded-lg border border-border bg-input shadow-sm">
-      {src && !failed ? (
-        <img
-          src={src}
-          alt={alt}
-          loading="lazy"
-          decoding="async"
-          onError={() => setFailed(true)}
-          className="h-full w-full object-cover"
-        />
-      ) : (
-        <div className="flex h-full w-full flex-col items-center justify-center gap-2 px-3 text-center text-sm font-semibold text-muted-foreground">
-          <BookOpen className="h-8 w-8" aria-hidden="true" />
-          <span>Sem capa</span>
-        </div>
-      )}
-    </div>
-  );
-}
-
 function WorkCard({ work }: { work: PublicWorkSummary }) {
   const metadata = [work.type?.label, work.country].filter(Boolean).join(" · ");
 
   return (
     <article className="min-w-0">
-      <CatalogCover key={work.coverUrl || "empty"} src={work.coverUrl} alt={`Capa de ${work.title}`} />
-      <h2 className="mt-2 truncate text-sm font-bold text-foreground sm:text-base" title={work.title}>
-        {work.title}
-      </h2>
+      <Link
+        to={`/obras/${encodeURIComponent(work.slug)}`}
+        aria-label={`Ver detalhes de ${work.title}`}
+        className="group block rounded-lg outline-none focus-visible:ring-2 focus-visible:ring-primary"
+      >
+        <CatalogCover key={work.coverUrl || "empty"} src={work.coverUrl} alt={`Capa de ${work.title}`} className="transition-transform group-hover:-translate-y-1" />
+        <h2 className="mt-2 truncate text-sm font-bold text-foreground group-hover:text-primary sm:text-base" title={work.title}>
+          {work.title}
+        </h2>
+      </Link>
       <p className="truncate text-xs font-medium text-muted-foreground" title={joinAuthors(work.authors)}>
         {joinAuthors(work.authors)}
       </p>

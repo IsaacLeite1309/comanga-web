@@ -29,6 +29,55 @@ export interface PublicWorkSummary {
   authors: PublicOption[];
 }
 
+export interface PublicAuthorDetails extends PublicOption {
+  roles: string[];
+}
+
+export interface PublicVolumePreview {
+  id: number;
+  number: number;
+  singleVolume: boolean;
+  coverUrl?: string | null;
+  releaseDatePrecision: string;
+  releaseYear?: number | null;
+  releaseMonth?: number | null;
+  releaseDay?: number | null;
+}
+
+export interface PublicEditionDetails {
+  id: number;
+  chronologicalNumber: number;
+  coverUrl?: string | null;
+  brazilianPublisher: PublicOption;
+  editionType: PublicOption;
+  format: PublicOption;
+  coverType: PublicOption;
+  brazilPublicationStatus: string;
+  volumesCount: number;
+  volumes: PublicVolumePreview[];
+}
+
+export interface PublicWorkDetails {
+  id: number;
+  slug: string;
+  title: string;
+  originalTitle?: string | null;
+  coverUrl?: string | null;
+  type: PublicOption;
+  country: string;
+  originalPublicationStartYear?: number | null;
+  originalPublicationEndYear?: number | null;
+  originalVolumeCount?: number | null;
+  directRelease: boolean;
+  originalPublicationStatus: string;
+  authors: PublicAuthorDetails[];
+  genres: PublicOption[];
+  demographics: string[];
+  serializationMagazines: PublicOption[];
+  originalPublishers: PublicOption[];
+  editions: PublicEditionDetails[];
+}
+
 export interface PublicEditionSummary {
   id: number;
   chronologicalNumber: number;
@@ -61,6 +110,10 @@ export interface PublicWorksResponse {
 export interface PublicEditionsResponse {
   editions: PublicEditionSummary[];
   pagination: PublicPagination;
+}
+
+export interface PublicWorkDetailsResponse {
+  work: PublicWorkDetails;
 }
 
 export interface PublicWorksQuery {
