@@ -145,6 +145,30 @@ export interface PublicEditionDetailsResponse {
   pagination: PublicPagination;
 }
 
+export interface PublicVolumeDetails extends PublicVolumePreview {
+  pages?: number | null;
+  price?: number | null;
+  priceCurrency: string;
+  isbn10?: string | null;
+  isbn13?: string | null;
+  affiliateLink?: string | null;
+  synopsis?: string | null;
+  edition: {
+    id: number;
+    chronologicalNumber: number;
+    work: {
+      id: number;
+      slug: string;
+      title: string;
+      originalTitle?: string | null;
+    };
+  };
+}
+
+export interface PublicVolumeDetailsResponse {
+  volume: PublicVolumeDetails;
+}
+
 export interface PublicWorksQuery {
   term?: string;
   typeId?: number;
