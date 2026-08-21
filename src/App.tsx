@@ -7,6 +7,7 @@ import { ProfilePage } from "@/features/profile";
 import {
   PublicCatalogPage,
   PublicEditionDetailsPage,
+  PublicVolumeDetailsPage,
   PublicWorkDetailsPage,
 } from "@/features/public-catalog";
 import { WishlistPage } from "@/features/wishlist";
@@ -62,6 +63,7 @@ const App = () => (
               <Route path="/pesquisa" element={<PublicCatalogPage />} />
               <Route path="/obras/:slug" element={<PublicWorkDetailsPage />} />
               <Route path="/edicoes/:editionId" element={<PublicEditionDetailsPage />} />
+              <Route path="/volumes/:volumeId" element={<PublicVolumeDetailsPage />} />
               <Route path="/colecao" element={<CollectionPage />} />
               <Route path="/checklist" element={<ChecklistPage />} />
               <Route path="/desejos" element={<WishlistPage />} />

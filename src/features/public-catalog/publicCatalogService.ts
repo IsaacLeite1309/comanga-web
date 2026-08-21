@@ -4,6 +4,7 @@ import type {
   PublicEditionsQuery,
   PublicEditionsResponse,
   PublicEditionDetailsResponse,
+  PublicVolumeDetailsResponse,
   PublicWorkDetailsResponse,
   PublicWorksQuery,
   PublicWorksResponse,
@@ -53,4 +54,9 @@ export async function getPublicEditionDetails(
     params: query,
   });
   return response.data;
+}
+
+export async function getPublicVolumeDetails(volumeId: number) {
+  const response = await api.get<PublicVolumeDetailsResponse>(`/public/volumes/${volumeId}`);
+  return response.data.volume;
 }

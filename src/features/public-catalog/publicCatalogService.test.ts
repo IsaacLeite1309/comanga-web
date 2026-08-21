@@ -3,6 +3,7 @@ import { api } from "@/services/api";
 import {
   getPublicCatalogOptions,
   getPublicEditionDetails,
+  getPublicVolumeDetails,
   getPublicWorkDetails,
   listPublicEditions,
   listPublicWorks,
@@ -103,5 +104,13 @@ describe("publicCatalogService", () => {
     expect(api.get).toHaveBeenCalledWith("/public/editions/20", {
       params: { page: 2, limit: 24 },
     });
+  });
+
+  it("carrega os detalhes públicos de um Volume", async () => {
+    const volume = { id: 30, number: 1, edition: { id: 20 } };
+    vi.mocked(api.get).mockResolvedValueOnce({ data: { volume } });
+
+    await expect(getPublicVolumeDetails(30)).resolves.toEqual(volume);
+    expect(api.get).toHaveBeenCalledWith("/public/volumes/30");
   });
 });
