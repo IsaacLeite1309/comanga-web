@@ -90,6 +90,66 @@ describe("PublicWorkDetails", () => {
     expect(cover.parentElement).toHaveClass("aspect-[2/3]");
   });
 
+  it.each([
+    [1994, 1994, "1994"],
+    [1994, null, "1994–"],
+    [null, 2001, "2001"],
+    [null, null, "Não informado"],
+  ])(
+    "representa corretamente os limites parciais da publicação original",
+    async (startYear, endYear, expected) => {
+      vi.mocked(getPublicWorkDetails).mockResolvedValue({
+        ...work,
+        originalPublicationStartYear: startYear,
+        originalPublicationEndYear: endYear,
+      });
+      renderPage();
+
+      expect(await screen.findByText(expected)).toBeInTheDocument();
+    },
+  );
+
+  it("representa datas parciais e ausentes na prévia dos Volumes", async () => {
+    const edition = work.editions[0];
+    const baseVolume = edition.volumes[0];
+    vi.mocked(getPublicWorkDetails).mockResolvedValue({
+      ...work,
+      editions: [{
+        ...edition,
+        volumes: [
+          { ...baseVolume, id: 31, releaseDatePrecision: "Mes e ano", releaseYear: 2025, releaseMonth: 8, releaseDay: null },
+          { ...baseVolume, id: 32, releaseDatePrecision: "Ano", releaseYear: 2026, releaseMonth: null, releaseDay: null },
+          { ...baseVolume, id: 33, releaseDatePrecision: "Desconhecida", releaseYear: null, releaseMonth: null, releaseDay: null },
+        ],
+      }],
+    });
+    renderPage();
+
+    expect(await screen.findByText("08/2025")).toBeInTheDocument();
+    expect(screen.getByText("2026")).toBeInTheDocument();
+    expect(screen.getByText("Data não informada")).toBeInTheDocument();
+  });
+
+  it("omite metadados opcionais ausentes sem inventar valores", async () => {
+    vi.mocked(getPublicWorkDetails).mockResolvedValue({
+      ...work,
+      originalTitle: null,
+      originalVolumeCount: null,
+      authors: [],
+      genres: [],
+      demographics: [],
+      serializationMagazines: [],
+      originalPublishers: [],
+    });
+    renderPage();
+
+    expect(await screen.findByRole("heading", { name: "Monster", level: 1 })).toBeInTheDocument();
+    expect(screen.queryByText("MONSTER")).not.toBeInTheDocument();
+    expect(screen.queryByText("Volumes originais")).not.toBeInTheDocument();
+    expect(screen.queryByText("Editoras originais")).not.toBeInTheDocument();
+    expect(screen.queryByText("Revistas")).not.toBeInTheDocument();
+  });
+
   it("lista somente os dados recebidos das Edições e as prévias de Volumes", async () => {
     renderPage();
 

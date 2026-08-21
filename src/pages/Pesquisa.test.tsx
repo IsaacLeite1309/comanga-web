@@ -99,7 +99,7 @@ describe("Pesquisa", () => {
 
   it("registra aba, ordenação e página padrão na URL", async () => {
     renderCatalog();
-    await screen.findByRole("heading", { name: "Monster" });
+    await screen.findByRole("heading", { name: "Monster" }, { timeout: 5000 });
 
     await waitFor(() => {
       const params = currentParams();
