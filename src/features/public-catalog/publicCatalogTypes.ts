@@ -44,6 +44,10 @@ export interface PublicVolumePreview {
   releaseDay?: number | null;
 }
 
+export interface PublicEditionVolumeSummary extends PublicVolumePreview {
+  pages?: number | null;
+}
+
 export interface PublicEditionDetails {
   id: number;
   chronologicalNumber: number;
@@ -55,6 +59,25 @@ export interface PublicEditionDetails {
   brazilPublicationStatus: string;
   volumesCount: number;
   volumes: PublicVolumePreview[];
+}
+
+export interface PublicEditionPageDetails {
+  id: number;
+  chronologicalNumber: number;
+  coverUrl?: string | null;
+  brazilianPublisher: PublicOption;
+  editionType: PublicOption;
+  format: PublicOption;
+  coverType: PublicOption;
+  brazilPublicationStatus: string;
+  volumesCount: number;
+  work: {
+    id: number;
+    slug: string;
+    title: string;
+    originalTitle?: string | null;
+    authors: PublicOption[];
+  };
 }
 
 export interface PublicWorkDetails {
@@ -114,6 +137,12 @@ export interface PublicEditionsResponse {
 
 export interface PublicWorkDetailsResponse {
   work: PublicWorkDetails;
+}
+
+export interface PublicEditionDetailsResponse {
+  edition: PublicEditionPageDetails;
+  volumes: PublicEditionVolumeSummary[];
+  pagination: PublicPagination;
 }
 
 export interface PublicWorksQuery {
