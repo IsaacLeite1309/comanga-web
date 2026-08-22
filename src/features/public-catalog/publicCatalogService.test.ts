@@ -4,6 +4,7 @@ import {
   getPublicCatalogOptions,
   getPublicAuthorWorks,
   getPublicEditionDetails,
+  getPublicVolumeDetails,
   getPublicWorkDetails,
   listPublicEditions,
   listPublicWorks,
@@ -123,5 +124,13 @@ describe("publicCatalogService", () => {
     expect(api.get).toHaveBeenCalledWith("/public/authors/5/works", {
       params: { page: 2, limit: 24, sortBy: "title", order: "ASC" },
     });
+  });
+
+  it("carrega os detalhes públicos de um Volume", async () => {
+    const volume = { id: 30, number: 1, edition: { id: 20 } };
+    vi.mocked(api.get).mockResolvedValueOnce({ data: { volume } });
+
+    await expect(getPublicVolumeDetails(30)).resolves.toEqual(volume);
+    expect(api.get).toHaveBeenCalledWith("/public/volumes/30");
   });
 });

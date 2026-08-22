@@ -2,6 +2,7 @@ export { default as PublicCatalogPage } from "@/pages/Pesquisa";
 export { default as PublicAuthorWorksPage } from "@/pages/PublicAuthorWorks";
 export { default as PublicEditionDetailsPage } from "@/pages/PublicEditionDetails";
 export { default as PublicWorkDetailsPage } from "@/pages/PublicWorkDetails";
+export { default as PublicVolumeDetailsPage } from "@/pages/PublicVolumeDetails";
 export * from "@/features/public-catalog/CatalogCover";
 export * from "@/features/public-catalog/CatalogPagination";
 export * from "@/features/public-catalog/PublicWorkCard";
