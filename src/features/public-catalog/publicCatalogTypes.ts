@@ -145,6 +145,19 @@ export interface PublicEditionDetailsResponse {
   pagination: PublicPagination;
 }
 
+export interface PublicAuthorWorksResponse {
+  author: PublicOption;
+  works: PublicWorkSummary[];
+  pagination: PublicPagination;
+}
+
+export interface PublicAuthorWorksQuery {
+  sortBy: WorkSort;
+  order: CatalogOrder;
+  page: number;
+  limit: number;
+}
+
 export interface PublicVolumeDetails extends PublicVolumePreview {
   pages?: number | null;
   price?: number | null;

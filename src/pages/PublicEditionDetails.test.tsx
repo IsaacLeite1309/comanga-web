@@ -84,6 +84,7 @@ describe("PublicEditionDetails", () => {
     expect(getPublicEditionDetails).toHaveBeenCalledWith(20, { page: 1, limit: 24 });
     expect(screen.getByText("MONSTER")).toBeInTheDocument();
     expect(screen.getByText("Naoki Urasawa")).toBeInTheDocument();
+    expect(screen.getByRole("link", { name: "Ver Obras de Naoki Urasawa" })).toHaveAttribute("href", "/autores/5");
     expect(screen.getByText("Panini")).toBeInTheDocument();
     expect(screen.getByText("Deluxe")).toBeInTheDocument();
     expect(screen.getByText("Kanzenban")).toBeInTheDocument();

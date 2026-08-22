@@ -78,6 +78,7 @@ describe("PublicWorkDetails", () => {
     expect(getPublicWorkDetails).toHaveBeenCalledWith("monster");
     expect(screen.getByText("MONSTER")).toBeInTheDocument();
     expect(screen.getByText("Naoki Urasawa")).toBeInTheDocument();
+    expect(screen.getByRole("link", { name: "Ver Obras de Naoki Urasawa" })).toHaveAttribute("href", "/autores/3");
     expect(screen.getByText("Roteiro · Arte")).toBeInTheDocument();
     expect(screen.getByText("Suspense")).toBeInTheDocument();
     expect(screen.getByText("Seinen")).toBeInTheDocument();

@@ -6,6 +6,7 @@ import { ChecklistPage, CollectionPage } from "@/features/collection";
 import { ProfilePage } from "@/features/profile";
 import {
   PublicCatalogPage,
+  PublicAuthorWorksPage,
   PublicEditionDetailsPage,
   PublicVolumeDetailsPage,
   PublicWorkDetailsPage,
@@ -61,6 +62,7 @@ const App = () => (
               />
               
               <Route path="/pesquisa" element={<PublicCatalogPage />} />
+              <Route path="/autores/:authorId" element={<PublicAuthorWorksPage />} />
               <Route path="/obras/:slug" element={<PublicWorkDetailsPage />} />
               <Route path="/edicoes/:editionId" element={<PublicEditionDetailsPage />} />
               <Route path="/volumes/:volumeId" element={<PublicVolumeDetailsPage />} />

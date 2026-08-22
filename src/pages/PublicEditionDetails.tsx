@@ -146,7 +146,13 @@ function PublicEditionDetails() {
             </div>
             <h1 className="mt-3 text-3xl font-bold text-foreground sm:text-4xl">{edition.work.title} — {editionLabel}</h1>
             {edition.work.originalTitle ? <p className="mt-1 text-lg font-semibold text-muted-foreground">{edition.work.originalTitle}</p> : null}
-            {edition.work.authors.length > 0 ? <p className="mt-2 text-sm font-medium text-muted-foreground">{edition.work.authors.map(({ label }) => label).join(", ")}</p> : null}
+            {edition.work.authors.length > 0 ? (
+              <p className="mt-2 flex flex-wrap gap-x-2 text-sm font-medium text-muted-foreground">
+                {edition.work.authors.map((author) => (
+                  <Link key={author.id} to={`/autores/${author.id}`} aria-label={`Ver Obras de ${author.label}`} className="hover:text-primary hover:underline">{author.label}</Link>
+                ))}
+              </p>
+            ) : null}
 
             <dl className="mt-6 grid grid-cols-2 gap-3 lg:grid-cols-3">
               <MetaItem label="Editora" value={edition.brazilianPublisher.label} />
