@@ -24,11 +24,11 @@ import type {
   PublicCatalogTab,
   PublicEditionSummary,
   PublicPagination,
-  PublicWorkSummary,
   WorkSort,
 } from "@/features/public-catalog/publicCatalogTypes";
 import { CatalogCover } from "@/features/public-catalog/CatalogCover";
 import { CatalogPagination } from "@/features/public-catalog/CatalogPagination";
+import { PublicWorkCard } from "@/features/public-catalog/PublicWorkCard";
 
 const PAGE_SIZE = 24;
 const EMPTY_OPTIONS: PublicCatalogOptions = {
@@ -70,10 +70,6 @@ function numericCsvValues(value: string | null) {
   return csvValues(value).map(Number).filter((item) => Number.isInteger(item) && item > 0);
 }
 
-function joinAuthors(authors: Array<{ label: string }>) {
-  return authors.length > 0 ? authors.map((author) => author.label).join(", ") : "Autor não informado";
-}
-
 function resultCount(tab: PublicCatalogTab, total: number) {
   if (tab === "works") {
     return `${total} ${total === 1 ? "obra encontrada" : "obras encontradas"}`;
@@ -84,31 +80,6 @@ function resultCount(tab: PublicCatalogTab, total: number) {
 
 function volumesCount(total: number) {
   return `${total} ${total === 1 ? "Volume" : "Volumes"}`;
-}
-
-function WorkCard({ work }: { work: PublicWorkSummary }) {
-  const metadata = [work.type?.label, work.country].filter(Boolean).join(" · ");
-
-  return (
-    <article className="min-w-0">
-      <Link
-        to={`/obras/${encodeURIComponent(work.slug)}`}
-        aria-label={`Ver detalhes de ${work.title}`}
-        className="group block rounded-lg outline-none focus-visible:ring-2 focus-visible:ring-primary"
-      >
-        <CatalogCover key={work.coverUrl || "empty"} src={work.coverUrl} alt={`Capa de ${work.title}`} className="transition-transform group-hover:-translate-y-1" />
-        <h2 className="mt-2 truncate text-sm font-bold text-foreground group-hover:text-primary sm:text-base" title={work.title}>
-          {work.title}
-        </h2>
-      </Link>
-      <p className="truncate text-xs font-medium text-muted-foreground" title={joinAuthors(work.authors)}>
-        {joinAuthors(work.authors)}
-      </p>
-      {metadata ? (
-        <p className="mt-0.5 truncate text-xs text-muted-foreground" title={metadata}>{metadata}</p>
-      ) : null}
-    </article>
-  );
 }
 
 function EditionCard({ edition }: { edition: PublicEditionSummary }) {
@@ -613,7 +584,7 @@ const Pesquisa = () => {
             <>
               <section className="grid grid-cols-2 gap-x-3 gap-y-7 sm:grid-cols-3 sm:gap-x-4 lg:grid-cols-4 xl:grid-cols-5 2xl:grid-cols-6" aria-label={tab === "works" ? "Obras encontradas" : "Edições encontradas"}>
                 {tab === "works"
-                  ? works.map((work) => <WorkCard key={work.id} work={work} />)
+                  ? works.map((work) => <PublicWorkCard key={work.id} work={work} />)
                   : editions.map((edition) => <EditionCard key={edition.id} edition={edition} />)}
               </section>
               <CatalogPagination pagination={pagination} onPageChange={changePage} />

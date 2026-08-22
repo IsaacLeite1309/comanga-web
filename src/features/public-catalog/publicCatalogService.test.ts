@@ -2,6 +2,7 @@ import { beforeEach, describe, expect, it, vi } from "vitest";
 import { api } from "@/services/api";
 import {
   getPublicCatalogOptions,
+  getPublicAuthorWorks,
   getPublicEditionDetails,
   getPublicWorkDetails,
   listPublicEditions,
@@ -102,6 +103,25 @@ describe("publicCatalogService", () => {
     await expect(getPublicEditionDetails(20, { page: 2, limit: 24 })).resolves.toEqual(data);
     expect(api.get).toHaveBeenCalledWith("/public/editions/20", {
       params: { page: 2, limit: 24 },
+    });
+  });
+
+  it("carrega as Obras públicas de um Autor", async () => {
+    const data = {
+      author: { id: 5, label: "Naoki Urasawa" },
+      works: [],
+      pagination: { page: 2, limit: 24, total: 25, totalPages: 2 },
+    };
+    vi.mocked(api.get).mockResolvedValueOnce({ data });
+
+    await expect(getPublicAuthorWorks(5, {
+      page: 2,
+      limit: 24,
+      sortBy: "title",
+      order: "ASC",
+    })).resolves.toEqual(data);
+    expect(api.get).toHaveBeenCalledWith("/public/authors/5/works", {
+      params: { page: 2, limit: 24, sortBy: "title", order: "ASC" },
     });
   });
 });

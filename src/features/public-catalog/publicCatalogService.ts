@@ -1,6 +1,8 @@
 import { api } from "@/services/api";
 import type {
   PublicCatalogOptions,
+  PublicAuthorWorksQuery,
+  PublicAuthorWorksResponse,
   PublicEditionsQuery,
   PublicEditionsResponse,
   PublicEditionDetailsResponse,
@@ -50,6 +52,13 @@ export async function getPublicEditionDetails(
   query: { page: number; limit: number },
 ) {
   const response = await api.get<PublicEditionDetailsResponse>(`/public/editions/${editionId}`, {
+    params: query,
+  });
+  return response.data;
+}
+
+export async function getPublicAuthorWorks(authorId: number, query: PublicAuthorWorksQuery) {
+  const response = await api.get<PublicAuthorWorksResponse>(`/public/authors/${authorId}/works`, {
     params: query,
   });
   return response.data;

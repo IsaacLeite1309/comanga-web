@@ -194,10 +194,10 @@ function PublicWorkDetails() {
               <h2 id="authors-title" className="text-xs font-bold uppercase tracking-wide text-muted-foreground">Autoria</h2>
               <div className="mt-2 flex flex-wrap gap-3">
                 {work.authors.map((author) => (
-                  <div key={author.id} className="rounded-xl border border-border bg-input px-3 py-2">
+                  <Link key={author.id} to={`/autores/${author.id}`} aria-label={`Ver Obras de ${author.label}`} className="rounded-xl border border-border bg-input px-3 py-2 transition-colors hover:border-primary">
                     <p className="text-sm font-bold text-foreground">{author.label}</p>
                     {author.roles.length > 0 ? <p className="text-xs text-muted-foreground">{author.roles.join(" · ")}</p> : null}
-                  </div>
+                  </Link>
                 ))}
               </div>
             </section>
