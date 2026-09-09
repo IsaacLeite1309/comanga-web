@@ -91,14 +91,6 @@ const formOptions = {
   originalPublishers: optionLists["editoras-originais"],
 };
 
-const editionOptions = {
-  brazilianPublishers: [{ id: 30, label: "Panini" }],
-  editionTypes: [{ id: 31, label: "Tankobon" }],
-  coverTypes: [{ id: 32, label: "Capa comum" }],
-  formats: [{ id: 33, label: "Impresso" }],
-  brazilPublicationStatuses: [{ id: 34, label: "Completo" }],
-};
-
 const workDetail = {
   id: 10,
   title: "Naruto",

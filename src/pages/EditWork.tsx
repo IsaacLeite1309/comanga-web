@@ -1,4 +1,4 @@
-﻿import { useEffect, useMemo, useState } from "react";
+﻿import { useEffect, useState } from "react";
 import { Link, useParams } from "react-router-dom";
 import { ArrowLeft, LayoutGrid, List, Loader2, Pencil, Plus, Settings, Trash2 } from "lucide-react";
 import { toast } from "sonner";
@@ -7,7 +7,6 @@ import { getApiError } from "@/lib/apiError";
 import {
   editionAdminPath,
   newEditionAdminPath,
-  workAdminPath,
   workEditAdminPath,
 } from "@/lib/catalogPaths";
 import { CatalogVisibilityAction } from "@/components/catalog/CatalogVisibility";
@@ -66,10 +65,6 @@ function formatVolumesCount(count?: number) {
   return `${total} ${total === 1 ? "volume" : "volumes"}`;
 }
 
-function getPublicationStatusLabel(status: Edition["brazilPublicationStatus"]) {
-  return typeof status === "string" ? status : status?.label || "-";
-}
-
 const EditWork = () => {
   const { workSlug = "" } = useParams();
   const [work, setWork] = useState<WorkDetail | null>(null);
@@ -82,7 +77,6 @@ const EditWork = () => {
   const [isMobileGrid, setIsMobileGrid] = useState(false);
   const [error, setError] = useState("");
 
-  const workPath = useMemo(() => workAdminPath(workSlug), [workSlug]);
   const showGridView = editions.length > 0 && (isMobileGrid || viewMode === "grid");
   const showListView = !showGridView;
 

@@ -1,3 +1,4 @@
+import { lazy, Suspense } from "react";
 import { BrowserRouter, Route, Routes, Navigate } from "react-router-dom";
 import { Toaster as Sonner } from "@/components/ui/sonner";
 import NotFound from "./pages/NotFound.tsx";
@@ -12,27 +13,28 @@ import {
   PublicWorkDetailsPage,
 } from "@/features/public-catalog";
 import { WishlistPage } from "@/features/wishlist";
-import { AdminUsersPage } from "@/features/admin-users";
-import {
-  AdminOptionsPage,
-  EditionDetailsPage,
-  EditionFormPage,
-  EditMangasPage,
-  EditWorkFormPage,
-  EditWorkPage,
-  NewMangaPage,
-  PostCreateActionsPage,
-  VolumeDetailsPage,
-  VolumeFormPage,
-} from "@/features/admin-catalog";
 import { PublicNav } from "@/components/PublicNav.tsx";
 import { AuthProvider } from "@/contexts/AuthContext";
 import { ProtectedRoute } from "@/components/ProtectedRoute";
 
+const AdminUsersPage = lazy(() => import("@/features/admin-users").then((module) => ({ default: module.AdminUsersPage })));
+const AdminOptionsPage = lazy(() => import("@/features/admin-catalog").then((module) => ({ default: module.AdminOptionsPage })));
+const EditionDetailsPage = lazy(() => import("@/features/admin-catalog").then((module) => ({ default: module.EditionDetailsPage })));
+const EditionFormPage = lazy(() => import("@/features/admin-catalog").then((module) => ({ default: module.EditionFormPage })));
+const EditMangasPage = lazy(() => import("@/features/admin-catalog").then((module) => ({ default: module.EditMangasPage })));
+const EditWorkFormPage = lazy(() => import("@/features/admin-catalog").then((module) => ({ default: module.EditWorkFormPage })));
+const EditWorkPage = lazy(() => import("@/features/admin-catalog").then((module) => ({ default: module.EditWorkPage })));
+const NewMangaPage = lazy(() => import("@/features/admin-catalog").then((module) => ({ default: module.NewMangaPage })));
+const PostCreateActionsPage = lazy(() => import("@/features/admin-catalog").then((module) => ({ default: module.PostCreateActionsPage })));
+const VolumeDetailsPage = lazy(() => import("@/features/admin-catalog").then((module) => ({ default: module.VolumeDetailsPage })));
+const VolumeFormPage = lazy(() => import("@/features/admin-catalog").then((module) => ({ default: module.VolumeFormPage })));
+
 function AdminRoute({ children }: { children: React.ReactNode }) {
   return (
     <ProtectedRoute requiredRole="Administrador">
-      {children}
+      <Suspense fallback={<p role="status" className="p-6">Carregando...</p>}>
+        {children}
+      </Suspense>
     </ProtectedRoute>
   );
 }

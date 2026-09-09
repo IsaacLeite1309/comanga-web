@@ -101,6 +101,20 @@ O Vite informa a URL local no terminal. A API precisa permitir essa origem em `C
 | `npm run test:coverage` | Executa testes com cobertura. |
 | `npm run lint` | Executa ESLint. |
 
+## Verificações de qualidade
+
+Use Node.js 22 e `npm ci` para instalar as versões do lockfile.
+
+- `npm run check`: lint sem avisos, build e cobertura mínima de 80% em cada métrica.
+- `npm run check:online`: auditoria de todas as dependências, incluindo ferramentas de desenvolvimento.
+- `npm run typecheck`: valida o código da aplicação, testes e configurações TypeScript; também faz parte do build.
+
+A cobertura inclui páginas, componentes, hooks e rotas. Apenas declarações de tipos, testes, configuração de testes e o ponto de montagem `main.tsx` ficam fora da medição. As páginas administrativas são carregadas sob demanda para reduzir o JavaScript inicial.
+
+O GitHub Actions executa as verificações nos PRs e nos pushes para `develop` e `main`.
+
+A proteção de `develop` e `main` deve ser configurada pelo dono diretamente no GitHub.
+
 ## Qualidade e deploy
 
 - Testes cobrem componentes compartilhados, formulários, autenticação, páginas públicas, páginas administrativas e integração de serviços HTTP.

@@ -1,5 +1,5 @@
 import { fireEvent, render, screen, waitFor } from "@testing-library/react";
-import { AxiosError } from "axios";
+import { AxiosError, AxiosHeaders } from "axios";
 import { MemoryRouter, Route, Routes, useLocation } from "react-router-dom";
 import { beforeEach, describe, expect, it, vi } from "vitest";
 import PublicAuthorWorks from "@/pages/PublicAuthorWorks";
@@ -108,7 +108,7 @@ describe("PublicAuthorWorks", () => {
       status: 404,
       statusText: "Not Found",
       headers: {},
-      config: { headers: {} },
+      config: { headers: new AxiosHeaders() },
     });
     vi.mocked(getPublicAuthorWorks)
       .mockRejectedValueOnce(notFound)
