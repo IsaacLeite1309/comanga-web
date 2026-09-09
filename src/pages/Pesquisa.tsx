@@ -7,7 +7,7 @@ import {
   Search,
   SlidersHorizontal,
 } from "lucide-react";
-import { Link, useSearchParams } from "react-router-dom";
+import { useSearchParams } from "react-router-dom";
 import { MultiSelect } from "@/components/forms/MultiSelect";
 import { SearchableSelect, type SelectOption } from "@/components/forms/SearchableSelect";
 import { EmptyState, LoadingState } from "@/components/shared/AsyncState";
@@ -24,6 +24,7 @@ import type {
   PublicCatalogTab,
   PublicEditionSummary,
   PublicPagination,
+  PublicWorkSummary,
   WorkSort,
 } from "@/features/public-catalog/publicCatalogTypes";
 import { CatalogCover } from "@/features/public-catalog/CatalogCover";

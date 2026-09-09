@@ -37,7 +37,7 @@ const UserProfile = () => {
       });
       setProfile({ ...profile, conteudo_adulto: newStatus });
       toast.success(`Conteúdo +18 ${newStatus ? "ativado" : "desativado"}.`);
-    } catch (error) {
+    } catch {
       toast.error("Erro ao atualizar o filtro de conteúdo.");
     } finally {
       setIsUpdating(false);

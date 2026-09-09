@@ -363,40 +363,4 @@ function EditionSelect({
   );
 }
 
-function EditionInput({
-  label,
-  value,
-  onChange,
-  type = "text",
-  required = false,
-  hideLabel = false,
-}: {
-  label: string;
-  value: string;
-  onChange: (value: string) => void;
-  type?: string;
-  required?: boolean;
-  hideLabel?: boolean;
-}) {
-  return (
-    <label className="min-w-0">
-      {hideLabel ? (
-        <span className="sr-only">{label}</span>
-      ) : (
-        <span className="text-xs font-bold uppercase tracking-wide text-muted-foreground">
-          {label}{required ? <span className="text-red-400"> *</span> : ""}
-        </span>
-      )}
-      <input
-        aria-label={label}
-        type={type}
-        value={value}
-        onChange={(event) => onChange(event.target.value)}
-        placeholder="Digite"
-        className={`${hideLabel ? "" : "mt-2"} h-12 w-full rounded-xl border border-border bg-input px-3 text-base font-semibold text-foreground outline-none transition-colors placeholder:text-muted-foreground focus:border-primary focus:ring-2 focus:ring-primary/40`}
-      />
-    </label>
-  );
-}
-
 export default EditionForm;

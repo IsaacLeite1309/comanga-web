@@ -1,7 +1,7 @@
 import { fireEvent, render, screen, waitFor } from "@testing-library/react";
 import { MemoryRouter, Route, Routes } from "react-router-dom";
 import { beforeEach, describe, expect, it, vi } from "vitest";
-import { AxiosError } from "axios";
+import { AxiosError, AxiosHeaders } from "axios";
 import PublicWorkDetails from "@/pages/PublicWorkDetails";
 import { getPublicWorkDetails } from "@/features/public-catalog/publicCatalogService";
 
@@ -179,7 +179,7 @@ describe("PublicWorkDetails", () => {
       status: 404,
       statusText: "Not Found",
       headers: {},
-      config: { headers: {} },
+      config: { headers: new AxiosHeaders() },
     });
     vi.mocked(getPublicWorkDetails)
       .mockRejectedValueOnce(notFound)

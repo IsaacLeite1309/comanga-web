@@ -198,7 +198,7 @@ const NewManga = ({ mode = "create", workId, returnPath = "/admin/editar-mangas"
     : false;
   const selectedGenreNames = useMemo(
     () => options.genres
-      .filter((genre) => genreIds.includes(genre.id))
+      .filter((genre) => genreIds.includes(Number(genre.id)))
       .map((genre) => genre.label),
     [genreIds, options.genres]
   );
@@ -1070,7 +1070,7 @@ const NewManga = ({ mode = "create", workId, returnPath = "/admin/editar-mangas"
               options={options.originalPublishers}
               selectedIds={originalPublisherIds}
               onToggle={(id) => {
-                toggleSelectedValue(id, originalPublisherIds, setOriginalPublisherIds);
+                toggleSelectedValue(Number(id), originalPublisherIds, setOriginalPublisherIds);
                 clearInvalidField("originalPublisherIds");
               }}
               onOpen={() => clearInvalidField("originalPublisherIds")}
@@ -1093,7 +1093,7 @@ const NewManga = ({ mode = "create", workId, returnPath = "/admin/editar-mangas"
               options={options.magazines}
               selectedIds={magazineIds}
               onToggle={(id) => {
-                toggleSelectedValue(id, magazineIds, setMagazineIds);
+                toggleSelectedValue(Number(id), magazineIds, setMagazineIds);
                 clearInvalidField("magazineIds");
               }}
               onOpen={() => clearInvalidField("magazineIds")}
@@ -1151,7 +1151,7 @@ const NewManga = ({ mode = "create", workId, returnPath = "/admin/editar-mangas"
                 options={options.genres}
                 selectedIds={genreIds}
                 onToggle={(id) => {
-                  toggleSelectedValue(id, genreIds, setGenreIds);
+                  toggleSelectedValue(Number(id), genreIds, setGenreIds);
                   clearInvalidField("genreIds");
                 }}
                 onOpen={() => clearInvalidField("genreIds")}
@@ -1191,9 +1191,7 @@ const NewManga = ({ mode = "create", workId, returnPath = "/admin/editar-mangas"
                 key="save-work"
                 type="submit"
                 disabled={saving || Boolean(optionsError)}
-                className={`inline-flex h-12 w-full items-center justify-center gap-2 rounded-xl bg-primary px-5 text-sm font-bold text-primary-foreground transition-opacity hover:opacity-90 disabled:opacity-60 sm:w-auto sm:min-w-44 ${
-                  currentStep === "identification" ? "col-span-2" : ""
-                }`}
+                className="inline-flex h-12 w-full items-center justify-center gap-2 rounded-xl bg-primary px-5 text-sm font-bold text-primary-foreground transition-opacity hover:opacity-90 disabled:opacity-60 sm:w-auto sm:min-w-44"
               >
                 {saving ? <Loader2 className="h-4 w-4 animate-spin" /> : <Save className="h-4 w-4" />}
                 Salvar
@@ -1204,9 +1202,7 @@ const NewManga = ({ mode = "create", workId, returnPath = "/admin/editar-mangas"
                 type="button"
                 onClick={currentStep === "identification" ? goToAuthorsStep : goToPublicationStep}
                 disabled={saving || Boolean(optionsError)}
-                className={`inline-flex h-12 w-full items-center justify-center gap-2 rounded-xl bg-primary px-5 text-sm font-bold text-primary-foreground transition-opacity hover:opacity-90 disabled:opacity-60 sm:w-auto sm:min-w-44 ${
-                  currentStep === "identification" ? "col-span-2" : ""
-                }`}
+                className="inline-flex h-12 w-full items-center justify-center gap-2 rounded-xl bg-primary px-5 text-sm font-bold text-primary-foreground transition-opacity hover:opacity-90 disabled:opacity-60 sm:w-auto sm:min-w-44"
               >
                 Continuar
               </button>

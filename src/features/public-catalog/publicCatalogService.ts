@@ -32,7 +32,7 @@ export async function listPublicWorks(query: PublicWorksQuery) {
 
 export async function listPublicEditions(query: PublicEditionsQuery) {
   const response = await api.get<PublicEditionsResponse>("/public/editions", {
-    params: compactParams(query),
+    params: compactParams({ ...query }),
   });
 
   return response.data;
