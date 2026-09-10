@@ -15,7 +15,7 @@ O `comanga-web` é uma Single Page Application construída com React, TypeScript
 Navegador -> React SPA/Vercel -> /api -> API Node.js/Render -> Neon e Cloudflare R2
 ```
 
-Em produção, `vercel.json` redireciona `/api/*` para a API hospedada na Render. O frontend nunca acessa diretamente o PostgreSQL, o R2 ou segredos de infraestrutura.
+Em produção, `vercel.json` redireciona `/api/*` para a API hospedada na Render. O frontend nunca acessa diretamente o PostgreSQL, o R2 ou segredos de infraestrutura. O envio de e-mails pelo Resend é configurado somente na API.
 
 ## Funcionalidades implementadas
 
@@ -30,9 +30,10 @@ Em produção, `vercel.json` redireciona `/api/*` para a API hospedada na Render
 
 ### Contas e navegação autenticada
 
-- Cadastro, login, ativação de conta e reenvio de ativação.
+- Cadastro com nascimento obrigatório, login, ativação e reenvio de ativação.
+- Recuperação e redefinição de senha por e-mail, com validação compartilhada de senha e limite de 72 bytes em UTF-8. Os formulários reiniciam ao trocar de rota ou token.
 - Contexto de autenticação consultando `/api/auth/me` ao iniciar a aplicação.
-- Perfil do usuário, logout e preferência de conteúdo adulto.
+- Perfil do usuário, logout e preferência de conteúdo adulto, disponível apenas com nascimento informado e 18 anos completos; a API aplica a restrição pública.
 - Proteção visual de páginas privadas e administrativas por `ProtectedRoute`; a autorização efetiva permanece no backend.
 
 ### Administração
@@ -40,7 +41,7 @@ Em produção, `vercel.json` redireciona `/api/*` para a API hospedada na Render
 - Gestão de usuários e opções de domínio.
 - Cadastro e edição de Obras, Edições e Volumes.
 - Consulta administrativa da estrutura Obra -> Edição -> Volume.
-- Importação e remoção de capas internas por URL, com feedback de interface e confirmação de ações destrutivas.
+- Importação e substituição de capas internas obrigatórias por URL, com feedback de interface. Capas já associadas não podem ser removidas sem substituição.
 
 As páginas de Coleção, Checklist e Lista de Desejos existem como navegação/estrutura visual, mas Estante Digital e Lista de Desejos ainda não possuem suas regras e integrações finais implementadas.
 
@@ -48,7 +49,7 @@ As páginas de Coleção, Checklist e Lista de Desejos existem como navegação/
 
 | Área | Rotas |
 | --- | --- |
-| Conta | `/entrar`, `/cadastrar`, `/activate/:token`, `/reenvio`, `/perfil/:username` |
+| Conta | `/entrar`, `/cadastrar`, `/activate/:token`, `/reenvio`, `/recuperar-senha`, `/redefinir-senha/:token`, `/perfil/:username` |
 | Catálogo público | `/pesquisa`, `/obras/:slug`, `/edicoes/:editionId`, `/volumes/:volumeId`, `/autores/:authorId` |
 | Área pessoal | `/colecao`, `/checklist`, `/desejos` |
 | Administração | `/admin/novo-manga`, `/admin/editar-mangas`, `/admin/opcoes`, `/admin/users` e rotas aninhadas de Edições/Volumes |
@@ -65,7 +66,7 @@ O código é organizado por funcionalidade em `src/features`, incluindo `auth`, 
 
 ## Requisitos
 
-- Node.js 22 ou superior.
+- Node.js 22.12 ou superior.
 - API do CoMangá em execução localmente ou acessível no ambiente configurado.
 
 ## Configuração local
