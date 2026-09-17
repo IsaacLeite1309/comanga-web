@@ -2,7 +2,13 @@ import { Link } from "react-router-dom";
 import { CatalogCover } from "@/features/public-catalog/CatalogCover";
 import type { PublicWorkSummary } from "@/features/public-catalog/publicCatalogTypes";
 
-export function PublicWorkCard({ work }: { work: PublicWorkSummary }) {
+export function PublicWorkCard({
+  work,
+  showAuthors = true,
+}: {
+  work: PublicWorkSummary;
+  showAuthors?: boolean;
+}) {
   const metadata = [work.type?.label, work.country].filter(Boolean).join(" · ");
 
   return (
@@ -17,20 +23,22 @@ export function PublicWorkCard({ work }: { work: PublicWorkSummary }) {
           {work.title}
         </h2>
       </Link>
-      {work.authors.length > 0 ? (
-        <p className="truncate text-xs font-medium text-muted-foreground">
-          {work.authors.map((author, index) => (
-            <span key={author.id}>
-              {index > 0 ? ", " : null}
-              <Link to={`/autores/${author.id}`} aria-label={`Ver Obras de ${author.label}`} className="hover:text-primary hover:underline">
-                {author.label}
-              </Link>
-            </span>
-          ))}
-        </p>
-      ) : (
-        <p className="truncate text-xs font-medium text-muted-foreground">Autor não informado</p>
-      )}
+      {showAuthors ? (
+        work.authors.length > 0 ? (
+          <p className="truncate text-xs font-medium text-muted-foreground">
+            {work.authors.map((author, index) => (
+              <span key={author.id}>
+                {index > 0 ? ", " : null}
+                <Link to={`/autores/${author.id}`} aria-label={`Ver Obras de ${author.label}`} className="hover:text-primary hover:underline">
+                  {author.label}
+                </Link>
+              </span>
+            ))}
+          </p>
+        ) : (
+          <p className="truncate text-xs font-medium text-muted-foreground">Autor não informado</p>
+        )
+      ) : null}
       {metadata ? <p className="mt-0.5 truncate text-xs text-muted-foreground" title={metadata}>{metadata}</p> : null}
     </article>
   );

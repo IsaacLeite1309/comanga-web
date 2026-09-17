@@ -66,14 +66,14 @@ interface WorkResponse {
 
 const EDITION_NUMBER_OPTIONS: OptionValue[] = Array.from({ length: 10 }, (_, index) => ({
   id: String(index + 1),
-  label: `${index + 1}ª Edição`,
+  label: `${index + 1}ª edição`,
 }));
 
 const EDITION_PUBLICATION_STATUS_OPTIONS: OptionValue[] = [
-  { id: "Completo", label: "Completo" },
+  { id: "Completa", label: "Completa" },
   { id: "Em andamento", label: "Em andamento" },
   { id: "Em hiato", label: "Em hiato" },
-  { id: "Cancelado", label: "Cancelado" },
+  { id: "Cancelada", label: "Cancelada" },
 ];
 
 const EditionForm = () => {

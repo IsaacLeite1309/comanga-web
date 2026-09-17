@@ -22,6 +22,7 @@ const work = {
   originalVolumeCount: 18,
   directRelease: false,
   originalPublicationStatus: "Finalizada",
+  synopsis: "A sinopse canônica da Obra.",
   authors: [{ id: 3, label: "Naoki Urasawa", roles: ["Roteiro", "Arte"] }],
   genres: [{ id: 4, label: "Suspense" }],
   demographics: ["Seinen"],
@@ -77,14 +78,25 @@ describe("PublicWorkDetails", () => {
     expect(await screen.findByRole("heading", { name: "Monster", level: 1 })).toBeInTheDocument();
     expect(getPublicWorkDetails).toHaveBeenCalledWith("monster");
     expect(screen.getByText("MONSTER")).toBeInTheDocument();
+    expect(screen.getByText("Tipo de obra")).toBeInTheDocument();
+    expect(screen.getByText("País de Origem")).toBeInTheDocument();
+    expect(screen.getByText("Mangá").tagName).toBe("DD");
+    expect(screen.getByText("Japão").tagName).toBe("DD");
     expect(screen.getByText("Naoki Urasawa")).toBeInTheDocument();
     expect(screen.getByRole("link", { name: "Ver Obras de Naoki Urasawa" })).toHaveAttribute("href", "/autores/3");
     expect(screen.getByText("Roteiro · Arte")).toBeInTheDocument();
     expect(screen.getByText("Suspense")).toBeInTheDocument();
     expect(screen.getByText("Seinen")).toBeInTheDocument();
+    expect(screen.getByText("Suspense").closest("dd")).toBeInTheDocument();
+    expect(screen.getByText("Seinen").closest("dd")).toBeInTheDocument();
+    expect(screen.getByText("Gêneros")).toBeInTheDocument();
+    expect(screen.getByText("Demografia")).toBeInTheDocument();
     expect(screen.getByText("Shogakukan")).toBeInTheDocument();
     expect(screen.getByText("Big Comic Original")).toBeInTheDocument();
     expect(screen.getByText("1994–2001")).toBeInTheDocument();
+    expect(screen.getByRole("heading", { name: "Sinopse" })).toBeInTheDocument();
+    expect(screen.getByText("A sinopse canônica da Obra.")).toBeInTheDocument();
+    expect(screen.queryByText("Lançamento")).not.toBeInTheDocument();
 
     const cover = screen.getByAltText("Capa de Monster");
     expect(cover).toHaveAttribute("src", work.coverUrl);
@@ -93,7 +105,7 @@ describe("PublicWorkDetails", () => {
 
   it.each([
     [1994, 1994, "1994"],
-    [1994, null, "1994–"],
+    [1994, null, "1994-??"],
     [null, 2001, "2001"],
     [null, null, "Não informado"],
   ])(
@@ -110,32 +122,12 @@ describe("PublicWorkDetails", () => {
     },
   );
 
-  it("representa datas parciais e ausentes na prévia dos Volumes", async () => {
-    const edition = work.editions[0];
-    const baseVolume = edition.volumes[0];
-    vi.mocked(getPublicWorkDetails).mockResolvedValue({
-      ...work,
-      editions: [{
-        ...edition,
-        volumes: [
-          { ...baseVolume, id: 31, releaseDatePrecision: "Mes e ano", releaseYear: 2025, releaseMonth: 8, releaseDay: null },
-          { ...baseVolume, id: 32, releaseDatePrecision: "Ano", releaseYear: 2026, releaseMonth: null, releaseDay: null },
-          { ...baseVolume, id: 33, releaseDatePrecision: "Desconhecida", releaseYear: null, releaseMonth: null, releaseDay: null },
-        ],
-      }],
-    });
-    renderPage();
-
-    expect(await screen.findByText("08/2025")).toBeInTheDocument();
-    expect(screen.getByText("2026")).toBeInTheDocument();
-    expect(screen.getByText("Data não informada")).toBeInTheDocument();
-  });
-
   it("omite metadados opcionais ausentes sem inventar valores", async () => {
     vi.mocked(getPublicWorkDetails).mockResolvedValue({
       ...work,
       originalTitle: null,
       originalVolumeCount: null,
+      synopsis: null,
       authors: [],
       genres: [],
       demographics: [],
@@ -147,22 +139,31 @@ describe("PublicWorkDetails", () => {
     expect(await screen.findByRole("heading", { name: "Monster", level: 1 })).toBeInTheDocument();
     expect(screen.queryByText("MONSTER")).not.toBeInTheDocument();
     expect(screen.queryByText("Volumes originais")).not.toBeInTheDocument();
-    expect(screen.queryByText("Editoras originais")).not.toBeInTheDocument();
-    expect(screen.queryByText("Revistas")).not.toBeInTheDocument();
+    expect(screen.queryByText("Editora Original")).not.toBeInTheDocument();
+    expect(screen.queryByText("Pré-publicação")).not.toBeInTheDocument();
+    expect(screen.queryByRole("heading", { name: "Sinopse" })).not.toBeInTheDocument();
   });
 
   it("lista somente os dados recebidos das Edições e as prévias de Volumes", async () => {
     renderPage();
 
     expect(await screen.findByRole("heading", { name: "Edições brasileiras" })).toBeInTheDocument();
-    expect(screen.getByRole("heading", { name: "1ª Edição" })).toBeInTheDocument();
+    expect(screen.getByRole("heading", { name: "1ª edição Panini" })).toBeInTheDocument();
+    expect(screen.queryByText("Regular")).not.toBeInTheDocument();
     expect(screen.getByText("Panini")).toBeInTheDocument();
-    expect(screen.getByText("9 Volumes")).toBeInTheDocument();
+    expect(screen.getByText((_, element) => (
+      element?.tagName === "SPAN" && element.textContent === "Em publicação com 9 volumes"
+    ))).toBeInTheDocument();
     expect(screen.getByText("Volume 1")).toBeInTheDocument();
-    expect(screen.getByText("15/05/2024")).toBeInTheDocument();
-    expect(screen.getByRole("link", { name: "Ver detalhes da 1ª Edição" })).toHaveAttribute(
+    expect(screen.getByRole("link", { name: "Ver detalhes do Volume 1" })).toHaveAttribute(
       "href",
-      "/edicoes/20",
+      "/volumes/30",
+    );
+    expect(screen.queryByText("15/05/2024")).not.toBeInTheDocument();
+    expect(screen.queryByAltText("Capa da 1ª edição de Monster")).not.toBeInTheDocument();
+    expect(screen.getByRole("link", { name: "1ª edição Panini Em publicação com 9 volumes" })).toHaveAttribute(
+      "href",
+      "/obras/monster/edicao/20",
     );
   });
 

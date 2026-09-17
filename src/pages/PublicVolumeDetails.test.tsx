@@ -60,7 +60,7 @@ describe("PublicVolumeDetails", () => {
     expect(await screen.findByRole("heading", { name: "Monster — Volume 1", level: 1 })).toBeInTheDocument();
     expect(getPublicVolumeDetails).toHaveBeenCalledWith(30);
     expect(screen.getByText("MONSTER")).toBeInTheDocument();
-    expect(screen.getByText("2ª Edição")).toBeInTheDocument();
+    expect(screen.getByText("2ª edição")).toBeInTheDocument();
     expect(screen.getByText("20/08/2026")).toBeInTheDocument();
     expect(screen.getByText("416 páginas")).toBeInTheDocument();
     expect(screen.getByText("R$ 79,90")).toBeInTheDocument();
@@ -82,7 +82,7 @@ describe("PublicVolumeDetails", () => {
     renderPage();
     await screen.findByRole("heading", { name: "Monster — Volume 1" });
 
-    expect(screen.getByRole("link", { name: "Voltar para 2ª Edição" })).toHaveAttribute("href", "/edicoes/20");
+    expect(screen.getByRole("link", { name: "Voltar para 2ª edição" })).toHaveAttribute("href", "/edicoes/20");
     expect(screen.getByRole("link", { name: "Ver detalhes de Monster" })).toHaveAttribute("href", "/obras/monster");
   });
 

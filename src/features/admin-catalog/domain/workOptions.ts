@@ -17,10 +17,10 @@ export const NATIVE_COUNTRY_OPTIONS: OptionValue[] = [
 ];
 
 export const NATIVE_ORIGINAL_STATUS_OPTIONS: OptionValue[] = [
-  { id: "Completo", value: "Completo", label: "Completo" },
+  { id: "Completa", value: "Completa", label: "Completa" },
   { id: "Em andamento", value: "Em andamento", label: "Em andamento" },
   { id: "Em hiato", value: "Em hiato", label: "Em hiato" },
-  { id: "Cancelado", value: "Cancelado", label: "Cancelado" },
+  { id: "Cancelada", value: "Cancelada", label: "Cancelada" },
 ];
 
 export const NATIVE_DEMOGRAPHY_OPTIONS: OptionValue[] = [

@@ -18,3 +18,9 @@ export function formatPublicReleaseDate(
   }
   return String(volume.releaseYear);
 }
+
+export function formatPublicationStatus(status?: string | null) {
+  if (status === "Completa") return "Completo";
+  if (status === "Cancelada") return "Cancelado";
+  return status || "Não informado";
+}

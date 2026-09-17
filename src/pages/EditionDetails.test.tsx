@@ -27,7 +27,7 @@ const editionResponse = {
     editionType: { id: 31, label: "Tankobon" },
     coverType: { id: 32, label: "Capa comum" },
     format: { id: 33, label: "Impresso" },
-    brazilPublicationStatus: "Completo",
+    brazilPublicationStatus: "Completa",
     volumesCount: 0,
   },
 };

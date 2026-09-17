@@ -107,7 +107,7 @@ function PublicVolumeDetails() {
   }
 
   const volumeLabel = publicVolumeLabel(volume);
-  const editionLabel = `${volume.edition.chronologicalNumber}ª Edição`;
+  const editionLabel = `${volume.edition.chronologicalNumber}ª edição`;
   const hasReleaseDate = Boolean(volume.releaseYear);
 
   return (

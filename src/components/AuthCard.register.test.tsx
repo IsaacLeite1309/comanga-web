@@ -68,6 +68,12 @@ describe("AuthCard cadastro", () => {
     vi.clearAllMocks();
   });
 
+  it("retira o painel da aba da ordem de tabulacao", () => {
+    renderRegister();
+
+    expect(screen.getByRole("tabpanel")).toHaveAttribute("tabindex", "-1");
+  });
+
   it("bloqueia submissao quando senha e confirmacao divergem", async () => {
     renderRegister();
 

@@ -9,6 +9,7 @@ import {
   PublicCatalogPage,
   PublicAuthorWorksPage,
   PublicEditionDetailsPage,
+  EditionVolumeSelectionPage,
   PublicVolumeDetailsPage,
   PublicWorkDetailsPage,
 } from "@/features/public-catalog";
@@ -66,9 +67,14 @@ const App = () => (
               <Route path="/pesquisa" element={<PublicCatalogPage />} />
               <Route path="/autores/:authorId" element={<PublicAuthorWorksPage />} />
               <Route path="/obras/:slug" element={<PublicWorkDetailsPage />} />
+              <Route path="/obras/:slug/edicao/:editionId" element={<PublicEditionDetailsPage />} />
+              <Route path="/obras/:slug/edicao/:editionId/selecionar/:mode" element={<EditionVolumeSelectionPage />} />
               <Route path="/edicoes/:editionId" element={<PublicEditionDetailsPage />} />
+              <Route path="/edicoes/:editionId/selecionar/:mode" element={<EditionVolumeSelectionPage />} />
               <Route path="/volumes/:volumeId" element={<PublicVolumeDetailsPage />} />
               <Route path="/colecao" element={<CollectionPage />} />
+              <Route path="/colecao/:slug/edicao/:editionId" element={<PublicEditionDetailsPage />} />
+              <Route path="/colecao/:slug/edicao/:editionId/selecionar/:mode" element={<EditionVolumeSelectionPage />} />
               <Route path="/checklist" element={<ChecklistPage />} />
               <Route path="/desejos" element={<WishlistPage />} />
               <Route

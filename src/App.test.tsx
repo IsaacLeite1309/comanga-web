@@ -16,6 +16,7 @@ vi.mock("@/features/public-catalog", () => ({
   PublicCatalogPage: () => "Catálogo público",
   PublicAuthorWorksPage: () => "Obras do autor",
   PublicEditionDetailsPage: () => "Edição pública",
+  EditionVolumeSelectionPage: () => "Seleção de Volumes",
   PublicVolumeDetailsPage: () => "Volume público",
   PublicWorkDetailsPage: () => "Obra pública",
 }));
@@ -30,7 +31,8 @@ describe("navegação e acesso administrativo", () => {
     window.history.replaceState({}, "", "/entrar");
     render(<App />);
     expect(await screen.findByText("Entrar na conta")).toBeInTheDocument();
-    fireEvent.click(screen.getAllByRole("link", { name: /pesquisar/i })[0]);
+    const [searchLink] = await screen.findAllByRole("link", { name: /pesquisar/i });
+    fireEvent.click(searchLink);
     expect(await screen.findByText("Catálogo público")).toBeInTheDocument();
   });
 

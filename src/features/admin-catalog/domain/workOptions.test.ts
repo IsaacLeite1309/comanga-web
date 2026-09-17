@@ -23,10 +23,10 @@ describe("opções nativas de Obra", () => {
   it("preserva a ordem e a grafia oficial dos demais valores nativos", () => {
     expect(values(NATIVE_COUNTRY_OPTIONS)).toEqual(["Japão", "Coreia do Sul", "China", "Taiwan"]);
     expect(values(NATIVE_ORIGINAL_STATUS_OPTIONS)).toEqual([
-      "Completo",
+      "Completa",
       "Em andamento",
       "Em hiato",
-      "Cancelado",
+      "Cancelada",
     ]);
     expect(values(NATIVE_DEMOGRAPHY_OPTIONS)).toEqual(["Shonen", "Shoujo", "Seinen", "Josei", "Kodomo"]);
   });

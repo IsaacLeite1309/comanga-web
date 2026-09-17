@@ -34,6 +34,7 @@ describe("PublicNav", () => {
     const { container } = renderPublicNav("/entrar");
 
     expect(container).toHaveTextContent("CoMangá");
+    expect(container.querySelector("a button")).not.toBeInTheDocument();
     expect(screen.getAllByText("Pesquisar").length).toBeGreaterThan(0);
     expect(screen.getAllByText("Checklists").length).toBeGreaterThan(0);
     expect(screen.getAllByText("Lista de Desejos").length).toBeGreaterThan(0);

@@ -1,5 +1,5 @@
 import { useEffect, useRef, useState } from "react";
-import { Check, ChevronDown, ChevronUp } from "lucide-react";
+import { Check, ChevronDown, ChevronUp, X } from "lucide-react";
 import { useDropdown } from "@/hooks/useDropdown";
 import type { SelectOption } from "@/components/forms/SearchableSelect";
 
@@ -16,9 +16,14 @@ interface MultiSelectProps {
   invalid?: boolean;
   errorMessage?: string;
   searchable?: boolean;
+  placeholder?: string;
+  searchPlaceholder?: string;
+  onClear?: () => void;
   reorderable?: boolean;
   onMove?: (fromIndex: number, toIndex: number) => void;
   maxVisibleItems?: number;
+  tone?: "default" | "sidebar" | "panel";
+  textSize?: "sm" | "base";
 }
 
 function normalizeSearchText(value: string) {
@@ -43,9 +48,14 @@ export function MultiSelect({
   invalid = false,
   errorMessage = "",
   searchable = false,
+  placeholder = "Selecione",
+  searchPlaceholder = "Digite para buscar...",
+  onClear,
   reorderable = false,
   onMove,
   maxVisibleItems = 6,
+  tone = "default",
+  textSize = "base",
 }: MultiSelectProps) {
   const { isOpen, closeDropdown, toggleDropdown, rootProps } = useDropdown();
   const [searchTerm, setSearchTerm] = useState("");
@@ -61,9 +71,23 @@ export function MultiSelect({
     ? selectedOptions.map((option) => option.label).join(", ")
     : disabled
       ? disabledMessage
-      : "Selecione";
+      : placeholder;
   const visibleChips = selectedOptions.slice(0, 3);
   const hiddenChipCount = Math.max(selectedOptions.length - visibleChips.length, 0);
+  const sidebarTone = tone === "sidebar";
+  const panelTone = tone === "panel";
+  const brightTone = sidebarTone || panelTone;
+  const fieldSurface = sidebarTone
+    ? "border-sidebar-foreground/35 bg-sidebar"
+    : panelTone
+      ? "border-sidebar-foreground/35 bg-background"
+      : "border-border bg-input";
+  const secondaryText = brightTone ? "text-foreground" : "text-muted-foreground";
+  const menuSurface = sidebarTone ? "bg-sidebar" : "bg-background";
+  const controlTextSize = textSize === "sm" ? "text-sm" : "text-base";
+  const selectedChipText = brightTone ? "text-foreground" : "text-primary";
+  const hiddenChipText = brightTone ? "text-foreground" : "text-muted-foreground";
+  const placeholderText = "text-muted-foreground";
 
   useEffect(() => {
     if (isOpen && searchable) searchInputRef.current?.focus();
@@ -78,11 +102,11 @@ export function MultiSelect({
   return (
     <div {...rootProps} className="min-w-0">
       <div className="relative min-w-0">
-        <span className="text-xs font-bold uppercase tracking-wide text-muted-foreground">
+        <span className={`text-xs font-bold uppercase tracking-wide ${brightTone ? "text-foreground" : "text-muted-foreground"}`}>
           {label}{required ? <span className="text-red-400"> *</span> : ""}
         </span>
         {isOpen && searchable && !disabled ? (
-          <div className={`mt-2 flex min-h-12 w-full items-center justify-between gap-3 rounded-xl border bg-input px-3 py-2 text-base font-semibold text-foreground outline-none transition-colors focus-within:ring-2 ${
+          <div className={`mt-2 flex min-h-12 w-full items-center justify-between gap-3 rounded-xl border px-3 py-2 font-semibold text-foreground outline-none transition-colors focus-within:ring-2 ${controlTextSize} ${fieldSurface} ${
             invalid
               ? "border-red-500 focus-within:border-red-500 focus-within:ring-red-500/30"
               : "border-primary focus-within:border-primary focus-within:ring-primary/40"
@@ -100,16 +124,62 @@ export function MultiSelect({
                   closeDropdown();
                 }
               }}
-              placeholder="Digite para buscar..."
-              className="min-w-0 flex-1 bg-transparent text-base font-semibold text-foreground outline-none placeholder:text-muted-foreground"
+              placeholder={searchPlaceholder}
+              className={`min-w-0 flex-1 bg-transparent font-semibold text-foreground outline-none ${controlTextSize} ${brightTone ? "placeholder:text-foreground" : "placeholder:text-muted-foreground"}`}
             />
+            {selectedOptions.length > 0 && onClear ? (
+              <button
+                type="button"
+                aria-label={`Limpar ${label}`}
+                onClick={onClear}
+                className={`-mr-1 inline-flex h-8 w-8 shrink-0 items-center justify-center transition-colors hover:text-foreground focus:text-foreground focus:outline-none ${secondaryText}`}
+              >
+                <X className="h-4 w-4" aria-hidden="true" />
+              </button>
+            ) : (
+              <button
+                type="button"
+                aria-label={`Fechar ${label}`}
+                onClick={closeDropdown}
+                className={`-mr-1 inline-flex h-8 w-8 shrink-0 items-center justify-center ${secondaryText}`}
+              >
+                <ChevronDown className="h-4 w-4 rotate-180" />
+              </button>
+            )}
+          </div>
+        ) : selectedOptions.length > 0 && onClear && !disabled ? (
+          <div className={`mt-2 flex min-h-12 w-full items-center rounded-xl border font-semibold text-foreground outline-none transition-colors focus-within:ring-2 ${controlTextSize} ${fieldSurface} ${
+            invalid
+              ? "border-red-500 focus-within:border-red-500 focus-within:ring-red-500/30"
+              : `${brightTone ? "border-sidebar-foreground/35" : "border-border"} focus-within:border-primary focus-within:ring-primary/40`
+          }`}>
             <button
               type="button"
-              aria-label={`Fechar ${label}`}
-              onClick={closeDropdown}
-              className="-mr-1 inline-flex h-8 w-8 shrink-0 items-center justify-center text-muted-foreground"
+              onClick={handleToggleDropdown}
+              className="flex min-h-12 min-w-0 flex-1 items-center px-3 py-2 text-left outline-none"
+              aria-expanded={isOpen}
+              aria-label={`Selecionar ${label}`}
             >
-              <ChevronDown className="h-4 w-4 rotate-180" />
+              <span className="flex min-w-0 flex-1 flex-wrap gap-1.5">
+                {visibleChips.map((option) => (
+                  <span key={getOptionValue(option)} className={`max-w-full truncate rounded-md bg-primary/15 px-2 py-1 text-xs font-bold ${selectedChipText}`}>
+                    {option.label}
+                  </span>
+                ))}
+                {hiddenChipCount > 0 ? (
+                  <span className={`rounded-md bg-muted px-2 py-1 text-xs font-bold ${hiddenChipText}`}>
+                    +{hiddenChipCount}
+                  </span>
+                ) : null}
+              </span>
+            </button>
+            <button
+              type="button"
+              aria-label={`Limpar ${label}`}
+              onClick={onClear}
+              className={`inline-flex min-h-12 w-11 shrink-0 items-center justify-center transition-colors hover:text-foreground focus:text-foreground focus:outline-none ${secondaryText}`}
+            >
+              <X className="h-4 w-4" aria-hidden="true" />
             </button>
           </div>
         ) : (
@@ -117,10 +187,10 @@ export function MultiSelect({
             type="button"
             disabled={disabled}
             onClick={handleToggleDropdown}
-            className={`mt-2 flex min-h-12 w-full items-center justify-between gap-3 rounded-xl border bg-input px-3 py-2 text-left text-base font-semibold text-foreground outline-none transition-colors focus:ring-2 disabled:cursor-not-allowed disabled:opacity-60 ${
+            className={`mt-2 flex min-h-12 w-full items-center justify-between gap-3 rounded-xl border px-3 py-2 text-left font-semibold text-foreground outline-none transition-colors focus:ring-2 disabled:cursor-not-allowed disabled:opacity-60 ${controlTextSize} ${fieldSurface} ${
               invalid
                 ? "border-red-500 focus:border-red-500 focus:ring-red-500/30"
-                : "border-border focus:border-primary focus:ring-primary/40"
+                : `${brightTone ? "border-sidebar-foreground/35" : "border-border"} focus:border-primary focus:ring-primary/40`
             }`}
             aria-expanded={isOpen}
             aria-label={`Selecionar ${label}`}
@@ -128,35 +198,35 @@ export function MultiSelect({
             {searchable && selectedOptions.length > 0 ? (
               <span className="flex min-w-0 flex-1 flex-wrap gap-1.5">
                 {visibleChips.map((option) => (
-                  <span key={getOptionValue(option)} className="max-w-full truncate rounded-md bg-primary/15 px-2 py-1 text-xs font-bold text-primary">
+                  <span key={getOptionValue(option)} className={`max-w-full truncate rounded-md bg-primary/15 px-2 py-1 text-xs font-bold ${selectedChipText}`}>
                     {option.label}
                   </span>
                 ))}
                 {hiddenChipCount > 0 ? (
-                  <span className="rounded-md bg-muted px-2 py-1 text-xs font-bold text-muted-foreground">
+                  <span className={`rounded-md bg-muted px-2 py-1 text-xs font-bold ${hiddenChipText}`}>
                     +{hiddenChipCount}
                   </span>
                 ) : null}
               </span>
             ) : (
-              <span className={`truncate ${selectedOptions.length > 0 ? "" : "text-muted-foreground"}`}>
+              <span className={`truncate ${selectedOptions.length > 0 ? "" : placeholderText}`}>
                 {summary}
               </span>
             )}
-            <ChevronDown className={`h-4 w-4 shrink-0 text-muted-foreground transition-transform ${isOpen ? "rotate-180" : ""}`} />
+            <ChevronDown className={`h-4 w-4 shrink-0 transition-transform ${secondaryText} ${isOpen ? "rotate-180" : ""}`} />
           </button>
         )}
 
         {isOpen && !disabled ? (
           <div
-            className="absolute left-0 top-[calc(100%+4px)] z-30 w-full overflow-y-auto rounded-lg border border-primary bg-background shadow-2xl"
-            style={{ maxHeight: maxVisibleItems * 40 }}
+            className={`absolute left-0 top-[calc(100%+4px)] z-30 w-full overflow-y-auto rounded-lg border border-primary shadow-2xl ${menuSurface}`}
+            style={{ maxHeight: maxVisibleItems * 44 }}
           >
             {options.length === 0 ? (
-              <div className="px-3 py-4 text-sm font-semibold text-muted-foreground">{emptyMessage}</div>
+              <div className={`px-3 py-4 text-sm font-semibold ${secondaryText}`}>{emptyMessage}</div>
             ) : null}
             {options.length > 0 && filteredOptions.length === 0 ? (
-              <div className="px-3 py-4 text-sm font-semibold text-muted-foreground">Nenhum resultado encontrado.</div>
+              <div className={`px-3 py-4 text-sm font-semibold ${secondaryText}`}>Nenhum resultado encontrado.</div>
             ) : null}
             {filteredOptions.map((option) => {
               const optionValue = getOptionValue(option);
@@ -166,6 +236,7 @@ export function MultiSelect({
                 <button
                   key={optionValue}
                   type="button"
+                  title={option.label}
                   onClick={() => onToggle(optionValue)}
                   onKeyDown={(event) => {
                     if (event.key === "Enter") {
@@ -173,7 +244,7 @@ export function MultiSelect({
                       closeDropdown();
                     }
                   }}
-                  className={`flex w-full items-center justify-between gap-2 px-3 py-2 text-left text-sm font-semibold transition-colors ${
+                  className={`flex h-11 w-full items-center justify-between gap-2 px-3 text-left text-sm font-semibold transition-colors ${
                     selected
                       ? "bg-primary text-primary-foreground"
                       : "text-foreground hover:bg-primary hover:text-primary-foreground"

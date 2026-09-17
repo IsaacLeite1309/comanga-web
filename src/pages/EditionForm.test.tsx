@@ -114,7 +114,7 @@ describe("EditionForm", () => {
     chooseDropdown(/acabamento/i, /capa comum/i);
     chooseDropdown(/formato/i, /impresso/i);
     chooseDropdown(/número da edição/i, /1ª edição/i);
-    chooseDropdown(/status de publicação/i, /completo/i);
+    chooseDropdown(/status de publicação/i, /completa/i);
     fireEvent.change(screen.getByLabelText(/url da capa da edição/i), {
       target: { value: "https://cdn.comanga.test/edicao.jpg" },
     });
@@ -129,7 +129,7 @@ describe("EditionForm", () => {
         coverTypeId: 32,
         formatId: 33,
         chronologicalNumber: 1,
-        brazilPublicationStatus: "Completo",
+        brazilPublicationStatus: "Completa",
         coverAssetId: "7f28c7f0-c94f-46e8-b61c-6ea716f8f28e",
       }));
     });
@@ -258,7 +258,7 @@ describe("EditionForm", () => {
     chooseDropdown(/acabamento/i, /capa comum/i);
     chooseDropdown(/formato/i, /impresso/i);
     chooseDropdown(/n.*mero da edi/i, /^1ª edição$/i);
-    chooseDropdown(/status de publica/i, /completo/i);
+    chooseDropdown(/status de publica/i, /completa/i);
     fireEvent.click(screen.getByRole("button", { name: /^salvar$/i }));
 
     await waitFor(() => expect(toast.error).toHaveBeenCalledWith("Edição duplicada."));

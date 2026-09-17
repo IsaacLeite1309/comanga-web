@@ -49,7 +49,7 @@ const editionsResponse = {
       visibility: "Privado",
       brazilianPublisher: { id: 30, label: "Panini" },
       editionType: { id: 31, label: "Tankobon" },
-      brazilPublicationStatus: "Completo",
+      brazilPublicationStatus: "Completa",
       volumesCount: 0,
     },
   ],
@@ -89,7 +89,7 @@ describe("EditWork", () => {
     expect(await screen.findByRole("heading", { name: "Naruto" })).toBeInTheDocument();
     expect(screen.getByText("Masashi Kishimoto")).toBeInTheDocument();
     expect(screen.getByText("Mangá")).toBeInTheDocument();
-    expect(screen.getAllByText("1ª Edição")[0]).toBeInTheDocument();
+    expect(screen.getAllByText("1ª edição")[0]).toBeInTheDocument();
     expect(screen.getAllByText("0 volumes")[0]).toBeInTheDocument();
     expect(screen.getByRole("link", { name: /editar obra/i })).toHaveAttribute("href", "/admin/editar-mangas/obras/naruto/editar");
     expect(screen.getByRole("link", { name: /adicionar edição/i })).toHaveAttribute("href", "/admin/editar-mangas/obras/naruto/edicoes/nova");
@@ -144,7 +144,7 @@ describe("EditWork", () => {
             coverUrl: null,
             brazilianPublisher: null,
             editionType: null,
-            brazilPublicationStatus: { label: "Completo" },
+            brazilPublicationStatus: { label: "Completa" },
             volumesCount: 1,
           }],
           pagination: { total: 1 },

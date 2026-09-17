@@ -105,7 +105,7 @@ const workDetail = {
   originalVolumeCount: 72,
   directRelease: false,
   originalPublishers: [{ id: 19, label: "Shueisha" }],
-  originalPublicationStatus: "Completo",
+  originalPublicationStatus: "Completa",
   authors: [{ author: { id: 1, label: "Masashi Kishimoto" }, roles: ["História e Arte"] }],
   genres: [{ id: 7, label: "Acao" }],
   demographics: ["Shonen"],
@@ -182,7 +182,7 @@ async function goToPublicationStep() {
 
 async function fillPublicationFields() {
   await chooseDropdown(/editora original/i, /shueisha/i);
-  await chooseDropdown(/status de publica.*o original/i, /completo/i);
+  await chooseDropdown(/status de publica.*o original/i, /completa/i);
   await chooseDropdown(/in.*cio da publica.*o original/i, /1999/i);
   await chooseDropdown(/fim da publica.*o original/i, /2014/i);
   fireEvent.change(screen.getByLabelText(/n.*mero de volumes originais/i), { target: { value: "72" } });
@@ -240,7 +240,7 @@ describe("NewManga", () => {
         typeId: 9,
         country: "Japão",
         originalPublisherIds: [{ id: 19, position: 0 }],
-        originalPublicationStatus: "Completo",
+        originalPublicationStatus: "Completa",
         originalPublicationStartYear: 1999,
         originalPublicationEndYear: 2014,
         originalVolumeCount: 72,
@@ -279,7 +279,7 @@ describe("NewManga", () => {
     fireEvent.click(screen.getByRole("button", { name: /shogakukan/i }));
     fireEvent.click(screen.getByRole("button", { name: /mover shogakukan para cima/i }));
 
-    await chooseDropdown(/status de publica.*o original/i, /completo/i);
+    await chooseDropdown(/status de publica.*o original/i, /completa/i);
     await chooseDropdown(/in.*cio da publica.*o original/i, /1999/i);
     await chooseDropdown(/fim da publica.*o original/i, /2014/i);
     fireEvent.change(screen.getByLabelText(/n.*mero de volumes originais/i), { target: { value: "72" } });
