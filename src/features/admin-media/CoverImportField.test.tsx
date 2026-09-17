@@ -106,7 +106,7 @@ describe("CoverImportField", () => {
     const onChange = vi.fn();
     render(<CoverImportField
       label="Capa"
-      value={{ assetId: "asset-id", coverUrl: "https://media.test/capa.webp", pending: false }}
+      value={{ assetId: "asset-id", coverUrl: "https://media.test/capa.webp", pending: true }}
       onChange={onChange}
     />);
 
@@ -117,4 +117,11 @@ describe("CoverImportField", () => {
     expect(onChange).not.toHaveBeenCalled();
     expect(adminMediaService.deletePendingCover).not.toHaveBeenCalled();
   });
+});
+
+
+it.each([false, true])("não oferece remoção de capa obrigatória; pendente=%s", pending => {
+  render(<CoverImportField label="Capa" required value={{ assetId: "id", coverUrl: "https://media.test/cover.webp", pending }} onChange={vi.fn()} />);
+  expect(screen.queryByRole("button", { name: "Remover capa" })).not.toBeInTheDocument();
+  expect(screen.getByRole("button", { name: "Substituir capa" })).toBeInTheDocument();
 });

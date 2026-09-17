@@ -6,6 +6,7 @@ import { api } from "@/services/api";
 vi.mock("@/services/api", () => ({ api: { get: vi.fn() } }));
 vi.mock("@/components/ui/sonner", () => ({ Toaster: () => null }));
 vi.mock("@/features/auth", () => ({
+  PasswordRecoveryPage: () => "Recuperar senha",
   AuthPage: () => "Entrar na conta",
   ActivatePage: () => "Ativar conta",
   ResendActivationPage: () => "Reenviar ativação",

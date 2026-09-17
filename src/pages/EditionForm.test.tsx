@@ -259,6 +259,7 @@ describe("EditionForm", () => {
     chooseDropdown(/formato/i, /impresso/i);
     chooseDropdown(/n.*mero da edi/i, /^1ª edição$/i);
     chooseDropdown(/status de publica/i, /completa/i);
+    fireEvent.change(screen.getByLabelText(/url da capa da edi/i), { target: { value: "https://example.com/capa.jpg" } });
     fireEvent.click(screen.getByRole("button", { name: /^salvar$/i }));
 
     await waitFor(() => expect(toast.error).toHaveBeenCalledWith("Edição duplicada."));

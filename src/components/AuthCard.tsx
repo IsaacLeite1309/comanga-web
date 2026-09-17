@@ -7,6 +7,8 @@ import { api } from "@/services/api";
 import { useAuth } from "@/contexts/AuthContext";
 import { BrandLogo } from "@/components/BrandLogo";
 
+import { validatePassword } from "@/lib/passwordValidation";
+
 /* ──────────────────────────── Tipos ──────────────────────────── */
 
 interface PasswordInputProps {
@@ -23,6 +25,7 @@ interface LoginData {
 }
 
 interface RegisterData {
+  birthDate: string;
   username: string;
   email: string;
   password: string;
@@ -36,7 +39,6 @@ type RegisterErrors = Record<keyof RegisterData, string>;
 
 const VALIDATION_MESSAGES = {
   RN0001: "Utilize entre 3 e 20 caracteres, sem espaços, acentos ou caracteres especiais.",
-  RN0002: "Utilize no mínimo 8 caracteres, incluindo pelo menos uma letra maiúscula, uma minúscula, um número e um caractere especial.",
   RN0020: "Divergência nos valores da senha e confirmação de senha!",
   EMAIL_INVALID: "Informe um e-mail válido.",
   EMAIL_REQUIRED: "Informe seu e-mail.",
@@ -44,7 +46,6 @@ const VALIDATION_MESSAGES = {
   // Mensagens de campo vazio (Cadastro)
   USERNAME_REQUIRED: "Informe um Nome de Usuário.",
   REG_EMAIL_REQUIRED: "Informe um e-mail.",
-  REG_PASSWORD_REQUIRED: "Informe uma senha.",
   CONFIRM_PASSWORD_REQUIRED: "Informe a confirmação da senha.",
 } as const;
 
@@ -57,16 +58,6 @@ function validateUsername(username: string): string {
 function validateEmail(email: string): string {
   if (!email.trim()) return VALIDATION_MESSAGES.EMAIL_REQUIRED;
   if (!/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email)) return VALIDATION_MESSAGES.EMAIL_INVALID;
-  return "";
-}
-
-function validatePassword(password: string): string {
-  if (!password) return VALIDATION_MESSAGES.REG_PASSWORD_REQUIRED;
-  if (password.length < 8) return VALIDATION_MESSAGES.RN0002;
-  if (!/[A-Z]/.test(password)) return VALIDATION_MESSAGES.RN0002;
-  if (!/[a-z]/.test(password)) return VALIDATION_MESSAGES.RN0002;
-  if (!/[0-9]/.test(password)) return VALIDATION_MESSAGES.RN0002;
-  if (!/[\W_]/.test(password)) return VALIDATION_MESSAGES.RN0002;
   return "";
 }
 
@@ -83,7 +74,12 @@ function validateRegisterEmail(email: string): string {
 }
 
 function validateRegisterForm(data: RegisterData): RegisterErrors {
+  const birth = new Date(`${data.birthDate}T00:00:00Z`);
+  const validBirth = /^(?!0000)\d{4}-\d{2}-\d{2}$/.test(data.birthDate)
+    && Number.isFinite(birth.getTime()) && birth.toISOString().slice(0, 10) === data.birthDate
+    && data.birthDate <= new Date().toISOString().slice(0, 10);
   return {
+    birthDate: validBirth ? "" : "Informe uma data de nascimento válida e não futura.",
     username: validateUsername(data.username),
     email: validateRegisterEmail(data.email),
     password: validatePassword(data.password),
@@ -187,12 +183,14 @@ export function AuthCard() {
 
   // Register state
   const [registerData, setRegisterData] = useState<RegisterData>({
+    birthDate: "",
     username: "",
     email: "",
     password: "",
     confirmPassword: "",
   });
   const [registerErrors, setRegisterErrors] = useState<RegisterErrors>({
+    birthDate: "",
     username: "",
     email: "",
     password: "",
@@ -206,8 +204,8 @@ export function AuthCard() {
     navigate(newTab === "register" ? "/cadastrar" : "/entrar");
     setLoginData({ email: "", password: "" });
     setLoginErrors({ email: "", password: "" });
-    setRegisterData({ username: "", email: "", password: "", confirmPassword: "" });
-    setRegisterErrors({ username: "", email: "", password: "", confirmPassword: "" });
+    setRegisterData({ birthDate: "", username: "", email: "", password: "", confirmPassword: "" });
+    setRegisterErrors({ birthDate: "", username: "", email: "", password: "", confirmPassword: "" });
   }
 
   /* ── Handlers de mudança ── */
@@ -279,8 +277,8 @@ export function AuthCard() {
       toast.success(response.data.message || "Cadastro realizado! Verifique seu e-mail.");
 
       // Limpar formulário e ir para login
-      setRegisterData({ username: "", email: "", password: "", confirmPassword: "" });
-      setRegisterErrors({ username: "", email: "", password: "", confirmPassword: "" });
+      setRegisterData({ birthDate: "", username: "", email: "", password: "", confirmPassword: "" });
+      setRegisterErrors({ birthDate: "", username: "", email: "", password: "", confirmPassword: "" });
       setTab("login");
     } catch (error: unknown) {
       if (isAxiosError(error) && error.response) {
@@ -365,9 +363,9 @@ export function AuthCard() {
                 )}
               </button>
               <p className="text-center text-sm text-muted-foreground">
-                <a href="#" className="hover:text-primary transition-colors underline underline-offset-2">
+                <Link to="/recuperar-senha" className="hover:text-primary transition-colors underline underline-offset-2">
                   Esqueceu a senha?
-                </a>
+                </Link>
               </p>
             </form>
           </TabsContent>
@@ -393,6 +391,14 @@ export function AuthCard() {
                 onChange={handleRegisterChange}
                 error={registerErrors.email}
               />
+              <label className="block text-sm text-foreground">
+                Data de nascimento
+                <input type="date" name="birthDate" required aria-label="Data de nascimento"
+                  max={new Date().toISOString().slice(0, 10)} value={registerData.birthDate}
+                  onChange={handleRegisterChange} aria-invalid={Boolean(registerErrors.birthDate)}
+                  className="mt-1 h-12 w-full rounded-xl border border-border bg-input px-4" />
+                {registerErrors.birthDate && <span role="alert" className="text-xs text-red-400">{registerErrors.birthDate}</span>}
+              </label>
               <PasswordInput
                 name="password"
                 placeholder="Senha"

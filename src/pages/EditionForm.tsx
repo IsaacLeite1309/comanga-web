@@ -189,12 +189,13 @@ const EditionForm = () => {
       formatId: Number(draft.formatId),
       chronologicalNumber: Number(draft.chronologicalNumber),
       brazilPublicationStatus: draft.brazilPublicationStatus,
-      coverAssetId: draft.coverAssetId || null,
+      coverAssetId: draft.coverAssetId,
     };
   }
 
   function isDraftIncomplete() {
-    return !draft.brazilianPublisherId
+    return !draft.coverAssetId
+      || !draft.brazilianPublisherId
       || !draft.editionTypeId
       || !draft.coverTypeId
       || !draft.formatId
@@ -306,6 +307,7 @@ const EditionForm = () => {
           <div className="md:col-span-3">
             <CoverImportField
               label="Capa da Edição"
+              required
               value={draft.coverAssetId ? {
                 assetId: draft.coverAssetId,
                 coverUrl: draft.coverUrl,

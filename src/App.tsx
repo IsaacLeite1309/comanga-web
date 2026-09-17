@@ -2,7 +2,7 @@ import { lazy, Suspense } from "react";
 import { BrowserRouter, Route, Routes, Navigate } from "react-router-dom";
 import { Toaster as Sonner } from "@/components/ui/sonner";
 import NotFound from "./pages/NotFound.tsx";
-import { ActivatePage, AuthPage, ResendActivationPage } from "@/features/auth";
+import { ActivatePage, AuthPage, ResendActivationPage, PasswordRecoveryPage } from "@/features/auth";
 import { ChecklistPage, CollectionPage } from "@/features/collection";
 import { ProfilePage } from "@/features/profile";
 import {
@@ -49,6 +49,8 @@ const App = () => (
           <PublicNav />
           <main className="min-w-0 flex-1 flex flex-col md:ml-20 lg:ml-64 pb-16 md:pb-0">
             <Routes>
+              <Route path="/recuperar-senha" element={<PasswordRecoveryPage />} />
+              <Route path="/redefinir-senha/:token?" element={<PasswordRecoveryPage reset />} />
               <Route path="/" element={<Navigate to="/entrar" replace />} />
               <Route path="/entrar" element={<AuthPage />} />
               <Route path="/cadastrar" element={<AuthPage />} />
