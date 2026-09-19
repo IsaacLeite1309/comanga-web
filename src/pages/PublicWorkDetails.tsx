@@ -84,7 +84,7 @@ function EditionCard({ edition, workSlug, workTitle }: { edition: PublicEditionD
       </Link>
       {edition.volumes.length > 0 ? (
         <section className="mt-5" aria-label={`Prévia de Volumes da ${label}`}>
-          <div className="grid grid-cols-2 gap-3 sm:grid-cols-3 lg:max-w-xl">
+          <div className="grid grid-cols-2 gap-3 sm:grid-cols-3 lg:grid-cols-5">
             {edition.volumes.map((volume) => (
               <VolumePreview key={volume.id} volume={volume} workTitle={workTitle} />
             ))}
@@ -188,7 +188,7 @@ function PublicWorkDetails() {
             <h1 className="text-3xl font-bold text-foreground sm:text-4xl">{work.title}</h1>
 
             {work.synopsis ? (
-              <section className="mt-6" aria-labelledby="synopsis-title">
+              <section className="mt-6 max-w-5xl" aria-labelledby="synopsis-title">
                 <h2 id="synopsis-title" className="text-xs font-bold uppercase tracking-wide text-muted-foreground">Sinopse</h2>
                 <p className="mt-2 whitespace-pre-line text-sm font-medium leading-relaxed text-foreground">{work.synopsis}</p>
               </section>
@@ -232,7 +232,7 @@ function PublicWorkDetails() {
             </dl>
           </aside>
 
-          <section className="order-4 min-w-0 border-t border-border pt-7 md:col-start-2 md:row-start-2" aria-labelledby="editions-title">
+          <section className="order-4 w-full max-w-5xl min-w-0 border-t border-border pt-7 md:col-start-2 md:row-start-2" aria-labelledby="editions-title">
             <h2 id="editions-title" className="text-2xl font-bold text-foreground">Edições brasileiras</h2>
 
             {work.editions.length > 0 ? (

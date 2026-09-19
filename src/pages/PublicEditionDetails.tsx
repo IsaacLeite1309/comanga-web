@@ -233,7 +233,7 @@ function PublicEditionDetails() {
 
               {volumes.length > 0 ? (
                 <>
-                  <div className="mt-5 grid grid-cols-2 gap-x-3 gap-y-7 sm:grid-cols-3 sm:gap-x-4 lg:grid-cols-4 xl:grid-cols-5" aria-label="Volumes da Edição">
+                  <div className="mt-5 grid grid-cols-2 gap-x-3 gap-y-7 sm:grid-cols-3 sm:gap-x-4 lg:grid-cols-5" aria-label="Volumes da Edição">
                     {volumes.map((volume) => <VolumeCard key={volume.id} volume={volume} workTitle={edition.work.title} />)}
                   </div>
                   <CatalogPagination pagination={pagination} onPageChange={changePage} ariaLabel="Paginação dos Volumes" />
