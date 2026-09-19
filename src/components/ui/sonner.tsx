@@ -15,9 +15,9 @@ const Toaster = ({ ...props }: ToasterProps) => {
           toast:
             "group toast !bg-slate-50 !text-slate-800 !border-slate-200 !shadow-2xl text-base p-4",
           error:
-            "!bg-red-50 !text-red-800 !border-red-200 !border-l-4 !border-l-red-500 !pr-12 [&_[data-icon]]:!text-red-600 [&_[data-close-button]]:!text-red-600",
+            "!border-l-4 !pr-12 [&[data-type=error]]:!bg-[#fff1f2] [&[data-type=error]]:!text-[#b42318] [&[data-type=error]]:!border-[#fecdd3] [&[data-type=error]]:!border-l-[#ef4444] [&[data-type=error]_[data-title]]:!text-[#b42318] [&_[data-icon]]:!text-red-600 [&_[data-close-button]]:!text-red-600",
           success:
-            "!bg-green-50 !text-green-800 !border-green-200 !border-l-4 !border-l-green-500 !pr-12 [&_[data-icon]]:!text-green-600 [&_[data-close-button]]:!text-green-600",
+            "!border-l-4 !pr-12 [&[data-type=success]]:!bg-[#effcf3] [&[data-type=success]]:!text-[#237a45] [&[data-type=success]]:!border-[#bbf7d0] [&[data-type=success]]:!border-l-[#22c55e] [&[data-type=success]_[data-title]]:!text-[#237a45] [&_[data-icon]]:!text-green-600 [&_[data-close-button]]:!text-green-600",
           description: "group-[.toast]:text-muted-foreground",
           closeButton:
             "!left-auto !right-3 !top-1/2 !h-9 !w-9 !-translate-y-1/2 !translate-x-0 !border-0 !bg-transparent !text-slate-500 hover:!bg-black/5 hover:!text-slate-800 [&>svg]:!h-4 [&>svg]:!w-4",
