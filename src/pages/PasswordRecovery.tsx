@@ -1,6 +1,7 @@
 import { useState, type FormEvent } from "react";
-import { Link, useParams } from "react-router-dom";
+import { Link, useNavigate, useParams } from "react-router-dom";
 import { ArrowLeft, Eye, EyeOff, Send } from "lucide-react";
+import { toast } from "sonner";
 import { api } from "@/services/api";
 import { getApiError } from "@/lib/apiError";
 import { validatePassword } from "@/lib/passwordValidation";
@@ -13,12 +14,12 @@ export default function PasswordRecovery({ reset = false }: { reset?: boolean })
 
 function PasswordRecoveryForm({ reset, token }: { reset: boolean; token?: string }) {
   const [email, setEmail] = useState("");
+  const navigate = useNavigate();
   const [password, setPassword] = useState("");
   const [confirmation, setConfirmation] = useState("");
   const [showPassword, setShowPassword] = useState(false);
   const [showConfirmation, setShowConfirmation] = useState(false);
   const [loading, setLoading] = useState(false);
-  const [message, setMessage] = useState("");
   const [error, setError] = useState("");
 
   async function submit(event: FormEvent) {
@@ -39,8 +40,12 @@ function PasswordRecoveryForm({ reset, token }: { reset: boolean; token?: string
     try {
       const response = await api.post(reset ? "/auth/reset-password" : "/auth/forgot-password",
         reset ? { token, password, confirmPassword: confirmation } : { email });
-      setMessage(response.data.message);
-      setPassword(""); setConfirmation("");
+      if (reset) {
+        toast.success("Senha redefinida com sucesso. Faça login novamente.");
+        navigate("/entrar");
+      } else {
+        toast.success(response.data.message);
+      }
     } catch (cause) {
       setError(getApiError(cause, "Não foi possível concluir. Tente novamente."));
     } finally { setLoading(false); }
@@ -70,7 +75,7 @@ function PasswordRecoveryForm({ reset, token }: { reset: boolean; token?: string
         </p>
       )}
       {reset && <div className="mb-8" />}
-      {message ? <p role="status">{message}</p> : <form onSubmit={submit} className="space-y-4">
+      <form onSubmit={submit} className="space-y-4">
         {reset ? <>
           <div className="relative">
             <input aria-label="Nova senha" type={showPassword ? "text" : "password"} autoComplete="new-password" required value={password} onChange={event => setPassword(event.target.value)} placeholder="Nova senha" className={`${fieldClass} pr-12`} />
@@ -90,7 +95,7 @@ function PasswordRecoveryForm({ reset, token }: { reset: boolean; token?: string
           {!reset && !loading && <Send className="h-5 w-5" />}
           {loading ? "AGUARDE..." : reset ? "SALVAR NOVA SENHA" : "ENVIAR INSTRUÇÕES"}
         </button>
-      </form>}
+      </form>
       {reset && <div className="mt-5 text-center text-sm text-muted-foreground"><Link to="/recuperar-senha" className="underline underline-offset-2 hover:text-primary transition-colors">Solicitar novo link</Link></div>}
     </section>
   </main>;
