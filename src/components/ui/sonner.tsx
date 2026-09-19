@@ -15,10 +15,12 @@ const Toaster = ({ ...props }: ToasterProps) => {
           toast:
             "group toast group-[.toaster]:bg-background group-[.toaster]:text-foreground group-[.toaster]:border-border group-[.toaster]:shadow-2xl text-base p-4",
           error:
-            "!bg-red-500 !text-white !border-red-600 [&_[data-close-button]]:!border-white [&_[data-close-button]]:!bg-white [&_[data-close-button]]:!text-red-500 [&_[data-close-button]:hover]:!bg-red-50",
+            "!border-l-4 !border-l-red-500 !pr-12 [&_[data-icon]]:!text-red-400 [&_[data-close-button]]:!text-red-400",
           success:
-            "!bg-green-500 !text-white !border-green-600 [&_[data-close-button]]:!border-white [&_[data-close-button]]:!bg-white [&_[data-close-button]]:!text-green-500 [&_[data-close-button]:hover]:!bg-green-50",
+            "!border-l-4 !border-l-green-500 !pr-12 [&_[data-icon]]:!text-green-400 [&_[data-close-button]]:!text-green-400",
           description: "group-[.toast]:text-muted-foreground",
+          closeButton:
+            "!left-auto !right-3 !top-1/2 !h-8 !w-8 !-translate-y-1/2 !translate-x-0 !border-0 !bg-transparent !text-muted-foreground hover:!bg-white/10 hover:!text-foreground",
           actionButton: "group-[.toast]:bg-primary group-[.toast]:text-primary-foreground",
           cancelButton: "group-[.toast]:bg-muted group-[.toast]:text-muted-foreground",
         },
