@@ -184,16 +184,34 @@ function PublicWorkDetails() {
             className="order-1 w-full max-w-52 justify-self-center md:col-start-1 md:row-start-1 md:justify-self-start"
           />
 
-          <div className="order-2 min-w-0 md:col-start-2 md:row-start-1">
-            <h1 className="text-3xl font-bold text-foreground sm:text-4xl">{work.title}</h1>
+          <div className="contents md:col-start-2 md:row-span-2 md:block">
+            <div className="order-2 min-w-0">
+              <h1 className="text-3xl font-bold text-foreground sm:text-4xl">{work.title}</h1>
 
-            {work.synopsis ? (
-              <section className="mt-6 max-w-5xl" aria-labelledby="synopsis-title">
-                <h2 id="synopsis-title" className="text-xs font-bold uppercase tracking-wide text-muted-foreground">Sinopse</h2>
-                <p className="mt-2 whitespace-pre-line text-sm font-medium leading-relaxed text-foreground">{work.synopsis}</p>
-              </section>
-            ) : null}
+              {work.synopsis ? (
+                <section className="mt-6" aria-labelledby="synopsis-title">
+                  <h2 id="synopsis-title" className="text-xs font-bold uppercase tracking-wide text-muted-foreground">Sinopse</h2>
+                  <p className="mt-2 whitespace-pre-line text-sm font-medium leading-relaxed text-foreground">{work.synopsis}</p>
+                </section>
+              ) : null}
 
+            </div>
+
+            <section className="order-4 mt-0 min-w-0 border-t border-border pt-7 md:mt-7" aria-labelledby="editions-title">
+              <h2 id="editions-title" className="text-2xl font-bold text-foreground">Edições brasileiras</h2>
+
+              {work.editions.length > 0 ? (
+                <div className="mt-5 divide-y divide-border">
+                  {work.editions.map((edition) => (
+                    <EditionCard key={edition.id} edition={edition} workSlug={work.slug} workTitle={work.title} />
+                  ))}
+                </div>
+              ) : (
+                <div className="mt-5 border-t border-border py-12 text-center">
+                  <p className="text-sm font-semibold text-muted-foreground">Nenhuma Edição pública cadastrada para esta Obra.</p>
+                </div>
+              )}
+            </section>
           </div>
 
           <aside className="relative order-3 w-full border-b border-border pb-7 md:col-start-1 md:row-start-2 md:border-b-0 md:pb-0 md:pr-7 md:pt-7" aria-label="Informações da obra">
@@ -232,21 +250,6 @@ function PublicWorkDetails() {
             </dl>
           </aside>
 
-          <section className="order-4 w-full max-w-5xl min-w-0 border-t border-border pt-7 md:col-start-2 md:row-start-2" aria-labelledby="editions-title">
-            <h2 id="editions-title" className="text-2xl font-bold text-foreground">Edições brasileiras</h2>
-
-            {work.editions.length > 0 ? (
-              <div className="mt-5 divide-y divide-border">
-                {work.editions.map((edition) => (
-                  <EditionCard key={edition.id} edition={edition} workSlug={work.slug} workTitle={work.title} />
-                ))}
-              </div>
-            ) : (
-              <div className="mt-5 border-t border-border py-12 text-center">
-                <p className="text-sm font-semibold text-muted-foreground">Nenhuma Edição pública cadastrada para esta Obra.</p>
-              </div>
-            )}
-          </section>
         </section>
       </div>
     </div>
