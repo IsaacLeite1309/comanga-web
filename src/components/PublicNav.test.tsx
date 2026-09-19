@@ -31,8 +31,10 @@ describe("PublicNav", () => {
   });
 
   it("renderiza links principais e destaca entrada para visitante", () => {
-    renderPublicNav("/entrar");
+    const { container } = renderPublicNav("/entrar");
 
+    expect(container).toHaveTextContent("CoMangá");
+    expect(container.querySelector("a button")).not.toBeInTheDocument();
     expect(screen.getAllByText("Pesquisar").length).toBeGreaterThan(0);
     expect(screen.getAllByText("Checklists").length).toBeGreaterThan(0);
     expect(screen.getAllByText("Lista de Desejos").length).toBeGreaterThan(0);
@@ -53,6 +55,7 @@ describe("PublicNav", () => {
     expect(screen.getAllByText("Gerenciar Mangás").length).toBeGreaterThan(0);
     expect(screen.getAllByText("Gerenciar Opções").length).toBeGreaterThan(0);
     expect(screen.getAllByText("Gerenciar Usuários").length).toBeGreaterThan(0);
+    expect(screen.queryByRole("link", { name: /pesquisar/i })).not.toBeInTheDocument();
   });
 
   it("renderiza link de perfil quando o usuario esta autenticado", () => {

@@ -1,10 +1,13 @@
 ﻿import { useEffect, useMemo, useState } from "react";
-import { ArrowDownAZ, ArrowUpAZ, Check, ChevronDown, Globe2, LayoutGrid, List, Loader2, Lock, Search, Settings, Trash2 } from "lucide-react";
-import { isAxiosError } from "axios";
+import { ArrowDownAZ, ArrowUpAZ, Check, ChevronDown, LayoutGrid, List, Loader2, Search, Settings, Trash2 } from "lucide-react";
 import { Link } from "react-router-dom";
 import { api } from "@/services/api";
 import { toast } from "sonner";
 import { useDropdown } from "@/hooks/useDropdown";
+import { getApiError } from "@/lib/apiError";
+import { workAdminPath } from "@/lib/catalogPaths";
+import { CatalogVisibilityAction } from "@/components/catalog/CatalogVisibility";
+import { EmptyState, LoadingState } from "@/components/shared/AsyncState";
 
 type WorkVisibility = "Privado" | "Público";
 type SortOrder = "ASC" | "DESC";
@@ -24,6 +27,7 @@ interface OptionValue {
 
 interface WorkSummary {
   id: number;
+  slug: string;
   title: string;
   originalTitle?: string | null;
   coverUrl?: string | null;
@@ -62,39 +66,13 @@ interface FilterOption {
   label: string;
 }
 
-function getApiError(error: unknown, fallback: string) {
-  if (isAxiosError(error) && error.response?.data?.error) {
-    return error.response.data.error;
-  }
-
-  return fallback;
-}
-
-function visibilityBadgeClassName(visibility: WorkVisibility) {
-  return visibility === "Público"
-    ? "border border-green-500/30 bg-green-500/15 text-green-300"
-    : "border border-yellow-500/30 bg-yellow-500/15 text-yellow-300";
-}
-
-function visibilityActionClassName(visibility: WorkVisibility) {
-  return visibility === "Público"
-    ? "border-green-500/40 bg-green-500/15 text-green-300 hover:border-green-400 hover:bg-green-500/25"
-    : "border-yellow-500/40 bg-yellow-500/15 text-yellow-300 hover:border-yellow-400 hover:bg-yellow-500/25";
-}
-
-function VisibilityIcon({ visibility, className = "h-3.5 w-3.5" }: { visibility: WorkVisibility; className?: string }) {
-  const Icon = visibility === "Público" ? Globe2 : Lock;
-
-  return <Icon className={className} />;
-}
-
 function formatEditionsCount(count?: number) {
   const total = count ?? 0;
   return `${total} ${total === 1 ? "edição" : "edições"}`;
 }
 
 function buildWorkEditPath(work: WorkSummary) {
-  return `/admin/editar-mangas/obras/${encodeURIComponent(work.title)}`;
+  return workAdminPath(work.slug);
 }
 
 function FilterDropdown({
@@ -439,15 +417,14 @@ const EditMangas = () => {
                 </div>
                 <h2 className="mt-2 truncate text-center text-sm font-bold text-foreground">{work.title}</h2>
                 <div className="mt-2 grid grid-cols-3 gap-1.5">
-                  <button
-                    type="button"
+                  <CatalogVisibilityAction
+                    visibility={work.visibility}
+                    ariaLabel={`Alterar visibilidade de ${work.title}`}
                     onClick={() => toggleVisibility(work)}
-                    disabled={updatingVisibilityId === work.id}
-                    aria-label={`Alterar visibilidade de ${work.title}`}
-                    className={visibilityActionClassName(work.visibility) + " inline-flex h-8 items-center justify-center rounded-md border transition-colors disabled:opacity-50"}
-                  >
-                    {updatingVisibilityId === work.id ? <Loader2 className="h-3.5 w-3.5 animate-spin" /> : <VisibilityIcon visibility={work.visibility} />}
-                  </button>
+                    loading={updatingVisibilityId === work.id}
+                    showLabel={false}
+                    className="h-8 w-full rounded-md"
+                  />
                   <Link
                     to={buildWorkEditPath(work)}
                     state={{ workId: work.id }}
@@ -485,16 +462,11 @@ const EditMangas = () => {
           </div>
 
           {loading ? (
-            <div className="flex items-center justify-center gap-2 px-4 py-12 text-muted-foreground">
-              <Loader2 className="h-5 w-5 animate-spin text-primary" />
-              Carregando Obras...
-            </div>
+            <LoadingState message="Carregando Obras..." />
           ) : error ? (
             <div className="px-4 py-12 text-center text-sm font-semibold text-red-300">{error}</div>
           ) : !hasWorks ? (
-            <div className="px-4 py-12 text-center text-sm font-semibold text-muted-foreground">
-              {emptyWorksMessage}
-            </div>
+            <EmptyState message={emptyWorksMessage} />
           ) : (
             works.map((work) => (
               <article
@@ -527,20 +499,13 @@ const EditMangas = () => {
                     <span className="rounded-full bg-muted px-2 py-1 text-xs font-semibold text-muted-foreground">
                       {work.country || "País não informado"}
                     </span>
-                    <button
-                      type="button"
+                    <CatalogVisibilityAction
+                      visibility={work.visibility}
+                      ariaLabel={`Alterar visibilidade compacta de ${work.title}`}
                       onClick={() => toggleVisibility(work)}
-                      disabled={updatingVisibilityId === work.id}
-                      aria-label={`Alterar visibilidade compacta de ${work.title}`}
-                      className={visibilityActionClassName(work.visibility) + " inline-flex items-center gap-1.5 rounded-lg border px-2 py-1 text-xs font-bold disabled:opacity-50"}
-                    >
-                      {updatingVisibilityId === work.id ? (
-                        <Loader2 className="h-3.5 w-3.5 animate-spin" />
-                      ) : (
-                        <VisibilityIcon visibility={work.visibility} className="h-3.5 w-3.5" />
-                      )}
-                      {work.visibility}
-                    </button>
+                      loading={updatingVisibilityId === work.id}
+                      className="h-7 min-w-0 px-2 text-xs"
+                    />
                   </div>
                 </div>
 
@@ -561,20 +526,12 @@ const EditMangas = () => {
                 </div>
 
                 <div className="hidden justify-self-start md:block">
-                  <button
-                    type="button"
+                  <CatalogVisibilityAction
+                    visibility={work.visibility}
+                    ariaLabel={`Alterar visibilidade de ${work.title}`}
                     onClick={() => toggleVisibility(work)}
-                    disabled={updatingVisibilityId === work.id}
-                    aria-label={`Alterar visibilidade de ${work.title}`}
-                    className={visibilityActionClassName(work.visibility) + " inline-flex h-10 min-w-[118px] items-center justify-center gap-2 rounded-lg border px-3 text-sm font-bold transition-colors disabled:opacity-50"}
-                  >
-                    {updatingVisibilityId === work.id ? (
-                      <Loader2 className="h-3.5 w-3.5 animate-spin" />
-                    ) : (
-                      <VisibilityIcon visibility={work.visibility} />
-                    )}
-                    {work.visibility}
-                  </button>
+                    loading={updatingVisibilityId === work.id}
+                  />
                 </div>
 
                 <div className="flex items-center justify-start gap-2 md:contents">

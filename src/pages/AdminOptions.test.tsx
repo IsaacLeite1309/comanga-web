@@ -534,8 +534,20 @@ describe("AdminOptions", () => {
     expect(screen.getByRole("button", { name: /editora brasileira/i })).toBeInTheDocument();
     expect(screen.getByRole("button", { name: /acabamento/i })).toBeInTheDocument();
     expect(screen.getByRole("button", { name: /formato/i })).toBeInTheDocument();
-    expect(screen.getByRole("button", { name: /miolo/i })).toBeInTheDocument();
+    expect(screen.queryByRole("button", { name: /miolo/i })).not.toBeInTheDocument();
     expect(screen.queryByRole("button", { name: /^autor$/i })).not.toBeInTheDocument();
+  });
+
+  it("preserva o formulario selecionado ao sair e voltar durante a sessao SPA", () => {
+    const firstRender = render(<AdminOptions />);
+
+    selectForm(/edição/i);
+    firstRender.unmount();
+
+    render(<AdminOptions />);
+
+    expect(screen.getByLabelText(/selecionar formulário/i)).toHaveTextContent("Edição");
+    expect(screen.getByLabelText(/selecionar categoria/i)).toHaveTextContent("Selecione");
   });
 
   it("exclui valor apos confirmacao", async () => {

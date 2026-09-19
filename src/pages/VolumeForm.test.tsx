@@ -4,6 +4,7 @@ import { beforeEach, describe, expect, it, vi } from "vitest";
 import VolumeForm from "@/pages/VolumeForm";
 import { api } from "@/services/api";
 import { toast } from "sonner";
+import { resetVolumeDraftMemoryForTests } from "@/pages/volumeDraftMemory";
 
 vi.mock("@/services/api", () => ({
   api: {
@@ -11,6 +12,35 @@ vi.mock("@/services/api", () => ({
     post: vi.fn(),
     patch: vi.fn(),
   },
+}));
+
+vi.mock("@/features/admin-media", () => ({
+  CoverImportField: ({ label, value, onChange, invalid }: {
+    label: string;
+    value: { assetId: string; coverUrl: string; pending: boolean } | null;
+    onChange: (value: { assetId: string; coverUrl: string; pending: boolean } | null) => void;
+    invalid?: boolean;
+  }) => (
+    <div>
+      <input
+        aria-label={`URL da ${label}`}
+        value={value?.coverUrl || ""}
+        onChange={(event) => {
+          try {
+            const url = new URL(event.target.value);
+            onChange(url.protocol === "https:" ? {
+              assetId: "7f28c7f0-c94f-46e8-b61c-6ea716f8f28e",
+              coverUrl: event.target.value,
+              pending: true,
+            } : null);
+          } catch {
+            onChange(null);
+          }
+        }}
+      />
+      {invalid && <span>Importe uma capa válida antes de continuar.</span>}
+    </div>
+  ),
 }));
 
 vi.mock("sonner", () => ({
@@ -35,6 +65,24 @@ function renderVolumeForm(path = "/admin/editar-mangas/obras/Naruto/edicoes/20/v
 describe("VolumeForm", () => {
   beforeEach(() => {
     vi.clearAllMocks();
+    resetVolumeDraftMemoryForTests();
+  });
+
+  it("preserva o rascunho e a etapa de um novo volume durante a navegacao SPA", () => {
+    const firstRender = renderVolumeForm();
+
+    fireEvent.change(screen.getByLabelText(/n.*mero do volume/i), { target: { value: "4" } });
+    fireEvent.change(screen.getByLabelText(/^data de publica/i), { target: { value: "2026-08-18" } });
+    fireEvent.click(screen.getByRole("button", { name: /continuar/i }));
+    fireEvent.change(screen.getByLabelText(/url da capa/i), {
+      target: { value: "https://cdn.comanga.test/rascunho-volume.jpg" },
+    });
+    firstRender.unmount();
+
+    renderVolumeForm();
+
+    expect(screen.getByLabelText(/url da capa/i)).toHaveValue("https://cdn.comanga.test/rascunho-volume.jpg");
+    expect(screen.getByRole("button", { name: /etapa 2/i })).toHaveClass("bg-primary");
   });
 
   it("cadastra volume enviando os dados para a API da edicao", async () => {
@@ -43,12 +91,12 @@ describe("VolumeForm", () => {
     renderVolumeForm();
 
     fireEvent.change(screen.getByLabelText(/n.*mero do volume/i), { target: { value: "0" } });
-    fireEvent.click(screen.getByRole("button", { name: /^volume único$/i }));
+    fireEvent.click(screen.getByRole("switch", { name: /^volume único$/i }));
     fireEvent.change(screen.getByLabelText(/^data de publica/i), { target: { value: "2026-01-10" } });
     fireEvent.change(screen.getByLabelText(/pre.*o de capa/i), { target: { value: "39.9" } });
     fireEvent.change(screen.getByLabelText(/n.*mero de p.*ginas/i), { target: { value: "208" } });
     fireEvent.change(screen.getByLabelText(/isbn-10/i), { target: { value: "123456789X" } });
-    fireEvent.change(screen.getByLabelText(/isbn-13/i), { target: { value: "9781234567890" } });
+    fireEvent.change(screen.getByLabelText(/isbn-13/i), { target: { value: "9781234567897" } });
     fireEvent.click(screen.getByRole("button", { name: /continuar/i }));
     fireEvent.change(screen.getByLabelText(/url da capa/i), { target: { value: "https://cdn.comanga.test/volume-1.jpg" } });
     fireEvent.click(screen.getByRole("button", { name: /salvar/i }));
@@ -64,9 +112,9 @@ describe("VolumeForm", () => {
         releaseYear: 2026,
         releaseMonth: 1,
         releaseDay: 10,
-        coverUrl: "https://cdn.comanga.test/volume-1.jpg",
+        coverAssetId: "7f28c7f0-c94f-46e8-b61c-6ea716f8f28e",
         isbn10: "123456789X",
-        isbn13: "9781234567890",
+        isbn13: "9781234567897",
       }));
     });
   });
@@ -89,19 +137,19 @@ describe("VolumeForm", () => {
     expect(screen.queryByLabelText(/url da capa/i)).not.toBeInTheDocument();
   });
 
-  it("nao mostra erro de url da capa ao continuar a partir da etapa de dados", () => {
+  it("so exige a capa importada ao salvar na etapa de capa", () => {
     renderVolumeForm();
 
     fireEvent.change(screen.getByLabelText(/n.*mero do volume/i), { target: { value: "1" } });
     fireEvent.change(screen.getByLabelText(/^data de publica/i), { target: { value: "2026-01-10" } });
     fireEvent.click(screen.getByRole("button", { name: /continuar/i }));
     fireEvent.click(screen.getByRole("button", { name: /salvar/i }));
-    expect(screen.getByText(/url absoluta/i)).toBeInTheDocument();
+    expect(screen.getByText(/importe uma capa v.*lida/i)).toBeInTheDocument();
 
     fireEvent.click(screen.getByRole("button", { name: /voltar/i }));
     fireEvent.click(screen.getByRole("button", { name: /continuar/i }));
 
-    expect(screen.queryByText(/url absoluta/i)).not.toBeInTheDocument();
+    expect(screen.queryByText(/importe uma capa v.*lida/i)).not.toBeInTheDocument();
   });
 
   it("carrega e atualiza um volume existente com dados opcionais vazios", async () => {
@@ -112,6 +160,7 @@ describe("VolumeForm", () => {
           editionId: 20,
           number: 2,
           singleVolume: false,
+          coverAssetId: "7f28c7f0-c94f-46e8-b61c-6ea716f8f28e",
           coverUrl: "https://cdn.comanga.test/volume-2.jpg",
           pages: null,
           price: null,
@@ -175,7 +224,7 @@ describe("VolumeForm", () => {
     })));
   });
 
-  it("valida URLs e valores numericos antes de salvar", () => {
+  it("valida a capa importada, o link afiliado e valores numericos antes de salvar", () => {
     renderVolumeForm();
 
     fireEvent.change(screen.getByLabelText(/n.*mero do volume/i), { target: { value: "1" } });
@@ -187,7 +236,7 @@ describe("VolumeForm", () => {
     fireEvent.change(screen.getByLabelText(/url da capa/i), { target: { value: "capa-invalida" } });
     fireEvent.click(screen.getByRole("button", { name: /salvar/i }));
 
-    expect(screen.getByText(/informe uma url absoluta v.lida/i)).toBeInTheDocument();
+    expect(screen.getByText(/importe uma capa v.*lida/i)).toBeInTheDocument();
     expect(api.post).not.toHaveBeenCalled();
   });
 

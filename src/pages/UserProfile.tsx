@@ -10,6 +10,7 @@ interface UserProfileData {
   username: string;
   email: string;
   conteudo_adulto: boolean;
+  can_enable_adult_content: boolean;
 }
 
 const UserProfile = () => {
@@ -37,7 +38,7 @@ const UserProfile = () => {
       });
       setProfile({ ...profile, conteudo_adulto: newStatus });
       toast.success(`Conteúdo +18 ${newStatus ? "ativado" : "desativado"}.`);
-    } catch (error) {
+    } catch {
       toast.error("Erro ao atualizar o filtro de conteúdo.");
     } finally {
       setIsUpdating(false);
@@ -151,7 +152,7 @@ const UserProfile = () => {
                 </span>
               </div>
 
-              <button
+              {profile.can_enable_adult_content ? <button
                 onClick={toggleAdultContent}
                 disabled={isUpdating}
                 aria-pressed={profile.conteudo_adulto}
@@ -165,7 +166,7 @@ const UserProfile = () => {
                     profile.conteudo_adulto ? "translate-x-5" : "translate-x-0"
                   }`}
                 />
-              </button>
+              </button> : <p className="max-w-40 text-xs text-muted-foreground">Disponível apenas com data de nascimento informada e 18 anos completos.</p>}
             </div>
 
             <div className="rounded-xl border border-border bg-muted/20">

@@ -32,7 +32,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
       try {
         const response = await api.get("/auth/me");
         setUser(response.data.user);
-      } catch (error) {
+      } catch {
         setUser(null);
       } finally {
         setLoading(false);

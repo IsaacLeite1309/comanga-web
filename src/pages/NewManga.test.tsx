@@ -15,6 +15,36 @@ vi.mock("@/services/api", () => ({
   },
 }));
 
+vi.mock("@/features/admin-media", () => ({
+  CoverImportField: ({ label, value, onChange, invalid }: {
+    label: string;
+    value: { assetId: string; coverUrl: string; pending: boolean } | null;
+    onChange: (value: { assetId: string; coverUrl: string; pending: boolean } | null) => void;
+    invalid?: boolean;
+  }) => (
+    <div>
+      <input
+        aria-label={`URL da ${label}`}
+        value={value?.coverUrl || ""}
+        onChange={(event) => {
+          try {
+            const url = new URL(event.target.value);
+            onChange(url.protocol === "https:" ? {
+              assetId: "7f28c7f0-c94f-46e8-b61c-6ea716f8f28e",
+              coverUrl: event.target.value,
+              pending: true,
+            } : null);
+          } catch {
+            onChange(null);
+          }
+        }}
+      />
+      {value?.coverUrl && <img src={value.coverUrl} alt={`Prévia da ${label}`} />}
+      {invalid && <span>Importe uma capa válida antes de continuar.</span>}
+    </div>
+  ),
+}));
+
 vi.mock("sonner", () => ({
   toast: {
     success: vi.fn(),
@@ -61,18 +91,11 @@ const formOptions = {
   originalPublishers: optionLists["editoras-originais"],
 };
 
-const editionOptions = {
-  brazilianPublishers: [{ id: 30, label: "Panini" }],
-  editionTypes: [{ id: 31, label: "Tankobon" }],
-  coverTypes: [{ id: 32, label: "Capa comum" }],
-  formats: [{ id: 33, label: "Impresso" }],
-  brazilPublicationStatuses: [{ id: 34, label: "Completo" }],
-};
-
 const workDetail = {
   id: 10,
   title: "Naruto",
   originalTitle: "Naruto",
+  coverAssetId: "7f28c7f0-c94f-46e8-b61c-6ea716f8f28e",
   coverUrl: "https://cdn.comanga.test/naruto.jpg",
   country: "Japão",
   type: { id: 9, label: "Manga" },
@@ -82,7 +105,7 @@ const workDetail = {
   originalVolumeCount: 72,
   directRelease: false,
   originalPublishers: [{ id: 19, label: "Shueisha" }],
-  originalPublicationStatus: "Completo",
+  originalPublicationStatus: "Completa",
   authors: [{ author: { id: 1, label: "Masashi Kishimoto" }, roles: ["História e Arte"] }],
   genres: [{ id: 7, label: "Acao" }],
   demographics: ["Shonen"],
@@ -159,7 +182,7 @@ async function goToPublicationStep() {
 
 async function fillPublicationFields() {
   await chooseDropdown(/editora original/i, /shueisha/i);
-  await chooseDropdown(/status de publica.*o original/i, /completo/i);
+  await chooseDropdown(/status de publica.*o original/i, /completa/i);
   await chooseDropdown(/in.*cio da publica.*o original/i, /1999/i);
   await chooseDropdown(/fim da publica.*o original/i, /2014/i);
   fireEvent.change(screen.getByLabelText(/n.*mero de volumes originais/i), { target: { value: "72" } });
@@ -192,6 +215,7 @@ describe("NewManga", () => {
       data: {
         work: {
           id: 1,
+          slug: "naruto",
           title: "Naruto",
         },
       },
@@ -216,11 +240,11 @@ describe("NewManga", () => {
         typeId: 9,
         country: "Japão",
         originalPublisherIds: [{ id: 19, position: 0 }],
-        originalPublicationStatus: "Completo",
+        originalPublicationStatus: "Completa",
         originalPublicationStartYear: 1999,
         originalPublicationEndYear: 2014,
         originalVolumeCount: 72,
-        coverUrl: "https://cdn.comanga.test/naruto.jpg",
+        coverAssetId: "7f28c7f0-c94f-46e8-b61c-6ea716f8f28e",
         directRelease: false,
         authors: [{ authorId: 1, roles: ["História e Arte"] }],
         genreIds: [7],
@@ -239,6 +263,7 @@ describe("NewManga", () => {
       data: {
         work: {
           id: 1,
+          slug: "naruto",
           title: "Naruto",
         },
       },
@@ -254,7 +279,7 @@ describe("NewManga", () => {
     fireEvent.click(screen.getByRole("button", { name: /shogakukan/i }));
     fireEvent.click(screen.getByRole("button", { name: /mover shogakukan para cima/i }));
 
-    await chooseDropdown(/status de publica.*o original/i, /completo/i);
+    await chooseDropdown(/status de publica.*o original/i, /completa/i);
     await chooseDropdown(/in.*cio da publica.*o original/i, /1999/i);
     await chooseDropdown(/fim da publica.*o original/i, /2014/i);
     fireEvent.change(screen.getByLabelText(/n.*mero de volumes originais/i), { target: { value: "72" } });
@@ -361,7 +386,7 @@ describe("NewManga", () => {
   });
 
   it("desabilita demografia e revista quando lancamento direto esta ativo", async () => {
-    vi.mocked(api.post).mockResolvedValueOnce({ data: { work: { id: 1, title: "Naruto" } } });
+    vi.mocked(api.post).mockResolvedValueOnce({ data: { work: { id: 1, slug: "naruto", title: "Naruto" } } });
 
     renderNewManga();
 
@@ -560,7 +585,7 @@ describe("NewManga", () => {
     });
   });
 
-  it("marca campos obrigatorios e diferencia URL de capa invalida", async () => {
+  it("marca os campos obrigatorios e exige uma capa importada", async () => {
     renderNewManga();
 
     expect(await screen.findByRole("heading", { name: /novo mang/i })).toBeInTheDocument();
@@ -572,7 +597,7 @@ describe("NewManga", () => {
     fireEvent.change(screen.getByLabelText(/url da capa/i), { target: { value: "ftp://capas.test/naruto.jpg" } });
     fireEvent.click(screen.getByRole("button", { name: /continuar/i }));
 
-    expect(screen.getByText(/informe uma url absoluta v.*lida para a capa/i)).toBeInTheDocument();
+    expect(screen.getByText(/importe uma capa v.*lida antes de continuar/i)).toBeInTheDocument();
   });
 
   it("filtra um dropdown pesquisavel e informa quando nao ha resultado", async () => {
@@ -603,7 +628,7 @@ describe("NewManga", () => {
   }, 30000);
 
   it("salva publicacao em andamento sem fim nem total de volumes", async () => {
-    vi.mocked(api.post).mockResolvedValueOnce({ data: { work: { id: 1, title: "Naruto" } } });
+    vi.mocked(api.post).mockResolvedValueOnce({ data: { work: { id: 1, slug: "naruto", title: "Naruto" } } });
     renderNewManga();
 
     expect(await screen.findByRole("heading", { name: /novo mang/i })).toBeInTheDocument();

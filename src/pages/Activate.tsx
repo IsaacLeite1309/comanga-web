@@ -1,6 +1,6 @@
 import { useEffect, useRef, useState } from "react";
 import { useParams, Link } from "react-router-dom";
-import { Check, XCircle, Loader2 } from "lucide-react";
+import { Check, X, Loader2 } from "lucide-react";
 import { api } from "@/services/api";
 import { BrandLogo } from "@/components/BrandLogo";
 
@@ -59,7 +59,7 @@ const Activate = () => {
       </div>
 
       {/* Card */}
-      <div className="w-full max-w-md p-8 bg-card rounded-2xl border border-border shadow-2xl">
+      <div className="w-full max-w-md p-8 bg-background rounded-2xl border border-border">
         {status === "loading" && (
           <div className="flex flex-col items-center gap-4 py-8">
             <Loader2 className="h-12 w-12 text-primary animate-spin" />
@@ -91,8 +91,8 @@ const Activate = () => {
 
         {status === "error" && (
           <div className="flex flex-col items-center gap-4 py-8">
-            <div className="h-16 w-16 rounded-full bg-red-500/10 flex items-center justify-center">
-              <XCircle className="h-10 w-10 text-red-500" />
+            <div className="h-16 w-16 rounded-full bg-red-500 flex items-center justify-center">
+              <X className="h-10 w-10 text-white" strokeWidth={3} />
             </div>
             <h2 className="text-2xl font-semibold text-foreground text-center">
               Falha na ativação

@@ -2,6 +2,15 @@ let rememberedSelectedCategory = "";
 let rememberedNewValue = "";
 let rememberedSelectedCountryIds: number[] = [];
 let rememberedSearchTerm = "";
+let rememberedSelectedForm: "obra" | "edicao" = "obra";
+
+export function getRememberedAdminOptionsForm() {
+  return rememberedSelectedForm;
+}
+
+export function rememberAdminOptionsForm(form: "obra" | "edicao") {
+  rememberedSelectedForm = form;
+}
 
 export function getRememberedAdminOptionsCategory() {
   return rememberedSelectedCategory;
@@ -40,4 +49,5 @@ export function resetAdminOptionsMemoryForTests() {
   rememberedNewValue = "";
   rememberedSelectedCountryIds = [];
   rememberedSearchTerm = "";
+  rememberedSelectedForm = "obra";
 }

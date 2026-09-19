@@ -1,11 +1,26 @@
-import { useEffect, useId, useMemo, useState } from "react";
+import { useEffect, useMemo, useState } from "react";
 import { Link, useLocation, useNavigate, useParams } from "react-router-dom";
-import { ArrowLeft, ChevronDown, Loader2, RotateCcw, Save } from "lucide-react";
-import { isAxiosError } from "axios";
+import { ArrowLeft, Loader2, RotateCcw, Save } from "lucide-react";
 import { toast } from "sonner";
 import { api } from "@/services/api";
-import { useDropdown } from "@/hooks/useDropdown";
 import { UnsavedChangesPrompt } from "@/hooks/useUnsavedChangesWarning";
+import { SearchableSelect } from "@/components/forms/SearchableSelect";
+import { InputField, SelectField, ToggleField } from "@/components/forms/FormFields";
+import { CoverImportField } from "@/features/admin-media";
+import { getApiError } from "@/lib/apiError";
+import {
+  editionAdminPath,
+  newVolumeAdminPath,
+  volumeAdminPath,
+} from "@/lib/catalogPaths";
+import {
+  emptyVolumeDraft,
+  getRememberedVolumeDraft,
+  rememberVolumeDraft,
+  resetVolumeDraftMemory,
+  type RememberedVolumeStep,
+  type VolumeDraft,
+} from "./volumeDraftMemory";
 
 interface LocationState {
   workId?: number;
@@ -18,6 +33,7 @@ interface Volume {
   editionId: number;
   number: number;
   singleVolume?: boolean | null;
+  coverAssetId?: string | null;
   coverUrl?: string | null;
   pages?: number | null;
   price?: number | null;
@@ -37,24 +53,8 @@ interface VolumeResponse {
 }
 
 type ReleaseDatePrecision = "Completa" | "Mes e ano" | "Ano";
-type VolumeStep = "details" | "media";
-
-interface FormState {
-  number: string;
-  singleVolume: boolean;
-  coverUrl: string;
-  pages: string;
-  price: string;
-  priceCurrency: string;
-  releaseDatePrecision: ReleaseDatePrecision;
-  releaseYear: string;
-  releaseMonth: string;
-  releaseDay: string;
-  isbn10: string;
-  isbn13: string;
-  affiliateLink: string;
-  synopsis: string;
-}
+type VolumeStep = RememberedVolumeStep;
+type FormState = VolumeDraft;
 
 const PRICE_CURRENCY_OPTIONS = ["R$", "CR$", "Cr$", "NCz$", "Cz$"];
 
@@ -64,39 +64,12 @@ const RELEASE_PRECISION_OPTIONS: Array<{ value: ReleaseDatePrecision; label: str
   { value: "Ano", label: "Apenas ano" },
 ];
 
-const emptyForm: FormState = {
-  number: "",
-  singleVolume: false,
-  coverUrl: "",
-  pages: "",
-  price: "",
-  priceCurrency: "R$",
-  releaseDatePrecision: "Completa",
-  releaseYear: "",
-  releaseMonth: "",
-  releaseDay: "",
-  isbn10: "",
-  isbn13: "",
-  affiliateLink: "",
-  synopsis: "",
-};
+const emptyForm = emptyVolumeDraft;
 
 const volumeSteps: Array<{ id: VolumeStep; title: string }> = [
   { id: "details", title: "Dados do Volume" },
   { id: "media", title: "Capa e sinopse" },
 ];
-
-function getApiError(error: unknown, fallback: string) {
-  if (isAxiosError(error) && error.response?.data?.error) {
-    return error.response.data.error;
-  }
-
-  return fallback;
-}
-
-function buildEditionPath(workSlug = "", editionId = "") {
-  return `/admin/editar-mangas/obras/${encodeURIComponent(decodeURIComponent(workSlug))}/edicoes/${editionId}`;
-}
 
 function isAbsoluteUrl(value: string) {
   if (!value) return true;
@@ -135,9 +108,11 @@ const VolumeForm = () => {
   const navigate = useNavigate();
   const state = location.state as LocationState | null;
   const isEditing = Boolean(volumeId);
-  const editionPath = useMemo(() => buildEditionPath(workSlug, editionId), [workSlug, editionId]);
-  const [form, setForm] = useState<FormState>(emptyForm);
-  const [currentStep, setCurrentStep] = useState<VolumeStep>("details");
+  const draftKey = `${workSlug.toLocaleLowerCase("pt-BR")}:${editionId || state?.editionId || ""}`;
+  const rememberedDraft = useMemo(() => getRememberedVolumeDraft(draftKey), [draftKey]);
+  const editionPath = useMemo(() => editionAdminPath(workSlug, editionId), [workSlug, editionId]);
+  const [form, setForm] = useState<FormState>(() => (isEditing ? emptyForm : rememberedDraft.form));
+  const [currentStep, setCurrentStep] = useState<VolumeStep>(() => (isEditing ? "details" : rememberedDraft.currentStep));
   const [loading, setLoading] = useState(isEditing);
   const [saving, setSaving] = useState(false);
   const [invalidFields, setInvalidFields] = useState<string[]>([]);
@@ -146,6 +121,10 @@ const VolumeForm = () => {
   const formSignature = useMemo(() => JSON.stringify(form), [form]);
 
   const hasUnsavedChanges = Boolean(baselineSignature) && formSignature !== baselineSignature && !saving;
+
+  useEffect(() => {
+    if (!isEditing) rememberVolumeDraft(draftKey, { form, currentStep });
+  }, [currentStep, draftKey, form, isEditing]);
 
   useEffect(() => {
     let isMounted = true;
@@ -165,7 +144,9 @@ const VolumeForm = () => {
         setForm({
           number: String(volume.number ?? ""),
           singleVolume: Boolean(volume.singleVolume),
+          coverAssetId: volume.coverAssetId || "",
           coverUrl: volume.coverUrl || "",
+          coverPending: false,
           pages: volume.pages ? String(volume.pages) : "",
           price: volume.price !== null && volume.price !== undefined ? String(volume.price) : "",
           priceCurrency: volume.priceCurrency || "R$",
@@ -181,7 +162,9 @@ const VolumeForm = () => {
         setBaselineSignature(JSON.stringify({
           number: String(volume.number ?? ""),
           singleVolume: Boolean(volume.singleVolume),
+          coverAssetId: volume.coverAssetId || "",
           coverUrl: volume.coverUrl || "",
+          coverPending: false,
           pages: volume.pages ? String(volume.pages) : "",
           price: volume.price !== null && volume.price !== undefined ? String(volume.price) : "",
           priceCurrency: volume.priceCurrency || "R$",
@@ -249,7 +232,7 @@ const VolumeForm = () => {
     const invalid: string[] = [];
 
     if (form.number === "" || Number(form.number) < 0) invalid.push("number");
-    if (!form.coverUrl || !isAbsoluteUrl(form.coverUrl)) invalid.push("coverUrl");
+    if (!form.coverAssetId) invalid.push("coverAssetId");
     if (form.affiliateLink && !isAbsoluteUrl(form.affiliateLink)) invalid.push("affiliateLink");
     if (form.pages && Number(form.pages) <= 0) invalid.push("pages");
     if (form.price && Number(form.price) < 0) invalid.push("price");
@@ -297,7 +280,7 @@ const VolumeForm = () => {
     return {
       number: Number(form.number),
       singleVolume: form.singleVolume,
-      coverUrl: form.coverUrl || null,
+      coverAssetId: form.coverAssetId || null,
       pages: form.pages ? Number(form.pages) : null,
       price: form.price ? Number(form.price) : null,
       priceCurrency: form.priceCurrency,
@@ -325,6 +308,7 @@ const VolumeForm = () => {
       } else {
         const response = await api.post<VolumeResponse>(`/admin/editions/${editionId || state?.editionId}/volumes`, buildPayload());
         toast.success("Volume cadastrado com sucesso.");
+        resetVolumeDraftMemory(draftKey);
         setBaselineSignature(formSignature);
         navigate("/admin/pos-cadastro", {
           state: {
@@ -333,12 +317,12 @@ const VolumeForm = () => {
             actions: [
               {
                 label: "Gerenciar este Volume",
-                to: `${editionPath}/volumes/${response.data.volume.id}`,
+                to: volumeAdminPath(workSlug, editionId || state?.editionId || "", response.data.volume.id),
                 state: { workId: state?.workId, editionId: state?.editionId || Number(editionId), volumeId: response.data.volume.id },
               },
               {
                 label: "Cadastrar novo Volume",
-                to: `${editionPath}/volumes/novo`,
+                to: newVolumeAdminPath(workSlug, editionId || state?.editionId || ""),
                 state: { workId: state?.workId, editionId: state?.editionId || Number(editionId) },
               },
             ],
@@ -497,26 +481,25 @@ const VolumeForm = () => {
               </div>
             ) : (
               <>
-                <div className="grid gap-4 md:grid-cols-[120px_1fr]">
-                  <div className="aspect-[2/3] w-28 overflow-hidden rounded-xl border border-border bg-input">
-                    {form.coverUrl && isAbsoluteUrl(form.coverUrl) ? (
-                      <img src={form.coverUrl} alt="Prévia da capa do Volume" className="h-full w-full object-cover" />
-                    ) : (
-                      <div className="flex h-full w-full items-center justify-center px-3 text-center text-xs font-semibold text-muted-foreground">
-                        Prévia
-                      </div>
-                    )}
-                  </div>
-                  <InputField
-                    label="URL da capa"
-                    value={form.coverUrl}
-                    onChange={(value) => updateField("coverUrl", value)}
-                    required
-                    invalid={invalidFields.includes("coverUrl")}
-                    errorMessage="Informe uma URL absoluta válida."
-                    placeholder="Digite"
-                  />
-                </div>
+                <CoverImportField
+                  label="Capa do Volume"
+                  required
+                  invalid={invalidFields.includes("coverAssetId")}
+                  value={form.coverAssetId ? {
+                    assetId: form.coverAssetId,
+                    coverUrl: form.coverUrl,
+                    pending: form.coverPending,
+                  } : null}
+                  onChange={(cover) => {
+                    setForm((current) => ({
+                      ...current,
+                      coverAssetId: cover?.assetId || "",
+                      coverUrl: cover?.coverUrl || "",
+                      coverPending: cover?.pending || false,
+                    }));
+                    setInvalidFields((current) => current.filter((field) => field !== "coverAssetId"));
+                  }}
+                />
 
                 <div>
                   <label className="mb-2 block text-xs font-bold uppercase tracking-wide text-muted-foreground">
@@ -540,6 +523,8 @@ const VolumeForm = () => {
               type="button"
               onClick={() => {
                 setForm(emptyForm);
+                setCurrentStep("details");
+                resetVolumeDraftMemory(draftKey);
                 setInvalidFields([]);
                 setBaselineSignature(JSON.stringify(emptyForm));
               }}
@@ -588,167 +573,6 @@ const VolumeForm = () => {
   );
 };
 
-function InputField({
-  label,
-  value,
-  onChange,
-  type = "text",
-  step,
-  required = false,
-  invalid = false,
-  errorMessage,
-  placeholder,
-}: {
-  label: string;
-  value: string;
-  onChange: (value: string) => void;
-  type?: string;
-  step?: string;
-  required?: boolean;
-  invalid?: boolean;
-  errorMessage?: string;
-  placeholder?: string;
-}) {
-  const inputId = useId();
-
-  return (
-    <div>
-      <label htmlFor={inputId} className="mb-2 block text-xs font-bold uppercase tracking-wide text-muted-foreground">
-        {label} {required && <span className="text-red-400">*</span>}
-      </label>
-      <input
-        id={inputId}
-        value={value}
-        onChange={(event) => onChange(event.target.value)}
-        type={type}
-        step={step}
-        placeholder={placeholder}
-        className={`h-12 w-full rounded-xl border bg-input px-4 text-base font-semibold text-foreground outline-none transition-colors placeholder:text-muted-foreground focus:border-primary ${
-          invalid ? "border-red-500" : "border-border"
-        }`}
-      />
-      {invalid && errorMessage && (
-        <p className="mt-2 text-sm font-semibold text-red-400">{errorMessage}</p>
-      )}
-    </div>
-  );
-}
-
-function ToggleField({
-  label,
-  checked,
-  onChange,
-}: {
-  label: string;
-  checked: boolean;
-  onChange: (checked: boolean) => void;
-}) {
-  return (
-    <div className="flex min-w-0 items-center gap-3">
-      <button
-        type="button"
-        aria-label={label}
-        aria-pressed={checked}
-        onClick={() => onChange(!checked)}
-        className={`relative h-6 w-11 shrink-0 rounded-full border transition-colors ${
-          checked ? "border-primary bg-primary" : "border-border bg-muted"
-        }`}
-      >
-        <span
-          className={`absolute left-0.5 top-0.5 h-5 w-5 rounded-full bg-white transition-transform ${
-            checked ? "translate-x-5" : "translate-x-0"
-          }`}
-        />
-      </button>
-      <span className="text-sm font-semibold text-muted-foreground">{label}</span>
-    </div>
-  );
-}
-
-function SelectField({
-  label,
-  value,
-  onChange,
-  options,
-}: {
-  label: string;
-  value: string;
-  onChange: (value: string) => void;
-  options: Array<{ value: string; label: string }>;
-}) {
-  const inputId = useId();
-
-  return (
-    <div>
-      <label id={inputId} className="mb-2 block text-xs font-bold uppercase tracking-wide text-muted-foreground">
-        {label}
-      </label>
-      <DropdownSelect ariaLabelledBy={inputId} value={value} onChange={onChange} options={options} />
-    </div>
-  );
-}
-
-function DropdownSelect({
-  ariaLabel,
-  ariaLabelledBy,
-  value,
-  onChange,
-  options,
-}: {
-  ariaLabel?: string;
-  ariaLabelledBy?: string;
-  value: string;
-  onChange: (value: string) => void;
-  options: Array<{ value: string; label: string }>;
-}) {
-  const { isOpen, closeDropdown, toggleDropdown, rootProps } = useDropdown();
-  const selectedOption = options.find((option) => option.value === value);
-
-  return (
-    <div className="relative" {...rootProps}>
-      <button
-        type="button"
-        aria-label={ariaLabel}
-        aria-labelledby={ariaLabelledBy}
-        aria-expanded={isOpen}
-        onClick={toggleDropdown}
-        className={`flex h-12 w-full items-center justify-between gap-3 rounded-xl border bg-input px-4 text-left text-base font-semibold text-foreground outline-none transition-colors ${
-          isOpen ? "border-primary ring-2 ring-primary/30" : "border-border"
-        }`}
-      >
-        <span className={selectedOption ? "truncate" : "truncate text-muted-foreground"}>
-          {selectedOption?.label || "Selecione"}
-        </span>
-        <ChevronDown className={`h-4 w-4 shrink-0 text-muted-foreground transition-transform ${isOpen ? "rotate-180" : ""}`} />
-      </button>
-
-      {isOpen && (
-        <div className="absolute z-40 mt-1 max-h-72 w-full overflow-y-auto rounded-xl border border-primary bg-input py-1 shadow-xl">
-          {options.map((option) => {
-            const selected = option.value === value;
-            return (
-              <button
-                key={option.value}
-                type="button"
-                onClick={() => {
-                  onChange(option.value);
-                  closeDropdown();
-                }}
-                className={`flex h-11 w-full items-center justify-between px-4 text-left text-base font-bold transition-colors ${
-                  selected ? "bg-primary text-primary-foreground" : "text-foreground hover:bg-primary/20"
-                }`}
-              >
-                <span className="truncate">{option.label}</span>
-                {selected && <span aria-hidden="true">✓</span>}
-              </button>
-            );
-          })}
-        </div>
-      )}
-    </div>
-  );
-}
-
 function ReleaseDateField({
   precision,
   value,
@@ -770,11 +594,12 @@ function ReleaseDateField({
         Data de publicação <span className="text-red-400">*</span>
       </label>
       <div className="grid gap-3 sm:grid-cols-[170px_1fr]">
-        <DropdownSelect
+        <SearchableSelect
           ariaLabel="Precisão da data de publicação"
           value={precision}
           onChange={(nextValue) => onPrecisionChange(nextValue as ReleaseDatePrecision)}
           options={RELEASE_PRECISION_OPTIONS}
+          className=""
         />
         <input
           aria-label="Data de publicação"
