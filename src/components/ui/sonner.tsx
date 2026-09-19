@@ -13,7 +13,7 @@ const Toaster = ({ ...props }: ToasterProps) => {
       toastOptions={{
         classNames: {
           toast:
-            "group toast group-[.toaster]:bg-background group-[.toaster]:text-foreground group-[.toaster]:border-border group-[.toaster]:shadow-2xl text-base p-4",
+            "group toast !bg-sidebar !text-foreground !border-white/15 !shadow-2xl text-base p-4",
           error:
             "!border-l-4 !border-l-red-500 !pr-12 [&_[data-icon]]:!text-red-400 [&_[data-close-button]]:!text-red-400",
           success:
