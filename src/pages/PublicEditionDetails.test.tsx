@@ -96,11 +96,11 @@ describe("PublicEditionDetails", () => {
     expect(screen.getByRole("heading", { name: "Em publicação com 25 volumes" })).toBeInTheDocument();
     expect(screen.queryByText("Status no Brasil")).not.toBeInTheDocument();
     expect(screen.getByText("2026-??")).toBeInTheDocument();
-    expect(screen.getByRole("link", { name: "Volumes à Coleção" })).toHaveAttribute(
+    expect(screen.getByRole("link", { name: "Coleção" })).toHaveAttribute(
       "href",
       "/obras/monster/edicao/20/selecionar/estante",
     );
-    expect(screen.getByRole("link", { name: "Volumes à Lista de Desejos" })).toHaveAttribute(
+    expect(screen.getByRole("link", { name: "Lista de Desejos" })).toHaveAttribute(
       "href",
       "/obras/monster/edicao/20/selecionar/desejos",
     );
