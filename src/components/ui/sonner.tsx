@@ -13,14 +13,14 @@ const Toaster = ({ ...props }: ToasterProps) => {
       toastOptions={{
         classNames: {
           toast:
-            "group toast !bg-sidebar !text-foreground !border-white/15 !shadow-2xl text-base p-4",
+            "group toast !bg-slate-50 !text-slate-800 !border-slate-200 !shadow-2xl text-base p-4",
           error:
-            "!border-l-4 !border-l-red-500 !pr-12 [&_[data-icon]]:!text-red-400 [&_[data-close-button]]:!text-red-400",
+            "!bg-red-50 !text-red-800 !border-red-200 !border-l-4 !border-l-red-500 !pr-12 [&_[data-icon]]:!text-red-600 [&_[data-close-button]]:!text-red-600",
           success:
-            "!border-l-4 !border-l-green-500 !pr-12 [&_[data-icon]]:!text-green-400 [&_[data-close-button]]:!text-green-400",
+            "!bg-green-50 !text-green-800 !border-green-200 !border-l-4 !border-l-green-500 !pr-12 [&_[data-icon]]:!text-green-600 [&_[data-close-button]]:!text-green-600",
           description: "group-[.toast]:text-muted-foreground",
           closeButton:
-            "!left-auto !right-3 !top-1/2 !h-9 !w-9 !-translate-y-1/2 !translate-x-0 !border-0 !bg-transparent !text-muted-foreground hover:!bg-white/10 hover:!text-foreground [&>svg]:!h-4 [&>svg]:!w-4",
+            "!left-auto !right-3 !top-1/2 !h-9 !w-9 !-translate-y-1/2 !translate-x-0 !border-0 !bg-transparent !text-slate-500 hover:!bg-black/5 hover:!text-slate-800 [&>svg]:!h-4 [&>svg]:!w-4",
           actionButton: "group-[.toast]:bg-primary group-[.toast]:text-primary-foreground",
           cancelButton: "group-[.toast]:bg-muted group-[.toast]:text-muted-foreground",
         },
