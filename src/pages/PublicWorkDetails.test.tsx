@@ -148,7 +148,7 @@ describe("PublicWorkDetails", () => {
     renderPage();
 
     expect(await screen.findByRole("heading", { name: "Edições brasileiras" })).toBeInTheDocument();
-    expect(screen.getByRole("heading", { name: "1ª edição Panini" })).toBeInTheDocument();
+    expect(screen.getByRole("heading", { name: /1ª edição\s*Panini/ })).toBeInTheDocument();
     expect(screen.queryByText("Regular")).not.toBeInTheDocument();
     expect(screen.getByText("Panini")).toBeInTheDocument();
     expect(screen.getByText((_, element) => (
@@ -161,7 +161,7 @@ describe("PublicWorkDetails", () => {
     );
     expect(screen.queryByText("15/05/2024")).not.toBeInTheDocument();
     expect(screen.queryByAltText("Capa da 1ª edição de Monster")).not.toBeInTheDocument();
-    expect(screen.getByRole("link", { name: "1ª edição Panini Em publicação com 9 volumes" })).toHaveAttribute(
+    expect(screen.getByRole("link", { name: /1ª edição\s*Panini Em publicação com 9 volumes/ })).toHaveAttribute(
       "href",
       "/obras/monster/edicao/20",
     );
