@@ -2,11 +2,11 @@ import { useEffect, useState } from "react";
 import {
   AlertCircle,
   ArrowLeft,
+  Barcode,
   BookOpen,
   Calendar,
-  ExternalLink,
-  FileText,
-  Hash,
+  ChevronRight,
+  Plus,
   ShoppingCart,
 } from "lucide-react";
 import { Link, useParams } from "react-router-dom";
@@ -107,22 +107,45 @@ function PublicVolumeDetails() {
   }
 
   const volumeLabel = publicVolumeLabel(volume);
-  const editionLabel = `${volume.edition.chronologicalNumber}ª Edição`;
+  const volumePageTitle = `${volume.edition.work.title} ${volumeLabel.replace(/^Volume\b/, "volume")}`;
+  const editionLabel = `${volume.edition.chronologicalNumber}ª edição`;
   const hasReleaseDate = Boolean(volume.releaseYear);
 
   return (
-    <div className="min-w-0 flex-1 bg-background">
-      <header className="border-b border-border bg-background/95 px-4 py-4 backdrop-blur sm:px-6 xl:px-8">
-        <div className="mx-auto flex w-full max-w-7xl items-center gap-4">
-          <Link aria-label={`Voltar para ${editionLabel}`} to={`/edicoes/${volume.edition.id}`} className="inline-flex min-w-0 items-center gap-2 text-sm font-bold text-foreground hover:text-primary">
-            <ArrowLeft className="h-4 w-4 shrink-0 text-primary" aria-hidden="true" />
-            <span className="truncate">{volumeLabel}</span>
+    <div className="min-w-0 flex-1 bg-background px-4 pb-7 pt-16 sm:px-6 sm:pb-9 xl:px-10">
+      <div className="mx-auto w-full max-w-7xl">
+        <div className="fixed inset-x-0 top-0 z-50 flex h-16 min-w-0 items-center gap-3 border-b border-border bg-background px-4 md:left-20 sm:px-6 lg:left-64 xl:px-10">
+          <Link
+            aria-label={`Voltar para ${editionLabel}`}
+            to={`/edicoes/${volume.edition.id}`}
+            className="inline-flex shrink-0 items-center gap-2 rounded-lg px-2 py-1 text-base font-bold leading-none text-foreground transition-colors hover:bg-sidebar-accent/30 hover:text-foreground"
+          >
+            <ArrowLeft className="h-5 w-5 text-primary" aria-hidden="true" />
+            Voltar
           </Link>
-        </div>
-      </header>
 
-      <div className="mx-auto grid min-h-[calc(100dvh-4.5rem)] w-full max-w-7xl lg:grid-cols-[minmax(22rem,1.05fr)_minmax(24rem,0.95fr)]">
-        <section className="relative isolate flex min-h-[34rem] items-center justify-center overflow-hidden border-b border-border p-8 sm:min-h-[42rem] sm:p-12 lg:min-h-0 lg:border-b-0 lg:border-r">
+          <nav className="flex min-w-0 items-center gap-1 text-base font-semibold leading-none" aria-label="Caminho de navegação">
+            <Link to="/pesquisa?tab=works&sortBy=title&order=ASC&page=1" className="shrink-0 rounded-lg px-2 py-1 text-muted-foreground transition-colors hover:bg-sidebar-accent/30 hover:text-foreground">
+              Pesquisar
+            </Link>
+            <ChevronRight className="h-5 w-5 shrink-0 text-muted-foreground" aria-hidden="true" />
+            <Link to={`/obras/${encodeURIComponent(volume.edition.work.slug)}`} className="truncate rounded-lg px-2 py-1 text-muted-foreground transition-colors hover:bg-sidebar-accent/30 hover:text-foreground" title={volume.edition.work.title}>
+              {volume.edition.work.title}
+            </Link>
+            <ChevronRight className="h-5 w-5 shrink-0 text-muted-foreground" aria-hidden="true" />
+            <Link to={`/edicoes/${volume.edition.id}`} className="shrink-0 rounded-lg px-2 py-1 text-muted-foreground transition-colors hover:bg-sidebar-accent/30 hover:text-foreground">
+              {editionLabel}
+            </Link>
+            <ChevronRight className="h-5 w-5 shrink-0 text-muted-foreground" aria-hidden="true" />
+            <span className="truncate rounded-lg bg-sidebar-accent/30 px-2 py-1 text-primary" aria-current="page">
+              {volumeLabel}
+            </span>
+          </nav>
+        </div>
+      </div>
+
+      <div className="-mx-4 grid min-h-[calc(100dvh-7.5rem)] w-[calc(100%+2rem)] sm:-mx-6 sm:w-[calc(100%+3rem)] xl:-mx-10 xl:w-[calc(100%+5rem)] lg:items-start lg:grid-cols-[minmax(22rem,0.85fr)_minmax(24rem,1.15fr)]">
+        <section className="relative isolate flex min-h-[34rem] items-center justify-center overflow-hidden border-b border-border p-8 sm:min-h-[42rem] sm:p-12 lg:fixed lg:bottom-0 lg:left-64 lg:top-16 lg:h-[calc(100dvh-4rem)] lg:w-[calc((100vw-16rem)*0.425)] lg:min-h-0 lg:border-b-0 lg:border-r">
           {volume.coverUrl ? (
             <>
               <img src={volume.coverUrl} alt="" aria-hidden="true" className="absolute inset-0 -z-20 h-full w-full scale-110 object-cover opacity-45 blur-2xl" />
@@ -136,64 +159,98 @@ function PublicVolumeDetails() {
             src={volume.coverUrl}
             alt={`Capa do ${volumeLabel} de ${volume.edition.work.title}`}
             eager
-            className="w-full max-w-sm shadow-2xl shadow-black/50 sm:max-w-md lg:max-w-[25rem]"
+            className="w-full max-w-sm shadow-2xl shadow-black/50 sm:max-w-md lg:max-w-[23rem] lg:-translate-y-8"
           />
         </section>
 
-        <article className="flex min-w-0 flex-col bg-card/30">
-          <div className="border-b border-border px-5 py-6 sm:px-8">
-            <div className="flex items-center gap-2 text-sm font-bold text-primary">
-              <BookOpen className="h-4 w-4" aria-hidden="true" />
-              <span>{editionLabel}</span>
-            </div>
-            <h1 className="mt-3 text-2xl font-bold leading-tight text-foreground sm:text-3xl">
-              {volume.edition.work.title} — {volumeLabel}
+        <article className="flex min-w-0 flex-col bg-card/30 lg:col-start-2 lg:row-start-1">
+          <div className="px-5 pb-0 pt-6 sm:px-8">
+            <h1 className="text-2xl font-bold leading-tight text-foreground sm:text-3xl">
+              {volumePageTitle}
             </h1>
-            {volume.edition.work.originalTitle ? (
-              <p className="mt-1 text-base font-semibold text-muted-foreground">{volume.edition.work.originalTitle}</p>
-            ) : null}
-            <div className="mt-4 flex flex-wrap gap-x-4 gap-y-2 text-sm font-semibold">
-              <Link to={`/edicoes/${volume.edition.id}`} className="text-primary hover:underline">Ver {editionLabel}</Link>
-              <Link to={`/obras/${encodeURIComponent(volume.edition.work.slug)}`} aria-label={`Ver detalhes de ${volume.edition.work.title}`} className="text-primary hover:underline">
-                Ver detalhes de {volume.edition.work.title}
-              </Link>
+            <div className="mt-4 flex flex-wrap gap-x-7 gap-y-3">
+              <div>
+                <p className="text-sm font-bold uppercase tracking-wide text-muted-foreground">Obra</p>
+                <Link
+                  to={`/obras/${encodeURIComponent(volume.edition.work.slug)}`}
+                  aria-label={`Ver detalhes da Obra ${volume.edition.work.title}`}
+                  className="-ml-3 -mt-1 inline-flex w-fit rounded-2xl bg-background px-3 py-2 text-left transition-colors hover:bg-sidebar-accent/30 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary focus-visible:ring-offset-2 focus-visible:ring-offset-background"
+                >
+                  <p className="text-2xl font-bold text-primary">{volume.edition.work.title}</p>
+                </Link>
+              </div>
+              <div>
+                <p className="text-sm font-bold uppercase tracking-wide text-muted-foreground">Edição</p>
+                <Link
+                  to={`/edicoes/${volume.edition.id}`}
+                  aria-label={`Ver ${editionLabel}`}
+                  className="-ml-3 -mt-1 inline-flex w-fit rounded-2xl bg-background px-3 py-2 text-left transition-colors hover:bg-sidebar-accent/30 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary focus-visible:ring-offset-2 focus-visible:ring-offset-background"
+                >
+                  <p className="text-2xl font-bold text-primary">{editionLabel} · {volume.edition.brazilianPublisher.label}</p>
+                </Link>
+              </div>
             </div>
+
+            <div className="mt-6 w-full border-t border-border pt-6">
+              <div className="grid grid-cols-2 gap-3">
+                <button type="button" className="relative inline-flex min-h-[3.25rem] items-center justify-center rounded-full border border-sidebar-foreground/30 bg-sidebar px-4 py-3 text-base font-bold text-white transition-colors hover:bg-sidebar-accent">
+                  <Plus className="absolute left-5 h-5 w-5" strokeWidth={3} aria-hidden="true" />
+                  Coleção
+                </button>
+                <button type="button" className="relative inline-flex min-h-[3.25rem] items-center justify-center rounded-full border border-sidebar-foreground/30 bg-sidebar px-4 py-3 text-base font-bold text-white transition-colors hover:bg-sidebar-accent">
+                  <Plus className="absolute left-5 h-5 w-5" strokeWidth={3} aria-hidden="true" />
+                  Lista de Desejos
+                </button>
+
+              {volume.affiliateLink ? (
+                <a
+                  href={volume.affiliateLink}
+                  target="_blank"
+                  rel="noreferrer noopener"
+                  className="col-span-2 mt-3 inline-flex min-h-[3.25rem] w-full items-center justify-center gap-2 rounded-full border border-[#ff9900]/45 bg-white px-5 py-2.5 text-base font-semibold text-black transition-colors hover:border-[#ff9900] hover:bg-[#fffaf3]"
+                >
+                  Comprar na <img src="/amazon-logo.svg" alt="Amazon" className="h-8 w-8 -translate-y-px object-contain" />
+                </a>
+              ) : (
+                <div className="relative col-span-2 mt-3 overflow-hidden rounded-full">
+                  <button type="button" disabled className="inline-flex min-h-[3.25rem] w-full items-center justify-center gap-2 border border-[#ff9900]/25 bg-white/45 px-5 py-2.5 text-base font-semibold text-background/70">
+                    Comprar na <img src="/amazon-logo.svg" alt="Amazon" className="h-8 w-8 -translate-y-px object-contain opacity-55" />
+                  </button>
+                  <div className="pointer-events-none absolute left-[19%] top-1/2 flex h-8 w-[62%] -translate-y-1/2 rotate-[4deg] items-center justify-center bg-red-500 px-3 text-xs font-bold uppercase tracking-wide text-white shadow-sm shadow-black/30">
+                    Indisponível
+                  </div>
+                  </div>
+                )}
+              </div>
+            </div>
+            <div className="mt-6 border-b border-border" aria-hidden="true" />
           </div>
 
-          {volume.affiliateLink ? (
-            <div className="border-b border-border px-5 py-4 sm:px-8">
-              <a href={volume.affiliateLink} target="_blank" rel="noreferrer noopener" className="inline-flex w-full items-center justify-center gap-3 rounded-xl bg-foreground px-5 py-3 text-base font-bold text-background transition-opacity hover:opacity-90">
-                <ShoppingCart className="h-5 w-5" aria-hidden="true" />
-                Comprar em loja parceira
-                <ExternalLink className="h-4 w-4" aria-hidden="true" />
-              </a>
-            </div>
-          ) : null}
-
           {volume.synopsis ? (
-            <section className="border-b border-border px-5 py-6 sm:px-8" aria-labelledby="synopsis-title">
-              <h2 id="synopsis-title" className="text-lg font-bold text-foreground">Sinopse</h2>
-              <p className="mt-3 whitespace-pre-line text-sm leading-7 text-muted-foreground sm:text-base">{volume.synopsis}</p>
+            <section className="px-5 pb-0 pt-6 sm:px-8" aria-labelledby="synopsis-title">
+              <h2 id="synopsis-title" className="text-sm font-bold uppercase tracking-wide text-muted-foreground">Sinopse</h2>
+              <p className="mt-3 whitespace-pre-line text-sm leading-7 text-foreground sm:text-base">{volume.synopsis}</p>
+              <div className="mt-6 border-b border-border" aria-hidden="true" />
             </section>
           ) : null}
 
           <section className="px-5 py-6 sm:px-8" aria-labelledby="details-title">
-            <h2 id="details-title" className="text-lg font-bold text-foreground">Detalhes</h2>
-            <dl className="mt-4 grid gap-4 sm:grid-cols-2">
+            <h2 id="details-title" className="text-sm font-bold uppercase tracking-wide text-muted-foreground">Detalhes</h2>
+            <dl className="mt-4 grid grid-cols-[1.1fr_0.8fr_1fr_1.1fr_1.5fr] gap-x-3">
               {hasReleaseDate ? (
                 <DetailRow icon={<Calendar className="h-4 w-4" />} label="Lançamento" value={formatPublicReleaseDate(volume)} />
-              ) : null}
-              {volume.pages ? (
-                <DetailRow icon={<FileText className="h-4 w-4" />} label="Páginas" value={`${volume.pages} ${volume.pages === 1 ? "página" : "páginas"}`} />
               ) : null}
               {volume.price !== null && volume.price !== undefined ? (
                 <DetailRow icon={<ShoppingCart className="h-4 w-4" />} label="Preço" value={formatPrice(volume.price, volume.priceCurrency)} />
               ) : null}
+              {volume.pages ? (
+                <DetailRow icon={<BookOpen className="h-4 w-4" />} label="Páginas" value={`${volume.pages} ${volume.pages === 1 ? "página" : "páginas"}`} />
+              ) : null}
               {volume.isbn10 ? (
-                <DetailRow icon={<Hash className="h-4 w-4" />} label="ISBN-10" value={volume.isbn10} />
+                <DetailRow icon={<Barcode className="h-4 w-4" />} label="ISBN-10" value={volume.isbn10} />
               ) : null}
               {volume.isbn13 ? (
-                <DetailRow icon={<Hash className="h-4 w-4" />} label="ISBN-13" value={volume.isbn13} />
+                <DetailRow icon={<Barcode className="h-4 w-4" />} label="ISBN-13" value={volume.isbn13} />
               ) : null}
             </dl>
           </section>

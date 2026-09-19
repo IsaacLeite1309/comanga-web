@@ -68,12 +68,12 @@ export function CoverImportField({
   }
 
   function requestRemoveCover() {
-    if (!value || busyRef.current) return;
+    if (!value?.pending || required || busyRef.current) return;
     setConfirmation("remove");
   }
 
   async function removeCover() {
-    if (!value || busyRef.current) return;
+    if (!value?.pending || required || busyRef.current) return;
     busyRef.current = true;
     setBusy(true);
     setError("");
@@ -138,7 +138,7 @@ export function CoverImportField({
               {busy ? <Loader2 className="h-4 w-4 animate-spin" /> : <ImagePlus className="h-4 w-4" />}
               {value ? "Substituir capa" : "Importar capa"}
             </button>
-            {value && (
+            {value?.pending && !required && (
               <button
                 type="button"
                 disabled={busy}

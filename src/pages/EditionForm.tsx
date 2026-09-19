@@ -66,14 +66,14 @@ interface WorkResponse {
 
 const EDITION_NUMBER_OPTIONS: OptionValue[] = Array.from({ length: 10 }, (_, index) => ({
   id: String(index + 1),
-  label: `${index + 1}ª Edição`,
+  label: `${index + 1}ª edição`,
 }));
 
 const EDITION_PUBLICATION_STATUS_OPTIONS: OptionValue[] = [
-  { id: "Completo", label: "Completo" },
+  { id: "Completa", label: "Completa" },
   { id: "Em andamento", label: "Em andamento" },
   { id: "Em hiato", label: "Em hiato" },
-  { id: "Cancelado", label: "Cancelado" },
+  { id: "Cancelada", label: "Cancelada" },
 ];
 
 const EditionForm = () => {
@@ -189,12 +189,13 @@ const EditionForm = () => {
       formatId: Number(draft.formatId),
       chronologicalNumber: Number(draft.chronologicalNumber),
       brazilPublicationStatus: draft.brazilPublicationStatus,
-      coverAssetId: draft.coverAssetId || null,
+      coverAssetId: draft.coverAssetId,
     };
   }
 
   function isDraftIncomplete() {
-    return !draft.brazilianPublisherId
+    return !draft.coverAssetId
+      || !draft.brazilianPublisherId
       || !draft.editionTypeId
       || !draft.coverTypeId
       || !draft.formatId
@@ -306,6 +307,7 @@ const EditionForm = () => {
           <div className="md:col-span-3">
             <CoverImportField
               label="Capa da Edição"
+              required
               value={draft.coverAssetId ? {
                 assetId: draft.coverAssetId,
                 coverUrl: draft.coverUrl,

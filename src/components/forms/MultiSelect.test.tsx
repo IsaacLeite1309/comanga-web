@@ -9,24 +9,42 @@ const options = [
 ];
 
 describe("MultiSelect", () => {
+  it("diminui o destaque do placeholder quando não há seleção", () => {
+    render(
+      <MultiSelect
+        label="Gêneros"
+        options={options}
+        selectedIds={[]}
+        onToggle={vi.fn()}
+        placeholder="Todos"
+        tone="panel"
+      />,
+    );
+
+    expect(screen.getByText("Todos")).toHaveClass("text-muted-foreground");
+  });
+
   it("filtra, seleciona e mantem a opcao selecionada disponivel", () => {
     const onToggle = vi.fn();
+    const onClear = vi.fn();
     render(
       <MultiSelect
         label="Editoras originais"
         options={options}
         selectedIds={[1]}
         onToggle={onToggle}
+        onClear={onClear}
         searchable
       />,
     );
 
     fireEvent.click(screen.getByLabelText(/selecionar editoras originais/i));
+    expect(screen.getByRole("button", { name: "Limpar Editoras originais" })).toBeInTheDocument();
     fireEvent.change(screen.getByLabelText(/selecionar editoras originais/i), {
       target: { value: "Shuei" },
     });
 
-    expect(screen.getByRole("button", { name: "Shueisha" })).toBeInTheDocument();
+    expect(screen.getByRole("button", { name: "Shueisha" })).toHaveAttribute("title", "Shueisha");
     fireEvent.click(screen.getByRole("button", { name: "Shueisha" }));
     expect(onToggle).toHaveBeenCalledWith(1);
   });

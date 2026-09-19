@@ -1,4 +1,4 @@
-import { fireEvent, render, screen, waitFor } from "@testing-library/react";
+import { fireEvent, render, screen, waitFor, within } from "@testing-library/react";
 import { AxiosError, AxiosHeaders } from "axios";
 import { MemoryRouter, Route, Routes, useLocation } from "react-router-dom";
 import { beforeEach, describe, expect, it, vi } from "vitest";
@@ -19,12 +19,15 @@ const response = {
     format: { id: 3, label: "Kanzenban" },
     coverType: { id: 4, label: "Capa dura" },
     brazilPublicationStatus: "Em publicação",
+    brazilPublicationStartYear: 2026,
+    brazilPublicationEndYear: null,
     volumesCount: 25,
     work: {
       id: 8,
       slug: "monster",
       title: "Monster",
       originalTitle: "MONSTER",
+      originalPublicationStatus: "Em andamento",
       authors: [{ id: 5, label: "Naoki Urasawa" }],
     },
   },
@@ -60,11 +63,11 @@ function LocationProbe() {
   return <output data-testid="location-search">{location.search}</output>;
 }
 
-function renderPage(entry = "/edicoes/20?page=1") {
+function renderPage(entry = "/obras/monster/edicao/20?page=1") {
   return render(
     <MemoryRouter initialEntries={[entry]}>
       <Routes>
-        <Route path="/edicoes/:editionId" element={<><PublicEditionDetails /><LocationProbe /></>} />
+        <Route path="/obras/:slug/edicao/:editionId" element={<><PublicEditionDetails /><LocationProbe /></>} />
       </Routes>
     </MemoryRouter>,
   );
@@ -80,31 +83,43 @@ describe("PublicEditionDetails", () => {
     renderPage();
 
     expect(screen.getByText("Carregando Edição...")).toBeInTheDocument();
-    expect(await screen.findByRole("heading", { name: "Monster — 2ª Edição", level: 1 })).toBeInTheDocument();
+    expect(await screen.findByRole("heading", { name: "2ª edição", level: 1 })).toBeInTheDocument();
     expect(getPublicEditionDetails).toHaveBeenCalledWith(20, { page: 1, limit: 24 });
-    expect(screen.getByText("MONSTER")).toBeInTheDocument();
-    expect(screen.getByText("Naoki Urasawa")).toBeInTheDocument();
-    expect(screen.getByRole("link", { name: "Ver Obras de Naoki Urasawa" })).toHaveAttribute("href", "/autores/5");
+    expect(screen.getByText("Obra")).toBeInTheDocument();
+    expect(screen.getByRole("link", { name: "Ver detalhes da Obra Monster" })).toHaveAttribute("href", "/obras/monster");
+    expect(screen.queryByText("MONSTER")).not.toBeInTheDocument();
+    expect(screen.queryByText("Naoki Urasawa")).not.toBeInTheDocument();
     expect(screen.getByText("Panini")).toBeInTheDocument();
     expect(screen.getByText("Deluxe")).toBeInTheDocument();
     expect(screen.getByText("Kanzenban")).toBeInTheDocument();
     expect(screen.getByText("Capa dura")).toBeInTheDocument();
-    expect(screen.getByText("Em publicação")).toBeInTheDocument();
-    expect(screen.getByRole("link", { name: "Ver detalhes de Monster" })).toHaveAttribute("href", "/obras/monster");
+    expect(screen.getByRole("heading", { name: "Em publicação com 25 volumes" })).toBeInTheDocument();
+    expect(screen.queryByText("Status no Brasil")).not.toBeInTheDocument();
+    expect(screen.getByText("2026-??")).toBeInTheDocument();
+    expect(screen.getByRole("link", { name: "Coleção" })).toHaveAttribute(
+      "href",
+      "/obras/monster/edicao/20/selecionar/estante",
+    );
+    expect(screen.getByRole("link", { name: "Lista de Desejos" })).toHaveAttribute(
+      "href",
+      "/obras/monster/edicao/20/selecionar/desejos",
+    );
 
-    const cover = screen.getByAltText("Capa da 2ª Edição de Monster");
+    const cover = screen.getByAltText("Capa da 2ª edição de Monster");
     expect(cover).toHaveAttribute("src", response.edition.coverUrl);
     expect(cover.parentElement).toHaveClass("aspect-[2/3]");
   });
 
-  it("lista os Volumes em ordem recebida com data, páginas, fallback e acesso ao detalhe", async () => {
+  it("lista os Volumes em ordem recebida com data, fallback e acesso ao detalhe", async () => {
     renderPage();
-    await screen.findByRole("heading", { name: "Volumes" });
+    await screen.findByRole("heading", { name: "Em publicação com 25 volumes" });
 
-    const headings = screen.getAllByRole("heading", { level: 3 }).map((heading) => heading.textContent);
+    const headings = within(screen.getByRole("region", { name: "Em publicação com 25 volumes" }))
+      .getAllByRole("heading", { level: 3 })
+      .map((heading) => heading.textContent);
     expect(headings).toEqual(["Volume 1", "Volume 2"]);
     expect(screen.getByText("20/08/2026")).toBeInTheDocument();
-    expect(screen.getByText("416 páginas")).toBeInTheDocument();
+    expect(screen.queryByText("416 páginas")).not.toBeInTheDocument();
     expect(screen.getByText("2027")).toBeInTheDocument();
     expect(screen.getByText("Sem capa")).toBeInTheDocument();
     expect(screen.getByRole("link", { name: "Ver detalhes do Volume 1" })).toHaveAttribute("href", "/volumes/30");
@@ -113,7 +128,7 @@ describe("PublicEditionDetails", () => {
 
   it("pagina os Volumes e preserva a página na URL", async () => {
     renderPage();
-    await screen.findByRole("heading", { name: "Volumes" });
+    await screen.findByRole("heading", { name: "Em publicação com 25 volumes" });
 
     fireEvent.click(screen.getByRole("button", { name: "Próxima" }));
 
@@ -153,6 +168,6 @@ describe("PublicEditionDetails", () => {
     fireEvent.click(screen.getByRole("button", { name: "Tentar novamente" }));
 
     await waitFor(() => expect(getPublicEditionDetails).toHaveBeenCalledTimes(2));
-    expect(await screen.findByRole("heading", { name: "Monster — 2ª Edição" })).toBeInTheDocument();
+    expect(await screen.findByRole("heading", { name: "2ª edição" })).toBeInTheDocument();
   });
 });

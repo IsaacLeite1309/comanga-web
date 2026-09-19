@@ -71,7 +71,7 @@ interface VolumesResponse {
 }
 
 function formatEditionNumber(chronologicalNumber: number) {
-  return `${chronologicalNumber}ª Edição`;
+  return `${chronologicalNumber}ª edição`;
 }
 
 function formatVolumesCount(count?: number) {

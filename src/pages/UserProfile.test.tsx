@@ -36,6 +36,7 @@ function mockLoadedProfile(conteudoAdulto = false) {
         username: "usuario_teste",
         email: "usuario@teste.com",
         conteudo_adulto: conteudoAdulto,
+        can_enable_adult_content: true,
       },
     },
   });

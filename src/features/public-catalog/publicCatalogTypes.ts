@@ -13,7 +13,12 @@ export interface PublicCatalogOptions {
   countries: string[];
   demographics: string[];
   genres: PublicOption[];
+  originalPublishers: PublicOption[];
+  serializationMagazines: PublicOption[];
+  originalPublicationStatuses: string[];
   brazilianPublishers: PublicOption[];
+  brazilPublicationStatuses: string[];
+  editionTypes: PublicOption[];
   formats: PublicOption[];
   coverTypes: PublicOption[];
 }
@@ -70,6 +75,8 @@ export interface PublicEditionPageDetails {
   format: PublicOption;
   coverType: PublicOption;
   brazilPublicationStatus: string;
+  brazilPublicationStartYear?: number | null;
+  brazilPublicationEndYear?: number | null;
   volumesCount: number;
   work: {
     id: number;
@@ -93,6 +100,7 @@ export interface PublicWorkDetails {
   originalVolumeCount?: number | null;
   directRelease: boolean;
   originalPublicationStatus: string;
+  synopsis?: string | null;
   authors: PublicAuthorDetails[];
   genres: PublicOption[];
   demographics: string[];
@@ -169,6 +177,7 @@ export interface PublicVolumeDetails extends PublicVolumePreview {
   edition: {
     id: number;
     chronologicalNumber: number;
+    brazilianPublisher: PublicOption;
     work: {
       id: number;
       slug: string;
@@ -188,6 +197,11 @@ export interface PublicWorksQuery {
   country?: string;
   demographics?: string[];
   genreIds?: number[];
+  originalPublisherId?: number;
+  serializationMagazineId?: number;
+  originalPublicationStatus?: string;
+  originalPublicationStartYear?: number;
+  originalPublicationEndYear?: number;
   sortBy: WorkSort;
   order: CatalogOrder;
   page: number;
@@ -197,8 +211,13 @@ export interface PublicWorksQuery {
 export interface PublicEditionsQuery {
   term?: string;
   brazilianPublisherId?: number;
+  editionTypeId?: number;
   formatId?: number;
   coverTypeId?: number;
+  chronologicalNumber?: number;
+  brazilPublicationStatus?: string;
+  brazilPublicationStartYear?: number;
+  brazilPublicationEndYear?: number;
   sortBy: EditionSort;
   order: CatalogOrder;
   page: number;

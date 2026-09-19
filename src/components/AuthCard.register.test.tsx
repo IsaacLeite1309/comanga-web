@@ -38,6 +38,7 @@ function fillRegisterForm(data: {
   password?: string;
   confirmPassword?: string;
 }) {
+  fireEvent.change(screen.getByLabelText("Data de nascimento"), { target: { value: "2000-01-01" } });
   if (data.username !== undefined) {
     fireEvent.change(screen.getByPlaceholderText("Nome de Usuário"), {
       target: { value: data.username },
@@ -66,6 +67,21 @@ function fillRegisterForm(data: {
 describe("AuthCard cadastro", () => {
   beforeEach(() => {
     vi.clearAllMocks();
+  });
+
+  it("retira o painel da aba da ordem de tabulacao", () => {
+    renderRegister();
+
+    expect(screen.getByRole("tabpanel")).toHaveAttribute("tabindex", "-1");
+  });
+
+  it("recusa senha multibyte longa antes de enviar cadastro", async () => {
+    renderRegister();
+    const password = "Aa1!" + "é".repeat(35);
+    fillRegisterForm({ username: "novo_user", email: "novo@usuario.com", password, confirmPassword: password });
+    fireEvent.click(screen.getByRole("button", { name: "CADASTRAR" }));
+    expect(await screen.findByText(/72 bytes/)).toBeInTheDocument();
+    expect(api.post).not.toHaveBeenCalled();
   });
 
   it("bloqueia submissao quando senha e confirmacao divergem", async () => {
@@ -109,6 +125,7 @@ describe("AuthCard cadastro", () => {
 
     await waitFor(() => {
       expect(api.post).toHaveBeenCalledWith("/auth/register", {
+        birthDate: "2000-01-01",
         username: "novo_user",
         email: "existente@usuario.com",
         password: "SenhaForte123!",
@@ -206,4 +223,20 @@ describe("AuthCard cadastro", () => {
     expect(screen.getByText("Utilize no mínimo 8 caracteres, incluindo pelo menos uma letra maiúscula, uma minúscula, um número e um caractere especial.")).toBeInTheDocument();
     expect(api.post).not.toHaveBeenCalled();
   });
+});
+
+it("exige data válida e envia nascimento no cadastro", async () => {
+  vi.clearAllMocks();
+  vi.mocked(api.post).mockResolvedValue({ data: { message: "Conta criada." } });
+  renderRegister();
+  fillRegisterForm({ username: "new_user", email: "new@example.com", password: "SenhaForte123!", confirmPassword: "SenhaForte123!" });
+  fireEvent.change(screen.getByLabelText("Data de nascimento"), { target: { value: "" } });
+  fireEvent.click(screen.getByRole("button", { name: "CADASTRAR" }));
+  expect(await screen.findByRole("alert")).toHaveTextContent("data de nascimento válida");
+  fireEvent.change(screen.getByLabelText("Data de nascimento"), { target: { value: "2999-01-01" } });
+  fireEvent.click(screen.getByRole("button", { name: "CADASTRAR" }));
+  expect(await screen.findByRole("alert")).toHaveTextContent("não futura");
+  fireEvent.change(screen.getByLabelText("Data de nascimento"), { target: { value: "2000-02-29" } });
+  fireEvent.click(screen.getByRole("button", { name: "CADASTRAR" }));
+  await waitFor(() => expect(api.post).toHaveBeenCalledWith("/auth/register", expect.objectContaining({ birthDate: "2000-02-29" })));
 });

@@ -58,7 +58,7 @@ describe("paginas estaticas", () => {
       </MemoryRouter>,
     );
 
-    expect(screen.getByRole("heading", { name: "Pesquisar" })).toBeInTheDocument();
+    expect(screen.getByRole("searchbox", { name: "Pesquisar no catálogo" })).toBeInTheDocument();
   });
 
   it("renderiza a pagina inicial com o card de autenticacao", () => {

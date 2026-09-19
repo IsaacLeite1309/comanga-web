@@ -1,6 +1,7 @@
 ﻿import {
   BookOpen,
   CalendarCheck,
+  LibraryBig,
   Heart,
   PlusCircle,
   Search,
@@ -23,7 +24,7 @@ interface NavItem {
 }
 
 const collectorNavItems: NavItem[] = [
-  { label: "Coleção", icon: BookOpen, href: "/colecao" },
+  { label: "Coleção", icon: LibraryBig, href: "/colecao" },
   { label: "Pesquisar", icon: Search, href: "/pesquisa" },
   { label: "Checklists", icon: CalendarCheck, href: "/checklist" },
   { label: "Lista de Desejos", icon: Heart, href: "/desejos" },
@@ -37,28 +38,31 @@ const adminNavItems: NavItem[] = [
 ];
 
 function NavButton({ item, showLabel }: { item: NavItem; showLabel?: boolean }) {
+  const className = cn(
+    "flex flex-col md:flex-row items-center justify-center md:justify-start gap-1 md:gap-3 px-3 py-2 md:px-4 md:py-3 rounded-3xl transition-colors w-full font-bold",
+    item.active
+      ? "bg-primary text-primary-foreground hover:opacity-90"
+      : item.danger
+        ? "text-red-500 hover:bg-red-500/10"
+        : "text-white hover:bg-sidebar-accent"
+  );
+
   const content = (
-    <button
-      onClick={item.onClick}
-      className={cn(
-        "flex flex-col md:flex-row items-center justify-center md:justify-start gap-1 md:gap-3 px-3 py-2 md:px-4 md:py-3 rounded-3xl transition-colors w-full font-bold",
-        item.active
-          ? "bg-primary text-primary-foreground hover:opacity-90"
-          : item.danger
-            ? "text-red-500 hover:bg-red-500/10"
-            : "text-white hover:bg-sidebar-accent"
-      )}
-    >
+    <>
       <item.icon className="h-6 w-6 shrink-0" />
       {showLabel && <span className="min-w-0 whitespace-nowrap text-sm">{item.label}</span>}
-    </button>
+    </>
   );
 
   if (item.href) {
-    return <Link to={item.href} className="w-full">{content}</Link>;
+    return <Link to={item.href} className={className}>{content}</Link>;
   }
 
-  return content;
+  return (
+    <button type="button" onClick={item.onClick} className={className}>
+      {content}
+    </button>
+  );
 }
 
 export function PublicNav() {

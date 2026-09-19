@@ -2,13 +2,14 @@ import { lazy, Suspense } from "react";
 import { BrowserRouter, Route, Routes, Navigate } from "react-router-dom";
 import { Toaster as Sonner } from "@/components/ui/sonner";
 import NotFound from "./pages/NotFound.tsx";
-import { ActivatePage, AuthPage, ResendActivationPage } from "@/features/auth";
+import { ActivatePage, AuthPage, ResendActivationPage, PasswordRecoveryPage } from "@/features/auth";
 import { ChecklistPage, CollectionPage } from "@/features/collection";
 import { ProfilePage } from "@/features/profile";
 import {
   PublicCatalogPage,
   PublicAuthorWorksPage,
   PublicEditionDetailsPage,
+  EditionVolumeSelectionPage,
   PublicVolumeDetailsPage,
   PublicWorkDetailsPage,
 } from "@/features/public-catalog";
@@ -44,10 +45,12 @@ const App = () => (
     <Sonner />
     <BrowserRouter>
       <AuthProvider>
-        <div className="flex min-h-screen w-full max-w-full overflow-x-hidden bg-background">
+        <div className="flex min-h-screen w-full max-w-full overflow-x-clip bg-background">
           <PublicNav />
           <main className="min-w-0 flex-1 flex flex-col md:ml-20 lg:ml-64 pb-16 md:pb-0">
             <Routes>
+              <Route path="/recuperar-senha" element={<PasswordRecoveryPage />} />
+              <Route path="/redefinir-senha/:token?" element={<PasswordRecoveryPage reset />} />
               <Route path="/" element={<Navigate to="/entrar" replace />} />
               <Route path="/entrar" element={<AuthPage />} />
               <Route path="/cadastrar" element={<AuthPage />} />
@@ -66,9 +69,14 @@ const App = () => (
               <Route path="/pesquisa" element={<PublicCatalogPage />} />
               <Route path="/autores/:authorId" element={<PublicAuthorWorksPage />} />
               <Route path="/obras/:slug" element={<PublicWorkDetailsPage />} />
+              <Route path="/obras/:slug/edicao/:editionId" element={<PublicEditionDetailsPage />} />
+              <Route path="/obras/:slug/edicao/:editionId/selecionar/:mode" element={<EditionVolumeSelectionPage />} />
               <Route path="/edicoes/:editionId" element={<PublicEditionDetailsPage />} />
+              <Route path="/edicoes/:editionId/selecionar/:mode" element={<EditionVolumeSelectionPage />} />
               <Route path="/volumes/:volumeId" element={<PublicVolumeDetailsPage />} />
               <Route path="/colecao" element={<CollectionPage />} />
+              <Route path="/colecao/:slug/edicao/:editionId" element={<PublicEditionDetailsPage />} />
+              <Route path="/colecao/:slug/edicao/:editionId/selecionar/:mode" element={<EditionVolumeSelectionPage />} />
               <Route path="/checklist" element={<ChecklistPage />} />
               <Route path="/desejos" element={<WishlistPage />} />
               <Route
