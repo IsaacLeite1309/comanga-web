@@ -150,18 +150,18 @@ function PublicWorkDetails() {
   }
 
   return (
-    <div className="min-w-0 flex-1 px-4 py-7 sm:px-6 sm:py-9 xl:px-10">
+    <div className="min-w-0 flex-1 px-4 pb-7 pt-[4.5rem] sm:px-6 sm:pb-9 xl:px-10">
       <div className="mx-auto w-full max-w-7xl">
-        <div className="flex h-10 min-w-0 items-center gap-3 border-b border-border">
+        <div className="fixed inset-x-0 top-0 z-50 flex h-16 min-w-0 items-center gap-3 border-b border-border bg-background px-4 md:left-20 sm:px-6 lg:left-64 xl:px-10">
           <Link
             to="/pesquisa?tab=works&sortBy=title&order=ASC&page=1"
-            className="-translate-y-3 inline-flex shrink-0 items-center gap-2 rounded-lg px-2 py-1 text-base font-bold leading-none text-foreground transition-colors hover:bg-sidebar-accent/30 hover:text-foreground"
+            className="inline-flex shrink-0 items-center gap-2 rounded-lg px-2 py-1 text-base font-bold leading-none text-foreground transition-colors hover:bg-sidebar-accent/30 hover:text-foreground"
           >
             <ArrowLeft className="h-5 w-5 text-primary" aria-hidden="true" />
             Voltar
           </Link>
 
-          <nav className="-translate-y-3 flex min-w-0 items-center gap-1 text-base font-semibold leading-none" aria-label="Caminho de navegação">
+          <nav className="flex min-w-0 items-center gap-1 text-base font-semibold leading-none" aria-label="Caminho de navegação">
             <Link
               to="/pesquisa?tab=works&sortBy=title&order=ASC&page=1"
               className="shrink-0 rounded-lg px-2 py-1 text-muted-foreground transition-colors hover:bg-sidebar-accent/30 hover:text-foreground"
@@ -169,7 +169,7 @@ function PublicWorkDetails() {
               Pesquisar
             </Link>
             <ChevronRight className="h-5 w-5 shrink-0 text-muted-foreground" aria-hidden="true" />
-            <span className="truncate rounded-lg bg-sidebar-accent/30 px-2 py-1 text-foreground" title={work.title} aria-current="page">
+            <span className="truncate rounded-lg bg-sidebar-accent/30 px-2 py-1 text-primary" title={work.title} aria-current="page">
               {work.title}
             </span>
           </nav>
@@ -196,11 +196,9 @@ function PublicWorkDetails() {
 
           </div>
 
-          <aside className="relative order-3 w-full border-b border-border pb-7 md:col-start-1 md:row-start-2 md:border-b-0 md:pb-0 md:pr-7 md:pt-7" aria-labelledby="work-information-title">
+          <aside className="relative order-3 w-full border-b border-border pb-7 md:col-start-1 md:row-start-2 md:border-b-0 md:pb-0 md:pr-7 md:pt-7" aria-label="Informações da obra">
             <span className="absolute bottom-0 right-0 top-7 hidden w-px bg-border md:block" aria-hidden="true" />
-            <h2 id="work-information-title" className="text-sm font-bold uppercase tracking-wide text-white">Informações</h2>
-
-            <dl className="mt-5">
+            <dl>
               <MetaItem label="Título original" value={work.originalTitle} />
             </dl>
 

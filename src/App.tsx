@@ -45,7 +45,7 @@ const App = () => (
     <Sonner />
     <BrowserRouter>
       <AuthProvider>
-        <div className="flex min-h-screen w-full max-w-full overflow-x-hidden bg-background">
+        <div className="flex min-h-screen w-full max-w-full overflow-x-clip bg-background">
           <PublicNav />
           <main className="min-w-0 flex-1 flex flex-col md:ml-20 lg:ml-64 pb-16 md:pb-0">
             <Routes>

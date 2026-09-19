@@ -177,6 +177,7 @@ export interface PublicVolumeDetails extends PublicVolumePreview {
   edition: {
     id: number;
     chronologicalNumber: number;
+    brazilianPublisher: PublicOption;
     work: {
       id: number;
       slug: string;

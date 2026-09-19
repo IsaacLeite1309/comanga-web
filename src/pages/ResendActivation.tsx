@@ -65,17 +65,17 @@ const ResendActivation = () => {
       </div>
 
       {/* Card */}
-      <div className="w-full max-w-md p-8 bg-card rounded-2xl border border-border shadow-2xl relative">
+      <div className="w-full max-w-md p-8 bg-background rounded-2xl border border-border relative">
         {/* Voltar */}
         <Link
           to="/entrar"
-          className="absolute top-8 left-8 text-muted-foreground hover:text-primary transition-colors"
+          className="absolute left-6 top-6 text-muted-foreground hover:text-primary transition-colors sm:left-8 sm:top-8"
           title="Voltar ao início"
         >
           <ArrowLeft className="h-6 w-6" />
         </Link>
 
-        <h2 className="text-center text-2xl font-semibold text-foreground mt-2 mb-2">
+        <h2 className="text-center text-2xl font-semibold text-foreground mt-12 mb-2 sm:mt-2">
           Reenviar Ativação
         </h2>
         <p className="text-center text-sm text-muted-foreground mb-8 px-4">

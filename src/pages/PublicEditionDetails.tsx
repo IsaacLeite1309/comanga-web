@@ -137,18 +137,18 @@ function PublicEditionDetails() {
   const backPath = isCollectionContext ? "/colecao" : workPath;
 
   return (
-    <div className="min-w-0 flex-1 px-4 py-7 sm:px-6 sm:py-9 xl:px-10">
+    <div className="min-w-0 flex-1 px-4 pb-7 pt-[4.5rem] sm:px-6 sm:pb-9 xl:px-10">
       <div className="mx-auto w-full max-w-7xl">
-        <div className="flex h-10 min-w-0 items-center gap-3 border-b border-border">
+        <div className="fixed inset-x-0 top-0 z-50 flex h-16 min-w-0 items-center gap-3 border-b border-border bg-background px-4 md:left-20 sm:px-6 lg:left-64 xl:px-10">
           <Link
             to={backPath}
-            className="-translate-y-3 inline-flex shrink-0 items-center gap-2 rounded-lg px-2 py-1 text-base font-bold leading-none text-foreground transition-colors hover:bg-sidebar-accent/30 hover:text-foreground"
+            className="inline-flex shrink-0 items-center gap-2 rounded-lg px-2 py-1 text-base font-bold leading-none text-foreground transition-colors hover:bg-sidebar-accent/30 hover:text-foreground"
           >
             <ArrowLeft className="h-5 w-5 text-primary" aria-hidden="true" />
             Voltar
           </Link>
 
-          <nav className="-translate-y-3 flex min-w-0 items-center gap-1 text-base font-semibold leading-none" aria-label="Caminho de navegação">
+          <nav className="flex min-w-0 items-center gap-1 text-base font-semibold leading-none" aria-label="Caminho de navegação">
             <Link
               to={rootPath}
               className="shrink-0 rounded-lg px-2 py-1 text-muted-foreground transition-colors hover:bg-sidebar-accent/30 hover:text-foreground"
@@ -164,7 +164,7 @@ function PublicEditionDetails() {
               {edition.work.title}
             </Link>
             <ChevronRight className="h-5 w-5 shrink-0 text-muted-foreground" aria-hidden="true" />
-            <span className="truncate rounded-lg bg-sidebar-accent/30 px-2 py-1 text-foreground" aria-current="page">
+            <span className="truncate rounded-lg bg-sidebar-accent/30 px-2 py-1 text-primary" aria-current="page">
               {editionLabel}
             </span>
           </nav>
@@ -196,27 +196,25 @@ function PublicEditionDetails() {
             <div className="order-3 grid gap-3 md:col-start-2 md:row-start-1 md:w-full">
               <Link
                 to={`${editionPath}/selecionar/estante`}
-                className="relative inline-flex items-center justify-center rounded-xl border border-sidebar-foreground/30 bg-sidebar px-4 py-3 text-center text-sm font-bold text-white transition-colors hover:bg-sidebar-accent"
+                className="relative inline-flex min-h-[3.25rem] items-center justify-center rounded-full border border-sidebar-foreground/30 bg-sidebar px-4 py-3 text-center text-base font-bold text-white transition-colors hover:bg-sidebar-accent"
               >
-                <Plus className="absolute left-4 h-5 w-5" strokeWidth={3} aria-hidden="true" />
-                Volumes à Coleção
+                <Plus className="absolute left-5 h-5 w-5" strokeWidth={3} aria-hidden="true" />
+                Coleção
               </Link>
               <Link
                 to={`${editionPath}/selecionar/desejos`}
-                className="relative inline-flex items-center justify-center rounded-xl border border-sidebar-foreground/30 bg-sidebar px-4 py-3 text-center text-sm font-bold text-white transition-colors hover:bg-sidebar-accent"
+                className="relative inline-flex min-h-[3.25rem] items-center justify-center rounded-full border border-sidebar-foreground/30 bg-sidebar px-4 py-3 text-center text-base font-bold text-white transition-colors hover:bg-sidebar-accent"
               >
-                <Plus className="absolute left-4 h-5 w-5" strokeWidth={3} aria-hidden="true" />
-                Volumes à Lista de Desejos
+                <Plus className="absolute left-5 h-5 w-5" strokeWidth={3} aria-hidden="true" />
+                Lista de Desejos
               </Link>
             </div>
           </div>
 
           <div className="mt-4 grid items-start gap-y-7 md:grid-cols-[13rem_minmax(0,1fr)] md:gap-x-10">
-            <aside className="relative w-full border-b border-border pb-7 md:border-b-0 md:pb-0 md:pr-7 md:pt-[14.25rem]" aria-labelledby="edition-information-title">
+            <aside className="relative w-full border-b border-border pb-7 md:border-b-0 md:pb-0 md:pr-7 md:pt-[14.25rem]" aria-label="Informações da edição">
               <span className="absolute bottom-0 right-0 top-0 hidden w-px bg-border md:top-[14.25rem] md:block" aria-hidden="true" />
-              <h2 id="edition-information-title" className="text-sm font-bold uppercase tracking-wide text-white">Informações</h2>
-
-              <dl className="mt-5 grid grid-cols-2 gap-x-4 gap-y-4 md:grid-cols-1">
+              <dl className="grid grid-cols-2 gap-x-4 gap-y-4 md:grid-cols-1">
                 <MetaItem label="Editora Brasileira" value={edition.brazilianPublisher.label} />
                 <MetaItem label="Tipo de Edição" value={edition.editionType.label} />
                 <MetaItem label="Formato" value={edition.format.label} />

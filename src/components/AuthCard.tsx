@@ -1,7 +1,7 @@
-import { useState, useEffect, type FormEvent, type ChangeEvent } from "react";
+import { useState, useEffect, useRef, type FormEvent, type ChangeEvent } from "react";
 import { Link, useLocation, useNavigate } from "react-router-dom";
 import { Tabs, TabsList, TabsTrigger, TabsContent } from "@/components/ui/tabs";
-import { Eye, EyeOff, Loader2 } from "lucide-react";
+import { Calendar, Eye, EyeOff, Loader2 } from "lucide-react";
 import { toast } from "sonner";
 import { api } from "@/services/api";
 import { useAuth } from "@/contexts/AuthContext";
@@ -169,6 +169,7 @@ export function AuthCard() {
   const { login } = useAuth();
   const location = useLocation();
   const navigate = useNavigate();
+  const birthDateInputRef = useRef<HTMLInputElement>(null);
   const [tab, setTab] = useState(location.pathname === "/cadastrar" ? "register" : "login");
 
   useEffect(() => {
@@ -176,6 +177,17 @@ export function AuthCard() {
     else if (location.pathname === "/entrar" && tab !== "login") setTab("login");
   }, [location.pathname, tab]);
   const [loading, setLoading] = useState(false);
+
+  const openBirthDatePicker = () => {
+    const input = birthDateInputRef.current;
+    if (!input) return;
+
+    try {
+      (input as HTMLInputElement & { showPicker?: () => void }).showPicker?.();
+    } catch {
+      input.focus();
+    }
+  };
 
   // Login state
   const [loginData, setLoginData] = useState<LoginData>({ email: "", password: "" });
@@ -310,7 +322,7 @@ export function AuthCard() {
       </div>
 
       {/* Card */}
-      <div className="w-full max-w-md p-8 bg-card rounded-2xl border border-border shadow-2xl">
+      <div className="w-full max-w-md p-8 bg-background rounded-2xl border border-border">
         <Tabs value={tab} onValueChange={handleTabChange} className="w-full">
           <TabsList className="w-full h-12 rounded-full bg-muted p-1">
             <TabsTrigger
@@ -391,14 +403,43 @@ export function AuthCard() {
                 onChange={handleRegisterChange}
                 error={registerErrors.email}
               />
-              <label className="block text-sm text-foreground">
-                Data de nascimento
-                <input type="date" name="birthDate" required aria-label="Data de nascimento"
-                  max={new Date().toISOString().slice(0, 10)} value={registerData.birthDate}
-                  onChange={handleRegisterChange} aria-invalid={Boolean(registerErrors.birthDate)}
-                  className="mt-1 h-12 w-full rounded-xl border border-border bg-input px-4" />
-                {registerErrors.birthDate && <span role="alert" className="text-xs text-red-400">{registerErrors.birthDate}</span>}
-              </label>
+              <div>
+                <div className="relative">
+                  <input
+                    type="date"
+                    name="birthDate"
+                    required
+                    ref={birthDateInputRef}
+                    aria-label="Data de nascimento"
+                    max={new Date().toISOString().slice(0, 10)}
+                    value={registerData.birthDate}
+                    onChange={handleRegisterChange}
+                    onClick={openBirthDatePicker}
+                    aria-invalid={Boolean(registerErrors.birthDate)}
+                    className={`h-12 w-full rounded-xl border bg-input px-4 pr-12 text-sm focus:outline-none focus:ring-2 transition-colors [color-scheme:dark] [&::-webkit-calendar-picker-indicator]:opacity-0 ${
+                      registerData.birthDate ? "text-foreground" : "text-transparent"
+                    } ${
+                      registerErrors.birthDate
+                        ? "border-red-500 focus:ring-red-500"
+                        : "border-border focus:ring-primary"
+                    }`}
+                  />
+                  {!registerData.birthDate && (
+                    <span className="pointer-events-none absolute left-4 top-1/2 -translate-y-1/2 text-sm text-muted-foreground">
+                      Data de nascimento
+                    </span>
+                  )}
+                  <button
+                    type="button"
+                    onClick={openBirthDatePicker}
+                    aria-label="Selecionar data de nascimento"
+                    className="absolute right-3 top-1/2 -translate-y-1/2 p-1 text-muted-foreground hover:text-foreground transition-colors"
+                  >
+                    <Calendar className="h-5 w-5" />
+                  </button>
+                </div>
+                {registerErrors.birthDate && <span role="alert" className="block text-xs text-red-500 mt-1 ml-1">{registerErrors.birthDate}</span>}
+              </div>
               <PasswordInput
                 name="password"
                 placeholder="Senha"

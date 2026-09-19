@@ -317,6 +317,7 @@ describe("Pesquisa", () => {
     expect(screen.queryByText("3 Volumes")).not.toBeInTheDocument();
     expect(screen.queryByText("13,7 × 20 cm · Brochura")).not.toBeInTheDocument();
     expect(screen.getByText("1 edição encontrada")).toBeInTheDocument();
+    expect(screen.getByRole("link", { name: "Ver detalhes da 2ª edição de Monster" })).toHaveAttribute("href", "/obras/monster/edicao/20");
 
     fireEvent.error(screen.getByAltText("Capa da 2ª edição de Monster"));
     expect(screen.getByText("Sem capa")).toBeInTheDocument();

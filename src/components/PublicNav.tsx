@@ -1,6 +1,7 @@
 ﻿import {
   BookOpen,
   CalendarCheck,
+  LibraryBig,
   Heart,
   PlusCircle,
   Search,
@@ -23,7 +24,7 @@ interface NavItem {
 }
 
 const collectorNavItems: NavItem[] = [
-  { label: "Coleção", icon: BookOpen, href: "/colecao" },
+  { label: "Coleção", icon: LibraryBig, href: "/colecao" },
   { label: "Pesquisar", icon: Search, href: "/pesquisa" },
   { label: "Checklists", icon: CalendarCheck, href: "/checklist" },
   { label: "Lista de Desejos", icon: Heart, href: "/desejos" },

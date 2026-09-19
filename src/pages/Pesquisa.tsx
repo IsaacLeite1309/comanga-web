@@ -1,6 +1,6 @@
 import { useEffect, useMemo, useRef, useState } from "react";
 import { AlertCircle, ArrowDownAZ, ArrowUpAZ, Search, SlidersHorizontal, X } from "lucide-react";
-import { useSearchParams } from "react-router-dom";
+import { Link, useSearchParams } from "react-router-dom";
 import { MultiSelect } from "@/components/forms/MultiSelect";
 import { SearchableSelect, type SelectOption } from "@/components/forms/SearchableSelect";
 import { EmptyState, LoadingState } from "@/components/shared/AsyncState";
@@ -120,15 +120,22 @@ function EditionCard({ edition }: { edition: PublicEditionSummary }) {
 
   return (
     <article className="min-w-0">
-      <CatalogCover
-        key={edition.coverUrl || "empty"}
-        src={edition.coverUrl}
-        alt={`Capa da ${editionLabel} de ${edition.work.title}`}
-      />
-      <h2 className="mt-2 truncate text-sm font-bold text-foreground sm:text-base" title={edition.work.title}>
-        {edition.work.title}
-      </h2>
-      <p className="mt-0.5 truncate text-xs text-muted-foreground" title={metadata}>{metadata}</p>
+      <Link
+        to={`/obras/${encodeURIComponent(edition.work.slug)}/edicao/${edition.id}`}
+        aria-label={`Ver detalhes da ${editionLabel} de ${edition.work.title}`}
+        className="group block rounded-lg outline-none focus-visible:ring-2 focus-visible:ring-primary"
+      >
+        <CatalogCover
+          key={edition.coverUrl || "empty"}
+          src={edition.coverUrl}
+          alt={`Capa da ${editionLabel} de ${edition.work.title}`}
+          className="transition-transform group-hover:-translate-y-1"
+        />
+        <h2 className="mt-2 truncate text-sm font-bold text-foreground group-hover:text-primary sm:text-base" title={edition.work.title}>
+          {edition.work.title}
+        </h2>
+        <p className="mt-0.5 truncate text-xs text-muted-foreground" title={metadata}>{metadata}</p>
+      </Link>
     </article>
   );
 }
@@ -504,13 +511,13 @@ const Pesquisa = () => {
       <div className="mx-auto w-full max-w-[100rem]">
         <div className="relative z-30">
           <div className="flex flex-col gap-3 xl:flex-row xl:items-end">
-          <div className="inline-flex h-12 min-w-0 w-full rounded-xl border border-sidebar-foreground/30 bg-sidebar p-1 sm:w-auto sm:flex-none" role="tablist" aria-label="Tipo de resultado">
+          <div className="inline-flex h-12 min-w-0 w-full rounded-full border border-sidebar-foreground/30 bg-sidebar p-1 sm:w-auto sm:flex-none" role="tablist" aria-label="Tipo de resultado">
             <button
               type="button"
               role="tab"
               aria-selected={tab === "works"}
               onClick={() => changeTab("works")}
-              className={`inline-flex h-10 flex-1 items-center justify-center rounded-lg px-5 text-sm font-bold transition-colors sm:flex-none ${tab === "works" ? "bg-primary text-primary-foreground" : "text-foreground hover:bg-sidebar-accent"}`}
+              className={`inline-flex h-full flex-1 items-center justify-center rounded-full px-5 text-sm font-semibold transition-all sm:flex-none ${tab === "works" ? "bg-primary text-primary-foreground" : "text-foreground hover:bg-sidebar-accent"}`}
             >
               Obras
             </button>
@@ -519,7 +526,7 @@ const Pesquisa = () => {
               role="tab"
               aria-selected={tab === "editions"}
               onClick={() => changeTab("editions")}
-              className={`inline-flex h-10 flex-1 items-center justify-center rounded-lg px-5 text-sm font-bold transition-colors sm:flex-none ${tab === "editions" ? "bg-primary text-primary-foreground" : "text-foreground hover:bg-sidebar-accent"}`}
+              className={`inline-flex h-full flex-1 items-center justify-center rounded-full px-5 text-sm font-semibold transition-all sm:flex-none ${tab === "editions" ? "bg-primary text-primary-foreground" : "text-foreground hover:bg-sidebar-accent"}`}
             >
               Edições
             </button>

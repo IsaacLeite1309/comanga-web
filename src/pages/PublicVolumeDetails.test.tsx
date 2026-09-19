@@ -28,6 +28,7 @@ const volume = {
   edition: {
     id: 20,
     chronologicalNumber: 2,
+    brazilianPublisher: { id: 4, label: "Panini" },
     work: {
       id: 8,
       slug: "monster",
@@ -57,10 +58,9 @@ describe("PublicVolumeDetails", () => {
     renderPage();
 
     expect(screen.getByText("Carregando Volume...")).toBeInTheDocument();
-    expect(await screen.findByRole("heading", { name: "Monster — Volume 1", level: 1 })).toBeInTheDocument();
+    expect(await screen.findByRole("heading", { name: "Monster volume 1", level: 1 })).toBeInTheDocument();
     expect(getPublicVolumeDetails).toHaveBeenCalledWith(30);
-    expect(screen.getByText("MONSTER")).toBeInTheDocument();
-    expect(screen.getByText("2ª edição")).toBeInTheDocument();
+    expect(screen.getByText("2ª edição · Panini")).toBeInTheDocument();
     expect(screen.getByText("20/08/2026")).toBeInTheDocument();
     expect(screen.getByText("416 páginas")).toBeInTheDocument();
     expect(screen.getByText("R$ 79,90")).toBeInTheDocument();
@@ -72,7 +72,7 @@ describe("PublicVolumeDetails", () => {
     expect(cover).toHaveAttribute("src", volume.coverUrl);
     expect(cover.parentElement).toHaveClass("aspect-[2/3]");
 
-    const affiliate = screen.getByRole("link", { name: "Comprar em loja parceira" });
+    const affiliate = screen.getByRole("link", { name: "Comprar na Amazon" });
     expect(affiliate).toHaveAttribute("href", volume.affiliateLink);
     expect(affiliate).toHaveAttribute("target", "_blank");
     expect(affiliate).toHaveAttribute("rel", "noreferrer noopener");
@@ -80,10 +80,13 @@ describe("PublicVolumeDetails", () => {
 
   it("oferece retorno contextual para a Edição e para a Obra", async () => {
     renderPage();
-    await screen.findByRole("heading", { name: "Monster — Volume 1" });
+    await screen.findByRole("heading", { name: "Monster volume 1" });
 
     expect(screen.getByRole("link", { name: "Voltar para 2ª edição" })).toHaveAttribute("href", "/edicoes/20");
-    expect(screen.getByRole("link", { name: "Ver detalhes de Monster" })).toHaveAttribute("href", "/obras/monster");
+    expect(screen.getByRole("link", { name: "Pesquisar" })).toHaveAttribute("href", "/pesquisa?tab=works&sortBy=title&order=ASC&page=1");
+    expect(screen.getByRole("link", { name: "Monster" })).toHaveAttribute("href", "/obras/monster");
+    expect(screen.getByRole("link", { name: "Ver 2ª edição" })).toHaveAttribute("href", "/edicoes/20");
+    expect(screen.getByRole("link", { name: "Ver detalhes da Obra Monster" })).toHaveAttribute("href", "/obras/monster");
   });
 
   it("não inventa valores nem ações ainda inaplicáveis quando campos opcionais estão ausentes", async () => {
@@ -108,7 +111,7 @@ describe("PublicVolumeDetails", () => {
     });
     renderPage();
 
-    expect(await screen.findByRole("heading", { name: "Monster — Volume único" })).toBeInTheDocument();
+    expect(await screen.findByRole("heading", { name: "Monster volume único" })).toBeInTheDocument();
     expect(screen.getByText("Sem capa")).toBeInTheDocument();
     expect(screen.queryByText("Páginas")).not.toBeInTheDocument();
     expect(screen.queryByText("Preço")).not.toBeInTheDocument();
@@ -117,8 +120,9 @@ describe("PublicVolumeDetails", () => {
     expect(screen.queryByText("ISBN-13")).not.toBeInTheDocument();
     expect(screen.queryByText("Sinopse")).not.toBeInTheDocument();
     expect(screen.queryByRole("link", { name: "Comprar em loja parceira" })).not.toBeInTheDocument();
-    expect(screen.queryByRole("button", { name: /estante/i })).not.toBeInTheDocument();
-    expect(screen.queryByRole("button", { name: /desejos/i })).not.toBeInTheDocument();
+    expect(screen.getByRole("button", { name: "Coleção" })).toBeInTheDocument();
+    expect(screen.getByRole("button", { name: "Lista de Desejos" })).toBeInTheDocument();
+    expect(screen.getByRole("button", { name: "Comprar na Amazon" })).toBeDisabled();
   });
 
   it.each([
@@ -153,7 +157,7 @@ describe("PublicVolumeDetails", () => {
     expect(await screen.findByText("Volume não encontrado.")).toBeInTheDocument();
     fireEvent.click(screen.getByRole("button", { name: "Tentar novamente" }));
     await waitFor(() => expect(getPublicVolumeDetails).toHaveBeenCalledTimes(2));
-    expect(await screen.findByRole("heading", { name: "Monster — Volume 1" })).toBeInTheDocument();
+    expect(await screen.findByRole("heading", { name: "Monster volume 1" })).toBeInTheDocument();
 
     unmount();
     vi.clearAllMocks();
