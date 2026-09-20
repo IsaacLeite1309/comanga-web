@@ -459,10 +459,18 @@ function useOptionStatusMutations(selection: Selection, data: Data) {
   // A ordem é global: a lista completa é buscada antes de mover, para que a paginação
   // ou um termo de busca não empurrem os valores omitidos para o fim da lista.
   async function loadOrderedIds(categorySlug: string) {
-    const response = await api.get<OptionsResponse>(`/admin/options/${categorySlug}`, {
-      params: { order: "ASC", page: 1, limit: 100, includeInactive: "true" },
-    });
-    return response.data.values.map((item) => item.id);
+    const ids: number[] = [];
+    let page = 1;
+    let totalPages = 1;
+    do {
+      const response = await api.get<OptionsResponse>(`/admin/options/${categorySlug}`, {
+        params: { order: "ASC", page, limit: 100, includeInactive: "true" },
+      });
+      ids.push(...response.data.values.map(item => item.id));
+      totalPages = response.data.pagination.totalPages;
+      page += 1;
+    } while (page <= totalPages);
+    return ids;
   }
 
   async function moveValue(value: DomainOptionValue, offset: number) {
