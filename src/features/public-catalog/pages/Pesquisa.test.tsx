@@ -15,7 +15,10 @@ vi.mock("@/features/public-catalog/publicCatalogService", () => ({
 }));
 
 const options = {
-  workTypes: [{ id: 1, label: "Mangá" }],
+  workTypes: [
+    { id: 1, label: "Mangá", countryIds: [10], countries: ["Japão"] },
+    { id: 2, label: "Manhwa", countryIds: [11], countries: ["Coreia do Sul"] },
+  ],
   countries: ["Japão", "Coreia do Sul"],
   demographics: ["Shonen", "Seinen"],
   genres: [{ id: 7, label: "Ação" }],
@@ -142,6 +145,25 @@ describe("Pesquisa", () => {
     }));
   });
 
+  it("atualiza os Tipos de Obra ao trocar o país de origem", async () => {
+    renderCatalog();
+    await screen.findByRole("heading", { name: "Monster" });
+
+    fireEvent.click(screen.getByLabelText("Tipo de Obra"));
+    expect(screen.getByRole("button", { name: "Mangá" })).toBeInTheDocument();
+    expect(screen.getByRole("button", { name: "Manhwa" })).toBeInTheDocument();
+    fireEvent.keyDown(document, { key: "Escape" });
+
+    fireEvent.click(screen.getByRole("button", { name: /filtros avançados/i }));
+    fireEvent.click(screen.getByLabelText("País de Origem"));
+    fireEvent.click(screen.getByRole("button", { name: "Coreia do Sul" }));
+
+    await waitFor(() => expect(currentParams().get("country")).toBe("Coreia do Sul"));
+    fireEvent.click(screen.getByLabelText("Tipo de Obra"));
+    expect(screen.getByRole("button", { name: "Manhwa" })).toBeInTheDocument();
+    expect(screen.queryByRole("button", { name: "Mangá" })).not.toBeInTheDocument();
+  });
+
   it("aplica debounce à busca e reflete o termo na URL", async () => {
     renderCatalog();
     await screen.findByRole("heading", { name: "Monster" });
@@ -186,6 +208,50 @@ describe("Pesquisa", () => {
     fireEvent.click(clearButton);
 
     await waitFor(() => expect(currentParams().has("term")).toBe(false));
+  });
+
+  it("restringe os Tipos de Obra ao país selecionado", async () => {
+    renderCatalog("/pesquisa?tab=works&country=Coreia+do+Sul");
+    await screen.findByRole("heading", { name: "Monster" });
+
+    fireEvent.click(screen.getByLabelText("Tipo de Obra"));
+
+    expect(screen.getByRole("button", { name: "Manhwa" })).toBeInTheDocument();
+    expect(screen.queryByRole("button", { name: "Mangá" })).not.toBeInTheDocument();
+  });
+
+  it("oferece todos os Tipos de Obra quando nenhum país está selecionado", async () => {
+    renderCatalog("/pesquisa?tab=works");
+    await screen.findByRole("heading", { name: "Monster" });
+
+    fireEvent.click(screen.getByLabelText("Tipo de Obra"));
+
+    expect(screen.getByRole("button", { name: "Mangá" })).toBeInTheDocument();
+    expect(screen.getByRole("button", { name: "Manhwa" })).toBeInTheDocument();
+  });
+
+  it("apresenta gêneros e tipos de Edição na ordem recebida da API", async () => {
+    vi.mocked(getPublicCatalogOptions).mockResolvedValue({
+      ...options,
+      genres: [
+        { id: 30, label: "Aventura" },
+        { id: 31, label: "Ação" },
+        { id: 32, label: "Boys’ Love" },
+      ],
+    });
+    renderCatalog("/pesquisa?tab=works");
+    await screen.findByRole("heading", { name: "Monster" });
+
+    fireEvent.click(screen.getByRole("button", { name: /filtros avançados/i }));
+    fireEvent.click(screen.getByLabelText("Selecionar Gêneros"));
+
+    const genreButtons = ["Aventura", "Ação", "Boys’ Love"].map(
+      (label) => screen.getByRole("button", { name: label })
+    );
+    expect(genreButtons[0].compareDocumentPosition(genreButtons[1]))
+      .toBe(Node.DOCUMENT_POSITION_FOLLOWING);
+    expect(genreButtons[1].compareDocumentPosition(genreButtons[2]))
+      .toBe(Node.DOCUMENT_POSITION_FOLLOWING);
   });
 
   it("combina filtros de Obra e os persiste na URL", async () => {
@@ -338,7 +404,8 @@ describe("Pesquisa", () => {
     expect(screen.getByRole("link", { name: "Ver detalhes da 2ª edição de Monster" })).toHaveAttribute("href", "/obras/monster/edicao/20");
 
     fireEvent.error(screen.getByAltText("Capa da 2ª edição de Monster"));
-    expect(screen.getByText("Sem capa")).toBeInTheDocument();
+    // A capa da Edição vem do Volume 1: quando falta, o estado vazio é explícito.
+    expect(screen.getByText("Capa indisponível")).toBeInTheDocument();
   });
 
   it("aplica os filtros próprios da vitrine de Edições", async () => {

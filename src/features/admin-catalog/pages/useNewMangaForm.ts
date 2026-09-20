@@ -28,6 +28,7 @@ import {
   draftSignature,
   emptyOptions,
   filterOptionsByDependency,
+  filterWorkTypesByCountry,
   findOptionByLabels,
   getDefaultCountryAndType,
   getDefaultWorkTypeLabels,
@@ -35,6 +36,7 @@ import {
   getInvalidIdentificationFields,
   getInvalidPublicationFields,
   hasDuplicateAuthors,
+  isHentaiGenre,
   moveValue,
   normalizeSearchText,
   toggleValue,
@@ -81,7 +83,7 @@ function useNewMangaOptions(
           isEditMode && workId ? api.get<WorkDetailResponse>(`/admin/works/${workId}`) : Promise.resolve(null),
         ]);
         if (!isMounted) return;
-        const formOptions = optionsResponse.data.options;
+        const formOptions = preserveLinkedOptions(optionsResponse.data.options, workResponse?.data.work);
         setAllOptions(formOptions);
         setOptions({ ...emptyOptions, genres: formOptions.genres });
         if (workResponse?.data.work) {
@@ -105,6 +107,20 @@ function useNewMangaOptions(
   return { allOptions, loadingOptions, options, optionsError, setOptions };
 }
 
+// Vínculos legados ou inativos continuam visíveis apenas na Obra à qual pertencem.
+function preserveLinkedOptions(options: WorkFormOptions, work?: WorkDetailResponse["work"]): WorkFormOptions {
+  if (!work) return options;
+  const workTypes = [...options.workTypes];
+  if (work.type && !workTypes.some(type => Number(type.id) === Number(work.type?.id))) {
+    workTypes.push({ ...work.type, preservedCountry: work.country || "" });
+  }
+  const genres = [...options.genres];
+  for (const genre of work.genres) {
+    if (!genres.some(option => Number(option.id) === Number(genre.id))) genres.push(genre);
+  }
+  return { ...options, workTypes, genres };
+}
+
 function availableOptions(allOptions: WorkFormOptions, country: string) {
   function relatedOrAll(values: WorkFormOptions[keyof WorkFormOptions]) {
     const related = filterOptionsByDependency(values, country);
@@ -112,7 +128,8 @@ function availableOptions(allOptions: WorkFormOptions, country: string) {
   }
   return {
     authors: relatedOrAll(allOptions.authors),
-    workTypes: relatedOrAll(allOptions.workTypes),
+    // Tipos oficiais são restritos ao país; sem dependência não há combinação válida.
+    workTypes: filterWorkTypesByCountry(allOptions.workTypes, country),
     genres: allOptions.genres,
     magazines: relatedOrAll(allOptions.magazines),
     originalPublishers: relatedOrAll(allOptions.originalPublishers),
@@ -166,7 +183,7 @@ function getDerivedState(draft: NewMangaDraft, options: WorkFormOptions, allOpti
     (status) => normalizeSearchText(draft.originalPublicationStatus).includes(status)
   );
   const hasHentaiGenre = options.genres.some(
-    (genre) => draft.genreIds.includes(Number(genre.id)) && normalizeSearchText(genre.label) === "hentai"
+    (genre) => draft.genreIds.includes(Number(genre.id)) && isHentaiGenre(genre)
   );
   return {
     demographyDisabled: effectiveDirectRelease || Boolean(draft.typeId && !isManga),

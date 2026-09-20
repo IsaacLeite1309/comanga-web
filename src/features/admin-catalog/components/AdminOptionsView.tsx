@@ -1,5 +1,20 @@
 import { KeyboardEvent } from "react";
-import { ArrowDownAZ, ArrowUpAZ, Edit3, Loader2, Plus, Save, Search, Trash2, X } from "lucide-react";
+import {
+  ArrowDown,
+  ArrowDownAZ,
+  ArrowUp,
+  ArrowUpAZ,
+  Edit3,
+  Loader2,
+  Lock,
+  Plus,
+  Save,
+  Search,
+  ToggleLeft,
+  ToggleRight,
+  Trash2,
+  X
+} from "lucide-react";
 import { SearchableSelect } from "@/components/forms/SearchableSelect";
 import { AdminOptionsPageModel } from "../hooks/useAdminOptionsPage";
 import { DomainOptionValue, FORM_OPTIONS, OptionCategory } from "../pages/adminOptionsModel";
@@ -86,6 +101,61 @@ function CountryField({ model }: { model: AdminOptionsPageModel }) {
   );
 }
 
+function NewOptionForm({ model }: { model: AdminOptionsPageModel }) {
+  if (model.systemManagedCategory) {
+    return (
+      <div className="flex items-start gap-2 rounded-xl border border-border bg-muted/40 p-3 text-sm text-muted-foreground">
+        <Lock className="mt-0.5 h-4 w-4 shrink-0" />
+        <p>
+          {model.currentCategory
+            ? `Os valores de ${model.currentCategory.name} são controlados pelo sistema.`
+            : "Os valores dessa lista são controlados pelo sistema."}
+          {" "}
+          Não é possível criar, renomear ou excluir; use os botões da lista para ativar ou desativar cada valor.
+        </p>
+      </div>
+    );
+  }
+
+  return (
+    <form
+      className="flex flex-col gap-2 sm:grid sm:grid-cols-[minmax(0,1fr)_150px] sm:items-start"
+      onSubmit={model.handleCreate}
+    >
+      <label className="min-w-0 flex-1">
+        <span className="text-xs font-bold uppercase tracking-wide text-muted-foreground">Novo valor</span>
+        <input
+          value={model.newValue}
+          onChange={(event) => model.changeNewValue(event.target.value)}
+          disabled={!model.selectedCategory}
+          placeholder={model.currentCategory
+            ? `Adicionar em ${model.currentCategory.name}`
+            : "Selecione uma categoria"}
+          className={`mt-2 h-12 w-full rounded-xl border bg-input px-3 text-base text-foreground outline-none transition-colors focus:ring-2 focus:ring-primary/40 ${
+            model.newValueError
+              ? "border-red-500 focus:border-red-500"
+              : "border-border focus:border-primary"
+          }`}
+        />
+        {model.newValueError && (
+          <span className="mt-1 ml-1 block text-xs text-red-500">{model.newValueError}</span>
+        )}
+      </label>
+      <div className="sm:pt-[30px]">
+        <button
+          type="submit"
+          disabled={model.saving || !model.selectedCategory}
+          className="inline-flex h-12 w-full items-center justify-center gap-2 rounded-xl bg-primary px-4 text-sm font-bold text-primary-foreground transition-opacity hover:opacity-90 disabled:opacity-60"
+        >
+          {model.saving ? <Loader2 className="h-4 w-4 animate-spin" /> : <Plus className="h-4 w-4" />}
+          Adicionar
+        </button>
+      </div>
+      <CountryField model={model} />
+    </form>
+  );
+}
+
 function AdminOptionsControls({ model }: { model: AdminOptionsPageModel }) {
   return (
     <section className="grid gap-3 rounded-xl border border-border bg-card p-4 md:grid-cols-[150px_260px_1fr]">
@@ -108,41 +178,7 @@ function AdminOptionsControls({ model }: { model: AdminOptionsPageModel }) {
           onChange={model.changeCategory}
         />
       </div>
-      <form
-        className="flex flex-col gap-2 sm:grid sm:grid-cols-[minmax(0,1fr)_150px] sm:items-start"
-        onSubmit={model.handleCreate}
-      >
-        <label className="min-w-0 flex-1">
-          <span className="text-xs font-bold uppercase tracking-wide text-muted-foreground">Novo valor</span>
-          <input
-            value={model.newValue}
-            onChange={(event) => model.changeNewValue(event.target.value)}
-            disabled={!model.selectedCategory}
-            placeholder={model.currentCategory
-              ? `Adicionar em ${model.currentCategory.name}`
-              : "Selecione uma categoria"}
-            className={`mt-2 h-12 w-full rounded-xl border bg-input px-3 text-base text-foreground outline-none transition-colors focus:ring-2 focus:ring-primary/40 ${
-              model.newValueError
-                ? "border-red-500 focus:border-red-500"
-                : "border-border focus:border-primary"
-            }`}
-          />
-          {model.newValueError && (
-            <span className="mt-1 ml-1 block text-xs text-red-500">{model.newValueError}</span>
-          )}
-        </label>
-        <div className="sm:pt-[30px]">
-          <button
-            type="submit"
-            disabled={model.saving || !model.selectedCategory}
-            className="inline-flex h-12 w-full items-center justify-center gap-2 rounded-xl bg-primary px-4 text-sm font-bold text-primary-foreground transition-opacity hover:opacity-90 disabled:opacity-60"
-          >
-            {model.saving ? <Loader2 className="h-4 w-4 animate-spin" /> : <Plus className="h-4 w-4" />}
-            Adicionar
-          </button>
-        </div>
-        <CountryField model={model} />
-      </form>
+      <NewOptionForm model={model} />
     </section>
   );
 }
@@ -246,10 +282,69 @@ function OptionEditor({ model, value }: { model: AdminOptionsPageModel; value: D
   );
 }
 
+const ICON_BUTTON_CLASS = "inline-flex h-10 w-10 items-center justify-center rounded-lg border border-border text-foreground hover:bg-muted disabled:cursor-not-allowed disabled:opacity-50";
+
+// Ordem manual: só aparece nas categorias que o backend aceita reordenar.
+function OptionOrderActions({ model, value }: { model: AdminOptionsPageModel; value: DomainOptionValue }) {
+  if (!model.reorderableCategory) return null;
+  const index = model.values.findIndex((item) => item.id === value.id);
+  const totalPages = Math.max(1, model.pagination.totalPages);
+  const moving = model.movingId === value.id;
+  const isFirst = model.page === 1 && index === 0;
+  const isLast = model.page >= totalPages && index === model.values.length - 1;
+  return (
+    <>
+      <button
+        type="button"
+        aria-label={`Mover ${value.label} para cima`}
+        disabled={moving || isFirst}
+        onClick={() => void model.moveValue(value, -1)}
+        className={ICON_BUTTON_CLASS}
+      >
+        <ArrowUp className="h-4 w-4" />
+      </button>
+      <button
+        type="button"
+        aria-label={`Mover ${value.label} para baixo`}
+        disabled={moving || isLast}
+        onClick={() => void model.moveValue(value, 1)}
+        className={ICON_BUTTON_CLASS}
+      >
+        <ArrowDown className="h-4 w-4" />
+      </button>
+    </>
+  );
+}
+
+// Valor controlado pelo sistema: a única ação permitida é ativar ou desativar.
+function OptionActiveToggle({ model, value }: { model: AdminOptionsPageModel; value: DomainOptionValue }) {
+  const active = value.active !== false;
+  const toggling = model.togglingId === value.id;
+  return (
+    <button
+      type="button"
+      role="switch"
+      aria-checked={active}
+      aria-label={`${active ? "Desativar" : "Ativar"} ${value.label}`}
+      disabled={toggling}
+      onClick={() => void model.toggleActive(value)}
+      className="inline-flex h-10 items-center gap-2 rounded-lg border border-border px-3 text-sm font-bold text-foreground hover:bg-muted disabled:opacity-60"
+    >
+      {toggling
+        ? <Loader2 className="h-4 w-4 animate-spin" />
+        : active ? <ToggleRight className="h-4 w-4" /> : <ToggleLeft className="h-4 w-4" />}
+      {active ? "Desativar" : "Ativar"}
+    </button>
+  );
+}
+
 function OptionActions({ model, value }: { model: AdminOptionsPageModel; value: DomainOptionValue }) {
   const editing = model.editingId === value.id;
   const saving = model.savingEditId === value.id;
   const deleting = model.deletingId === value.id;
+  if (model.systemManagedCategory) {
+    return <OptionActiveToggle model={model} value={value} />;
+  }
   if (editing) {
     return (
       <>
@@ -275,6 +370,7 @@ function OptionActions({ model, value }: { model: AdminOptionsPageModel; value: 
   }
   return (
     <>
+      <OptionOrderActions model={model} value={value} />
       <button
         type="button"
         onClick={() => model.startEditing(value)}
@@ -283,6 +379,7 @@ function OptionActions({ model, value }: { model: AdminOptionsPageModel; value: 
         <Edit3 className="h-4 w-4" />
         Editar
       </button>
+      {model.reorderableCategory && <OptionActiveToggle model={model} value={value} />}
       <button
         type="button"
         disabled={deleting}
@@ -303,7 +400,14 @@ function OptionRow({ model, value }: { model: AdminOptionsPageModel; value: Doma
       <div className="min-w-0 flex-1">
         {editing ? <OptionEditor model={model} value={value} /> : (
           <div>
-            <p className="break-words text-base font-semibold text-foreground">{value.label}</p>
+            <p className="break-words text-base font-semibold text-foreground">
+              {value.label}
+              {value.active === false && (
+                <span className="ml-2 rounded-full border border-border px-2 py-0.5 text-xs font-bold uppercase text-muted-foreground">
+                  Desativado
+                </span>
+              )}
+            </p>
             {model.countryDependent && value.depends_on && value.depends_on.length > 0 && (
               <p className="mt-1 text-xs font-semibold text-muted-foreground">
                 Países: {value.depends_on.map((dependency) => dependency.label).join(", ")}

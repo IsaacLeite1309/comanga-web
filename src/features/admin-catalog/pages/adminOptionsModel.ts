@@ -10,6 +10,10 @@ export type SortOrder = "ASC" | "DESC";
 export interface DomainOptionValue {
   id: number;
   label: string;
+  code?: string | null;
+  systemManaged?: boolean;
+  position?: number;
+  active?: boolean;
   category: OptionCategory;
   depends_on?: DomainOptionValueDependency[];
 }
@@ -60,9 +64,24 @@ const COUNTRY_DEPENDENT_CATEGORY_SLUGS = new Set([
   "editoras-originais",
 ]);
 const COMMA_LITERAL_CATEGORY_SLUGS = new Set(["formatos-fisicos"]);
+// Listas semeadas pelo sistema: só é possível ativar ou desativar seus valores.
+const SYSTEM_MANAGED_CATEGORY_SLUGS = new Set(["tipos-obra", "generos"]);
+// Lista com ordem de exibição definida manualmente pelo administrador.
+const REORDERABLE_CATEGORY_SLUGS = new Set(["tipos-edicao"]);
+// A reordenação envia a lista inteira, por isso a categoria é carregada em uma página só.
+const REORDERABLE_PAGE_SIZE = 50;
 
 export function getPageSizeForCategory(categorySlug: string) {
+  if (REORDERABLE_CATEGORY_SLUGS.has(categorySlug)) return REORDERABLE_PAGE_SIZE;
   return COUNTRY_DEPENDENT_CATEGORY_SLUGS.has(categorySlug) ? 5 : DEFAULT_PAGE_SIZE;
+}
+
+export function isSystemManagedCategory(categorySlug: string) {
+  return SYSTEM_MANAGED_CATEGORY_SLUGS.has(categorySlug);
+}
+
+export function isReorderableCategory(categorySlug: string) {
+  return REORDERABLE_CATEGORY_SLUGS.has(categorySlug);
 }
 
 export function getCategoryForm(categorySlug: string): OptionForm | undefined {

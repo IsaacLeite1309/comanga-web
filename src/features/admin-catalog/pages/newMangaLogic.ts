@@ -40,6 +40,24 @@ export function filterOptionsByDependency(options: OptionValue[], dependencyLabe
   ));
 }
 
+// Tipo de Obra oficial exige dependência de país completa: sem dependência com o
+// país escolhido o backend recusa a combinação, então o formulário não a oferece.
+export function filterWorkTypesByCountry(workTypes: OptionValue[], countryLabel: string) {
+  if (!countryLabel) return [];
+  const normalizedCountry = normalizeSearchText(countryLabel);
+  return workTypes.filter((workType) => workType.preservedCountry === countryLabel || workType.depends_on?.some(
+    (dependency) => normalizeSearchText(dependency.label) === normalizedCountry
+  ));
+}
+
+// Identidade estável do gênero adulto; o rótulo é só um último recurso.
+export const HENTAI_GENRE_CODE = "hentai";
+
+export function isHentaiGenre(genre: OptionValue) {
+  if (genre.code) return genre.code === HENTAI_GENRE_CODE;
+  return normalizeSearchText(genre.label) === HENTAI_GENRE_CODE;
+}
+
 export function getDefaultWorkTypeLabels(countryName = "") {
   const country = normalizeSearchText(countryName);
   if (country.includes("coreia")) return ["manhwa"];
@@ -49,10 +67,9 @@ export function getDefaultWorkTypeLabels(countryName = "") {
 
 export function getDefaultCountryAndType(options: WorkFormOptions) {
   const japan = NATIVE_COUNTRY_OPTIONS.find((option) => option.value === "Japão");
-  const relatedTypes = japan
-    ? filterOptionsByDependency(options.workTypes, getOptionValue(japan))
+  const workTypes = japan
+    ? filterWorkTypesByCountry(options.workTypes, getOptionValue(japan))
     : [];
-  const workTypes = relatedTypes.length > 0 ? relatedTypes : options.workTypes;
   const type = findOptionByLabels(workTypes, getDefaultWorkTypeLabels(japan?.label));
   return {
     country: japan ? getOptionValue(japan) : "",

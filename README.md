@@ -152,3 +152,7 @@ Cadastro e edição exigem título romanizado e sinopse própria; o título orig
 ## Capa da Edição
 
 A Edição usa a capa do Volume de número 1 e não oferece importação de capa própria. Sem essa origem, exibe estado vazio e permanece privada até ter um Volume 1 com capa. Excluir um Volume atualiza também a capa e a contagem do resumo da Edição. Requer a API correspondente; coordenar a publicação com a migration que remove editions.cover_asset_id.
+
+## Opções controladas e catálogo adulto
+
+Tipos de Obra e gêneros permitem apenas ativação/desativação. Tipos de Edição podem ser ordenados; os botões respeitam ASC/DESC. Formulários oferecem tipos compatíveis com o país e preservam vínculos legados somente na própria Obra, sem oferecê-los em novos cadastros. A pesquisa usa relações tipo/país e atualiza opções conforme a sessão; a API é a autoridade da política adulta e da autorização.

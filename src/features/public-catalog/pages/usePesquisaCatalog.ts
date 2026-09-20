@@ -306,6 +306,18 @@ function useCatalogOptions() {
   };
 }
 
+// Com um país escolhido, só os Tipos de Obra declarados pela API para ele continuam
+// disponíveis; sem país, a lista completa é oferecida.
+export function filterWorkTypesByCountry(
+  workTypes: PublicCatalogOptions["workTypes"],
+  country: string
+) {
+  if (!country) return workTypes;
+  return workTypes.filter((workType) => (
+    !workType.countries || workType.countries.length === 0 || workType.countries.includes(country)
+  ));
+}
+
 function useCatalogResults(location: ReturnType<typeof useCatalogLocation>) {
   const [works, setWorks] = useState<PublicWorkSummary[]>([]);
   const [editions, setEditions] = useState<PublicEditionSummary[]>([]);
@@ -421,7 +433,11 @@ export function usePesquisaCatalog() {
   const optionState = useCatalogOptions();
   const resultState = useCatalogResults(location);
   const advancedFilters = useAdvancedFilters(location.searchParams);
-  return { ...location, ...optionState, ...resultState, ...advancedFilters };
+  const workTypeOptions = useMemo(
+    () => filterWorkTypesByCountry(optionState.options.workTypes, location.params.country),
+    [location.params.country, optionState.options.workTypes]
+  );
+  return { ...location, ...optionState, ...resultState, ...advancedFilters, workTypeOptions };
 }
 
 export type PesquisaCatalog = ReturnType<typeof usePesquisaCatalog>;

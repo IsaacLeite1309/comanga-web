@@ -200,7 +200,28 @@ describe("metadados próprios da Obra no formulário administrativo", () => {
       "Um ninja busca reconhecimento na própria vila.",
     );
   });
-
+  it("preserva tipo e gênero legados ao editar sem oferecê-los no cadastro", async () => {
+    const legacyWork = { ...workDetail, type: { id: 99, label: "Tipo legado" },
+      genres: [{ id: 98, label: "Gênero legado" }] };
+    vi.mocked(api.get).mockImplementation((url: string) => Promise.resolve({
+      data: url === "/admin/works/form-options" ? { options: formOptions } : { work: legacyWork },
+    }));
+    vi.mocked(api.patch).mockResolvedValue({ data: { work: legacyWork } });
+    const edit = renderEdit();
+    await waitFor(() => expect(screen.getByLabelText(/tipo de obra/i)).toHaveTextContent("Tipo legado"));
+    fireEvent.click(screen.getByRole("button", { name: /continuar/i }));
+    fireEvent.click(screen.getByRole("button", { name: /continuar/i }));
+    expect(screen.getByLabelText(/selecionar g.neros/i)).toHaveTextContent("Gênero legado");
+    fireEvent.click(screen.getByRole("button", { name: /^salvar$/i }));
+    await waitFor(() => expect(api.patch).toHaveBeenCalledWith("/admin/works/10", expect.objectContaining({
+      typeId: 99, genreIds: [98],
+    })));
+    edit.unmount();
+    renderCreate();
+    await waitForOptions();
+    fireEvent.click(screen.getByLabelText(/tipo de obra/i));
+    expect(screen.queryByRole("button", { name: "Tipo legado" })).not.toBeInTheDocument();
+  });
 
 });
 

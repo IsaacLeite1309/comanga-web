@@ -352,6 +352,31 @@ describe("NewManga", () => {
     });
   });
 
+  it("oferece apenas tipos de obra compativeis com o pais selecionado", async () => {
+    renderNewManga();
+
+    expect(await screen.findByRole("heading", { name: /novo mang/i })).toBeInTheDocument();
+    await waitFor(() => {
+      expect(screen.getByLabelText(/tipo de obra/i)).toHaveTextContent("Manga");
+    });
+
+    fireEvent.click(screen.getByLabelText(/tipo de obra/i));
+    expect(screen.getByRole("button", { name: "Manga" })).toBeInTheDocument();
+    expect(screen.getByRole("button", { name: "Artbook" })).toBeInTheDocument();
+    expect(screen.queryByRole("button", { name: "Manhwa" })).not.toBeInTheDocument();
+    expect(screen.queryByRole("button", { name: "Manhua" })).not.toBeInTheDocument();
+
+    await chooseDropdown(/pa.*s de origem/i, /coreia do sul/i);
+    await waitFor(() => {
+      expect(screen.getByLabelText(/tipo de obra/i)).toHaveTextContent("Manhwa");
+    });
+
+    fireEvent.click(screen.getByLabelText(/tipo de obra/i));
+    expect(screen.getByRole("button", { name: "Manhwa" })).toBeInTheDocument();
+    expect(screen.queryByRole("button", { name: "Manga" })).not.toBeInTheDocument();
+    expect(screen.queryByRole("button", { name: "Artbook" })).not.toBeInTheDocument();
+  });
+
   it("filtra autores conforme o pais de origem selecionado", async () => {
     renderNewManga();
 

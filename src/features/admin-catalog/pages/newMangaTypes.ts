@@ -2,6 +2,10 @@ export interface OptionValue {
   id: number | string;
   label: string;
   value?: string;
+  code?: string | null;
+  systemManaged?: boolean;
+  preservedCountry?: string;
+  position?: number;
   depends_on?: Array<{
     id: number;
     label: string;
