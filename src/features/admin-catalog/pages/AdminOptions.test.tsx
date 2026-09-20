@@ -693,3 +693,38 @@ describe("AdminOptions", () => {
   });
 
 });
+
+describe("revisão de PR: limites da ordenação", () => {
+  it.each([101, 205])("move o último item de %i opções usando a ordem completa", async (total) => {
+    resetAdminOptionsMemoryForTests();
+    vi.clearAllMocks();
+    vi.mocked(api.get).mockReset();
+    vi.mocked(api.patch).mockReset();
+    const values = Array.from({ length: total }, (_, index) => ({
+      id: index + 1, label: `Tipo ${index + 1}`, position: index, active: true,
+      category: { slug: "tipos-edicao", name: "Tipo de edição" },
+    }));
+    vi.mocked(api.get).mockImplementation(async (_url, config) => {
+      const { page = 1, limit = 50 } = (config?.params || {}) as { page?: number; limit?: number };
+      return { data: { category: { slug: "tipos-edicao", name: "Tipo de edição" },
+        values: values.slice((page - 1) * limit, page * limit),
+        pagination: { page, limit, total, totalPages: Math.ceil(total / limit) },
+      } };
+    });
+    vi.mocked(api.patch).mockResolvedValue({ data: {} });
+    render(<AdminOptions />);
+    selectCategory(/tipo de edi/i);
+    await screen.findByText("Tipo 1");
+    for (let page = 2; page <= Math.ceil(total / 50); page += 1) {
+      fireEvent.click(screen.getByRole("button", { name: /próxima/i }));
+      await screen.findByText(`Tipo ${(page - 1) * 50 + 1}`);
+    }
+    const move = screen.getByRole("button", { name: `Mover Tipo ${total} para cima` });
+    expect(move).toBeEnabled();
+    fireEvent.click(move);
+    await waitFor(() => expect(api.patch).toHaveBeenCalledWith(
+      "/admin/options/tipos-edicao/order",
+      { valueIds: [...values.slice(0, total - 2).map(value => value.id), total, total - 1] },
+    ));
+  });
+});
