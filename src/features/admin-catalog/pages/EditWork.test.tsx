@@ -156,7 +156,8 @@ describe("EditWork", () => {
     expect(screen.getAllByText("1 volume").length).toBeGreaterThan(0);
     fireEvent.click(screen.getByRole("button", { name: /grade/i }));
 
-    expect(screen.getAllByText("Sem capa")).toHaveLength(2);
+    expect(screen.getAllByText("Sem capa")).toHaveLength(1);
+    expect(screen.getAllByText("Sem capa (cadastre o Volume 1)")).toHaveLength(1);
   });
 
   it("altera a visibilidade de uma edicao", async () => {

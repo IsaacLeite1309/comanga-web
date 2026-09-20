@@ -45,7 +45,7 @@ export function EditionSummary({
             <img src={edition.coverUrl} alt={`Capa da ${label}`} className="h-full w-full object-cover" />
           ) : (
             <div className="flex h-full w-full items-center justify-center px-4 text-center text-sm font-semibold text-muted-foreground">
-              Sem capa
+              Sem capa (cadastre o Volume 1)
             </div>
           )}
         </div>

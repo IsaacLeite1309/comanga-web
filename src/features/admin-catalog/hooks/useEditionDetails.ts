@@ -59,6 +59,8 @@ export function useEditionDetails(editionId: string | number | undefined) {
       setVolumes((current) => current.filter((volume) => volume.id !== deletingVolume.id));
       toast.success("Volume excluído com sucesso.");
       setDeletingVolume(null);
+      const response = await api.get<EditionResponse>(`/admin/editions/${editionId}`);
+      setEdition(response.data.edition);
     } catch (deleteError) {
       toast.error(getApiError(deleteError, "Erro ao excluir Volume."));
     } finally {

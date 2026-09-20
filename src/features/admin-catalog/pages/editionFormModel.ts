@@ -16,6 +16,7 @@ export interface Edition {
   id: number;
   workId: number;
   chronologicalNumber: number;
+  // Somente leitura: derivada do Volume 1 da mesma Edição.
   coverAssetId?: string | null;
   coverUrl?: string | null;
   brazilianPublisher: EditionOption | null;
@@ -63,9 +64,6 @@ export function editionToDraft(edition: Edition): EditionDraft {
     brazilPublicationStatus: typeof edition.brazilPublicationStatus === "string"
       ? edition.brazilPublicationStatus
       : edition.brazilPublicationStatus?.label || "",
-    coverAssetId: edition.coverAssetId || "",
-    coverUrl: edition.coverUrl || "",
-    coverPending: false,
   };
 }
 
@@ -77,13 +75,11 @@ export function buildEditionPayload(draft: EditionDraft) {
     formatId: Number(draft.formatId),
     chronologicalNumber: Number(draft.chronologicalNumber),
     brazilPublicationStatus: draft.brazilPublicationStatus,
-    coverAssetId: draft.coverAssetId,
   };
 }
 
 export function isEditionDraftIncomplete(draft: EditionDraft) {
   const requiredValues = [
-    draft.coverAssetId,
     draft.brazilianPublisherId,
     draft.editionTypeId,
     draft.coverTypeId,

@@ -148,3 +148,7 @@ Contas com múltiplos perfis podem escolher o perfil ativo na tela de perfil. As
 ## Metadados e créditos da Obra
 
 Cadastro e edição exigem título romanizado e sinopse própria; o título original continua opcional. A ficha pública distingue títulos e usa a sinopse da Obra. Autores podem ser reordenados por controles acessíveis e o backend preserva a ordem do array. Requer a frente correspondente da API e revisão editorial dos valores preenchidos pelo backfill.
+
+## Capa da Edição
+
+A Edição usa a capa do Volume de número 1 e não oferece importação de capa própria. Sem essa origem, exibe estado vazio e permanece privada até ter um Volume 1 com capa. Excluir um Volume atualiza também a capa e a contagem do resumo da Edição. Requer a API correspondente; coordenar a publicação com a migration que remove editions.cover_asset_id.
