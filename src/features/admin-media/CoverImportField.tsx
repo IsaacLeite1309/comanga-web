@@ -1,6 +1,6 @@
 import { useRef, useState } from "react";
 import { ImagePlus, Loader2, Trash2 } from "lucide-react";
-import { ConfirmationDialog } from "@/components/shared/ConfirmationDialog";
+import { ConfirmationDialog } from "./ConfirmationDialog";
 import { getApiError } from "@/lib/apiError";
 import { adminMediaService } from "./adminMediaService";
 
@@ -18,6 +18,24 @@ interface CoverImportFieldProps {
   invalid?: boolean;
 }
 
+function getConfirmationCopy(confirmation: "replace" | "remove" | null) {
+  if (confirmation === "remove") {
+    return {
+      title: "Remover capa?",
+      description: "A capa deixará de fazer parte deste cadastro. Confirme para continuar.",
+      confirmLabel: "Confirmar remoção",
+      destructive: true,
+    };
+  }
+
+  return {
+    title: "Substituir capa?",
+    description: "A capa atual será substituída pela nova imagem importada. Confirme para continuar.",
+    confirmLabel: "Confirmar substituição",
+    destructive: false,
+  };
+}
+
 export function CoverImportField({
   label,
   value,
@@ -30,6 +48,7 @@ export function CoverImportField({
   const busyRef = useRef(false);
   const [error, setError] = useState("");
   const [confirmation, setConfirmation] = useState<"replace" | "remove" | null>(null);
+  const confirmationCopy = getConfirmationCopy(confirmation);
 
   function requestImportCover() {
     if (busyRef.current) return;
@@ -162,12 +181,10 @@ export function CoverImportField({
       </div>
       <ConfirmationDialog
         open={confirmation !== null}
-        title={confirmation === "remove" ? "Remover capa?" : "Substituir capa?"}
-        description={confirmation === "remove"
-          ? "A capa deixará de fazer parte deste cadastro. Confirme para continuar."
-          : "A capa atual será substituída pela nova imagem importada. Confirme para continuar."}
-        confirmLabel={confirmation === "remove" ? "Confirmar remoção" : "Confirmar substituição"}
-        destructive={confirmation === "remove"}
+        title={confirmationCopy.title}
+        description={confirmationCopy.description}
+        confirmLabel={confirmationCopy.confirmLabel}
+        destructive={confirmationCopy.destructive}
         onCancel={() => setConfirmation(null)}
         onConfirm={confirmAction}
       />

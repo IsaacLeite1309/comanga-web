@@ -62,7 +62,15 @@ As páginas de Coleção, Checklist e Lista de Desejos existem como navegação/
 - Tailwind CSS, Radix UI, Lucide e Sonner para interface e feedback.
 - Vitest e React Testing Library para testes.
 
-O código é organizado por funcionalidade em `src/features`, incluindo `auth`, `profile`, `admin-catalog`, `admin-media`, `admin-users` e `public-catalog`. Componentes reutilizáveis ficam em `src/components`, serviços HTTP em `src/services` e utilitários em `src/lib`.
+O código é organizado por funcionalidade em `src/features`: `auth`, `profile`, `admin-catalog`, `admin-media`, `admin-users`, `public-catalog`, `collection` e `wishlist`. Cada feature é responsável pelas suas páginas, componentes específicos, estado, regras e testes, expondo sua API pública por `index.ts`. As duas últimas preservam as telas provisórias e não representam funcionalidades de coleção/desejos concluídas.
+
+`src/App.tsx` e `src/app` compõem rotas, navegação e proteção de páginas. O contexto de autenticação pertence a `features/auth`. Componentes reutilizáveis ficam em `src/components`, o cliente HTTP em `src/services` e utilitários transversais em `src/lib`; essa base compartilhada não depende das features.
+
+Imports entre features usam somente suas APIs públicas e as dependências permitidas em `eslint.config.js`. `npm run lint` verifica as fronteiras com `eslint-plugin-boundaries`, ciclos e resolução de imports com `eslint-plugin-import-x` e o resolver TypeScript. Todo arquivo de produção deve pertencer a uma feature, à composição ou à base compartilhada; arquivos sem classificação e imports de testes são recusados. O código de produção usa `import`: `require()`, `module.require()`, `require.resolve()` e imports dinâmicos com caminho calculado são recusados para manter a detecção de ciclos verificável.
+
+O ESLint também limita a complexidade ciclomática a 15, a profundidade de blocos a 4 e cada função a 150 linhas de código, sempre como erro. Comentários e linhas vazias não entram na contagem. Apenas testes (`*.test.*`, `*.spec.*`, `__tests__`) e arquivos gerados (`*.generated.*`, `src/generated/`) têm exceção de tamanho; complexidade e profundidade continuam obrigatórias. Saídas de build e dependências já ficam fora do lint. Os testes da configuração verificam os limites e o alcance dessas exceções.
+
+`npm run test:architecture` testa essa configuração com o próprio ESLint em projetos temporários, cobrindo também tentativas de contornar as fronteiras por arquivos intermediários. Essas regressões fazem parte de `npm run check`, enquanto a suíte Vitest concentra os testes funcionais. O frontend continua uma SPA separada da API.
 
 ## Requisitos
 
@@ -100,13 +108,14 @@ O Vite informa a URL local no terminal. A API precisa permitir essa origem em `C
 | `npm run preview` | Serve localmente o build gerado. |
 | `npm test` | Executa a suíte Vitest. |
 | `npm run test:coverage` | Executa testes com cobertura. |
-| `npm run lint` | Executa ESLint. |
+| `npm run lint` | Executa ESLint, incluindo fronteiras arquiteturais, imports e ciclos. |
 
 ## Verificações de qualidade
 
 Use Node.js 22 e `npm ci` para instalar as versões do lockfile.
 
-- `npm run check`: lint sem avisos, build e cobertura mínima de 80% em cada métrica.
+- `npm run check`: fronteiras arquiteturais, lint sem avisos, build e cobertura mínima de 80% em cada métrica.
+- `npm run test:architecture`: regressões da configuração arquitetural do ESLint em projetos temporários.
 - `npm run check:online`: auditoria de todas as dependências, incluindo ferramentas de desenvolvimento.
 - `npm run typecheck`: valida o código da aplicação, testes e configurações TypeScript; também faz parte do build.
 

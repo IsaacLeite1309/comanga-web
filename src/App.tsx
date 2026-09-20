@@ -1,8 +1,8 @@
 import { lazy, Suspense } from "react";
 import { BrowserRouter, Route, Routes, Navigate } from "react-router-dom";
 import { Toaster as Sonner } from "@/components/ui/sonner";
-import NotFound from "./pages/NotFound.tsx";
-import { ActivatePage, AuthPage, ResendActivationPage, PasswordRecoveryPage } from "@/features/auth";
+import NotFound from "./app/NotFound.tsx";
+import { ActivatePage, AuthPage, AuthProvider, ResendActivationPage, PasswordRecoveryPage } from "@/features/auth";
 import { ChecklistPage, CollectionPage } from "@/features/collection";
 import { ProfilePage } from "@/features/profile";
 import {
@@ -14,9 +14,8 @@ import {
   PublicWorkDetailsPage,
 } from "@/features/public-catalog";
 import { WishlistPage } from "@/features/wishlist";
-import { PublicNav } from "@/components/PublicNav.tsx";
-import { AuthProvider } from "@/contexts/AuthContext";
-import { ProtectedRoute } from "@/components/ProtectedRoute";
+import { PublicNav } from "@/app/PublicNav";
+import { ProtectedRoute } from "@/app/ProtectedRoute";
 
 const AdminUsersPage = lazy(() => import("@/features/admin-users").then((module) => ({ default: module.AdminUsersPage })));
 const AdminOptionsPage = lazy(() => import("@/features/admin-catalog").then((module) => ({ default: module.AdminOptionsPage })));

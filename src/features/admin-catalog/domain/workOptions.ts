@@ -1,4 +1,4 @@
-import type { OptionValue } from "@/types/catalog";
+import type { OptionValue } from "./catalogTypes";
 
 export const NATIVE_AUTHOR_ROLE_OPTIONS: OptionValue[] = [
   { id: "História e Arte", value: "História e Arte", label: "História e Arte" },

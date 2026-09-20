@@ -13,8 +13,9 @@
     "test:coverage": "vitest run --coverage",
     "test:watch": "vitest",
     "typecheck": "tsc --noEmit -p tsconfig.app.json && tsc --noEmit -p tsconfig.node.json",
-    "check": "npm run lint && npm run build && npm run test:coverage",
-    "check:online": "npm audit"
+    "check": "npm run lint && npm run test:architecture && npm run build && npm run test:coverage",
+    "check:online": "npm audit",
+    "test:architecture": "node --test scripts/eslint-architecture.test.cjs"
   },
   "dependencies": {
     "@radix-ui/react-tabs": "^1.1.12",
@@ -38,6 +39,9 @@
     "@vitest/coverage-v8": "^4.1.11",
     "autoprefixer": "^10.4.21",
     "eslint": "^9.32.0",
+    "eslint-import-resolver-typescript": "4.4.5",
+    "eslint-plugin-boundaries": "7.2.0",
+    "eslint-plugin-import-x": "4.17.1",
     "eslint-plugin-react-hooks": "^5.2.0",
     "eslint-plugin-react-refresh": "^0.4.20",
     "globals": "^15.15.0",
