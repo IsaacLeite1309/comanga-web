@@ -1,1 +1,1 @@
-export { default as WishlistPage } from "@/pages/Desejos";
+export { default as WishlistPage } from "./pages/Desejos";

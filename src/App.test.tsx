@@ -5,12 +5,17 @@ import { api } from "@/services/api";
 
 vi.mock("@/services/api", () => ({ api: { get: vi.fn() } }));
 vi.mock("@/components/ui/sonner", () => ({ Toaster: () => null }));
-vi.mock("@/features/auth", () => ({
-  PasswordRecoveryPage: () => "Recuperar senha",
-  AuthPage: () => "Entrar na conta",
-  ActivatePage: () => "Ativar conta",
-  ResendActivationPage: () => "Reenviar ativação",
-}));
+vi.mock("@/features/auth", async () => {
+  const actual = await vi.importActual<typeof import("@/features/auth")>("@/features/auth");
+
+  return {
+    ...actual,
+    PasswordRecoveryPage: () => "Recuperar senha",
+    AuthPage: () => "Entrar na conta",
+    ActivatePage: () => "Ativar conta",
+    ResendActivationPage: () => "Reenviar ativação",
+  };
+});
 vi.mock("@/features/profile", () => ({ ProfilePage: () => "Meu perfil" }));
 vi.mock("@/features/admin-users", () => ({ AdminUsersPage: () => "Administrar usuários" }));
 vi.mock("@/features/public-catalog", () => ({
@@ -55,8 +60,16 @@ describe("navegação e acesso administrativo", () => {
   });
 
   it("preserva a página de rota inexistente", async () => {
-    window.history.replaceState({}, "", "/rota-inexistente");
-    render(<App />);
-    expect(await screen.findByText("404")).toBeInTheDocument();
+    const consoleError = vi.spyOn(console, "error").mockImplementation(() => {});
+    try {
+      window.history.replaceState({}, "", "/rota-inexistente");
+      render(<App />);
+      expect(await screen.findByText("404")).toBeInTheDocument();
+      expect(consoleError.mock.calls).toEqual([
+        ["404 Error: User attempted to access non-existent route:", "/rota-inexistente"],
+      ]);
+    } finally {
+      consoleError.mockRestore();
+    }
   });
 });
