@@ -156,3 +156,7 @@ A Edição usa a capa do Volume de número 1 e não oferece importação de capa
 ## Opções controladas e catálogo adulto
 
 Tipos de Obra e gêneros permitem apenas ativação/desativação. Tipos de Edição podem ser ordenados; os botões respeitam ASC/DESC. Formulários oferecem tipos compatíveis com o país e preservam vínculos legados somente na própria Obra, sem oferecê-los em novos cadastros. A pesquisa usa relações tipo/país e atualiza opções conforme a sessão; a API é a autoridade da política adulta e da autorização.
+
+## Regressões transversais
+
+Testes cobrem proteção das rotas administrativas e acessibilidade dos controles de autenticação. As regressões de cada regra acompanham a respectiva frente funcional. `npm run check` mantém lint, arquitetura, build e cobertura com piso de 80%.
