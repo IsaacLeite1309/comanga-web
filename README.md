@@ -144,3 +144,7 @@ Calendário público, Estante Digital funcional, Lista de Desejos funcional, dad
 ## Perfis e conta
 
 Contas com múltiplos perfis podem escolher o perfil ativo na tela de perfil. As rotas administrativas exigem perfil Administrador ativo; possuir a atribuição não basta durante uso como Usuário Padrão. A mesma tela permite alterar username e senha, mantendo a sessão atual e revogando as outras na troca autenticada. Requer os endpoints de perfis/conta da API e a migration `20260920120000_perfis_de_acesso`.
+
+## Metadados e créditos da Obra
+
+Cadastro e edição exigem título romanizado e sinopse própria; o título original continua opcional. A ficha pública distingue títulos e usa a sinopse da Obra. Autores podem ser reordenados por controles acessíveis e o backend preserva a ordem do array. Requer a frente correspondente da API e revisão editorial dos valores preenchidos pelo backfill.

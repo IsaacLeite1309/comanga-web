@@ -14,6 +14,7 @@ const work = {
   slug: "monster",
   title: "Monster",
   originalTitle: "MONSTER",
+  romanizedTitle: "Monsutā",
   coverUrl: "https://cdn.comanga.test/monster.jpg",
   type: { id: 2, label: "Mangá" },
   country: "Japão",
@@ -77,7 +78,11 @@ describe("PublicWorkDetails", () => {
     expect(screen.getByRole("status")).toHaveTextContent("Carregando Obra");
     expect(await screen.findByRole("heading", { name: "Monster", level: 1 })).toBeInTheDocument();
     expect(getPublicWorkDetails).toHaveBeenCalledWith("monster");
+    expect(screen.getByText("Título original")).toBeInTheDocument();
     expect(screen.getByText("MONSTER")).toBeInTheDocument();
+    expect(screen.getByText("Título romanizado")).toBeInTheDocument();
+    expect(screen.getByText("Monsutā")).toBeInTheDocument();
+    expect(screen.getByText("Monsutā")).not.toBe(screen.getByText("MONSTER"));
     expect(screen.getByText("Tipo de obra")).toBeInTheDocument();
     expect(screen.getByText("País de Origem")).toBeInTheDocument();
     expect(screen.getByText("Mangá").tagName).toBe("DD");
@@ -96,6 +101,7 @@ describe("PublicWorkDetails", () => {
     expect(screen.getByText("1994–2001")).toBeInTheDocument();
     expect(screen.getByRole("heading", { name: "Sinopse" })).toBeInTheDocument();
     expect(screen.getByText("A sinopse canônica da Obra.")).toBeInTheDocument();
+    expect(getPublicWorkDetails).toHaveBeenCalledTimes(1);
     expect(screen.queryByText("Lançamento")).not.toBeInTheDocument();
 
     const cover = screen.getByAltText("Capa de Monster");

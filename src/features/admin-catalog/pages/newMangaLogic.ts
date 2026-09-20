@@ -64,6 +64,8 @@ export function draftFromWork(work: WorkDetail): NewMangaDraft {
   return {
     title: work.title || "",
     originalTitle: work.originalTitle || "",
+    romanizedTitle: work.romanizedTitle || "",
+    synopsis: work.synopsis || "",
     originalPublicationStartYear: work.originalPublicationStartYear ? String(work.originalPublicationStartYear) : "",
     originalPublicationEndYear: work.originalPublicationEndYear ? String(work.originalPublicationEndYear) : "",
     originalVolumeCount: work.originalVolumeCount ? String(work.originalVolumeCount) : "",
@@ -96,6 +98,8 @@ export function getInvalidIdentificationFields(draft: NewMangaDraft) {
   const fields: string[] = [];
   if (!draft.title.trim()) fields.push("title");
   if (!draft.originalTitle.trim()) fields.push("originalTitle");
+  if (!draft.romanizedTitle.trim()) fields.push("romanizedTitle");
+  if (!draft.synopsis.trim()) fields.push("synopsis");
   if (!draft.country) fields.push("country");
   if (!draft.typeId) fields.push("typeId");
   if (!draft.coverAssetId) fields.push("coverAssetId");
@@ -159,6 +163,8 @@ export function buildWorkPayload(draft: NewMangaDraft, rules: PublicationRules) 
   return {
     title: draft.title.trim(),
     originalTitle: draft.originalTitle.trim() || null,
+    romanizedTitle: draft.romanizedTitle.trim(),
+    synopsis: draft.synopsis.trim(),
     originalPublicationStartYear: draft.originalPublicationStartYear ? Number(draft.originalPublicationStartYear) : null,
     originalPublicationEndYear: !rules.isOpenOriginalPublication && draft.originalPublicationEndYear
       ? Number(draft.originalPublicationEndYear)

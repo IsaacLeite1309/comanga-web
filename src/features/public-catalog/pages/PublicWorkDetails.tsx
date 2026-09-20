@@ -198,8 +198,9 @@ function PublicWorkDetails() {
 
           <aside className="relative order-3 w-full border-b border-border pb-7 md:col-start-1 md:row-start-2 md:border-b-0 md:pb-0 md:pr-7 md:pt-7" aria-label="Informações da obra">
             <span className="absolute bottom-0 right-0 top-7 hidden w-px bg-border md:block" aria-hidden="true" />
-            <dl>
+            <dl className="grid gap-4">
               <MetaItem label="Título original" value={work.originalTitle} />
+              <MetaItem label="Título romanizado" value={work.romanizedTitle} />
             </dl>
 
             <section className="mt-4" aria-labelledby="authors-title">
