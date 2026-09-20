@@ -10,7 +10,7 @@ interface ProtectedRouteProps {
 }
 
 export function ProtectedRoute({ children, requiredRole }: ProtectedRouteProps) {
-  const { isAuthenticated, loading, user } = useAuth();
+  const { isAuthenticated, loading, user, activeProfile } = useAuth();
   const location = useLocation();
   const sessionToastFired = useRef(false);
   const forbiddenToastFired = useRef(false);
@@ -21,11 +21,11 @@ export function ProtectedRoute({ children, requiredRole }: ProtectedRouteProps) 
       sessionToastFired.current = true;
     }
 
-    if (!loading && isAuthenticated && requiredRole && user?.role !== requiredRole && !forbiddenToastFired.current) {
+    if (!loading && isAuthenticated && requiredRole && activeProfile !== requiredRole && !forbiddenToastFired.current) {
       toast.error("Acesso negado: Você não tem permissão para acessar esta área.");
       forbiddenToastFired.current = true;
     }
-  }, [loading, isAuthenticated, requiredRole, user?.role]);
+  }, [loading, isAuthenticated, requiredRole, activeProfile]);
 
   if (loading) {
     return (
@@ -39,7 +39,8 @@ export function ProtectedRoute({ children, requiredRole }: ProtectedRouteProps) 
     return <Navigate to="/entrar" state={{ from: location }} replace />;
   }
 
-  if (requiredRole && user?.role !== requiredRole) {
+  // O perfil ATIVO decide o acesso; a API revalida a autorização em toda rota protegida.
+  if (requiredRole && activeProfile !== requiredRole) {
     return <Navigate to={user?.username ? `/perfil/${user.username}` : "/entrar"} replace />;
   }
 

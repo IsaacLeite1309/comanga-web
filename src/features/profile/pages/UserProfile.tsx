@@ -4,6 +4,10 @@ import { isAxiosError } from "axios";
 import { api } from "@/services/api";
 import { useAuth } from "@/features/auth";
 import { toast } from "sonner";
+import { ActiveProfileSelector } from "../components/ActiveProfileSelector";
+import { useAccountSettings } from "../hooks/useAccountSettings";
+import { PasswordForm } from "../components/PasswordForm";
+import { UsernameForm } from "../components/UsernameForm";
 
 interface UserProfileData {
   id: string;
@@ -11,7 +15,10 @@ interface UserProfileData {
   email: string;
   conteudo_adulto: boolean;
   can_enable_adult_content: boolean;
+  profiles?: string[];
+  active_profile?: string;
 }
+
 
 interface ProfileDetailsProps {
   profile: UserProfileData;
@@ -234,6 +241,8 @@ const UserProfile = () => {
   const [isLoggingOut, setIsLoggingOut] = useState(false);
   const [isAdvancedOpen, setIsAdvancedOpen] = useState(false);
   const [showDeletePassword, setShowDeletePassword] = useState(false);
+  const { isSwitchingProfile, changeActiveProfile, changePassword, changeUsername } =
+    useAccountSettings(profile, setProfile);
 
   async function toggleAdultContent() {
     if (!profile || isUpdating) return;
@@ -333,6 +342,14 @@ const UserProfile = () => {
               isUpdating={isUpdating}
               onToggleAdultContent={toggleAdultContent}
             />
+            <ActiveProfileSelector
+              profiles={profile.profiles || []}
+              activeProfile={profile.active_profile || ""}
+              updating={isSwitchingProfile}
+              onChange={changeActiveProfile}
+            />
+            <UsernameForm key={profile.username} currentUsername={profile.username} onSubmit={changeUsername} />
+            <PasswordForm onSubmit={changePassword} />
             <AdvancedSettings
               isOpen={isAdvancedOpen}
               onToggle={() => setIsAdvancedOpen((current) => !current)}

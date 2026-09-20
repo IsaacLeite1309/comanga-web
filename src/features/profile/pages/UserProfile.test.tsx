@@ -1,4 +1,4 @@
-import { fireEvent, render, screen, waitFor } from "@testing-library/react";
+import { fireEvent, render, screen, waitFor, within } from "@testing-library/react";
 import { beforeEach, describe, expect, it, vi } from "vitest";
 import UserProfile from "./UserProfile";
 import { api } from "@/services/api";
@@ -6,11 +6,14 @@ import { toast } from "sonner";
 
 const logoutMock = vi.fn();
 const clearSessionMock = vi.fn();
+const updateUserMock = vi.fn();
 
-vi.mock("@/features/auth", () => ({
+vi.mock("@/features/auth", async (importOriginal) => ({
+  ...(await importOriginal<typeof import("@/features/auth")>()),
   useAuth: () => ({
     logout: logoutMock,
     clearSession: clearSessionMock,
+    updateUser: updateUserMock,
   }),
 }));
 
@@ -40,6 +43,10 @@ function mockLoadedProfile(conteudoAdulto = false) {
       },
     },
   });
+}
+
+function deleteDialog() {
+  return within(screen.getByRole("dialog", { name: /excluir conta permanentemente/i }));
 }
 
 async function openAdvancedSettings() {
@@ -169,7 +176,7 @@ describe("UserProfile", () => {
 
     fireEvent.click(screen.getByRole("button", { name: /confirmar exclusão/i }));
 
-    expect(screen.getByRole("alert")).toHaveTextContent("Informe sua senha atual.");
+    expect(deleteDialog().getByRole("alert")).toHaveTextContent("Informe sua senha atual.");
     expect(api.delete).not.toHaveBeenCalled();
   });
 
@@ -181,13 +188,13 @@ describe("UserProfile", () => {
     await openAdvancedSettings();
     fireEvent.click(screen.getByRole("button", { name: /^excluir conta$/i }));
 
-    const passwordInput = screen.getByLabelText(/senha atual/i);
+    const passwordInput = deleteDialog().getByLabelText(/senha atual/i);
     expect(passwordInput).toHaveAttribute("type", "password");
 
-    fireEvent.click(screen.getByRole("button", { name: /mostrar senha/i }));
+    fireEvent.click(deleteDialog().getByRole("button", { name: /mostrar senha/i }));
     expect(passwordInput).toHaveAttribute("type", "text");
 
-    fireEvent.click(screen.getByRole("button", { name: /ocultar senha/i }));
+    fireEvent.click(deleteDialog().getByRole("button", { name: /ocultar senha/i }));
     expect(passwordInput).toHaveAttribute("type", "password");
   });
 
@@ -205,7 +212,7 @@ describe("UserProfile", () => {
 
     await openAdvancedSettings();
     fireEvent.click(screen.getByRole("button", { name: /^excluir conta$/i }));
-    fireEvent.change(screen.getByLabelText(/senha atual/i), {
+    fireEvent.change(deleteDialog().getByLabelText(/senha atual/i), {
       target: { value: "SenhaErrada123!" },
     });
     fireEvent.click(screen.getByRole("button", { name: /confirmar exclusão/i }));
@@ -229,7 +236,7 @@ describe("UserProfile", () => {
 
     await openAdvancedSettings();
     fireEvent.click(screen.getByRole("button", { name: /^excluir conta$/i }));
-    fireEvent.change(screen.getByLabelText(/senha atual/i), {
+    fireEvent.change(deleteDialog().getByLabelText(/senha atual/i), {
       target: { value: "SenhaForte123!" },
     });
     fireEvent.click(screen.getByRole("button", { name: /confirmar exclusão/i }));

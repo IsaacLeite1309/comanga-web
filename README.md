@@ -140,3 +140,7 @@ Calendário público, Estante Digital funcional, Lista de Desejos funcional, dad
 
 - [comanga-api](https://github.com/IsaacLeite1309/comanga-api) - API REST, autenticação, catálogo e mídia.
 - [comanga-docs](https://github.com/IsaacLeite1309/comanga-docs) - documentação técnica e acadêmica.
+
+## Perfis e conta
+
+Contas com múltiplos perfis podem escolher o perfil ativo na tela de perfil. As rotas administrativas exigem perfil Administrador ativo; possuir a atribuição não basta durante uso como Usuário Padrão. A mesma tela permite alterar username e senha, mantendo a sessão atual e revogando as outras na troca autenticada. Requer os endpoints de perfis/conta da API e a migration `20260920120000_perfis_de_acesso`.

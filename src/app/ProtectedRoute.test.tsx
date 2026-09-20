@@ -7,7 +7,8 @@ import { toast } from "sonner";
 let authState = {
   isAuthenticated: false,
   loading: false,
-  user: null as null | { username: string; role?: string },
+  activeProfile: "Usuário Padrão",
+  user: null as null | { username: string },
 };
 
 vi.mock("@/features/auth", () => ({
@@ -45,6 +46,7 @@ describe("ProtectedRoute", () => {
     authState = {
       isAuthenticated: false,
       loading: false,
+      activeProfile: "Usuário Padrão",
       user: null,
     };
   });
@@ -65,6 +67,7 @@ describe("ProtectedRoute", () => {
     authState = {
       isAuthenticated: true,
       loading: false,
+      activeProfile: "Usuário Padrão",
       user: { username: "admin" },
     };
 
@@ -78,7 +81,8 @@ describe("ProtectedRoute", () => {
     authState = {
       isAuthenticated: true,
       loading: false,
-      user: { username: "isaac", role: "Usuário Padrão" },
+      activeProfile: "Usuário Padrão",
+      user: { username: "isaac" },
     };
 
     renderProtectedRoute("Administrador");
@@ -94,7 +98,8 @@ describe("ProtectedRoute", () => {
     authState = {
       isAuthenticated: true,
       loading: false,
-      user: { username: "admin", role: "Administrador" },
+      activeProfile: "Administrador",
+      user: { username: "admin" },
     };
 
     renderProtectedRoute("Administrador");

@@ -6,7 +6,8 @@ import { PublicNav } from "./PublicNav";
 let authState = {
   isAuthenticated: false,
   loading: false,
-  user: null as null | { username: string; role?: string },
+  activeProfile: "Usuário Padrão",
+  user: null as null | { username: string },
 };
 
 vi.mock("@/features/auth", () => ({
@@ -26,6 +27,7 @@ describe("PublicNav", () => {
     authState = {
       isAuthenticated: false,
       loading: false,
+      activeProfile: "Usuário Padrão",
       user: null,
     };
   });
@@ -45,7 +47,8 @@ describe("PublicNav", () => {
     authState = {
       isAuthenticated: true,
       loading: false,
-      user: { username: "admin", role: "Administrador" },
+      activeProfile: "Administrador",
+      user: { username: "admin" },
     };
 
     renderPublicNav("/admin/users");
@@ -62,6 +65,7 @@ describe("PublicNav", () => {
     authState = {
       isAuthenticated: true,
       loading: false,
+      activeProfile: "Usuário Padrão",
       user: { username: "isaac" },
     };
 
@@ -78,6 +82,7 @@ describe("PublicNav", () => {
     authState = {
       isAuthenticated: true,
       loading: false,
+      activeProfile: "Usuário Padrão",
       user: null,
     };
 
@@ -93,6 +98,7 @@ describe("PublicNav", () => {
     authState = {
       isAuthenticated: false,
       loading: true,
+      activeProfile: "Usuário Padrão",
       user: null,
     };
 

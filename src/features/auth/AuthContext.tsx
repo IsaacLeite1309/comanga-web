@@ -2,7 +2,13 @@ import { useEffect, useState, type ReactNode } from "react";
 import { api } from "@/services/api";
 import { toast } from "sonner";
 import { useNavigate } from "react-router-dom";
-import { AuthContext, type AuthUser } from "./authContextState";
+import {
+  ADMIN_PROFILE,
+  AuthContext,
+  readActiveProfile,
+  readProfiles,
+  type AuthUser,
+} from "./authContextState";
 
 export function AuthProvider({ children }: { children: ReactNode }) {
   const [user, setUser] = useState<AuthUser | null>(null);
@@ -28,6 +34,11 @@ export function AuthProvider({ children }: { children: ReactNode }) {
     setUser(userData);
   }
 
+  // Mantém o contexto sincronizado após alterações do próprio perfil, sem recarregar a página.
+  function updateUser(changes: Partial<AuthUser>) {
+    setUser((current) => (current ? { ...current, ...changes } : current));
+  }
+
   function clearSession() {
     setUser(null);
     navigate("/entrar");
@@ -44,8 +55,23 @@ export function AuthProvider({ children }: { children: ReactNode }) {
     }
   }
 
+  const profiles = readProfiles(user);
+
   return (
-    <AuthContext.Provider value={{ isAuthenticated: !!user, user, loading, login, logout, clearSession }}>
+    <AuthContext.Provider
+      value={{
+        isAuthenticated: !!user,
+        user,
+        profiles,
+        activeProfile: readActiveProfile(user),
+        hasAdminProfile: profiles.includes(ADMIN_PROFILE),
+        loading,
+        login,
+        updateUser,
+        logout,
+        clearSession,
+      }}
+    >
       {children}
     </AuthContext.Provider>
   );
