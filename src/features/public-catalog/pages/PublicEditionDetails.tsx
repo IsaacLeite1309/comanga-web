@@ -129,29 +129,30 @@ function EditionContent({ data, editionPath, isCollectionContext, onPageChange }
         </div>
 
         <section className="relative mt-4 border-b border-border pb-9">
-          <div className="relative grid items-start gap-5 md:grid-cols-[minmax(0,1fr)_18rem] md:gap-x-10 md:pl-[15.5rem]">
+          <div className="relative grid grid-cols-1 items-start gap-5 md:gap-x-10 md:pl-[15.5rem] xl:grid-cols-[minmax(0,1fr)_18rem]">
             <CatalogCover
               key={edition.coverUrl || "empty"}
               src={edition.coverUrl}
               alt={`Capa da ${editionLabel} de ${edition.work.title}`}
+              emptyLabel="Capa indisponível"
               eager
               className="order-1 w-full max-w-52 justify-self-center md:absolute md:left-0 md:top-0 md:justify-self-start"
             />
 
             <div className="order-2 min-w-0 md:col-start-1 md:row-start-1">
-              <h1 className="text-3xl font-bold text-foreground sm:text-4xl md:whitespace-nowrap">{editionLabel}</h1>
+              <h1 className="break-words text-3xl font-bold text-foreground sm:text-4xl">{editionLabel}</h1>
               <div className="mt-3">
                 <p className="text-sm font-bold uppercase tracking-wide text-muted-foreground">Obra</p>
                 <Link
                   to={`/obras/${encodeURIComponent(edition.work.slug)}`}
                   aria-label={`Ver detalhes da Obra ${edition.work.title}`}
-                  className="-ml-3 -mt-1 inline-flex w-fit rounded-2xl bg-background px-3 py-2 text-left transition-colors hover:bg-sidebar-accent/30 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary focus-visible:ring-offset-2 focus-visible:ring-offset-background"
+                  className="-ml-3 -mt-1 inline-flex w-fit max-w-[calc(100%+0.75rem)] rounded-2xl bg-background px-3 py-2 text-left transition-colors hover:bg-sidebar-accent/30 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary focus-visible:ring-offset-2 focus-visible:ring-offset-background"
                 >
-                  <p className="text-2xl font-bold text-primary">{edition.work.title}</p>
+                  <p className="min-w-0 break-words text-2xl font-bold text-primary">{edition.work.title}</p>
                 </Link>
               </div>
             </div>
-            <div className="order-3 grid gap-3 md:col-start-2 md:row-start-1 md:w-full">
+            <div className="order-3 grid min-w-0 gap-3 md:col-start-1 md:row-start-2 md:w-full xl:col-start-2 xl:row-start-1">
               <Link
                 to={`${editionPath}/selecionar/estante`}
                 className="relative inline-flex min-h-[3.25rem] items-center justify-center rounded-full border border-sidebar-foreground/30 bg-sidebar px-4 py-3 text-center text-base font-bold text-white transition-colors hover:bg-sidebar-accent"

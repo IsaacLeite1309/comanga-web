@@ -284,8 +284,17 @@ function VolumesList({
 }) {
   return (
     <div className="overflow-hidden rounded-xl border border-border">
-      <VolumesListHeader />
-      <VolumesListBody collection={collection} navigation={navigation} actions={actions} />
+      <div
+        role="region"
+        aria-label="Tabela de Volumes"
+        tabIndex={0}
+        className="overflow-x-auto focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-inset focus-visible:ring-primary"
+      >
+        <div className="md:min-w-[840px]">
+          <VolumesListHeader />
+          <VolumesListBody collection={collection} navigation={navigation} actions={actions} />
+        </div>
+      </div>
       <CatalogPaginationControls pagination={collection.pagination} itemsLabel="Volumes" />
     </div>
   );

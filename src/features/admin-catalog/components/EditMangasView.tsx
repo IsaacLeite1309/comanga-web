@@ -22,15 +22,15 @@ function FilterDropdown({ label, value, options, onChange }: {
   }
 
   return (
-    <div {...rootProps} className="relative">
+    <div {...rootProps} className="relative min-w-0">
       <button
         type="button"
         onClick={toggleDropdown}
-        className="flex h-12 w-full items-center justify-between gap-3 rounded-xl border border-border bg-input px-3 text-left text-base font-semibold text-foreground outline-none transition-colors focus:border-primary focus:ring-2 focus:ring-primary/40"
+        className="flex min-h-12 w-full items-center justify-between gap-3 rounded-xl border border-border bg-input px-3 py-2 text-left text-base font-semibold text-foreground outline-none transition-colors focus:border-primary focus:ring-2 focus:ring-primary/40"
         aria-expanded={isOpen}
         aria-label={label}
       >
-        <span className="truncate">{selectedOption?.label}</span>
+        <span className="min-w-0 break-words">{selectedOption?.label}</span>
         <ChevronDown className={`h-3.5 w-3.5 shrink-0 text-muted-foreground transition-transform ${isOpen ? "rotate-180" : ""}`} />
       </button>
       {isOpen && (
@@ -49,7 +49,7 @@ function FilterDropdown({ label, value, options, onChange }: {
                 }`}
               >
                 <span>{option.label}</span>
-                {selected && <Check className="h-3.5 w-3.5" />}
+                {selected && <Check className="h-3.5 w-3.5 shrink-0" />}
               </button>
             );
           })}
@@ -94,8 +94,8 @@ function ViewModePicker({ model }: { model: EditMangasPageModel }) {
 
 function WorkFilters({ model }: { model: EditMangasPageModel }) {
   return (
-    <section className="grid gap-3 rounded-xl border border-border bg-card p-4 lg:grid-cols-[minmax(420px,1fr)_180px_180px_220px]">
-      <label className="relative">
+    <section className="grid gap-3 rounded-xl border border-border bg-card p-4 sm:grid-cols-2 xl:grid-cols-[minmax(0,1fr)_180px_180px_240px]">
+      <label className="relative min-w-0">
         <Search className="pointer-events-none absolute left-3 top-1/2 h-5 w-5 -translate-y-1/2 text-muted-foreground" />
         <input
           value={model.searchTerm}
@@ -258,13 +258,13 @@ function WorkListRow({ model, work }: { model: EditMangasPageModel; work: WorkSu
     <article className="grid grid-cols-[72px_minmax(0,1fr)_auto] gap-4 border-b border-border py-4 pl-5 pr-3 last:border-b-0 md:grid-cols-[72px_minmax(150px,1fr)_minmax(120px,0.8fr)_minmax(110px,0.62fr)_minmax(110px,0.62fr)_minmax(90px,0.45fr)_128px_84px_88px] md:items-center">
       <WorkCover work={work} />
       <WorkTitle model={model} work={work} />
-      <div className="hidden min-w-0 text-sm font-semibold text-muted-foreground md:block">
+      <div className="hidden min-w-0 break-words text-sm font-semibold text-muted-foreground md:block">
         {(work.authors || []).map((author) => author.label).join(", ") || "Sem autor"}
       </div>
-      <div className="hidden text-sm font-semibold text-muted-foreground md:block">
+      <div className="hidden min-w-0 break-words text-sm font-semibold text-muted-foreground md:block">
         {work.country || "-"}
       </div>
-      <div className="hidden text-sm font-semibold text-muted-foreground md:block">
+      <div className="hidden min-w-0 break-words text-sm font-semibold text-muted-foreground md:block">
         {work.type?.label || "-"}
       </div>
       <div className="hidden text-sm font-semibold text-muted-foreground md:block">
@@ -328,8 +328,17 @@ function WorksList({ model }: { model: EditMangasPageModel }) {
   if (!model.showListView) return null;
   return (
     <section className="overflow-hidden rounded-xl border border-border bg-card">
-      <WorksListHeader model={model} />
-      <WorksListBody model={model} />
+      <div
+        role="region"
+        aria-label="Tabela de Obras"
+        tabIndex={0}
+        className="overflow-x-auto focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-inset focus-visible:ring-primary"
+      >
+        <div className="md:min-w-[1120px]">
+          <WorksListHeader model={model} />
+          <WorksListBody model={model} />
+        </div>
+      </div>
       <WorksPagination model={model} />
     </section>
   );
@@ -341,7 +350,7 @@ function DeleteWorkDialog({ model }: { model: EditMangasPageModel }) {
     <div className="fixed inset-0 z-50 flex items-center justify-center bg-background/80 px-4 backdrop-blur-sm">
       <div className="w-fit max-w-[calc(100vw-2rem)] rounded-2xl border border-red-500/30 bg-card p-6 shadow-2xl">
         <h2 className="text-xl font-bold text-foreground">Excluir Obra</h2>
-        <p className="mt-2 whitespace-nowrap text-sm text-muted-foreground max-sm:whitespace-normal">
+        <p className="mt-2 break-words text-sm text-muted-foreground">
           Confirme a exclusão de {model.deletingWork.title}. Esta ação não pode ser desfeita.
         </p>
         <div className="mt-6 flex justify-end gap-3">
