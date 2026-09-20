@@ -1,8 +1,15 @@
 import { Link } from "react-router-dom";
 import { Loader2, Pencil, Plus, Settings, Trash2 } from "lucide-react";
+import { LoadingState } from "@/components/shared/AsyncState";
 import { VisibilityIcon } from "./CatalogVisibility";
 import { visibilityActionClassName } from "./catalogVisibilityStyles";
-import { CatalogViewToggle, DeleteCatalogItemDialog, DetailInfoBlock } from "./AdminCatalogDetailShared";
+import {
+  CatalogPaginationControls,
+  CatalogViewToggle,
+  DeleteCatalogItemDialog,
+  DetailInfoBlock,
+  DetailListError,
+} from "./AdminCatalogDetailShared";
 import { editionEditAdminPath, newVolumeAdminPath, volumeAdminPath } from "../domain/catalogPaths";
 import {
   formatEditionNumber,
@@ -14,6 +21,14 @@ import {
   type VolumeDetail,
 } from "../domain/adminCatalogDetails";
 import type { CatalogViewMode } from "../hooks/useCatalogDetailView";
+import type { CatalogPaginationView } from "../hooks/useCatalogPagedList";
+
+interface VolumesCollection {
+  volumes: VolumeDetail[];
+  loading: boolean;
+  error: string;
+  pagination: CatalogPaginationView;
+}
 
 interface VolumeActions {
   deletingId: number | null;
@@ -225,39 +240,88 @@ function VolumesListHeader() {
   );
 }
 
-function VolumesList({
-  volumes,
+function VolumesListBody({
+  collection,
   navigation,
   actions,
 }: {
-  volumes: VolumeDetail[];
+  collection: VolumesCollection;
+  navigation: VolumeNavigation;
+  actions: VolumeActions;
+}) {
+  if (collection.loading) return <LoadingState message="Carregando Volumes..." />;
+  if (collection.error) return <DetailListError message={collection.error} />;
+  if (collection.volumes.length === 0) {
+    return (
+      <p className="px-4 py-10 text-center text-sm font-semibold text-muted-foreground">
+        Nenhum Volume cadastrado. Cadastre um volume para completar esta Edição.
+      </p>
+    );
+  }
+
+  return (
+    <>
+      {collection.volumes.map((volume) => (
+        <VolumeListRow
+          key={volume.id}
+          volume={volume}
+          navigation={navigation}
+          actions={actions}
+        />
+      ))}
+    </>
+  );
+}
+
+function VolumesList({
+  collection,
+  navigation,
+  actions,
+}: {
+  collection: VolumesCollection;
   navigation: VolumeNavigation;
   actions: VolumeActions;
 }) {
   return (
     <div className="overflow-hidden rounded-xl border border-border">
       <VolumesListHeader />
-      {volumes.length === 0 ? (
-        <p className="px-4 py-10 text-center text-sm font-semibold text-muted-foreground">
-          Nenhum Volume cadastrado. Cadastre um volume para completar esta Edição.
-        </p>
-      ) : (
-        volumes.map((volume) => (
-          <VolumeListRow
+      <VolumesListBody collection={collection} navigation={navigation} actions={actions} />
+      <CatalogPaginationControls pagination={collection.pagination} itemsLabel="Volumes" />
+    </div>
+  );
+}
+
+function VolumesGrid({
+  collection,
+  navigation,
+  actions,
+}: {
+  collection: VolumesCollection;
+  navigation: VolumeNavigation;
+  actions: VolumeActions;
+}) {
+  return (
+    <>
+      <div className="grid gap-3 grid-cols-2 sm:grid-cols-3 lg:grid-cols-6">
+        {collection.volumes.map((volume) => (
+          <VolumeGridCard
             key={volume.id}
             volume={volume}
             navigation={navigation}
             actions={actions}
           />
-        ))
-      )}
-    </div>
+        ))}
+      </div>
+      <div className="overflow-hidden rounded-xl border border-border">
+        <CatalogPaginationControls pagination={collection.pagination} itemsLabel="Volumes" />
+      </div>
+    </>
   );
 }
 
 export function EditionVolumesSection({
   edition,
-  volumes,
+  collection,
   navigation,
   viewMode,
   showGridView,
@@ -265,7 +329,7 @@ export function EditionVolumesSection({
   onViewModeChange,
 }: {
   edition: EditionDetail;
-  volumes: VolumeDetail[];
+  collection: VolumesCollection;
   navigation: VolumeNavigation;
   viewMode: CatalogViewMode;
   showGridView: boolean;
@@ -294,18 +358,9 @@ export function EditionVolumesSection({
         </div>
       </div>
       {showGridView ? (
-        <div className="grid gap-3 grid-cols-2 sm:grid-cols-3 lg:grid-cols-6">
-          {volumes.map((volume) => (
-            <VolumeGridCard
-              key={volume.id}
-              volume={volume}
-              navigation={navigation}
-              actions={actions}
-            />
-          ))}
-        </div>
+        <VolumesGrid collection={collection} navigation={navigation} actions={actions} />
       ) : (
-        <VolumesList volumes={volumes} navigation={navigation} actions={actions} />
+        <VolumesList collection={collection} navigation={navigation} actions={actions} />
       )}
     </section>
   );

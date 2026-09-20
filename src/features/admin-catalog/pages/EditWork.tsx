@@ -29,6 +29,12 @@ const EditWork = () => {
     onDelete: details.setDeletingEdition,
     onToggleVisibility: details.toggleEditionVisibility,
   };
+  const editionsCollection = {
+    editions: details.editions,
+    loading: details.editionsLoading,
+    error: details.editionsError,
+    pagination: details.editionsPagination,
+  };
 
   return (
     <div className="flex-1 min-w-0 px-3 py-6 sm:px-4 sm:py-8">
@@ -44,7 +50,7 @@ const EditWork = () => {
         <WorkEditionsSection
           work={details.work}
           workSlug={workSlug}
-          editions={details.editions}
+          collection={editionsCollection}
           viewMode={view.viewMode}
           showGridView={view.showGridView}
           actions={editionActions}

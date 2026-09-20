@@ -160,3 +160,7 @@ Tipos de Obra e gêneros permitem apenas ativação/desativação. Tipos de Edi�
 ## Regressões transversais
 
 Testes cobrem proteção das rotas administrativas e acessibilidade dos controles de autenticação. As regressões de cada regra acompanham a respectiva frente funcional. `npm run check` mantém lint, arquitetura, build e cobertura com piso de 80%.
+
+## Paginação de Edições e Volumes
+
+Listas administrativas usam oito registros por página, em lista e grade. A página é preservada por Obra/Edição ao retornar dos formulários na mesma aba, e recua quando deixa de existir. Recarregar a aplicação reinicia a memória. Respostas atrasadas não substituem a navegação atual; carregamento, erro e vazio permanecem distintos. Reutiliza page/limit da API existente.

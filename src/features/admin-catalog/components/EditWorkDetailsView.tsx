@@ -1,9 +1,15 @@
 import { Link } from "react-router-dom";
 import { Loader2, Pencil, Plus, Settings, Trash2 } from "lucide-react";
-import { EmptyState } from "@/components/shared/AsyncState";
+import { EmptyState, LoadingState } from "@/components/shared/AsyncState";
 import { CatalogVisibilityAction } from "./CatalogVisibility";
 import { visibilityActionClassName } from "./catalogVisibilityStyles";
-import { CatalogViewToggle, DeleteCatalogItemDialog, DetailInfoBlock } from "./AdminCatalogDetailShared";
+import {
+  CatalogPaginationControls,
+  CatalogViewToggle,
+  DeleteCatalogItemDialog,
+  DetailInfoBlock,
+  DetailListError,
+} from "./AdminCatalogDetailShared";
 import { editionAdminPath, newEditionAdminPath, workEditAdminPath } from "../domain/catalogPaths";
 import {
   formatEditionNumber,
@@ -12,6 +18,14 @@ import {
   type WorkDetail,
 } from "../domain/adminCatalogDetails";
 import type { CatalogViewMode } from "../hooks/useCatalogDetailView";
+import type { CatalogPaginationView } from "../hooks/useCatalogPagedList";
+
+interface EditionsCollection {
+  editions: EditionDetail[];
+  loading: boolean;
+  error: string;
+  pagination: CatalogPaginationView;
+}
 
 interface EditionActions {
   deletingId: number | null;
@@ -19,6 +33,8 @@ interface EditionActions {
   onDelete: (edition: EditionDetail) => void;
   onToggleVisibility: (edition: EditionDetail) => void;
 }
+
+const editionListColumns = "grid grid-cols-[72px_minmax(0,1fr)_auto] gap-4 md:grid-cols-[72px_minmax(140px,1fr)_120px_minmax(140px,0.9fr)_100px_132px_92px_92px]";
 
 export function WorkSummary({
   work,
@@ -158,7 +174,7 @@ function EditionListRow({
   const deleting = actions.deletingId === edition.id;
 
   return (
-    <article className="grid grid-cols-[72px_minmax(0,1fr)_auto] gap-4 border-b border-border px-4 py-4 last:border-b-0 md:grid-cols-[72px_minmax(140px,1fr)_120px_minmax(140px,0.9fr)_100px_132px_92px_92px] md:items-center">
+    <article className={`${editionListColumns} border-b border-border px-4 py-4 last:border-b-0 md:items-center`}>
       <div className="aspect-[2/3] w-16 overflow-hidden rounded-md border border-border bg-input">
         {edition.coverUrl ? (
           <img src={edition.coverUrl} alt={`Capa da ${label}`} className="h-full w-full object-cover" />
@@ -227,7 +243,7 @@ function EditionListRow({
 
 function EditionsListHeader() {
   return (
-    <div className="grid grid-cols-[72px_minmax(0,1fr)_auto] items-center gap-4 border-b border-border bg-muted/20 px-4 py-3 text-xs font-bold uppercase tracking-wide text-muted-foreground md:grid-cols-[72px_minmax(140px,1fr)_120px_minmax(140px,0.9fr)_100px_132px_92px_92px]">
+    <div className={`${editionListColumns} items-center border-b border-border bg-muted/20 px-4 py-3 text-xs font-bold uppercase tracking-wide text-muted-foreground`}>
       <span>Capa</span>
       <span>Número da edição</span>
       <span className="hidden md:block">Editora</span>
@@ -240,13 +256,45 @@ function EditionsListHeader() {
   );
 }
 
-function EditionsList({
-  editions,
+function EditionsListBody({
+  collection,
   work,
   workSlug,
   actions,
 }: {
-  editions: EditionDetail[];
+  collection: EditionsCollection;
+  work: WorkDetail;
+  workSlug: string;
+  actions: EditionActions;
+}) {
+  if (collection.loading) return <LoadingState message="Carregando Edições..." />;
+  if (collection.error) return <DetailListError message={collection.error} />;
+  if (collection.editions.length === 0) {
+    return <EmptyState message="Nenhuma Edição cadastrada. Cadastre uma edição para começar a detalhar esta Obra." />;
+  }
+
+  return (
+    <>
+      {collection.editions.map((edition) => (
+        <EditionListRow
+          key={edition.id}
+          edition={edition}
+          work={work}
+          workSlug={workSlug}
+          actions={actions}
+        />
+      ))}
+    </>
+  );
+}
+
+function EditionsList({
+  collection,
+  work,
+  workSlug,
+  actions,
+}: {
+  collection: EditionsCollection;
   work: WorkDetail;
   workSlug: string;
   actions: EditionActions;
@@ -254,27 +302,47 @@ function EditionsList({
   return (
     <div className="overflow-hidden rounded-xl border border-border">
       <EditionsListHeader />
-      {editions.length === 0 ? (
-        <EmptyState message="Nenhuma Edição cadastrada. Cadastre uma edição para começar a detalhar esta Obra." />
-      ) : (
-        editions.map((edition) => (
-          <EditionListRow
+      <EditionsListBody collection={collection} work={work} workSlug={workSlug} actions={actions} />
+      <CatalogPaginationControls pagination={collection.pagination} itemsLabel="Edições" />
+    </div>
+  );
+}
+
+function EditionsGrid({
+  collection,
+  work,
+  workSlug,
+  actions,
+}: {
+  collection: EditionsCollection;
+  work: WorkDetail;
+  workSlug: string;
+  actions: EditionActions;
+}) {
+  return (
+    <>
+      <div className="grid gap-3 grid-cols-2 sm:grid-cols-3 lg:grid-cols-6">
+        {collection.editions.map((edition) => (
+          <EditionGridCard
             key={edition.id}
             edition={edition}
             work={work}
             workSlug={workSlug}
             actions={actions}
           />
-        ))
-      )}
-    </div>
+        ))}
+      </div>
+      <div className="overflow-hidden rounded-xl border border-border">
+        <CatalogPaginationControls pagination={collection.pagination} itemsLabel="Edições" />
+      </div>
+    </>
   );
 }
 
 export function WorkEditionsSection({
   work,
   workSlug,
-  editions,
+  collection,
   viewMode,
   showGridView,
   actions,
@@ -282,7 +350,7 @@ export function WorkEditionsSection({
 }: {
   work: WorkDetail;
   workSlug: string;
-  editions: EditionDetail[];
+  collection: EditionsCollection;
   viewMode: CatalogViewMode;
   showGridView: boolean;
   actions: EditionActions;
@@ -310,19 +378,9 @@ export function WorkEditionsSection({
         </div>
       </div>
       {showGridView ? (
-        <div className="grid gap-3 grid-cols-2 sm:grid-cols-3 lg:grid-cols-6">
-          {editions.map((edition) => (
-            <EditionGridCard
-              key={edition.id}
-              edition={edition}
-              work={work}
-              workSlug={workSlug}
-              actions={actions}
-            />
-          ))}
-        </div>
+        <EditionsGrid collection={collection} work={work} workSlug={workSlug} actions={actions} />
       ) : (
-        <EditionsList editions={editions} work={work} workSlug={workSlug} actions={actions} />
+        <EditionsList collection={collection} work={work} workSlug={workSlug} actions={actions} />
       )}
     </section>
   );

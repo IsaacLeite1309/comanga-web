@@ -39,6 +39,12 @@ const EditionDetails = () => {
     deletingId: details.deletingId,
     onDelete: details.setDeletingVolume,
   };
+  const volumesCollection = {
+    volumes: details.volumes,
+    loading: details.volumesLoading,
+    error: details.volumesError,
+    pagination: details.volumesPagination,
+  };
 
   return (
     <div className="flex-1 min-w-0 px-3 py-6 sm:px-4 sm:py-8">
@@ -54,7 +60,7 @@ const EditionDetails = () => {
         <EditionSummary edition={details.edition} workId={workId} workSlug={workSlug} />
         <EditionVolumesSection
           edition={details.edition}
-          volumes={details.volumes}
+          collection={volumesCollection}
           navigation={navigation}
           viewMode={view.viewMode}
           showGridView={view.showGridView}
