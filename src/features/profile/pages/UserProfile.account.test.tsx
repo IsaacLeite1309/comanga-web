@@ -228,6 +228,7 @@ describe("UserProfile — senha", () => {
     fireEvent.click(screen.getByRole("button", { name: "Alterar senha" }));
 
     expect(await screen.findByRole("alert")).toHaveTextContent("Utilize no mínimo 8 caracteres");
+    expect(screen.getByLabelText("Nova senha")).toHaveAttribute("aria-invalid", "true");
     expect(api.patch).not.toHaveBeenCalled();
   });
 
@@ -240,6 +241,7 @@ describe("UserProfile — senha", () => {
     expect(await screen.findByRole("alert")).toHaveTextContent(
       "Divergência nos valores da senha e confirmação de senha!"
     );
+    expect(screen.getByLabelText("Confirmação da nova senha")).toHaveAttribute("aria-invalid", "true");
     expect(api.patch).not.toHaveBeenCalled();
   });
 
@@ -262,6 +264,7 @@ describe("UserProfile — senha", () => {
     fireEvent.click(screen.getByRole("button", { name: "Alterar senha" }));
 
     expect(await screen.findByRole("alert")).toHaveTextContent("Informe sua senha atual.");
+    expect(screen.getByLabelText("Senha atual")).toHaveAttribute("aria-invalid", "true");
     expect(api.patch).not.toHaveBeenCalled();
   });
 
@@ -300,6 +303,7 @@ describe("UserProfile — senha", () => {
 
     expect(await screen.findByRole("alert")).toHaveTextContent("Senha atual incorreta!");
     expect(screen.getByLabelText("Senha atual")).toHaveValue("SenhaErrada123!");
+    expect(screen.getByLabelText("Senha atual")).toHaveAttribute("aria-invalid", "true");
   });
 
   it("exibe a recusa por excesso de tentativas", async () => {

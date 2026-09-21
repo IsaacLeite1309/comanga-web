@@ -7,6 +7,7 @@ interface PasswordFormProps {
 }
 
 const EMPTY_FORM = { currentPassword: "", newPassword: "", confirmPassword: "" };
+type PasswordFieldId = keyof typeof EMPTY_FORM;
 
 function validate(form: typeof EMPTY_FORM): string {
   if (!form.currentPassword) return "Informe sua senha atual.";
@@ -21,9 +22,18 @@ function validate(form: typeof EMPTY_FORM): string {
   return "";
 }
 
+function getInvalidField(error: string): PasswordFieldId {
+  if (error === "Informe sua senha atual." || error === "A nova senha deve ser diferente da senha atual.") {
+    return "currentPassword";
+  }
+  if (error === "Divergência nos valores da senha e confirmação de senha!") return "confirmPassword";
+  return "newPassword";
+}
+
 export function PasswordForm({ onSubmit }: PasswordFormProps) {
   const [form, setForm] = useState(EMPTY_FORM);
   const [error, setError] = useState("");
+  const [invalidField, setInvalidField] = useState<PasswordFieldId | null>(null);
   const [saving, setSaving] = useState(false);
   const [visibleFields, setVisibleFields] = useState<Record<keyof typeof EMPTY_FORM, boolean>>({
     currentPassword: false,
@@ -34,6 +44,7 @@ export function PasswordForm({ onSubmit }: PasswordFormProps) {
   function updateField(field: keyof typeof EMPTY_FORM, value: string) {
     setForm((current) => ({ ...current, [field]: value }));
     setError("");
+    setInvalidField(null);
   }
 
   function toggleVisibility(field: keyof typeof EMPTY_FORM) {
@@ -47,13 +58,18 @@ export function PasswordForm({ onSubmit }: PasswordFormProps) {
     const validationError = validate(form);
     if (validationError) {
       setError(validationError);
+      setInvalidField(getInvalidField(validationError));
       return;
     }
 
     setSaving(true);
     setError("");
+    setInvalidField(null);
     const failure = await onSubmit(form);
-    if (failure) setError(failure);
+    if (failure) {
+      setError(failure);
+      setInvalidField("currentPassword");
+    }
     else setForm(EMPTY_FORM);
     setSaving(false);
   }
@@ -77,12 +93,15 @@ export function PasswordForm({ onSubmit }: PasswordFormProps) {
           <div className="relative">
             <input
               aria-label={field.label}
+              aria-invalid={invalidField === field.id}
               placeholder={field.label}
               type={visibleFields[field.id] ? "text" : "password"}
               value={form[field.id]}
               disabled={saving}
               onChange={(event) => updateField(field.id, event.target.value)}
-              className="h-12 w-full rounded-xl border border-border bg-input px-4 pr-12 text-sm text-foreground placeholder:text-muted-foreground outline-none transition-colors focus:ring-2 focus:ring-primary disabled:opacity-50"
+              className={`h-12 w-full rounded-xl border bg-input px-4 pr-12 text-sm text-foreground placeholder:text-muted-foreground outline-none transition-colors focus:ring-2 disabled:opacity-50 ${
+                invalidField === field.id ? "border-red-500 focus:ring-red-500" : "border-border focus:ring-primary"
+              }`}
             />
             <button
               type="button"
