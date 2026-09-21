@@ -66,11 +66,11 @@ function NavButton({ item, showLabel }: { item: NavItem; showLabel?: boolean }) 
 }
 
 export function PublicNav() {
-  const { user, isAuthenticated, loading } = useAuth();
+  const { user, isAuthenticated, loading, activeProfile } = useAuth();
   const location = useLocation();
   const baseNavItems = loading
     ? []
-    : user?.role === "Administrador"
+    : activeProfile === "Administrador"
       ? adminNavItems
       : collectorNavItems;
 

@@ -50,13 +50,39 @@ describe("navegação e acesso administrativo", () => {
   });
 
   it.each([
-    ["Administrador", "Administrar usuários"],
-    ["Usuário Padrão", "Meu perfil"],
-  ])("preserva a autorização para %s", async (role, expectedPage) => {
-    vi.mocked(api.get).mockResolvedValue({ data: { user: { id: "1", username: "leitor", role } } });
+    ["Administrador", ["Administrador", "Usuário Padrão"], "Administrar usuários"],
+    ["Usuário Padrão", ["Administrador", "Usuário Padrão"], "Meu perfil"],
+    ["Usuário Padrão", ["Usuário Padrão"], "Meu perfil"],
+  ])("preserva a autorização para o perfil ativo %s", async (activeProfile, profiles, expectedPage) => {
+    vi.mocked(api.get).mockResolvedValue({
+      data: {
+        user: {
+          id: "1",
+          username: "leitor",
+          profiles,
+          active_profile: activeProfile,
+        },
+      },
+    });
     window.history.replaceState({}, "", "/admin/users");
     render(<App />);
     expect(await screen.findByText(expectedPage)).toBeInTheDocument();
+  });
+
+  it("não autoriza a administração quando o perfil ativo não pertence à conta", async () => {
+    vi.mocked(api.get).mockResolvedValue({
+      data: {
+        user: {
+          id: "1",
+          username: "leitor",
+          profiles: ["Usuário Padrão"],
+          active_profile: "Administrador",
+        },
+      },
+    });
+    window.history.replaceState({}, "", "/admin/users");
+    render(<App />);
+    expect(await screen.findByText("Meu perfil")).toBeInTheDocument();
   });
 
   it("preserva a página de rota inexistente", async () => {

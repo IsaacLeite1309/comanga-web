@@ -37,6 +37,7 @@ function mockUsersResponse(users = [
     username: "admin",
     email: "admin@teste.local",
     role: "Administrador",
+    profiles: ["Administrador", "Usuário Padrão"],
     status: "Ativada",
   },
   {
@@ -44,6 +45,7 @@ function mockUsersResponse(users = [
     username: "maria",
     email: "maria@teste.local",
     role: "Usuário Padrão",
+    profiles: ["Usuário Padrão"],
     status: "Ativada",
   },
 ], paginationOverrides = {}) {
@@ -128,6 +130,7 @@ describe("UserManagement", () => {
         username: "joao",
         email: "joao@teste.local",
         role: "Usuário Padrão",
+        profiles: ["Usuário Padrão"],
         status: "Ativada",
       },
     ], { page: 2, total: 12, totalPages: 2 });
@@ -170,6 +173,7 @@ describe("UserManagement", () => {
           username: "maria",
           email: "maria@teste.local",
           role: "Administrador",
+          profiles: ["Administrador", "Usuário Padrão"],
           status: "Ativada",
         },
       },
@@ -186,7 +190,35 @@ describe("UserManagement", () => {
         role: "Administrador",
       });
     });
-    expect(toast.success).toHaveBeenCalledWith("Nível de acesso atualizado com sucesso.");
+    expect(toast.success).toHaveBeenCalledWith("Perfil Administrador concedido a maria.");
+    expect(screen.getAllByLabelText("Nível de acesso de maria")[0]).toHaveTextContent("Administrador");
+  });
+
+  it("informa a recusa quando a remoção deixaria o sistema sem administrador", async () => {
+    mockUsersResponse();
+    vi.mocked(api.patch).mockRejectedValueOnce({
+      isAxiosError: true,
+      response: {
+        status: 409,
+        data: { error: "Operação bloqueada: o sistema ficaria sem nenhum administrador ativo." },
+      },
+    });
+
+    render(<UserManagement />);
+
+    const adminRoleSelect = (await screen.findAllByLabelText("Nível de acesso de admin"))[0];
+    expect(adminRoleSelect).toBeDisabled();
+
+    const mariaRoleSelect = (await screen.findAllByLabelText("Nível de acesso de maria"))[0];
+    fireEvent.click(mariaRoleSelect);
+    fireEvent.click(screen.getAllByRole("button", { name: "Administrador" })[0]);
+
+    await waitFor(() => {
+      expect(toast.error).toHaveBeenCalledWith(
+        "Operação bloqueada: o sistema ficaria sem nenhum administrador ativo."
+      );
+    });
+    expect(screen.getAllByLabelText("Nível de acesso de maria")[0]).toHaveTextContent("Usuário Padrão");
   });
 
   it("restaura valor anterior quando alteracao de nivel falha", async () => {

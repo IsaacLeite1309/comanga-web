@@ -8,7 +8,8 @@ let authState = {
   isAuthenticated: false,
   loading: false,
   isSessionEnding: false,
-  user: null as null | { username: string; role?: string },
+  activeProfile: "Usuário Padrão",
+  user: null as null | { username: string },
 };
 
 vi.mock("@/features/auth", () => ({
@@ -47,6 +48,7 @@ describe("ProtectedRoute", () => {
       isAuthenticated: false,
       loading: false,
       isSessionEnding: false,
+      activeProfile: "Usuário Padrão",
       user: null,
     };
   });
@@ -68,6 +70,7 @@ describe("ProtectedRoute", () => {
       isAuthenticated: true,
       loading: false,
       isSessionEnding: false,
+      activeProfile: "Usuário Padrão",
       user: { username: "admin" },
     };
 
@@ -82,7 +85,8 @@ describe("ProtectedRoute", () => {
       isAuthenticated: true,
       loading: false,
       isSessionEnding: false,
-      user: { username: "isaac", role: "Usuário Padrão" },
+      activeProfile: "Usuário Padrão",
+      user: { username: "isaac" },
     };
 
     renderProtectedRoute("Administrador");
@@ -99,7 +103,8 @@ describe("ProtectedRoute", () => {
       isAuthenticated: true,
       loading: false,
       isSessionEnding: false,
-      user: { username: "admin", role: "Administrador" },
+      activeProfile: "Administrador",
+      user: { username: "admin" },
     };
 
     renderProtectedRoute("Administrador");

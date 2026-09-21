@@ -20,7 +20,10 @@ interface AdminUser {
   id: string;
   username: string;
   email: string;
+  /** Campo derivado da atribuição Administrador, mantido para compatibilidade. */
   role: UserRole;
+  /** Perfis que a conta possui; o perfil padrão nunca é removido. */
+  profiles: UserRole[];
   status: UserStatus;
 }
 
@@ -547,8 +550,12 @@ const UserManagement = () => {
 
   async function handleRoleChange(targetUser: AdminUser, newRole: UserRole) {
     const previousUsers = users;
+    const grantsAdmin = newRole === "Administrador";
+    const nextProfiles: UserRole[] = grantsAdmin
+      ? ["Administrador", "Usuário Padrão"]
+      : ["Usuário Padrão"];
     setUsers((current) => current.map((item) => (
-      item.id === targetUser.id ? { ...item, role: newRole } : item
+      item.id === targetUser.id ? { ...item, role: newRole, profiles: nextProfiles } : item
     )));
     setUpdatingUserId(targetUser.id);
 
@@ -559,14 +566,16 @@ const UserManagement = () => {
       setUsers((current) => current.map((item) => (
         item.id === targetUser.id ? response.data.user : item
       )));
-      toast.success("Nível de acesso atualizado com sucesso.");
+      toast.success(grantsAdmin
+        ? `Perfil Administrador concedido a ${targetUser.username}.`
+        : `Perfil Administrador removido de ${targetUser.username}.`);
     } catch (requestError) {
       setUsers(previousUsers);
 
       if (isAxiosError(requestError) && requestError.response?.data?.error) {
         toast.error(requestError.response.data.error);
       } else {
-        toast.error("Erro ao atualizar nível de acesso.");
+        toast.error("Erro ao atualizar o perfil de acesso.");
       }
     } finally {
       setUpdatingUserId(null);
