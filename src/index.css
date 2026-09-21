@@ -48,6 +48,10 @@
 }
 
 @layer base {
+  html {
+    scrollbar-gutter: stable;
+  }
+
   * {
     @apply border-border;
     scrollbar-color: hsl(var(--muted-foreground)) hsl(var(--background));
