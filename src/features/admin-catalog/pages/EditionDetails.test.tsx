@@ -177,4 +177,21 @@ describe("EditionDetails", () => {
 
     expect(await screen.findByText("Edição não encontrada.")).toBeInTheDocument();
   });
+  it("atualiza a capa e a contagem da Edição depois de excluir o Volume 1", async () => {
+    let removed = false;
+    vi.mocked(api.get).mockImplementation((url: string) => Promise.resolve({
+      data: url.endsWith("/volumes")
+        ? (removed ? { volumes: [] } : volumesResponse)
+        : { edition: { ...editionResponse.edition, volumesCount: removed ? 0 : 1,
+          coverUrl: removed ? null : editionResponse.edition.coverUrl } },
+    }));
+    vi.mocked(api.delete).mockImplementation(async () => { removed = true; return { data: {} }; });
+    renderEditionDetails();
+    await screen.findByText("Volume 1");
+    fireEvent.click(screen.getByRole("button", { name: /excluir volume 1/i }));
+    fireEvent.click(screen.getByRole("button", { name: /confirmar exclus/i }));
+    expect(await screen.findByText("Sem capa (cadastre o Volume 1)")).toBeInTheDocument();
+    expect(screen.getByText("0 volumes")).toBeInTheDocument();
+  });
+
 });

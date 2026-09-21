@@ -106,7 +106,7 @@ function EditionGridCard({
           <img src={edition.coverUrl} alt={`Capa da ${label}`} className="h-full w-full object-cover" />
         ) : (
           <div className="flex h-full w-full items-center justify-center px-3 text-center text-sm font-semibold text-muted-foreground">
-            Sem capa
+            Sem capa (cadastre o Volume 1)
           </div>
         )}
       </div>
@@ -164,7 +164,7 @@ function EditionListRow({
           <img src={edition.coverUrl} alt={`Capa da ${label}`} className="h-full w-full object-cover" />
         ) : (
           <div className="flex h-full w-full items-center justify-center px-2 text-center text-xs font-semibold text-muted-foreground">
-            Sem capa
+            Sem capa (cadastre o Volume 1)
           </div>
         )}
       </div>

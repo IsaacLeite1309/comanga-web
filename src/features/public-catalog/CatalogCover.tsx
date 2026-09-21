@@ -7,9 +7,10 @@ type CatalogCoverProps = {
   alt: string;
   className?: string;
   eager?: boolean;
+  emptyLabel?: string;
 };
 
-export function CatalogCover({ src, alt, className, eager = false }: CatalogCoverProps) {
+export function CatalogCover({ src, alt, className, eager = false, emptyLabel = "Sem capa" }: CatalogCoverProps) {
   const [failed, setFailed] = useState(false);
 
   return (
@@ -26,7 +27,7 @@ export function CatalogCover({ src, alt, className, eager = false }: CatalogCove
       ) : (
         <div className="flex h-full w-full flex-col items-center justify-center gap-2 px-3 text-center text-sm font-semibold text-muted-foreground">
           <BookOpen className="h-8 w-8" aria-hidden="true" />
-          <span>Sem capa</span>
+          <span>{emptyLabel}</span>
         </div>
       )}
     </div>

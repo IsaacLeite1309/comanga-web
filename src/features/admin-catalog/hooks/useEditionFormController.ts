@@ -79,15 +79,6 @@ export function useEditionFormController() {
     setDraft((current) => ({ ...current, [field]: value }));
   }
 
-  function updateCover(cover: { assetId: string; coverUrl: string; pending: boolean } | null) {
-    setDraft((current) => ({
-      ...current,
-      coverAssetId: cover?.assetId || "",
-      coverUrl: cover?.coverUrl || "",
-      coverPending: cover?.pending || false,
-    }));
-  }
-
   async function handleSubmit(event: FormEvent<HTMLFormElement>) {
     event.preventDefault();
     if (saving) return;
@@ -124,7 +115,6 @@ export function useEditionFormController() {
     loading,
     options,
     saving,
-    updateCover,
     updateDraft,
     workId,
     workPath,

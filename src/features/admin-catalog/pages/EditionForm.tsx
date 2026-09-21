@@ -49,7 +49,6 @@ const EditionForm = () => {
           draft={controller.draft}
           options={controller.options}
           onChange={controller.updateDraft}
-          onCoverChange={controller.updateCover}
         />
 
         <div className="flex justify-end">

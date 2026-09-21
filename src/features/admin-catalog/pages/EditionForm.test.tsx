@@ -14,34 +14,6 @@ vi.mock("@/services/api", () => ({
   },
 }));
 
-vi.mock("@/features/admin-media", () => ({
-  CoverImportField: ({ label, value, onChange }: {
-    label: string;
-    value: { assetId: string; coverUrl: string; pending: boolean } | null;
-    onChange: (value: { assetId: string; coverUrl: string; pending: boolean } | null) => void;
-  }) => (
-    <div>
-      <input
-        aria-label={`URL da ${label}`}
-        value={value?.coverUrl || ""}
-        onChange={(event) => {
-          try {
-            const url = new URL(event.target.value);
-            onChange(url.protocol === "https:" ? {
-              assetId: "7f28c7f0-c94f-46e8-b61c-6ea716f8f28e",
-              coverUrl: event.target.value,
-              pending: true,
-            } : null);
-          } catch {
-            onChange(null);
-          }
-        }}
-      />
-      {value?.coverUrl && <img src={value.coverUrl} alt={`Prévia da ${label}`} />}
-    </div>
-  ),
-}));
-
 vi.mock("sonner", () => ({
   toast: {
     success: vi.fn(),
@@ -89,15 +61,23 @@ describe("EditionForm", () => {
 
     await screen.findByRole("heading", { name: /nova edição/i });
     chooseDropdown(/editora brasileira/i, /panini/i);
-    fireEvent.change(screen.getByLabelText(/url da capa da edição/i), {
-      target: { value: "https://cdn.comanga.test/rascunho-edicao.jpg" },
-    });
+    chooseDropdown(/tipo de edição/i, /tankobon/i);
     firstRender.unmount();
 
     renderEditionForm();
 
-    expect(await screen.findByLabelText(/url da capa da edição/i)).toHaveValue("https://cdn.comanga.test/rascunho-edicao.jpg");
-    expect(screen.getByLabelText(/editora brasileira/i)).toHaveTextContent("Panini");
+    expect(await screen.findByLabelText(/editora brasileira/i)).toHaveTextContent("Panini");
+    expect(screen.getByLabelText(/tipo de edição/i)).toHaveTextContent("Tankobon");
+  });
+
+  it("não oferece importação de capa e explica que ela vem do Volume 1", async () => {
+    vi.mocked(api.get).mockResolvedValueOnce({ data: editionOptions });
+    renderEditionForm();
+
+    await screen.findByRole("heading", { name: /nova edição/i });
+
+    expect(screen.queryByLabelText(/capa da edi/i)).not.toBeInTheDocument();
+    expect(screen.getByText(/a capa desta Edição é a capa do Volume 1/i)).toBeInTheDocument();
   });
 
   it("cadastra uma nova edição vinculada à Obra atual", async () => {
@@ -116,11 +96,6 @@ describe("EditionForm", () => {
     chooseDropdown(/formato/i, /impresso/i);
     chooseDropdown(/número da edição/i, /1ª edição/i);
     chooseDropdown(/status de publicação/i, /completa/i);
-    fireEvent.change(screen.getByLabelText(/url da capa da edição/i), {
-      target: { value: "https://cdn.comanga.test/edicao.jpg" },
-    });
-
-    expect(screen.getByAltText(/prévia da capa da edição/i)).toHaveAttribute("src", "https://cdn.comanga.test/edicao.jpg");
     fireEvent.click(screen.getByRole("button", { name: /^salvar$/i }));
 
     await waitFor(() => {
@@ -131,9 +106,10 @@ describe("EditionForm", () => {
         formatId: 33,
         chronologicalNumber: 1,
         brazilPublicationStatus: "Completa",
-        coverAssetId: "7f28c7f0-c94f-46e8-b61c-6ea716f8f28e",
       }));
     });
+    // A API recusa coverAssetId na Edição: o cliente nunca pode enviá-lo.
+    expect(vi.mocked(api.post).mock.calls[0][1]).not.toHaveProperty("coverAssetId");
     expect(toast.success).toHaveBeenCalledWith("Edição cadastrada com sucesso.");
     expect(screen.getByText("Edição cadastrada com sucesso")).toBeInTheDocument();
   });
@@ -162,17 +138,14 @@ describe("EditionForm", () => {
     renderEditionForm("/admin/editar-mangas/obras/Naruto/edicoes/50/editar");
 
     expect(await screen.findByRole("heading", { name: /editar edi/i })).toBeInTheDocument();
-    expect(screen.getByLabelText(/url da capa da edi/i)).toHaveValue("");
-    fireEvent.change(screen.getByLabelText(/url da capa da edi/i), {
-      target: { value: "https://cdn.comanga.test/edicao-2.jpg" },
-    });
+    chooseDropdown(/número da edição/i, /^3ª edição$/i);
     fireEvent.click(screen.getByRole("button", { name: /^salvar$/i }));
 
     await waitFor(() => expect(api.patch).toHaveBeenCalledWith("/admin/editions/50", expect.objectContaining({
-      chronologicalNumber: 2,
+      chronologicalNumber: 3,
       brazilPublicationStatus: "Em andamento",
-      coverAssetId: "7f28c7f0-c94f-46e8-b61c-6ea716f8f28e",
     })));
+    expect(vi.mocked(api.patch).mock.calls[0][1]).not.toHaveProperty("coverAssetId");
     expect(toast.success).toHaveBeenCalledWith("Edição atualizada com sucesso.");
     expect(await screen.findByText("Detalhes da Edição")).toBeInTheDocument();
   });
@@ -236,16 +209,6 @@ describe("EditionForm", () => {
     expect(screen.getByLabelText(/^editora brasileira$/i)).toHaveAttribute("aria-expanded", "false");
   });
 
-  it("nao renderiza preview para URL invalida", async () => {
-    vi.mocked(api.get).mockResolvedValueOnce({ data: editionOptions });
-    renderEditionForm();
-
-    await screen.findByRole("heading", { name: /nova edi/i });
-    fireEvent.change(screen.getByLabelText(/url da capa da edi/i), { target: { value: "arquivo-local" } });
-
-    expect(screen.queryByAltText(/pr.*via da capa da edi/i)).not.toBeInTheDocument();
-  });
-
   it("exibe a mensagem da API quando o cadastro falha", async () => {
     vi.mocked(api.get).mockResolvedValueOnce({ data: editionOptions });
     vi.mocked(api.post).mockRejectedValueOnce({
@@ -261,7 +224,6 @@ describe("EditionForm", () => {
     chooseDropdown(/formato/i, /impresso/i);
     chooseDropdown(/n.*mero da edi/i, /^1ª edição$/i);
     chooseDropdown(/status de publica/i, /completa/i);
-    fireEvent.change(screen.getByLabelText(/url da capa da edi/i), { target: { value: "https://example.com/capa.jpg" } });
     fireEvent.click(screen.getByRole("button", { name: /^salvar$/i }));
 
     await waitFor(() => expect(toast.error).toHaveBeenCalledWith("Edição duplicada."));
