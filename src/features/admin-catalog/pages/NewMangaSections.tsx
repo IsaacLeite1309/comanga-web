@@ -253,8 +253,9 @@ export function AuthorsStep({ controller }: ControllerProps) {
               invalid={controller.isInvalidField(`authors.${index}.roles`)}
               errorMessage={errorMessage(controller, `authors.${index}.roles`)}
               searchable
+              maxVisibleItems={7}
             />
-            <div className="flex items-center self-end">
+            <div className="flex items-center self-start pt-7">
               <button
                 type="button"
                 onClick={() => controller.removeAuthor(index)}

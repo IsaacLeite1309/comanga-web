@@ -16,6 +16,7 @@ import { toast } from "sonner";
 import { api } from "@/services/api";
 import { getApiError } from "@/lib/apiError";
 import { workAdminPath } from "../domain/catalogPaths";
+import { sortAuthorsByCredit } from "../domain/workOptions";
 import {
   emptyNewMangaDraft,
   getRememberedNewMangaDraft,
@@ -440,9 +441,10 @@ export function useNewMangaForm(mode: NewMangaMode, workId?: string) {
     )));
   }
   function toggleAuthorRole(index: number, role: string) {
-    updateDraft("authors", draft.authors.map((author, authorIndex) => authorIndex === index
+    const authors = draft.authors.map((author, authorIndex) => authorIndex === index
       ? { ...author, roles: toggleValue(author.roles, role) }
-      : author));
+      : author);
+    updateDraft("authors", sortAuthorsByCredit(authors, optionState.options.authors));
   }
   function handleFormKeyDown(event: KeyboardEvent<HTMLFormElement>) {
     if (event.key !== "Enter") return;

@@ -12,6 +12,7 @@ export const NATIVE_AUTHOR_ROLE_OPTIONS: OptionValue[] = [
 
 const COMBINED_AUTHOR_ROLE = "História e Arte";
 const SEPARATE_AUTHOR_ROLES = ["História", "Arte"];
+const AUTHOR_ROLE_PRIORITY = ["Criador Original", "História Original", "História e Arte", "História", "Arte", "Ilustrador", "Design de Personagens"];
 
 export function isAuthorRoleDisabled(selectedRoles: string[], role: string) {
   const hasCombinedRole = selectedRoles.includes(COMBINED_AUTHOR_ROLE);
@@ -22,6 +23,19 @@ export function isAuthorRoleDisabled(selectedRoles: string[], role: string) {
   if (hasHistoryRole) return role === COMBINED_AUTHOR_ROLE || role === "Arte";
   if (hasArtRole) return role === COMBINED_AUTHOR_ROLE || role === "História";
   return false;
+}
+
+export function sortAuthorsByCredit<T extends { authorId: string; roles: string[] }>(authors: T[], authorOptions: OptionValue[]) {
+  return [...authors].sort((first, second) => {
+    const priority = (roles: string[]) => Math.min(...roles.map((role) => {
+      const index = AUTHOR_ROLE_PRIORITY.indexOf(role);
+      return index === -1 ? AUTHOR_ROLE_PRIORITY.length : index;
+    }));
+    const firstName = authorOptions.find((option) => String(option.id) === first.authorId)?.label || "";
+    const secondName = authorOptions.find((option) => String(option.id) === second.authorId)?.label || "";
+    return priority(first.roles) - priority(second.roles)
+      || firstName.localeCompare(secondName, "pt-BR", { sensitivity: "base" });
+  });
 }
 
 export const NATIVE_COUNTRY_OPTIONS: OptionValue[] = [
