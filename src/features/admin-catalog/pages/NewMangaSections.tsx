@@ -245,8 +245,9 @@ export function AuthorsStep({ controller }: ControllerProps) {
               selectedIds={author.roles}
               isOptionDisabled={(role) => isAuthorRoleDisabled(author.roles, String(role))}
               onToggle={(role) => {
-                controller.toggleAuthorRole(index, String(role));
+                const reordered = controller.toggleAuthorRole(index, String(role));
                 controller.clearInvalidField(`authors.${index}.roles`);
+                return reordered;
               }}
               onOpen={() => controller.clearInvalidField(`authors.${index}.roles`)}
               required

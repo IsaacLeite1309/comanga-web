@@ -13,7 +13,7 @@ interface MultiSelectProps {
   label: string;
   options: SelectOption[];
   selectedIds: Array<number | string>;
-  onToggle: (id: number | string) => void;
+  onToggle: (id: number | string) => boolean | void;
   isOptionDisabled?: (id: number | string) => boolean;
   onOpen?: () => void;
   emptyMessage?: string;
@@ -263,7 +263,7 @@ function OptionsMenu({
   maxVisibleItems: number;
   menuSurface: string;
   isOptionDisabled?: (id: number | string) => boolean;
-  onToggle: (id: number | string) => void;
+  onToggle: (id: number | string) => boolean | void;
   options: SelectOption[];
   secondaryText: string;
   selectedIds: Array<number | string>;
@@ -295,7 +295,9 @@ function OptionsMenu({
             type="button"
             title={option.label}
             disabled={optionDisabled}
-            onClick={() => onToggle(optionValue)}
+            onClick={() => {
+              if (onToggle(optionValue)) closeDropdown();
+            }}
             onKeyDown={handleKeyDown}
             className={`flex h-11 w-full items-center justify-between gap-2 px-3 text-left text-sm font-semibold transition-colors disabled:cursor-not-allowed disabled:opacity-45 ${selected ? "bg-primary text-primary-foreground" : "text-foreground hover:bg-primary hover:text-primary-foreground"}`}
           >
