@@ -68,7 +68,7 @@ export function PasswordForm({ onSubmit }: PasswordFormProps) {
     <form className="rounded-xl border border-border bg-muted/20 p-4 space-y-3" onSubmit={handleSubmit}>
       <div className="flex items-center gap-2">
         <KeyRound className="h-4 w-4 text-primary" aria-hidden="true" />
-        <h3 className="text-sm font-bold text-foreground">Alterar senha</h3>
+        <h3 className="text-xs font-medium uppercase tracking-wider text-muted-foreground">Alterar senha</h3>
       </div>
       {fields.map((field) => (
         <div key={field.id}>
@@ -80,14 +80,14 @@ export function PasswordForm({ onSubmit }: PasswordFormProps) {
               value={form[field.id]}
               disabled={saving}
               onChange={(event) => updateField(field.id, event.target.value)}
-              className="h-12 w-full rounded-xl border border-border bg-input px-3 pr-12 text-base text-foreground outline-none transition-colors focus:border-primary focus:ring-2 focus:ring-primary/40 disabled:opacity-50"
+              className="h-12 w-full rounded-xl border border-border bg-input px-4 pr-12 text-sm text-foreground placeholder:text-muted-foreground outline-none transition-colors focus:ring-2 focus:ring-primary disabled:opacity-50"
             />
             <button
               type="button"
               disabled={saving}
               onClick={() => toggleVisibility(field.id)}
               aria-label={visibleFields[field.id] ? `Ocultar ${field.label.toLowerCase()}` : `Mostrar ${field.label.toLowerCase()}`}
-              className="absolute inset-y-0 right-0 flex w-11 items-center justify-center rounded-r-xl text-muted-foreground transition-colors hover:bg-muted hover:text-foreground disabled:opacity-50"
+              className="absolute right-3 top-1/2 -translate-y-1/2 p-1 text-muted-foreground transition-colors hover:text-foreground disabled:opacity-50"
             >
               {visibleFields[field.id] ? <EyeOff className="h-5 w-5" /> : <Eye className="h-5 w-5" />}
             </button>

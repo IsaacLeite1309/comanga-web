@@ -38,7 +38,7 @@ export function UsernameForm({ currentUsername, onSubmit }: UsernameFormProps) {
     <form className="rounded-xl border border-border bg-muted/20 p-4 space-y-3" onSubmit={handleSubmit}>
       <div className="flex items-center gap-2">
         <UserCog className="h-4 w-4 text-primary" aria-hidden="true" />
-        <h3 className="text-sm font-bold text-foreground">Alterar nome de usuário</h3>
+        <h3 className="text-xs font-medium uppercase tracking-wider text-muted-foreground">Alterar nome de usuário</h3>
       </div>
       <div>
         <input
@@ -52,8 +52,8 @@ export function UsernameForm({ currentUsername, onSubmit }: UsernameFormProps) {
             setUsername(event.target.value);
             setError("");
           }}
-          className={`h-12 w-full rounded-xl border bg-input px-3 text-base font-semibold text-foreground outline-none transition-colors focus:ring-2 disabled:opacity-50 ${
-            error ? "border-red-500 focus:border-red-500 focus:ring-red-500/30" : "border-border focus:border-primary focus:ring-primary/40"
+          className={`h-12 w-full rounded-xl border bg-input px-4 text-sm text-foreground placeholder:text-muted-foreground outline-none transition-colors focus:ring-2 disabled:opacity-50 ${
+            error ? "border-red-500 focus:ring-red-500" : "border-border focus:ring-primary"
           }`}
         />
       </div>

@@ -18,11 +18,8 @@ export function ActiveProfileSelector({ profiles, activeProfile, updating, onCha
         <ShieldCheck className="h-5 w-5 text-white" />
       </div>
       <div className="flex min-w-0 flex-1 flex-col">
-        <span className="text-sm font-semibold text-foreground">
+        <span className="text-xs font-medium uppercase tracking-wider text-muted-foreground">
           Perfil ativo
-        </span>
-        <span className="text-xs text-muted-foreground mt-0.5">
-          Define o contexto de uso desta sessão. Não concede nem remove perfis da conta.
         </span>
         <SearchableSelect
           ariaLabel="Perfil ativo"
