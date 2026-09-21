@@ -1,4 +1,4 @@
-import { ArrowLeft, Loader2, Plus, RotateCcw, Save, Trash2 } from "lucide-react";
+import { ArrowLeft, ChevronDown, ChevronUp, Loader2, Plus, RotateCcw, Save, Trash2 } from "lucide-react";
 import { MultiSelect as MultiSelectDropdown } from "@/components/forms/MultiSelect";
 import { InputField, SelectField, ToggleField, YearSelectField } from "@/components/forms/FormFields";
 import { CoverImportField } from "@/features/admin-media";
@@ -97,6 +97,31 @@ export function NewMangaSteps({ controller }: ControllerProps) {
   );
 }
 
+function WorkSynopsisField({ controller }: ControllerProps) {
+  const invalid = controller.isInvalidField("synopsis");
+  return (
+    <div className="md:col-span-2">
+      <label className="mb-2 block text-xs font-bold uppercase tracking-wide text-muted-foreground">
+        Sinopse da Obra<span className="text-red-400"> *</span>
+      </label>
+      <textarea
+        aria-label="Sinopse da Obra"
+        value={controller.draft.synopsis}
+        onChange={(event) => {
+          controller.updateDraft("synopsis", event.target.value);
+          controller.clearInvalidField("synopsis");
+        }}
+        placeholder="Digite"
+        rows={6}
+        className={`w-full resize-y rounded-xl border bg-input px-4 py-3 text-base font-semibold text-foreground outline-none transition-colors placeholder:text-muted-foreground ${
+          invalid ? "border-red-500 focus:border-red-500" : "border-border focus:border-primary"
+        }`}
+      />
+      {invalid ? <p className="mt-2 text-sm font-semibold text-red-400">Preencha o campo obrigatório.</p> : null}
+    </div>
+  );
+}
+
 export function IdentificationStep({ controller }: ControllerProps) {
   const { draft } = controller;
   return (
@@ -117,6 +142,15 @@ export function IdentificationStep({ controller }: ControllerProps) {
         required
         invalid={controller.isInvalidField("originalTitle")}
         errorMessage={errorMessage(controller, "originalTitle")}
+        placeholder="Digite"
+      />
+      <InputField
+        label="Título romanizado"
+        value={draft.romanizedTitle}
+        onChange={(value) => { controller.updateDraft("romanizedTitle", value); controller.clearInvalidField("romanizedTitle"); }}
+        required
+        invalid={controller.isInvalidField("romanizedTitle")}
+        errorMessage={errorMessage(controller, "romanizedTitle")}
         placeholder="Digite"
       />
       <SelectField
@@ -143,6 +177,7 @@ export function IdentificationStep({ controller }: ControllerProps) {
         errorMessage={errorMessage(controller, "typeId")}
         searchable
       />
+      <WorkSynopsisField controller={controller} />
       <div className="md:col-span-2">
         <CoverImportField
           label="Capa da Obra"
@@ -169,7 +204,9 @@ export function AuthorsStep({ controller }: ControllerProps) {
       <div className="mb-4 flex items-center justify-between gap-3">
         <div>
           <h2 className="text-lg font-bold text-foreground">Autor(es)</h2>
-          <p className="text-sm text-muted-foreground">Adicione cada autor com seu respectivo papel.</p>
+          <p className="text-sm text-muted-foreground">
+            Adicione cada autor com seu respectivo papel. Use os controles de mover para definir a ordem dos créditos.
+          </p>
         </div>
         <button
           type="button"
@@ -215,15 +252,35 @@ export function AuthorsStep({ controller }: ControllerProps) {
               errorMessage={errorMessage(controller, `authors.${index}.roles`)}
               searchable
             />
-            <button
-              type="button"
-              onClick={() => controller.removeAuthor(index)}
-              disabled={controller.draft.authors.length === 1}
-              className="inline-flex h-12 w-full items-center justify-center gap-2 self-end rounded-xl bg-red-500 px-3 text-sm font-bold text-white hover:bg-red-600 disabled:cursor-not-allowed disabled:opacity-50 md:w-12"
-              aria-label="Remover autor"
-            >
-              <Trash2 className="h-4 w-4" />
-            </button>
+            <div className="flex items-center gap-2 self-end">
+              <button
+                type="button"
+                onClick={() => controller.moveAuthor(index, index - 1)}
+                disabled={index === 0}
+                aria-label={`Mover autor ${index + 1} para cima`}
+                className="inline-flex h-12 w-12 items-center justify-center rounded-xl border border-border bg-input text-foreground transition-colors hover:border-primary hover:text-primary disabled:cursor-not-allowed disabled:opacity-50"
+              >
+                <ChevronUp className="h-4 w-4" />
+              </button>
+              <button
+                type="button"
+                onClick={() => controller.moveAuthor(index, index + 1)}
+                disabled={index === controller.draft.authors.length - 1}
+                aria-label={`Mover autor ${index + 1} para baixo`}
+                className="inline-flex h-12 w-12 items-center justify-center rounded-xl border border-border bg-input text-foreground transition-colors hover:border-primary hover:text-primary disabled:cursor-not-allowed disabled:opacity-50"
+              >
+                <ChevronDown className="h-4 w-4" />
+              </button>
+              <button
+                type="button"
+                onClick={() => controller.removeAuthor(index)}
+                disabled={controller.draft.authors.length === 1}
+                className="inline-flex h-12 w-full items-center justify-center gap-2 rounded-xl bg-red-500 px-3 text-sm font-bold text-white hover:bg-red-600 disabled:cursor-not-allowed disabled:opacity-50 md:w-12"
+                aria-label="Remover autor"
+              >
+                <Trash2 className="h-4 w-4" />
+              </button>
+            </div>
           </div>
         ))}
       </div>

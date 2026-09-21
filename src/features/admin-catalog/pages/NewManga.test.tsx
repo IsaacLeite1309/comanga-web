@@ -95,6 +95,8 @@ const workDetail = {
   id: 10,
   title: "Naruto",
   originalTitle: "Naruto",
+  romanizedTitle: "Naruto",
+  synopsis: "Um ninja busca reconhecimento na própria vila.",
   coverAssetId: "7f28c7f0-c94f-46e8-b61c-6ea716f8f28e",
   coverUrl: "https://cdn.comanga.test/naruto.jpg",
   country: "Japão",
@@ -153,8 +155,12 @@ async function chooseDropdownAt(label: RegExp, index: number, optionName: RegExp
 }
 
 async function fillIdentificationFields() {
-  fireEvent.change(screen.getAllByLabelText(/t.*tulo/i)[0], { target: { value: "Naruto" } });
+  fireEvent.change(screen.getByLabelText(/^t.*tulo$/i), { target: { value: "Naruto" } });
   fireEvent.change(screen.getByLabelText(/^t.*tulo original$/i), { target: { value: "Naruto" } });
+  fireEvent.change(screen.getByLabelText(/^t.*tulo romanizado$/i), { target: { value: "Naruto" } });
+  fireEvent.change(screen.getByLabelText(/^sinopse da obra$/i), {
+    target: { value: "Um ninja busca reconhecimento na própria vila." },
+  });
 
   await waitFor(() => {
     expect(api.get).toHaveBeenCalledWith("/admin/works/form-options");
@@ -233,7 +239,7 @@ describe("NewManga", () => {
 
     await fillIdentificationFields();
     expect(screen.getByAltText(/pr.*via da capa/i)).toHaveAttribute("src", "https://cdn.comanga.test/naruto.jpg");
-    expect(screen.queryByLabelText(/sinopse/i)).not.toBeInTheDocument();
+    expect(screen.getByLabelText(/^sinopse da obra$/i)).toHaveValue("Um ninja busca reconhecimento na própria vila.");
     fireEvent.click(screen.getByRole("button", { name: /continuar/i }));
     await fillAuthorsFields();
     fireEvent.click(screen.getByRole("button", { name: /continuar/i }));
@@ -258,8 +264,10 @@ describe("NewManga", () => {
         magazineIds: [{ id: 10, position: 0 }],
       }));
     });
-    expect(api.post).toHaveBeenCalledWith("/admin/works", expect.not.objectContaining({
-      synopsis: expect.anything(),
+    expect(api.post).toHaveBeenCalledWith("/admin/works", expect.objectContaining({
+      originalTitle: "Naruto",
+      romanizedTitle: "Naruto",
+      synopsis: "Um ninja busca reconhecimento na própria vila.",
     }));
     expect(toast.success).toHaveBeenCalledWith("Obra cadastrada com sucesso.");
   }, 30000);

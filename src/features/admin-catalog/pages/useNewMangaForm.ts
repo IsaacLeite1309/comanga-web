@@ -467,6 +467,7 @@ export function useNewMangaForm(mode: NewMangaMode, workId?: string) {
     handleSubmit,
     hasUnsavedChanges: Boolean(baselineSignature) && signature !== baselineSignature && !saving,
     isInvalidField: (field: string) => invalidFields.includes(field),
+    moveAuthor: (from: number, to: number) => updateDraft("authors", moveValue(draft.authors, from, to)),
     moveNumberValues: (field: "magazineIds" | "originalPublisherIds", from: number, to: number) => {
       updateDraft(field, moveValue(draft[field], from, to));
     },

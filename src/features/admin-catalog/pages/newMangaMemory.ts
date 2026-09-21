@@ -4,6 +4,8 @@ export type RememberedNewMangaDraft = {
   currentStep: "identification" | "authors" | "publication";
   title: string;
   originalTitle: string;
+  romanizedTitle: string;
+  synopsis: string;
   originalPublicationStartYear: string;
   originalPublicationEndYear: string;
   originalVolumeCount: string;
@@ -26,6 +28,8 @@ export const emptyNewMangaDraft: RememberedNewMangaDraft = {
   currentStep: "identification",
   title: "",
   originalTitle: "",
+  romanizedTitle: "",
+  synopsis: "",
   originalPublicationStartYear: "",
   originalPublicationEndYear: "",
   originalVolumeCount: "",

@@ -28,6 +28,7 @@ export interface PublicWorkSummary {
   slug: string;
   title: string;
   originalTitle?: string | null;
+  romanizedTitle?: string | null;
   coverUrl?: string | null;
   type?: PublicOption | null;
   country?: string | null;
@@ -92,6 +93,7 @@ export interface PublicWorkDetails {
   slug: string;
   title: string;
   originalTitle?: string | null;
+  romanizedTitle?: string | null;
   coverUrl?: string | null;
   type: PublicOption;
   country: string;

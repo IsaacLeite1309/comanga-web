@@ -29,6 +29,8 @@ export interface WorkDetail {
   slug: string;
   title: string;
   originalTitle?: string | null;
+  romanizedTitle: string;
+  synopsis: string;
   coverAssetId?: string | null;
   coverUrl?: string | null;
   country?: string | null;
@@ -63,6 +65,8 @@ export type NewMangaStep = "identification" | "authors" | "publication";
 export type NewMangaDraft = {
   title: string;
   originalTitle: string;
+  romanizedTitle: string;
+  synopsis: string;
   originalPublicationStartYear: string;
   originalPublicationEndYear: string;
   originalVolumeCount: string;
