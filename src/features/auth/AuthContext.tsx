@@ -7,6 +7,7 @@ import { AuthContext, type AuthUser } from "./authContextState";
 export function AuthProvider({ children }: { children: ReactNode }) {
   const [user, setUser] = useState<AuthUser | null>(null);
   const [loading, setLoading] = useState(true);
+  const [isSessionEnding, setIsSessionEnding] = useState(false);
   const navigate = useNavigate();
 
   useEffect(() => {
@@ -25,12 +26,15 @@ export function AuthProvider({ children }: { children: ReactNode }) {
   }, []);
 
   function login(userData: AuthUser) {
+    setIsSessionEnding(false);
     setUser(userData);
   }
 
   function clearSession() {
-    setUser(null);
+    setIsSessionEnding(true);
     navigate("/entrar");
+    setUser(null);
+    window.setTimeout(() => setIsSessionEnding(false), 0);
   }
 
   async function logout() {
@@ -45,7 +49,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
   }
 
   return (
-    <AuthContext.Provider value={{ isAuthenticated: !!user, user, loading, login, logout, clearSession }}>
+    <AuthContext.Provider value={{ isAuthenticated: !!user, user, loading, isSessionEnding, login, logout, clearSession }}>
       {children}
     </AuthContext.Provider>
   );

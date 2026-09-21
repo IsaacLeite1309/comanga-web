@@ -10,13 +10,13 @@ interface ProtectedRouteProps {
 }
 
 export function ProtectedRoute({ children, requiredRole }: ProtectedRouteProps) {
-  const { isAuthenticated, loading, user } = useAuth();
+  const { isAuthenticated, loading, isSessionEnding, user } = useAuth();
   const location = useLocation();
   const sessionToastFired = useRef(false);
   const forbiddenToastFired = useRef(false);
 
   useEffect(() => {
-    if (!loading && !isAuthenticated && !sessionToastFired.current) {
+    if (!loading && !isAuthenticated && !isSessionEnding && !sessionToastFired.current) {
       toast.error("Sua sessão é inválida ou foi encerrada. Por favor, faça login novamente.");
       sessionToastFired.current = true;
     }
@@ -25,7 +25,7 @@ export function ProtectedRoute({ children, requiredRole }: ProtectedRouteProps) 
       toast.error("Acesso negado: Você não tem permissão para acessar esta área.");
       forbiddenToastFired.current = true;
     }
-  }, [loading, isAuthenticated, requiredRole, user?.role]);
+  }, [loading, isAuthenticated, isSessionEnding, requiredRole, user?.role]);
 
   if (loading) {
     return (
