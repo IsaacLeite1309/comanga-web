@@ -121,7 +121,7 @@ describe("VolumeForm", () => {
     });
     expect(await screen.findByRole("heading", { name: "Volume cadastrado com sucesso!" })).toBeInTheDocument();
     expect(screen.getByRole("link", { name: "Gerenciar este Volume" })).toHaveAttribute(
-      "href", "/admin/editar-mangas/obras/Naruto/edicoes/20/volumes/30"
+      "href", "/admin/editar-mangas/obras/Naruto/edicoes/20/volumes/30/editar"
     );
   });
 
@@ -230,7 +230,7 @@ describe("VolumeForm", () => {
     })));
     expect(await screen.findByRole("heading", { name: "Volume cadastrado com sucesso!" })).toBeInTheDocument();
     expect(screen.getByRole("link", { name: "Gerenciar este Volume" })).toHaveAttribute(
-      "href", "/admin/editar-mangas/obras/Naruto/edicoes/20/volumes/31"
+      "href", "/admin/editar-mangas/obras/Naruto/edicoes/20/volumes/31/editar"
     );
   });
 

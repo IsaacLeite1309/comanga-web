@@ -1,9 +1,10 @@
-import { ArrowLeft, ChevronDown, ChevronUp, Loader2, Plus, RotateCcw, Save, Trash2 } from "lucide-react";
+import { ArrowLeft, Loader2, Plus, RotateCcw, Save, Trash2 } from "lucide-react";
 import { MultiSelect as MultiSelectDropdown } from "@/components/forms/MultiSelect";
 import { InputField, SelectField, ToggleField, YearSelectField } from "@/components/forms/FormFields";
 import { CoverImportField } from "@/features/admin-media";
 import type { NavigateFunction } from "react-router-dom";
 import {
+  isAuthorRoleDisabled,
   NATIVE_AUTHOR_ROLE_OPTIONS,
   NATIVE_COUNTRY_OPTIONS,
   NATIVE_DEMOGRAPHY_OPTIONS,
@@ -205,7 +206,7 @@ export function AuthorsStep({ controller }: ControllerProps) {
         <div>
           <h2 className="text-lg font-bold text-foreground">Autor(es)</h2>
           <p className="text-sm text-muted-foreground">
-            Adicione cada autor com seu respectivo papel. Use os controles de mover para definir a ordem dos créditos.
+            Adicione cada autor com seu respectivo papel. Os créditos são ordenados automaticamente pelo papel e, em caso de empate, pelo nome.
           </p>
         </div>
         <button
@@ -223,7 +224,7 @@ export function AuthorsStep({ controller }: ControllerProps) {
       </div>
       <div className="space-y-3 md:relative md:space-y-0">
         {controller.draft.authors.map((author, index) => (
-          <div key={index} className="grid gap-3 md:grid-cols-[1fr_1fr_auto]">
+          <div key={author.authorId || `novo-autor-${index}`} className="grid gap-3 md:grid-cols-[1fr_1fr_auto]">
             <SelectField
               label="Autor"
               value={author.authorId}
@@ -242,35 +243,20 @@ export function AuthorsStep({ controller }: ControllerProps) {
               label="Papel"
               options={NATIVE_AUTHOR_ROLE_OPTIONS}
               selectedIds={author.roles}
+              isOptionDisabled={(role) => isAuthorRoleDisabled(author.roles, String(role))}
               onToggle={(role) => {
-                controller.toggleAuthorRole(index, String(role));
+                const reordered = controller.toggleAuthorRole(index, String(role));
                 controller.clearInvalidField(`authors.${index}.roles`);
+                return reordered;
               }}
               onOpen={() => controller.clearInvalidField(`authors.${index}.roles`)}
               required
               invalid={controller.isInvalidField(`authors.${index}.roles`)}
               errorMessage={errorMessage(controller, `authors.${index}.roles`)}
               searchable
+              maxVisibleItems={7}
             />
-            <div className="flex items-center gap-2 self-end">
-              <button
-                type="button"
-                onClick={() => controller.moveAuthor(index, index - 1)}
-                disabled={index === 0}
-                aria-label={`Mover autor ${index + 1} para cima`}
-                className="inline-flex h-12 w-12 items-center justify-center rounded-xl border border-border bg-input text-foreground transition-colors hover:border-primary hover:text-primary disabled:cursor-not-allowed disabled:opacity-50"
-              >
-                <ChevronUp className="h-4 w-4" />
-              </button>
-              <button
-                type="button"
-                onClick={() => controller.moveAuthor(index, index + 1)}
-                disabled={index === controller.draft.authors.length - 1}
-                aria-label={`Mover autor ${index + 1} para baixo`}
-                className="inline-flex h-12 w-12 items-center justify-center rounded-xl border border-border bg-input text-foreground transition-colors hover:border-primary hover:text-primary disabled:cursor-not-allowed disabled:opacity-50"
-              >
-                <ChevronDown className="h-4 w-4" />
-              </button>
+            <div className="flex items-center self-start pt-[34px]">
               <button
                 type="button"
                 onClick={() => controller.removeAuthor(index)}

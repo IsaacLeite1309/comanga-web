@@ -22,6 +22,7 @@ export interface AuthContextValue {
   /** A conta possui a atribuição Administrador, mesmo que ela não esteja ativa. */
   hasAdminProfile: boolean;
   loading: boolean;
+  isSessionEnding: boolean;
   login: (userData: AuthUser) => void;
   updateUser: (changes: Partial<AuthUser>) => void;
   logout: () => void;

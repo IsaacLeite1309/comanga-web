@@ -3,7 +3,7 @@ import { Loader2, Pencil, Plus, Settings, Trash2 } from "lucide-react";
 import { VisibilityIcon } from "./CatalogVisibility";
 import { visibilityActionClassName } from "./catalogVisibilityStyles";
 import { CatalogViewToggle, DeleteCatalogItemDialog, DetailInfoBlock } from "./AdminCatalogDetailShared";
-import { editionEditAdminPath, newVolumeAdminPath, volumeAdminPath } from "../domain/catalogPaths";
+import { editionEditAdminPath, newVolumeAdminPath, volumeEditAdminPath } from "../domain/catalogPaths";
 import {
   formatEditionNumber,
   formatPrice,
@@ -118,7 +118,7 @@ function VolumeGridCard({
           <VisibilityIcon visibility={volume.visibility} />
         </button>
         <Link
-          to={volumeAdminPath(navigation.workSlug, navigation.editionId, volume.id)}
+          to={volumeEditAdminPath(navigation.workSlug, navigation.editionId, volume.id)}
           state={{ workId: navigation.workId, editionId: navigation.editionId, volumeId: volume.id }}
           aria-label={`Gerenciar ${label}`}
           className="inline-flex h-8 items-center justify-center rounded-md border border-border bg-card text-foreground transition-colors hover:border-primary hover:text-primary"
@@ -190,7 +190,7 @@ function VolumeListRow({
           {volume.visibility}
         </span>
         <Link
-          to={volumeAdminPath(navigation.workSlug, navigation.editionId, volume.id)}
+          to={volumeEditAdminPath(navigation.workSlug, navigation.editionId, volume.id)}
           state={{ workId: navigation.workId, editionId: navigation.editionId, volumeId: volume.id }}
           aria-label={`Gerenciar ${label}`}
           className="inline-flex h-10 w-10 items-center justify-center rounded-lg border border-border bg-input text-foreground transition-colors hover:border-primary hover:text-primary md:justify-self-center"

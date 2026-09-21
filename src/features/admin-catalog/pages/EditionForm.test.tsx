@@ -36,6 +36,7 @@ function renderEditionForm(path = "/admin/editar-mangas/obras/Naruto/edicoes/nov
       <Routes>
         <Route path="/admin/editar-mangas/obras/:workSlug/edicoes/nova" element={<EditionForm />} />
         <Route path="/admin/editar-mangas/obras/:workSlug/edicoes/:editionId/editar" element={<EditionForm />} />
+        <Route path="/admin/editar-mangas/obras/:workSlug/edicoes/:editionId" element={<div>Detalhes da Edição</div>} />
         <Route path="/admin/editar-mangas/obras/:workSlug" element={<div>Hub da Obra</div>} />
         <Route path="/admin/pos-cadastro" element={<div>Edição cadastrada com sucesso</div>} />
       </Routes>
@@ -146,6 +147,7 @@ describe("EditionForm", () => {
     })));
     expect(vi.mocked(api.patch).mock.calls[0][1]).not.toHaveProperty("coverAssetId");
     expect(toast.success).toHaveBeenCalledWith("Edição atualizada com sucesso.");
+    expect(await screen.findByText("Detalhes da Edição")).toBeInTheDocument();
   });
 
   it("resolve a obra diretamente pelo slug quando a rota e recarregada", async () => {

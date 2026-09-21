@@ -13,40 +13,47 @@ export default function PasswordRecovery({ reset = false }: { reset?: boolean })
 }
 
 const FIELD_CLASS = "h-12 w-full rounded-xl border border-border bg-input px-4 text-sm text-foreground placeholder:text-muted-foreground focus:outline-none focus:ring-2 focus:ring-primary";
+const MINIMUM_REQUEST_FEEDBACK_MS = 500;
+const EMAIL_PATTERN = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
 
 interface PasswordFieldProps {
   label: string;
   value: string;
   visible: boolean;
+  error?: string;
   onChange: (value: string) => void;
   onToggle: () => void;
 }
 
-function PasswordField({ label, value, visible, onChange, onToggle }: PasswordFieldProps) {
+function PasswordField({ label, value, visible, error, onChange, onToggle }: PasswordFieldProps) {
   const toggleLabel = label === "Nova senha"
     ? visible ? "Esconder senha" : "Mostrar senha"
     : visible ? "Esconder confirmação de senha" : "Mostrar confirmação de senha";
 
   return (
-    <div className="relative">
-      <input
-        aria-label={label}
-        type={visible ? "text" : "password"}
-        autoComplete="new-password"
-        required
-        value={value}
-        onChange={(event) => onChange(event.target.value)}
-        placeholder={label}
-        className={`${FIELD_CLASS} pr-12`}
-      />
-      <button
-        type="button"
-        onClick={onToggle}
-        aria-label={toggleLabel}
-        className="absolute right-3 top-1/2 -translate-y-1/2 p-1 text-muted-foreground hover:text-foreground transition-colors"
-      >
-        {visible ? <EyeOff className="h-5 w-5" /> : <Eye className="h-5 w-5" />}
-      </button>
+    <div>
+      <div className="relative">
+        <input
+          aria-label={label}
+          aria-invalid={Boolean(error)}
+          type={visible ? "text" : "password"}
+          autoComplete="new-password"
+          required
+          value={value}
+          onChange={(event) => onChange(event.target.value)}
+          placeholder={label}
+          className={`${FIELD_CLASS} pr-12 ${error ? "border-red-500 focus:ring-red-500" : ""}`}
+        />
+        <button
+          type="button"
+          onClick={onToggle}
+          aria-label={toggleLabel}
+          className="absolute right-3 top-1/2 -translate-y-1/2 p-1 text-muted-foreground hover:text-foreground transition-colors"
+        >
+          {visible ? <EyeOff className="h-5 w-5" /> : <Eye className="h-5 w-5" />}
+        </button>
+      </div>
+      {error && <span role="alert" className="ml-1 mt-1 block text-xs text-red-500">{error}</span>}
     </div>
   );
 }
@@ -58,6 +65,7 @@ interface RecoveryFieldsProps {
   confirmation: string;
   showPassword: boolean;
   showConfirmation: boolean;
+  errors: RecoveryErrors;
   setEmail: (value: string) => void;
   setPassword: (value: string) => void;
   setConfirmation: (value: string) => void;
@@ -68,16 +76,20 @@ interface RecoveryFieldsProps {
 function RecoveryFields(props: RecoveryFieldsProps) {
   if (!props.reset) {
     return (
-      <input
-        aria-label="E-mail"
-        type="email"
-        autoComplete="email"
-        required
-        value={props.email}
-        onChange={(event) => props.setEmail(event.target.value)}
-        placeholder="E-mail"
-        className={FIELD_CLASS}
-      />
+      <div>
+        <input
+          aria-label="E-mail"
+          aria-invalid={Boolean(props.errors.email)}
+          type="email"
+          autoComplete="email"
+          required
+          value={props.email}
+          onChange={(event) => props.setEmail(event.target.value)}
+          placeholder="E-mail"
+          className={`${FIELD_CLASS} ${props.errors.email ? "border-red-500 focus:ring-red-500" : ""}`}
+        />
+        {props.errors.email && <span role="alert" className="ml-1 mt-1 block text-xs text-red-500">{props.errors.email}</span>}
+      </div>
     );
   }
 
@@ -87,6 +99,7 @@ function RecoveryFields(props: RecoveryFieldsProps) {
         label="Nova senha"
         value={props.password}
         visible={props.showPassword}
+        error={props.errors.password}
         onChange={props.setPassword}
         onToggle={props.togglePassword}
       />
@@ -94,6 +107,7 @@ function RecoveryFields(props: RecoveryFieldsProps) {
         label="Confirmar senha"
         value={props.confirmation}
         visible={props.showConfirmation}
+        error={props.errors.confirmation}
         onChange={props.setConfirmation}
         onToggle={props.toggleConfirmation}
       />
@@ -128,12 +142,23 @@ function RecoverySubmitButton({ reset, loading }: { reset: boolean; loading: boo
   );
 }
 
-function getSubmissionError(reset: boolean, token: string | undefined, password: string, confirmation: string): string {
-  if (reset && !/^[a-f0-9]{64}$/.test(token || "")) return "Link de redefinição inválido. Solicite um novo link.";
-  const passwordError = reset ? validatePassword(password) : "";
-  if (passwordError) return passwordError;
-  if (reset && password !== confirmation) return "As senhas não conferem.";
-  return "";
+type RecoveryErrors = Record<"email" | "password" | "confirmation", string>;
+
+const EMPTY_ERRORS: RecoveryErrors = { email: "", password: "", confirmation: "" };
+
+function getSubmissionErrors(reset: boolean, email: string, password: string, confirmation: string): RecoveryErrors {
+  if (!reset) {
+    return {
+      ...EMPTY_ERRORS,
+      email: !email.trim() ? "Informe seu e-mail." : !EMAIL_PATTERN.test(email) ? "Informe um e-mail válido." : "",
+    };
+  }
+
+  return {
+    ...EMPTY_ERRORS,
+    password: validatePassword(password),
+    confirmation: !confirmation ? "Informe a confirmação da senha." : password !== confirmation ? "As senhas não conferem." : "",
+  };
 }
 
 function PasswordRecoveryForm({ reset, token }: { reset: boolean; token?: string }) {
@@ -144,15 +169,27 @@ function PasswordRecoveryForm({ reset, token }: { reset: boolean; token?: string
   const [showPassword, setShowPassword] = useState(false);
   const [showConfirmation, setShowConfirmation] = useState(false);
   const [loading, setLoading] = useState(false);
-  const [error, setError] = useState("");
+  const [errors, setErrors] = useState<RecoveryErrors>(EMPTY_ERRORS);
+  const [formError, setFormError] = useState("");
+
+  function clearFieldError(field: keyof RecoveryErrors) {
+    setErrors((current) => current[field] ? { ...current, [field]: "" } : current);
+    setFormError("");
+  }
 
   async function submit(event: FormEvent) {
     event.preventDefault();
     if (loading) return;
-    setError("");
-    const submissionError = getSubmissionError(reset, token, password, confirmation);
-    if (submissionError) return setError(submissionError);
+    setFormError("");
+    const submissionErrors = getSubmissionErrors(reset, email, password, confirmation);
+    setErrors(submissionErrors);
+    if (Object.values(submissionErrors).some(Boolean)) return;
+    if (reset && !/^[a-f0-9]{64}$/.test(token || "")) {
+      setFormError("Link de redefinição inválido. Solicite um novo link.");
+      return;
+    }
     setLoading(true);
+    const requestStartedAt = Date.now();
     try {
       const response = await api.post(reset ? "/auth/reset-password" : "/auth/forgot-password",
         reset ? { token, password, confirmPassword: confirmation } : { email });
@@ -160,10 +197,15 @@ function PasswordRecoveryForm({ reset, token }: { reset: boolean; token?: string
         toast.success("Senha redefinida com sucesso. Faça login novamente.");
         navigate("/entrar");
       } else {
+        setEmail("");
+        const remainingFeedbackTime = MINIMUM_REQUEST_FEEDBACK_MS - (Date.now() - requestStartedAt);
+        if (remainingFeedbackTime > 0) {
+          await new Promise((resolve) => setTimeout(resolve, remainingFeedbackTime));
+        }
         toast.success(response.data.message);
       }
     } catch (cause) {
-      setError(getApiError(cause, "Não foi possível concluir. Tente novamente."));
+      setFormError(getApiError(cause, "Não foi possível concluir. Tente novamente."));
     } finally { setLoading(false); }
   }
 
@@ -184,7 +226,7 @@ function PasswordRecoveryForm({ reset, token }: { reset: boolean; token?: string
         <ArrowLeft className="h-6 w-6" />
       </Link>
       <RecoveryIntroduction reset={reset} />
-      <form onSubmit={submit} className="space-y-4">
+      <form onSubmit={submit} className="space-y-4" noValidate>
         <RecoveryFields
           reset={reset}
           email={email}
@@ -192,13 +234,14 @@ function PasswordRecoveryForm({ reset, token }: { reset: boolean; token?: string
           confirmation={confirmation}
           showPassword={showPassword}
           showConfirmation={showConfirmation}
-          setEmail={setEmail}
-          setPassword={setPassword}
-          setConfirmation={setConfirmation}
+          errors={errors}
+          setEmail={(value) => { setEmail(value); clearFieldError("email"); }}
+          setPassword={(value) => { setPassword(value); clearFieldError("password"); }}
+          setConfirmation={(value) => { setConfirmation(value); clearFieldError("confirmation"); }}
           togglePassword={() => setShowPassword((value) => !value)}
           toggleConfirmation={() => setShowConfirmation((value) => !value)}
         />
-        {error && <p role="alert" className="text-sm text-red-400">{error}</p>}
+        {formError && <p role="alert" className="text-sm text-red-400">{formError}</p>}
         <RecoverySubmitButton reset={reset} loading={loading} />
       </form>
       {reset && (

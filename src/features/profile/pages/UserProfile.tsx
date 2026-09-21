@@ -1,4 +1,4 @@
-import { FormEvent, useEffect, useState } from "react";
+import { FormEvent, type ReactNode, useEffect, useState } from "react";
 import { User, Mail, ShieldAlert, Loader2, LogOut, Trash2, X, ChevronDown, Eye, EyeOff } from "lucide-react";
 import { isAxiosError } from "axios";
 import { api } from "@/services/api";
@@ -22,11 +22,12 @@ interface UserProfileData {
 
 interface ProfileDetailsProps {
   profile: UserProfileData;
+  showAdultContent: boolean;
   isUpdating: boolean;
   onToggleAdultContent: () => void;
 }
 
-function ProfileDetails({ profile, isUpdating, onToggleAdultContent }: ProfileDetailsProps) {
+function ProfileDetails({ profile, showAdultContent, isUpdating, onToggleAdultContent }: ProfileDetailsProps) {
   return (
     <>
       <div className="flex min-w-0 items-center gap-3 p-4 rounded-xl bg-muted/30 border border-border sm:gap-4">
@@ -49,7 +50,7 @@ function ProfileDetails({ profile, isUpdating, onToggleAdultContent }: ProfileDe
         </div>
       </div>
 
-      <div className="flex min-w-0 items-center gap-3 p-4 rounded-xl bg-muted/30 border border-border sm:gap-4">
+      {showAdultContent && <div className="flex min-w-0 items-center gap-3 p-4 rounded-xl bg-muted/30 border border-border sm:gap-4">
         <div className="h-10 w-10 rounded-full bg-primary flex items-center justify-center shrink-0">
           <ShieldAlert className="h-5 w-5 text-white" />
         </div>
@@ -80,7 +81,7 @@ function ProfileDetails({ profile, isUpdating, onToggleAdultContent }: ProfileDe
         ) : (
           <p className="max-w-40 text-xs text-muted-foreground">Disponível apenas com data de nascimento informada e 18 anos completos.</p>
         )}
-      </div>
+      </div>}
     </>
   );
 }
@@ -89,9 +90,10 @@ interface AdvancedSettingsProps {
   isOpen: boolean;
   onToggle: () => void;
   onDelete: () => void;
+  children: ReactNode;
 }
 
-function AdvancedSettings({ isOpen, onToggle, onDelete }: AdvancedSettingsProps) {
+function AdvancedSettings({ isOpen, onToggle, onDelete, children }: AdvancedSettingsProps) {
   return (
     <div className="rounded-xl border border-border bg-muted/20">
       <button
@@ -106,14 +108,16 @@ function AdvancedSettings({ isOpen, onToggle, onDelete }: AdvancedSettingsProps)
       </button>
       {isOpen && (
         <div id="advanced-settings-panel" className="border-t border-border p-4">
-          <div className="rounded-xl border border-red-500/30 bg-red-500/5 p-4">
+          <div className="space-y-4">
+            {children}
+            <div className="rounded-xl border border-red-500/30 bg-red-500/5 p-4">
             <div className="space-y-4">
               <div className="flex items-start gap-3">
                 <div className="h-10 w-10 rounded-full bg-red-500 flex items-center justify-center shrink-0">
                   <Trash2 className="h-5 w-5 text-white" />
                 </div>
                 <div>
-                  <h3 className="text-sm font-bold text-red-500">Excluir conta</h3>
+                  <h3 className="text-xs font-medium uppercase tracking-wider text-red-500">Excluir conta</h3>
                   <p className="text-xs text-muted-foreground mt-1">Excluir sua conta remove permanentemente seus dados e encerra suas sessões.</p>
                 </div>
               </div>
@@ -126,6 +130,7 @@ function AdvancedSettings({ isOpen, onToggle, onDelete }: AdvancedSettingsProps)
                   Excluir conta
                 </button>
               </div>
+            </div>
             </div>
           </div>
         </div>
@@ -339,6 +344,7 @@ const UserProfile = () => {
           <div className="space-y-6">
             <ProfileDetails
               profile={profile}
+              showAdultContent={profile.active_profile !== "Administrador" && profile.can_enable_adult_content}
               isUpdating={isUpdating}
               onToggleAdultContent={toggleAdultContent}
             />
@@ -348,13 +354,14 @@ const UserProfile = () => {
               updating={isSwitchingProfile}
               onChange={changeActiveProfile}
             />
-            <UsernameForm key={profile.username} currentUsername={profile.username} onSubmit={changeUsername} />
-            <PasswordForm onSubmit={changePassword} />
             <AdvancedSettings
               isOpen={isAdvancedOpen}
               onToggle={() => setIsAdvancedOpen((current) => !current)}
               onDelete={() => setIsDeleteModalOpen(true)}
-            />
+            >
+              <UsernameForm key={profile.username} currentUsername={profile.username} onSubmit={changeUsername} />
+              <PasswordForm onSubmit={changePassword} />
+            </AdvancedSettings>
             <LogoutButton loading={isLoggingOut} onLogout={handleLogout} />
           </div>
         ) : (

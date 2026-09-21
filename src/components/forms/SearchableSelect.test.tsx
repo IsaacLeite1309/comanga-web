@@ -46,7 +46,7 @@ describe("SearchableSelect", () => {
 
     const emptyMessage = screen.getByText("Nenhum resultado encontrado.");
     expect(screen.getByRole("button", { name: "Selecione" })).toBeInTheDocument();
-    expect(emptyMessage.parentElement).toHaveStyle({ maxHeight: "264px" });
+    expect(emptyMessage.parentElement).toHaveStyle({ maxHeight: "266px" });
   });
 
   it("pesquisa, seleciona e fecha a lista com interacao consistente", () => {

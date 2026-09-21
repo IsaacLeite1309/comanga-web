@@ -7,6 +7,7 @@ import { toast } from "sonner";
 let authState = {
   isAuthenticated: false,
   loading: false,
+  isSessionEnding: false,
   activeProfile: "Usuário Padrão",
   user: null as null | { username: string },
 };
@@ -46,6 +47,7 @@ describe("ProtectedRoute", () => {
     authState = {
       isAuthenticated: false,
       loading: false,
+      isSessionEnding: false,
       activeProfile: "Usuário Padrão",
       user: null,
     };
@@ -67,6 +69,7 @@ describe("ProtectedRoute", () => {
     authState = {
       isAuthenticated: true,
       loading: false,
+      isSessionEnding: false,
       activeProfile: "Usuário Padrão",
       user: { username: "admin" },
     };
@@ -81,6 +84,7 @@ describe("ProtectedRoute", () => {
     authState = {
       isAuthenticated: true,
       loading: false,
+      isSessionEnding: false,
       activeProfile: "Usuário Padrão",
       user: { username: "isaac" },
     };
@@ -98,6 +102,7 @@ describe("ProtectedRoute", () => {
     authState = {
       isAuthenticated: true,
       loading: false,
+      isSessionEnding: false,
       activeProfile: "Administrador",
       user: { username: "admin" },
     };

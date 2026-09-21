@@ -1,5 +1,5 @@
 import { FormEvent, useState } from "react";
-import { KeyRound, Loader2 } from "lucide-react";
+import { Eye, EyeOff, KeyRound, Loader2 } from "lucide-react";
 import { validatePassword } from "@/features/auth";
 
 interface PasswordFormProps {
@@ -7,6 +7,7 @@ interface PasswordFormProps {
 }
 
 const EMPTY_FORM = { currentPassword: "", newPassword: "", confirmPassword: "" };
+type PasswordFieldId = keyof typeof EMPTY_FORM;
 
 function validate(form: typeof EMPTY_FORM): string {
   if (!form.currentPassword) return "Informe sua senha atual.";
@@ -21,14 +22,33 @@ function validate(form: typeof EMPTY_FORM): string {
   return "";
 }
 
+function getInvalidField(error: string): PasswordFieldId {
+  if (error === "Informe sua senha atual." || error === "A nova senha deve ser diferente da senha atual.") {
+    return "currentPassword";
+  }
+  if (error === "Divergência nos valores da senha e confirmação de senha!") return "confirmPassword";
+  return "newPassword";
+}
+
 export function PasswordForm({ onSubmit }: PasswordFormProps) {
   const [form, setForm] = useState(EMPTY_FORM);
   const [error, setError] = useState("");
+  const [invalidField, setInvalidField] = useState<PasswordFieldId | null>(null);
   const [saving, setSaving] = useState(false);
+  const [visibleFields, setVisibleFields] = useState<Record<keyof typeof EMPTY_FORM, boolean>>({
+    currentPassword: false,
+    newPassword: false,
+    confirmPassword: false,
+  });
 
   function updateField(field: keyof typeof EMPTY_FORM, value: string) {
     setForm((current) => ({ ...current, [field]: value }));
     setError("");
+    setInvalidField(null);
+  }
+
+  function toggleVisibility(field: keyof typeof EMPTY_FORM) {
+    setVisibleFields((current) => ({ ...current, [field]: !current[field] }));
   }
 
   async function handleSubmit(event: FormEvent<HTMLFormElement>) {
@@ -38,13 +58,18 @@ export function PasswordForm({ onSubmit }: PasswordFormProps) {
     const validationError = validate(form);
     if (validationError) {
       setError(validationError);
+      setInvalidField(getInvalidField(validationError));
       return;
     }
 
     setSaving(true);
     setError("");
+    setInvalidField(null);
     const failure = await onSubmit(form);
-    if (failure) setError(failure);
+    if (failure) {
+      setError(failure);
+      setInvalidField("currentPassword");
+    }
     else setForm(EMPTY_FORM);
     setSaving(false);
   }
@@ -57,23 +82,40 @@ export function PasswordForm({ onSubmit }: PasswordFormProps) {
 
   return (
     <form className="rounded-xl border border-border bg-muted/20 p-4 space-y-3" onSubmit={handleSubmit}>
-      <div className="flex items-center gap-2">
-        <KeyRound className="h-4 w-4 text-primary" aria-hidden="true" />
-        <h3 className="text-sm font-bold text-foreground">Alterar senha</h3>
+      <div className="flex items-center gap-3">
+        <div className="flex h-10 w-10 shrink-0 items-center justify-center rounded-full bg-primary">
+          <KeyRound className="h-5 w-5 text-white" aria-hidden="true" />
+        </div>
+        <h3 className="text-xs font-medium uppercase tracking-wider text-muted-foreground">Alterar senha</h3>
       </div>
       {fields.map((field) => (
-        <label className="block" key={field.id}>
-          <span className="text-xs font-semibold text-muted-foreground">{field.label}</span>
-          <input
-            type="password"
-            value={form[field.id]}
-            disabled={saving}
-            onChange={(event) => updateField(field.id, event.target.value)}
-            className="mt-2 w-full rounded-lg border border-border bg-background px-3 py-2 text-base text-foreground outline-none transition-colors focus:border-primary disabled:opacity-50"
-          />
-        </label>
+        <div key={field.id}>
+          <div className="relative">
+            <input
+              aria-label={field.label}
+              aria-invalid={invalidField === field.id}
+              placeholder={field.label}
+              type={visibleFields[field.id] ? "text" : "password"}
+              value={form[field.id]}
+              disabled={saving}
+              onChange={(event) => updateField(field.id, event.target.value)}
+              className={`h-12 w-full rounded-xl border bg-input px-4 pr-12 text-sm text-foreground placeholder:text-muted-foreground outline-none transition-colors focus:ring-2 disabled:opacity-50 ${
+                invalidField === field.id ? "border-red-500 focus:ring-red-500" : "border-border focus:ring-primary"
+              }`}
+            />
+            <button
+              type="button"
+              disabled={saving}
+              onClick={() => toggleVisibility(field.id)}
+              aria-label={visibleFields[field.id] ? `Ocultar ${field.label.toLowerCase()}` : `Mostrar ${field.label.toLowerCase()}`}
+              className="absolute right-3 top-1/2 -translate-y-1/2 p-1 text-muted-foreground transition-colors hover:text-foreground disabled:opacity-50"
+            >
+              {visibleFields[field.id] ? <EyeOff className="h-5 w-5" /> : <Eye className="h-5 w-5" />}
+            </button>
+          </div>
+        </div>
       ))}
-      {error && <p role="alert" className="rounded-lg bg-red-500/10 px-3 py-2 text-sm font-medium text-red-500">{error}</p>}
+      {error && <p role="alert" className="-mt-1 ml-1 text-xs text-red-500">{error}</p>}
       <button
         type="submit"
         disabled={saving}
