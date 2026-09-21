@@ -223,7 +223,7 @@ function SortHeader({ model }: { model: EditMangasPageModel }) {
 
 function WorksListHeader({ model }: { model: EditMangasPageModel }) {
   return (
-    <div className="grid grid-cols-[72px_minmax(0,1fr)_auto] items-center gap-4 border-b border-border bg-muted/20 py-3 pl-5 pr-3 text-xs font-bold uppercase tracking-wide text-muted-foreground md:grid-cols-[72px_minmax(150px,1fr)_minmax(120px,0.8fr)_minmax(110px,0.62fr)_minmax(110px,0.62fr)_minmax(90px,0.45fr)_128px_84px_84px_88px]">
+    <div className="grid grid-cols-[72px_minmax(0,1fr)_auto] items-center gap-3 border-b border-border bg-muted/20 py-3 pl-5 pr-3 text-xs font-bold uppercase tracking-wide text-muted-foreground md:grid-cols-[72px_minmax(0,1.45fr)_minmax(0,1fr)_minmax(0,0.72fr)_minmax(0,0.72fr)_minmax(0,0.55fr)_118px_76px_76px_76px]">
       <span className="justify-self-start">Capa</span>
       <SortHeader model={model} />
       <span className="hidden justify-self-start md:block">AUTOR</span>
@@ -264,7 +264,7 @@ function WorkTitle({ model, work }: { model: EditMangasPageModel; work: WorkSumm
 
 function WorkListRow({ model, work }: { model: EditMangasPageModel; work: WorkSummary }) {
   return (
-    <article className="grid grid-cols-[72px_minmax(0,1fr)_auto] gap-4 border-b border-border py-4 pl-5 pr-3 last:border-b-0 md:grid-cols-[72px_minmax(150px,1fr)_minmax(120px,0.8fr)_minmax(110px,0.62fr)_minmax(110px,0.62fr)_minmax(90px,0.45fr)_128px_84px_84px_88px] md:items-center">
+    <article className="grid grid-cols-[72px_minmax(0,1fr)_auto] gap-3 border-b border-border py-4 pl-5 pr-3 last:border-b-0 md:grid-cols-[72px_minmax(0,1.45fr)_minmax(0,1fr)_minmax(0,0.72fr)_minmax(0,0.72fr)_minmax(0,0.55fr)_118px_76px_76px_76px] md:items-center">
       <WorkCover work={work} />
       <WorkTitle model={model} work={work} />
       <div className="hidden min-w-0 text-sm font-semibold text-muted-foreground md:block">
