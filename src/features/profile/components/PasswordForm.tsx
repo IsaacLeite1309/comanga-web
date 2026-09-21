@@ -66,8 +66,10 @@ export function PasswordForm({ onSubmit }: PasswordFormProps) {
 
   return (
     <form className="rounded-xl border border-border bg-muted/20 p-4 space-y-3" onSubmit={handleSubmit}>
-      <div className="flex items-center gap-2">
-        <KeyRound className="h-4 w-4 text-primary" aria-hidden="true" />
+      <div className="flex items-center gap-3">
+        <div className="flex h-10 w-10 shrink-0 items-center justify-center rounded-full bg-primary">
+          <KeyRound className="h-5 w-5 text-white" aria-hidden="true" />
+        </div>
         <h3 className="text-xs font-medium uppercase tracking-wider text-muted-foreground">Alterar senha</h3>
       </div>
       {fields.map((field) => (
@@ -94,7 +96,7 @@ export function PasswordForm({ onSubmit }: PasswordFormProps) {
           </div>
         </div>
       ))}
-      {error && <p role="alert" className="rounded-lg bg-red-500/10 px-3 py-2 text-sm font-medium text-red-500">{error}</p>}
+      {error && <p role="alert" className="-mt-1 ml-1 text-xs text-red-500">{error}</p>}
       <button
         type="submit"
         disabled={saving}

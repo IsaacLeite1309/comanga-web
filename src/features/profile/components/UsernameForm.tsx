@@ -36,8 +36,10 @@ export function UsernameForm({ currentUsername, onSubmit }: UsernameFormProps) {
 
   return (
     <form className="rounded-xl border border-border bg-muted/20 p-4 space-y-3" onSubmit={handleSubmit}>
-      <div className="flex items-center gap-2">
-        <UserCog className="h-4 w-4 text-primary" aria-hidden="true" />
+      <div className="flex items-center gap-3">
+        <div className="flex h-10 w-10 shrink-0 items-center justify-center rounded-full bg-primary">
+          <UserCog className="h-5 w-5 text-white" aria-hidden="true" />
+        </div>
         <h3 className="text-xs font-medium uppercase tracking-wider text-muted-foreground">Alterar nome de usuário</h3>
       </div>
       <div>

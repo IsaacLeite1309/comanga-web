@@ -117,7 +117,7 @@ function AdvancedSettings({ isOpen, onToggle, onDelete, children }: AdvancedSett
                   <Trash2 className="h-5 w-5 text-white" />
                 </div>
                 <div>
-                  <h3 className="text-sm font-bold text-red-500">Excluir conta</h3>
+                  <h3 className="text-xs font-medium uppercase tracking-wider text-red-500">Excluir conta</h3>
                   <p className="text-xs text-muted-foreground mt-1">Excluir sua conta remove permanentemente seus dados e encerra suas sessões.</p>
                 </div>
               </div>
