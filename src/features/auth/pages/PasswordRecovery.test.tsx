@@ -27,7 +27,15 @@ describe('recuperação de senha', () => {
     show(true);
     fireEvent.change(screen.getByLabelText('Nova senha'), { target: { value: 'SenhaNova123!' } });
     fireEvent.click(screen.getByRole('button', { name: 'Salvar nova senha' }));
-    expect(await screen.findByRole('alert')).toHaveTextContent('Confirme a nova senha.');
+    expect(await screen.findByRole('alert')).toHaveTextContent('Informe a confirmação da senha.');
+    expect(screen.getByLabelText('Confirmar senha')).toHaveAttribute('aria-invalid', 'true');
+    expect(api.post).not.toHaveBeenCalled();
+  });
+  it('exibe a validação do e-mail no próprio campo', async () => {
+    show();
+    fireEvent.click(screen.getByRole('button', { name: 'Enviar instruções' }));
+    expect(await screen.findByRole('alert')).toHaveTextContent('Informe seu e-mail.');
+    expect(screen.getByLabelText('E-mail')).toHaveAttribute('aria-invalid', 'true');
     expect(api.post).not.toHaveBeenCalled();
   });
   it.each([
