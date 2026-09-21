@@ -260,7 +260,7 @@ function OptionsMenu({
   return (
     <div
       className={`absolute left-0 top-[calc(100%+4px)] z-40 w-full overflow-y-auto rounded-lg border border-primary shadow-2xl ${menuSurface}`}
-      style={{ maxHeight: maxVisibleItems * 44 }}
+      style={{ maxHeight: maxVisibleItems * 44 + 2 }}
     >
       {!searchable && allowEmptyOption ? (
         <EmptyOption

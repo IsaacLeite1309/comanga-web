@@ -220,53 +220,9 @@ describe("ordenação manual dos Autores no formulário administrativo", () => {
     await screen.findByRole("heading", { name: /autor\(es\)/i });
   }
 
-  it("oferece controles acessíveis de mover para cima e para baixo", async () => {
+  it("não oferece controles manuais para ordenar autores", async () => {
     await goToAuthorsStepInEditMode();
 
-    const moveUp = screen.getAllByRole("button", { name: /mover autor .* para cima/i });
-    const moveDown = screen.getAllByRole("button", { name: /mover autor .* para baixo/i });
-
-    expect(moveUp).toHaveLength(2);
-    expect(moveDown).toHaveLength(2);
-    expect(moveUp[0]).toBeDisabled();
-    expect(moveDown[0]).toBeEnabled();
-    expect(moveUp[1]).toBeEnabled();
-    expect(moveDown[1]).toBeDisabled();
-  });
-
-  it("reordena os autores exibidos e envia o array na ordem apresentada", async () => {
-    vi.mocked(api.patch).mockResolvedValueOnce({ data: { work: workDetail } });
-    await goToAuthorsStepInEditMode();
-
-    expect(screen.getAllByLabelText(/^autor$/i)[0]).toHaveTextContent("Masashi Kishimoto");
-    expect(screen.getAllByLabelText(/^autor$/i)[1]).toHaveTextContent("Akira Toriyama");
-
-    fireEvent.click(screen.getAllByRole("button", { name: /mover autor .* para baixo/i })[0]);
-
-    expect(screen.getAllByLabelText(/^autor$/i)[0]).toHaveTextContent("Akira Toriyama");
-    expect(screen.getAllByLabelText(/^autor$/i)[1]).toHaveTextContent("Masashi Kishimoto");
-
-    fireEvent.click(screen.getByRole("button", { name: /continuar/i }));
-    await screen.findByLabelText(/editora original/i);
-    fireEvent.click(screen.getByRole("button", { name: /^salvar$/i }));
-
-    await waitFor(() => {
-      expect(api.patch).toHaveBeenCalledWith("/admin/works/10", expect.objectContaining({
-        authors: [
-          { authorId: 2, roles: ["Arte"] },
-          { authorId: 1, roles: ["História e Arte"] },
-        ],
-      }));
-    });
-  });
-
-  it("preserva os papéis de cada autor ao mover para cima", async () => {
-    await goToAuthorsStepInEditMode();
-
-    fireEvent.click(screen.getAllByRole("button", { name: /mover autor .* para cima/i })[1]);
-
-    const selectedRoles = screen.getAllByLabelText(/^selecionar papel$/i);
-    expect(selectedRoles[0]).toHaveTextContent("Arte");
-    expect(selectedRoles[1]).toHaveTextContent("História e Arte");
+    expect(screen.queryByRole("button", { name: /^mover autor/i })).not.toBeInTheDocument();
   });
 });
