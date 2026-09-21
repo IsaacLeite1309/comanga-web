@@ -105,7 +105,6 @@ export function useEditionFormController() {
         isEditMode,
         workId,
         workSlug,
-        workPath,
         navigate,
         setBaselineSignature,
       });
@@ -159,7 +158,6 @@ interface SaveEditionArgs {
   isEditMode: boolean;
   workId: string;
   workSlug: string;
-  workPath: string;
   navigate: ReturnType<typeof useNavigate>;
   setBaselineSignature: (signature: string) => void;
 }
@@ -170,7 +168,9 @@ async function saveEdition(args: SaveEditionArgs) {
     await api.patch(`/admin/editions/${args.editionId}`, payload);
     toast.success("Edição atualizada com sucesso.");
     args.setBaselineSignature(args.draftSignature);
-    args.navigate(args.workPath, { state: { workId: Number(args.workId) } });
+    args.navigate(editionAdminPath(args.workSlug, args.editionId || ""), {
+      state: { workId: Number(args.workId), editionId: Number(args.editionId) },
+    });
     return;
   }
   const response = await api.post<EditionResponse>(`/admin/works/${args.workId}/editions`, payload);

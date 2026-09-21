@@ -3,7 +3,7 @@ import { useLocation, useNavigate, useParams } from "react-router-dom";
 import { toast } from "sonner";
 import { getApiError } from "@/lib/apiError";
 import { api } from "@/services/api";
-import { editionAdminPath, newVolumeAdminPath, volumeAdminPath } from "../domain/catalogPaths";
+import { editionAdminPath, newVolumeAdminPath, volumeEditAdminPath } from "../domain/catalogPaths";
 import {
   emptyVolumeDraft,
   getRememberedVolumeDraft,
@@ -267,7 +267,7 @@ function postCreateState(args: SaveVolumeArgs, volumeId: number) {
     actions: [
       {
         label: "Gerenciar este Volume",
-        to: volumeAdminPath(args.workSlug, editionId, volumeId),
+        to: volumeEditAdminPath(args.workSlug, editionId, volumeId),
         state: { ...editionLocationState(args), volumeId },
       },
       {
