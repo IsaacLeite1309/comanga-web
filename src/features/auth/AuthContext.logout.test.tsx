@@ -3,6 +3,7 @@ import { MemoryRouter, Route, Routes } from "react-router-dom";
 import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
 import { AuthProvider } from "./AuthContext";
 import { useAuth } from "./useAuth";
+import { ProtectedRoute } from "@/app/ProtectedRoute";
 import { api } from "@/services/api";
 import { toast } from "sonner";
 
@@ -16,6 +17,7 @@ vi.mock("@/services/api", () => ({
 vi.mock("sonner", () => ({
   toast: {
     success: vi.fn(),
+    error: vi.fn(),
   },
 }));
 
@@ -79,6 +81,30 @@ describe("AuthContext logout", () => {
 
     expect(toast.success).toHaveBeenCalledWith("Sessão encerrada com segurança.");
     expect(await screen.findByText("Tela de login")).toBeInTheDocument();
+  });
+
+  it("mantém apenas o aviso de encerramento ao sair de uma rota protegida", async () => {
+    vi.mocked(api.get).mockResolvedValueOnce({
+      data: { user: { id: "user-id", username: "usuario_teste" } },
+    });
+    vi.mocked(api.post).mockResolvedValueOnce({ data: {} });
+
+    render(
+      <MemoryRouter initialEntries={["/perfil"]}>
+        <AuthProvider>
+          <Routes>
+            <Route path="/perfil" element={<ProtectedRoute><AuthConsumer /></ProtectedRoute>} />
+            <Route path="/entrar" element={<div>Tela de login</div>} />
+          </Routes>
+        </AuthProvider>
+      </MemoryRouter>
+    );
+
+    expect(await screen.findByText("usuario_teste")).toBeInTheDocument();
+    fireEvent.click(screen.getByRole("button", { name: "Sair" }));
+    expect(await screen.findByText("Tela de login")).toBeInTheDocument();
+    expect(toast.success).toHaveBeenCalledWith("Sessão encerrada com segurança.");
+    expect(toast.error).not.toHaveBeenCalled();
   });
 
   it("mantem usuario vazio quando a validacao inicial da sessao falha", async () => {
