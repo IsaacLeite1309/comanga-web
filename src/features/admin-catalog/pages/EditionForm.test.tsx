@@ -70,14 +70,14 @@ describe("EditionForm", () => {
     expect(screen.getByLabelText(/tipo de edição/i)).toHaveTextContent("Tankobon");
   });
 
-  it("não oferece importação de capa e explica que ela vem do Volume 1", async () => {
+  it("não oferece importação de capa própria", async () => {
     vi.mocked(api.get).mockResolvedValueOnce({ data: editionOptions });
     renderEditionForm();
 
     await screen.findByRole("heading", { name: /nova edição/i });
 
     expect(screen.queryByLabelText(/capa da edi/i)).not.toBeInTheDocument();
-    expect(screen.getByText(/a capa desta Edição é a capa do Volume 1/i)).toBeInTheDocument();
+    expect(screen.queryByText(/a capa desta Edição é a capa do Volume 1/i)).not.toBeInTheDocument();
   });
 
   it("cadastra uma nova edição vinculada à Obra atual", async () => {

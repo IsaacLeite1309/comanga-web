@@ -4,7 +4,7 @@ import { EmptyState } from "@/components/shared/AsyncState";
 import { CatalogVisibilityAction } from "./CatalogVisibility";
 import { visibilityActionClassName } from "./catalogVisibilityStyles";
 import { CatalogViewToggle, DeleteCatalogItemDialog, DetailInfoBlock } from "./AdminCatalogDetailShared";
-import { editionAdminPath, newEditionAdminPath, workEditAdminPath } from "../domain/catalogPaths";
+import { editionAdminPath, editionEditAdminPath, newEditionAdminPath, workEditAdminPath } from "../domain/catalogPaths";
 import {
   formatEditionNumber,
   formatVolumesCount,
@@ -111,7 +111,7 @@ function EditionGridCard({
         )}
       </div>
       <h3 className="mt-2 truncate text-center text-sm font-bold text-foreground">{label}</h3>
-      <div className="mt-2 grid grid-cols-3 gap-1.5">
+      <div className="mt-2 grid grid-cols-4 gap-1.5">
         <CatalogVisibilityAction
           visibility={edition.visibility}
           ariaLabel={`Alterar visibilidade da ${label}`}
@@ -120,6 +120,14 @@ function EditionGridCard({
           showLabel={false}
           className="h-8 w-full rounded-md"
         />
+        <Link
+          to={editionEditAdminPath(workSlug, edition.id)}
+          state={{ workId: work.id, editionId: edition.id }}
+          aria-label={`Editar ${label}`}
+          className="inline-flex h-8 items-center justify-center rounded-md border border-border bg-card text-foreground transition-colors hover:border-primary hover:text-primary"
+        >
+          <Pencil className="h-3.5 w-3.5" />
+        </Link>
         <Link
           to={editionAdminPath(workSlug, edition.id)}
           state={{ workId: work.id, editionId: edition.id }}
@@ -158,7 +166,7 @@ function EditionListRow({
   const deleting = actions.deletingId === edition.id;
 
   return (
-    <article className="grid grid-cols-[72px_minmax(0,1fr)_auto] gap-4 border-b border-border px-4 py-4 last:border-b-0 md:grid-cols-[72px_minmax(140px,1fr)_120px_minmax(140px,0.9fr)_100px_132px_92px_92px] md:items-center">
+    <article className="grid grid-cols-[72px_minmax(0,1fr)_auto] gap-4 border-b border-border px-4 py-4 last:border-b-0 md:grid-cols-[72px_minmax(140px,1fr)_120px_minmax(140px,0.9fr)_100px_132px_92px_92px_92px] md:items-center">
       <div className="aspect-[2/3] w-16 overflow-hidden rounded-md border border-border bg-input">
         {edition.coverUrl ? (
           <img src={edition.coverUrl} alt={`Capa da ${label}`} className="h-full w-full object-cover" />
@@ -204,6 +212,14 @@ function EditionListRow({
           className="h-7 min-w-0 px-2 text-xs md:hidden"
         />
         <Link
+          to={editionEditAdminPath(workSlug, edition.id)}
+          state={{ workId: work.id, editionId: edition.id }}
+          aria-label={`Editar ${label}`}
+          className="inline-flex h-10 w-10 items-center justify-center rounded-lg border border-border bg-input text-foreground transition-colors hover:border-primary hover:text-primary md:justify-self-center"
+        >
+          <Pencil className="h-3.5 w-3.5" />
+        </Link>
+        <Link
           to={editionAdminPath(workSlug, edition.id)}
           state={{ workId: work.id, editionId: edition.id }}
           aria-label={`Gerenciar ${label}`}
@@ -227,13 +243,14 @@ function EditionListRow({
 
 function EditionsListHeader() {
   return (
-    <div className="grid grid-cols-[72px_minmax(0,1fr)_auto] items-center gap-4 border-b border-border bg-muted/20 px-4 py-3 text-xs font-bold uppercase tracking-wide text-muted-foreground md:grid-cols-[72px_minmax(140px,1fr)_120px_minmax(140px,0.9fr)_100px_132px_92px_92px]">
+    <div className="grid grid-cols-[72px_minmax(0,1fr)_auto] items-center gap-4 border-b border-border bg-muted/20 px-4 py-3 text-xs font-bold uppercase tracking-wide text-muted-foreground md:grid-cols-[72px_minmax(140px,1fr)_120px_minmax(140px,0.9fr)_100px_132px_92px_92px_92px]">
       <span>Capa</span>
       <span>Número da edição</span>
       <span className="hidden md:block">Editora</span>
       <span className="hidden md:block">Tipo de edição</span>
       <span className="hidden md:block">Volumes</span>
       <span className="hidden md:block">Visibilidade</span>
+      <span className="hidden justify-self-center md:block">Editar</span>
       <span className="hidden justify-self-center md:block">Gerenciar</span>
       <span className="hidden justify-self-center md:block">Excluir</span>
     </div>

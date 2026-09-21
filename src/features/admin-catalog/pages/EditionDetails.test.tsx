@@ -86,7 +86,7 @@ describe("EditionDetails", () => {
     expect(screen.getByRole("link", { name: /editar edi/i })).toHaveAttribute("href", "/admin/editar-mangas/obras/Naruto/edicoes/20/editar");
   });
 
-  it("lista volumes da edicao com link de gerenciamento", async () => {
+  it("lista volumes da edicao com link direto de edição", async () => {
     vi.mocked(api.get)
       .mockResolvedValueOnce({ data: { edition: { ...editionResponse.edition, volumesCount: 1 } } })
       .mockResolvedValueOnce({ data: volumesResponse });
@@ -96,7 +96,7 @@ describe("EditionDetails", () => {
     expect(await screen.findByText("Volume 1")).toBeInTheDocument();
     expect(screen.getByText("208")).toBeInTheDocument();
     expect(screen.getAllByText("R$ 39,90").length).toBeGreaterThan(0);
-    expect(screen.getByRole("link", { name: /gerenciar volume 1/i })).toHaveAttribute("href", "/admin/editar-mangas/obras/Naruto/edicoes/20/volumes/30/editar");
+    expect(screen.getByRole("link", { name: /editar volume 1/i })).toHaveAttribute("href", "/admin/editar-mangas/obras/Naruto/edicoes/20/volumes/30/editar");
   });
 
   it("alterna para grade e mostra volume unico sem capa", async () => {

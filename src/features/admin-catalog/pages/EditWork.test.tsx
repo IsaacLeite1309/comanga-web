@@ -93,6 +93,7 @@ describe("EditWork", () => {
     expect(screen.getAllByText("0 volumes")[0]).toBeInTheDocument();
     expect(screen.getByRole("link", { name: /editar obra/i })).toHaveAttribute("href", "/admin/editar-mangas/obras/naruto/editar");
     expect(screen.getByRole("link", { name: /adicionar edição/i })).toHaveAttribute("href", "/admin/editar-mangas/obras/naruto/edicoes/nova");
+    expect(screen.getByRole("link", { name: /editar 1ª edição/i })).toHaveAttribute("href", "/admin/editar-mangas/obras/naruto/edicoes/20/editar");
     expect(screen.getByRole("link", { name: /gerenciar 1ª edição/i })).toHaveAttribute("href", "/admin/editar-mangas/obras/naruto/edicoes/20");
   });
 
