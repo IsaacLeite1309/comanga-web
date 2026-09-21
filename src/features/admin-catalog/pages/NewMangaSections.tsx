@@ -224,7 +224,7 @@ export function AuthorsStep({ controller }: ControllerProps) {
       </div>
       <div className="space-y-3 md:relative md:space-y-0">
         {controller.draft.authors.map((author, index) => (
-          <div key={index} className="grid gap-3 md:grid-cols-[1fr_1fr_auto]">
+          <div key={author.authorId || `novo-autor-${index}`} className="grid gap-3 md:grid-cols-[1fr_1fr_auto]">
             <SelectField
               label="Autor"
               value={author.authorId}
@@ -255,7 +255,7 @@ export function AuthorsStep({ controller }: ControllerProps) {
               searchable
               maxVisibleItems={7}
             />
-            <div className="flex items-center self-start pt-7">
+            <div className="flex items-center self-start pt-[34px]">
               <button
                 type="button"
                 onClick={() => controller.removeAuthor(index)}
