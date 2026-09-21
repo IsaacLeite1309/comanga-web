@@ -389,7 +389,7 @@ describe("NewManga", () => {
     await goToAuthorsStep();
     await chooseDropdown(/^autor$/i, /masashi kishimoto/i);
     fireEvent.click(screen.getByLabelText(/selecionar papel/i));
-    expect(screen.getAllByRole("button", { name: /hist.*ria|arte|criador original|ilustrador/i }).map((button) => button.textContent)).toEqual([
+    expect(screen.getAllByRole("button", { name: /hist.*ria|arte|criador original|ilustrador|design de personagens/i }).map((button) => button.textContent)).toEqual([
       "História e Arte",
       "História",
       "Arte",
