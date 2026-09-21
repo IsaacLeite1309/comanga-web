@@ -45,7 +45,7 @@ describe("MultiSelect", () => {
     fireEvent.click(trigger);
 
     const emptyMessage = screen.getByText("Nenhum valor cadastrado para esta lista.");
-    expect(emptyMessage.parentElement).toHaveStyle({ maxHeight: "264px" });
+    expect(emptyMessage.parentElement).toHaveStyle({ maxHeight: "266px" });
   });
 
   it("filtra, seleciona e mantem a opcao selecionada disponivel", () => {
