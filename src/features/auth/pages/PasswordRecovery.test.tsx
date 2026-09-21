@@ -14,14 +14,21 @@ function show(reset = false, value = token) {
 }
 beforeEach(() => vi.resetAllMocks());
 describe('recuperação de senha', () => {
-  it('envia e-mail, exibe a resposta neutra como notificação e mantém o formulário', async () => {
+  it('envia e-mail, limpa o campo e exibe a resposta neutra como notificação', async () => {
     vi.mocked(api.post).mockResolvedValue({ data: { message: 'Se houver uma conta apta para este e-mail, enviaremos as instruções de recuperação.' } });
     show(); fireEvent.change(screen.getByLabelText('E-mail'), { target: { value: 'a@example.com' } });
     fireEvent.click(screen.getByRole('button', { name: 'Enviar instruções' }));
     await waitFor(() => expect(toastSuccess).toHaveBeenCalledWith('Se houver uma conta apta para este e-mail, enviaremos as instruções de recuperação.'));
     expect(api.post).toHaveBeenCalledWith('/auth/forgot-password', { email: 'a@example.com' });
-    expect(screen.getByLabelText('E-mail')).toHaveValue('a@example.com');
+    expect(screen.getByLabelText('E-mail')).toHaveValue('');
     expect(screen.queryByRole('status')).not.toBeInTheDocument();
+  });
+  it('exibe a validação de confirmação de senha dentro do formulário', async () => {
+    show(true);
+    fireEvent.change(screen.getByLabelText('Nova senha'), { target: { value: 'SenhaNova123!' } });
+    fireEvent.click(screen.getByRole('button', { name: 'Salvar nova senha' }));
+    expect(await screen.findByRole('alert')).toHaveTextContent('Confirme a nova senha.');
+    expect(api.post).not.toHaveBeenCalled();
   });
   it.each([
     ['weak', 'weak', 'Utilize no mínimo'],

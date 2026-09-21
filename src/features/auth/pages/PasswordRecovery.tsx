@@ -13,6 +13,8 @@ export default function PasswordRecovery({ reset = false }: { reset?: boolean })
 }
 
 const FIELD_CLASS = "h-12 w-full rounded-xl border border-border bg-input px-4 text-sm text-foreground placeholder:text-muted-foreground focus:outline-none focus:ring-2 focus:ring-primary";
+const MINIMUM_REQUEST_FEEDBACK_MS = 500;
+const EMAIL_PATTERN = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
 
 interface PasswordFieldProps {
   label: string;
@@ -128,10 +130,13 @@ function RecoverySubmitButton({ reset, loading }: { reset: boolean; loading: boo
   );
 }
 
-function getSubmissionError(reset: boolean, token: string | undefined, password: string, confirmation: string): string {
+function getSubmissionError(reset: boolean, token: string | undefined, email: string, password: string, confirmation: string): string {
+  if (!reset && !email.trim()) return "Informe seu e-mail.";
+  if (!reset && !EMAIL_PATTERN.test(email)) return "Informe um e-mail válido.";
   if (reset && !/^[a-f0-9]{64}$/.test(token || "")) return "Link de redefinição inválido. Solicite um novo link.";
   const passwordError = reset ? validatePassword(password) : "";
   if (passwordError) return passwordError;
+  if (reset && !confirmation) return "Confirme a nova senha.";
   if (reset && password !== confirmation) return "As senhas não conferem.";
   return "";
 }
@@ -150,9 +155,10 @@ function PasswordRecoveryForm({ reset, token }: { reset: boolean; token?: string
     event.preventDefault();
     if (loading) return;
     setError("");
-    const submissionError = getSubmissionError(reset, token, password, confirmation);
+    const submissionError = getSubmissionError(reset, token, email, password, confirmation);
     if (submissionError) return setError(submissionError);
     setLoading(true);
+    const requestStartedAt = Date.now();
     try {
       const response = await api.post(reset ? "/auth/reset-password" : "/auth/forgot-password",
         reset ? { token, password, confirmPassword: confirmation } : { email });
@@ -160,6 +166,11 @@ function PasswordRecoveryForm({ reset, token }: { reset: boolean; token?: string
         toast.success("Senha redefinida com sucesso. Faça login novamente.");
         navigate("/entrar");
       } else {
+        setEmail("");
+        const remainingFeedbackTime = MINIMUM_REQUEST_FEEDBACK_MS - (Date.now() - requestStartedAt);
+        if (remainingFeedbackTime > 0) {
+          await new Promise((resolve) => setTimeout(resolve, remainingFeedbackTime));
+        }
         toast.success(response.data.message);
       }
     } catch (cause) {
@@ -184,7 +195,7 @@ function PasswordRecoveryForm({ reset, token }: { reset: boolean; token?: string
         <ArrowLeft className="h-6 w-6" />
       </Link>
       <RecoveryIntroduction reset={reset} />
-      <form onSubmit={submit} className="space-y-4">
+      <form onSubmit={submit} className="space-y-4" noValidate>
         <RecoveryFields
           reset={reset}
           email={email}
@@ -192,9 +203,9 @@ function PasswordRecoveryForm({ reset, token }: { reset: boolean; token?: string
           confirmation={confirmation}
           showPassword={showPassword}
           showConfirmation={showConfirmation}
-          setEmail={setEmail}
-          setPassword={setPassword}
-          setConfirmation={setConfirmation}
+          setEmail={(value) => { setEmail(value); if (error) setError(""); }}
+          setPassword={(value) => { setPassword(value); if (error) setError(""); }}
+          setConfirmation={(value) => { setConfirmation(value); if (error) setError(""); }}
           togglePassword={() => setShowPassword((value) => !value)}
           toggleConfirmation={() => setShowConfirmation((value) => !value)}
         />
