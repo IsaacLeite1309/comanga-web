@@ -28,7 +28,7 @@ export function ActiveProfileSelector({ profiles, activeProfile, updating, onCha
           value={activeProfile}
           disabled={updating}
           onChange={(event) => onChange(event.target.value)}
-          className="mt-2 w-full rounded-lg border border-border bg-background px-3 py-2 text-sm text-foreground outline-none transition-colors focus:border-primary disabled:opacity-50"
+          className="mt-2 h-12 w-full rounded-xl border border-border bg-input px-3 text-base font-semibold text-foreground outline-none transition-colors focus:border-primary focus:ring-2 focus:ring-primary/40 disabled:opacity-50"
         >
           {profiles.map((profile) => (
             <option key={profile} value={profile}>{profile}</option>

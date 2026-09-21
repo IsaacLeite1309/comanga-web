@@ -48,8 +48,10 @@ function mockLoadedProfile(overrides: Record<string, unknown> = {}) {
 
 async function renderProfile(overrides: Record<string, unknown> = {}) {
   mockLoadedProfile(overrides);
-  render(<UserProfile />);
+  const view = render(<UserProfile />);
   await screen.findByText("usuario_teste");
+  fireEvent.click(screen.getByRole("button", { name: "Configurações avançadas" }));
+  return view;
 }
 
 function axiosFailure(status: number, error: string) {
@@ -76,6 +78,15 @@ describe("UserProfile — perfil ativo", () => {
       "Administrador",
       "Usuário Padrão",
     ]);
+  });
+
+  it("oculta a configuração +18 para administrador e para conta sem elegibilidade", async () => {
+    const firstView = await renderProfile({ profiles: ["Administrador", "Usuário Padrão"], active_profile: "Administrador" });
+    expect(screen.queryByText("Conteúdo +18")).not.toBeInTheDocument();
+
+    firstView.unmount();
+    await renderProfile({ can_enable_adult_content: false });
+    expect(screen.queryByText("Conteúdo +18")).not.toBeInTheDocument();
   });
 
   it("troca o perfil ativo, notifica e atualiza o contexto sem recarregar", async () => {
@@ -180,6 +191,8 @@ describe("UserProfile — nome de usuário", () => {
       "Este nome de usuário não está disponível. Por favor, escolha outro."
     );
     expect(screen.getByText("usuario_teste")).toBeInTheDocument();
+    expect(screen.getByLabelText("Novo nome de usuário")).toHaveAttribute("aria-invalid", "true");
+    expect(toast.error).not.toHaveBeenCalledWith("Este nome de usuário não está disponível. Por favor, escolha outro.");
   });
 });
 
@@ -201,6 +214,8 @@ describe("UserProfile — senha", () => {
     expect(screen.getByLabelText("Nova senha")).toHaveAttribute("type", "password");
     expect(screen.getByLabelText("Confirmação da nova senha")).toHaveAttribute("type", "password");
     expect(screen.getByRole("button", { name: "Alterar senha" })).toBeEnabled();
+    fireEvent.click(screen.getByRole("button", { name: "Mostrar senha atual" }));
+    expect(screen.getByLabelText("Senha atual")).toHaveAttribute("type", "text");
   });
 
   it("recusa senha fora da política vigente sem chamar a API", async () => {
