@@ -9,6 +9,17 @@ export const NATIVE_AUTHOR_ROLE_OPTIONS: OptionValue[] = [
   { id: "Ilustrador", value: "Ilustrador", label: "Ilustrador" },
 ];
 
+const COMBINED_AUTHOR_ROLE = "História e Arte";
+const SEPARATE_AUTHOR_ROLES = ["História", "Arte"];
+
+export function isAuthorRoleDisabled(selectedRoles: string[], role: string) {
+  const hasCombinedRole = selectedRoles.includes(COMBINED_AUTHOR_ROLE);
+  const hasSeparateRole = SEPARATE_AUTHOR_ROLES.some((item) => selectedRoles.includes(item));
+
+  return (hasCombinedRole && SEPARATE_AUTHOR_ROLES.includes(role))
+    || (hasSeparateRole && role === COMBINED_AUTHOR_ROLE);
+}
+
 export const NATIVE_COUNTRY_OPTIONS: OptionValue[] = [
   { id: "Japão", value: "Japão", label: "Japão" },
   { id: "Coreia do Sul", value: "Coreia do Sul", label: "Coreia do Sul" },

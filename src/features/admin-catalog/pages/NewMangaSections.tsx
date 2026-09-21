@@ -4,6 +4,7 @@ import { InputField, SelectField, ToggleField, YearSelectField } from "@/compone
 import { CoverImportField } from "@/features/admin-media";
 import type { NavigateFunction } from "react-router-dom";
 import {
+  isAuthorRoleDisabled,
   NATIVE_AUTHOR_ROLE_OPTIONS,
   NATIVE_COUNTRY_OPTIONS,
   NATIVE_DEMOGRAPHY_OPTIONS,
@@ -242,6 +243,7 @@ export function AuthorsStep({ controller }: ControllerProps) {
               label="Papel"
               options={NATIVE_AUTHOR_ROLE_OPTIONS}
               selectedIds={author.roles}
+              isOptionDisabled={(role) => isAuthorRoleDisabled(author.roles, String(role))}
               onToggle={(role) => {
                 controller.toggleAuthorRole(index, String(role));
                 controller.clearInvalidField(`authors.${index}.roles`);

@@ -1,5 +1,6 @@
 import { describe, expect, it } from "vitest";
 import {
+  isAuthorRoleDisabled,
   NATIVE_AUTHOR_ROLE_OPTIONS,
   NATIVE_COUNTRY_OPTIONS,
   NATIVE_DEMOGRAPHY_OPTIONS,
@@ -9,6 +10,12 @@ import {
 const values = (options: Array<{ value?: string }>) => options.map((option) => option.value);
 
 describe("opções nativas de Obra", () => {
+  it("impede papéis de autoria redundantes, sem restringir os demais", () => {
+    expect(isAuthorRoleDisabled(["História e Arte"], "História")).toBe(true);
+    expect(isAuthorRoleDisabled(["História"], "História e Arte")).toBe(true);
+    expect(isAuthorRoleDisabled(["Criador Original"], "Ilustrador")).toBe(false);
+  });
+
   it("preserva a prioridade dos papéis de autoria definida pelo domínio", () => {
     expect(values(NATIVE_AUTHOR_ROLE_OPTIONS)).toEqual([
       "História e Arte",

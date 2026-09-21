@@ -14,6 +14,7 @@ interface MultiSelectProps {
   options: SelectOption[];
   selectedIds: Array<number | string>;
   onToggle: (id: number | string) => void;
+  isOptionDisabled?: (id: number | string) => boolean;
   onOpen?: () => void;
   emptyMessage?: string;
   disabled?: boolean;
@@ -37,6 +38,7 @@ function resolveMultiSelectProps({
   options,
   selectedIds,
   onToggle,
+  isOptionDisabled,
   onOpen,
   emptyMessage = "Nenhum valor cadastrado para esta lista.",
   disabled = false,
@@ -59,6 +61,7 @@ function resolveMultiSelectProps({
     options,
     selectedIds,
     onToggle,
+    isOptionDisabled,
     onOpen,
     emptyMessage,
     disabled,
@@ -252,13 +255,14 @@ function MultiSelectControl(props: ControlProps) {
 
 function OptionsMenu({
   closeDropdown, emptyMessage, filteredOptions, maxVisibleItems, menuSurface,
-  onToggle, options, secondaryText, selectedIds,
+  isOptionDisabled, onToggle, options, secondaryText, selectedIds,
 }: {
   closeDropdown: () => void;
   emptyMessage: string;
   filteredOptions: SelectOption[];
   maxVisibleItems: number;
   menuSurface: string;
+  isOptionDisabled?: (id: number | string) => boolean;
   onToggle: (id: number | string) => void;
   options: SelectOption[];
   secondaryText: string;
@@ -284,14 +288,16 @@ function OptionsMenu({
       {filteredOptions.map((option) => {
         const optionValue = getOptionValue(option);
         const selected = selectedIds.includes(optionValue);
+        const optionDisabled = isOptionDisabled?.(optionValue) ?? false;
         return (
           <button
             key={optionValue}
             type="button"
             title={option.label}
+            disabled={optionDisabled}
             onClick={() => onToggle(optionValue)}
             onKeyDown={handleKeyDown}
-            className={`flex h-11 w-full items-center justify-between gap-2 px-3 text-left text-sm font-semibold transition-colors ${selected ? "bg-primary text-primary-foreground" : "text-foreground hover:bg-primary hover:text-primary-foreground"}`}
+            className={`flex h-11 w-full items-center justify-between gap-2 px-3 text-left text-sm font-semibold transition-colors disabled:cursor-not-allowed disabled:opacity-45 ${selected ? "bg-primary text-primary-foreground" : "text-foreground hover:bg-primary hover:text-primary-foreground"}`}
           >
             <span>{option.label}</span>
             {selected ? <Check className="h-4 w-4" /> : null}
@@ -342,7 +348,7 @@ function ReorderList({ onMove, selectedOptions }: {
 
 export function MultiSelect(props: MultiSelectProps) {
   const {
-    label, options, selectedIds, onToggle, onOpen, emptyMessage, disabled,
+    label, options, selectedIds, onToggle, isOptionDisabled, onOpen, emptyMessage, disabled,
     disabledMessage, required, invalid, errorMessage, searchable, placeholder,
     searchPlaceholder, onClear, reorderable, onMove, maxVisibleItems, tone, textSize,
   } = resolveMultiSelectProps(props);
@@ -404,6 +410,7 @@ export function MultiSelect(props: MultiSelectProps) {
             filteredOptions={filteredOptions}
             maxVisibleItems={maxVisibleItems}
             menuSurface={styles.menuSurface}
+            isOptionDisabled={isOptionDisabled}
             onToggle={onToggle}
             options={options}
             secondaryText={styles.secondaryText}
