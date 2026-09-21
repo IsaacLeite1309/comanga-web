@@ -414,6 +414,20 @@ describe("NewManga", () => {
     expect(screen.getByRole("button", { name: "Criador Original" })).toBeEnabled();
   });
 
+  it("impede História e Arte selecionadas separadamente para o mesmo autor", async () => {
+    renderNewManga();
+
+    await screen.findByRole("heading", { name: /novo mang/i });
+    await goToAuthorsStep();
+    await chooseDropdown(/^autor$/i, /masashi kishimoto/i);
+    fireEvent.click(screen.getByLabelText(/selecionar papel/i));
+    fireEvent.click(screen.getByRole("button", { name: "História" }));
+
+    fireEvent.click(screen.getByLabelText(/selecionar papel/i));
+    expect(screen.getByRole("button", { name: "História e Arte" })).toBeDisabled();
+    expect(screen.getByRole("button", { name: "Arte" })).toBeDisabled();
+  });
+
   it("desabilita demografia e revista quando lancamento direto esta ativo", async () => {
     vi.mocked(api.post).mockResolvedValueOnce({ data: { work: { id: 1, slug: "naruto", title: "Naruto" } } });
 

@@ -13,6 +13,8 @@ describe("opções nativas de Obra", () => {
   it("impede papéis de autoria redundantes, sem restringir os demais", () => {
     expect(isAuthorRoleDisabled(["História e Arte"], "História")).toBe(true);
     expect(isAuthorRoleDisabled(["História"], "História e Arte")).toBe(true);
+    expect(isAuthorRoleDisabled(["História"], "Arte")).toBe(true);
+    expect(isAuthorRoleDisabled(["Arte"], "História")).toBe(true);
     expect(isAuthorRoleDisabled(["Criador Original"], "Ilustrador")).toBe(false);
   });
 

@@ -14,10 +14,13 @@ const SEPARATE_AUTHOR_ROLES = ["História", "Arte"];
 
 export function isAuthorRoleDisabled(selectedRoles: string[], role: string) {
   const hasCombinedRole = selectedRoles.includes(COMBINED_AUTHOR_ROLE);
-  const hasSeparateRole = SEPARATE_AUTHOR_ROLES.some((item) => selectedRoles.includes(item));
+  const hasHistoryRole = selectedRoles.includes("História");
+  const hasArtRole = selectedRoles.includes("Arte");
 
-  return (hasCombinedRole && SEPARATE_AUTHOR_ROLES.includes(role))
-    || (hasSeparateRole && role === COMBINED_AUTHOR_ROLE);
+  if (hasCombinedRole) return SEPARATE_AUTHOR_ROLES.includes(role);
+  if (hasHistoryRole) return role === COMBINED_AUTHOR_ROLE || role === "Arte";
+  if (hasArtRole) return role === COMBINED_AUTHOR_ROLE || role === "História";
+  return false;
 }
 
 export const NATIVE_COUNTRY_OPTIONS: OptionValue[] = [
