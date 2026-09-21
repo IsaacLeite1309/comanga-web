@@ -26,7 +26,6 @@ const EditWorkFormPage = lazy(() => import("@/features/admin-catalog").then((mod
 const EditWorkPage = lazy(() => import("@/features/admin-catalog").then((module) => ({ default: module.EditWorkPage })));
 const NewMangaPage = lazy(() => import("@/features/admin-catalog").then((module) => ({ default: module.NewMangaPage })));
 const PostCreateActionsPage = lazy(() => import("@/features/admin-catalog").then((module) => ({ default: module.PostCreateActionsPage })));
-const VolumeDetailsPage = lazy(() => import("@/features/admin-catalog").then((module) => ({ default: module.VolumeDetailsPage })));
 const VolumeFormPage = lazy(() => import("@/features/admin-catalog").then((module) => ({ default: module.VolumeFormPage })));
 
 function AdminRoute({ children }: { children: React.ReactNode }) {
@@ -137,8 +136,8 @@ const App = () => (
               <Route
                 path="/admin/editar-mangas/obras/:workSlug/edicoes/:editionId/volumes/:volumeId"
                 element={
-                  <AdminRoute>
-                    <VolumeDetailsPage />
+                <AdminRoute>
+                    <VolumeFormPage />
                   </AdminRoute>
                 }
               />

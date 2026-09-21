@@ -13,6 +13,7 @@ import {
 export function AuthProvider({ children }: { children: ReactNode }) {
   const [user, setUser] = useState<AuthUser | null>(null);
   const [loading, setLoading] = useState(true);
+  const [isSessionEnding, setIsSessionEnding] = useState(false);
   const navigate = useNavigate();
 
   useEffect(() => {
@@ -31,6 +32,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
   }, []);
 
   function login(userData: AuthUser) {
+    setIsSessionEnding(false);
     setUser(userData);
   }
 
@@ -40,8 +42,10 @@ export function AuthProvider({ children }: { children: ReactNode }) {
   }
 
   function clearSession() {
-    setUser(null);
+    setIsSessionEnding(true);
     navigate("/entrar");
+    setUser(null);
+    window.setTimeout(() => setIsSessionEnding(false), 0);
   }
 
   async function logout() {
@@ -66,6 +70,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
         activeProfile: readActiveProfile(user),
         hasAdminProfile: profiles.includes(ADMIN_PROFILE),
         loading,
+        isSessionEnding,
         login,
         updateUser,
         logout,
