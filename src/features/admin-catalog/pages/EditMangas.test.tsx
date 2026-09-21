@@ -88,6 +88,7 @@ describe("EditMangas", () => {
     expect(screen.getAllByText("Japão")[0]).toBeInTheDocument();
     expect(screen.getAllByText("Mangá")[0]).toBeInTheDocument();
     expect(screen.getByAltText("Capa de Naruto")).toHaveAttribute("src", "https://cdn.comanga.test/naruto.jpg");
+    expect(screen.getByRole("link", { name: /editar naruto/i })).toHaveAttribute("href", "/admin/editar-mangas/obras/naruto/editar");
     expect(screen.getByRole("link", { name: /gerenciar naruto/i })).toHaveAttribute("href", "/admin/editar-mangas/obras/naruto");
     expect(api.get).toHaveBeenCalledWith("/admin/works", expect.objectContaining({
       params: expect.objectContaining({ order: "ASC", page: 1, limit: 8 }),

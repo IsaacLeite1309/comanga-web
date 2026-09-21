@@ -1,5 +1,5 @@
 import { Link } from "react-router-dom";
-import { Loader2, Pencil, Plus, Settings, Trash2 } from "lucide-react";
+import { Loader2, Pencil, Plus, Trash2 } from "lucide-react";
 import { VisibilityIcon } from "./CatalogVisibility";
 import { visibilityActionClassName } from "./catalogVisibilityStyles";
 import { CatalogViewToggle, DeleteCatalogItemDialog, DetailInfoBlock } from "./AdminCatalogDetailShared";
@@ -120,10 +120,10 @@ function VolumeGridCard({
         <Link
           to={volumeEditAdminPath(navigation.workSlug, navigation.editionId, volume.id)}
           state={{ workId: navigation.workId, editionId: navigation.editionId, volumeId: volume.id }}
-          aria-label={`Gerenciar ${label}`}
+          aria-label={`Editar ${label}`}
           className="inline-flex h-8 items-center justify-center rounded-md border border-border bg-card text-foreground transition-colors hover:border-primary hover:text-primary"
         >
-          <Settings className="h-3.5 w-3.5" />
+          <Pencil className="h-3.5 w-3.5" />
         </Link>
         <button
           type="button"
@@ -192,10 +192,10 @@ function VolumeListRow({
         <Link
           to={volumeEditAdminPath(navigation.workSlug, navigation.editionId, volume.id)}
           state={{ workId: navigation.workId, editionId: navigation.editionId, volumeId: volume.id }}
-          aria-label={`Gerenciar ${label}`}
+          aria-label={`Editar ${label}`}
           className="inline-flex h-10 w-10 items-center justify-center rounded-lg border border-border bg-input text-foreground transition-colors hover:border-primary hover:text-primary md:justify-self-center"
         >
-          <Settings className="h-3.5 w-3.5" />
+          <Pencil className="h-3.5 w-3.5" />
         </Link>
         <button
           type="button"
@@ -219,7 +219,7 @@ function VolumesListHeader() {
       <span className="hidden md:block">Páginas</span>
       <span className="hidden md:block">Preço</span>
       <span className="hidden md:block">Visibilidade</span>
-      <span className="hidden justify-self-center md:block">Gerenciar</span>
+      <span className="hidden justify-self-center md:block">Editar</span>
       <span className="hidden justify-self-center md:block">Excluir</span>
     </div>
   );

@@ -1,9 +1,9 @@
-import { ArrowDownAZ, ArrowUpAZ, Check, ChevronDown, LayoutGrid, List, Loader2, Search, Settings, Trash2 } from "lucide-react";
+import { ArrowDownAZ, ArrowUpAZ, Check, ChevronDown, LayoutGrid, List, Loader2, Pencil, Search, Settings, Trash2 } from "lucide-react";
 import { Link } from "react-router-dom";
 import { EmptyState, LoadingState } from "@/components/shared/AsyncState";
 import { useDropdown } from "@/hooks/useDropdown";
 import { CatalogVisibilityAction } from "./CatalogVisibility";
-import { workAdminPath } from "../domain/catalogPaths";
+import { workAdminPath, workEditAdminPath } from "../domain/catalogPaths";
 import { EditMangasPageModel } from "../hooks/useEditMangasPage";
 import { FilterOption, formatEditionsCount, WorkSummary } from "../pages/editMangasModel";
 
@@ -155,6 +155,14 @@ function WorkManageActions({ model, work, compact = false }: {
   return (
     <>
       <Link
+        to={workEditAdminPath(work.slug)}
+        state={{ workId: work.id }}
+        aria-label={`Editar ${work.title}`}
+        className={`inline-flex items-center justify-center border border-border bg-input text-foreground transition-colors hover:border-primary hover:text-primary ${sizeClass} ${radiusClass} ${compact ? "" : "md:justify-self-center"}`}
+      >
+        <Pencil className="h-3.5 w-3.5" />
+      </Link>
+      <Link
         to={workAdminPath(work.slug)}
         state={{ workId: work.id }}
         aria-label={`Gerenciar ${work.title}`}
@@ -182,7 +190,7 @@ function WorksGrid({ model }: { model: EditMangasPageModel }) {
         <article key={work.id} className="rounded-lg border border-border bg-card p-2">
           <WorkCover work={work} compact />
           <h2 className="mt-2 truncate text-center text-sm font-bold text-foreground">{work.title}</h2>
-          <div className="mt-2 grid grid-cols-3 gap-1.5">
+          <div className="mt-2 grid grid-cols-4 gap-1.5">
             <CatalogVisibilityAction
               visibility={work.visibility}
               ariaLabel={`Alterar visibilidade de ${work.title}`}
@@ -215,7 +223,7 @@ function SortHeader({ model }: { model: EditMangasPageModel }) {
 
 function WorksListHeader({ model }: { model: EditMangasPageModel }) {
   return (
-    <div className="grid grid-cols-[72px_minmax(0,1fr)_auto] items-center gap-4 border-b border-border bg-muted/20 py-3 pl-5 pr-3 text-xs font-bold uppercase tracking-wide text-muted-foreground md:grid-cols-[72px_minmax(150px,1fr)_minmax(120px,0.8fr)_minmax(110px,0.62fr)_minmax(110px,0.62fr)_minmax(90px,0.45fr)_128px_84px_88px]">
+    <div className="grid grid-cols-[72px_minmax(0,1fr)_auto] items-center gap-4 border-b border-border bg-muted/20 py-3 pl-5 pr-3 text-xs font-bold uppercase tracking-wide text-muted-foreground md:grid-cols-[72px_minmax(150px,1fr)_minmax(120px,0.8fr)_minmax(110px,0.62fr)_minmax(110px,0.62fr)_minmax(90px,0.45fr)_128px_84px_84px_88px]">
       <span className="justify-self-start">Capa</span>
       <SortHeader model={model} />
       <span className="hidden justify-self-start md:block">AUTOR</span>
@@ -223,6 +231,7 @@ function WorksListHeader({ model }: { model: EditMangasPageModel }) {
       <span className="hidden justify-self-start md:block">TIPO DE OBRA</span>
       <span className="hidden justify-self-start md:block">EDIÇÕES</span>
       <span className="hidden justify-self-start md:block">VISIBILIDADE</span>
+      <span className="hidden justify-self-center md:block">EDITAR</span>
       <span className="hidden justify-self-center md:block">GERENCIAR</span>
       <span className="hidden justify-self-center md:block">EXCLUIR</span>
     </div>
@@ -255,7 +264,7 @@ function WorkTitle({ model, work }: { model: EditMangasPageModel; work: WorkSumm
 
 function WorkListRow({ model, work }: { model: EditMangasPageModel; work: WorkSummary }) {
   return (
-    <article className="grid grid-cols-[72px_minmax(0,1fr)_auto] gap-4 border-b border-border py-4 pl-5 pr-3 last:border-b-0 md:grid-cols-[72px_minmax(150px,1fr)_minmax(120px,0.8fr)_minmax(110px,0.62fr)_minmax(110px,0.62fr)_minmax(90px,0.45fr)_128px_84px_88px] md:items-center">
+    <article className="grid grid-cols-[72px_minmax(0,1fr)_auto] gap-4 border-b border-border py-4 pl-5 pr-3 last:border-b-0 md:grid-cols-[72px_minmax(150px,1fr)_minmax(120px,0.8fr)_minmax(110px,0.62fr)_minmax(110px,0.62fr)_minmax(90px,0.45fr)_128px_84px_84px_88px] md:items-center">
       <WorkCover work={work} />
       <WorkTitle model={model} work={work} />
       <div className="hidden min-w-0 text-sm font-semibold text-muted-foreground md:block">
