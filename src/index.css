@@ -68,6 +68,25 @@
     -webkit-appearance: none;
   }
 
+  .comanga-dropdown-scrollbar {
+    scrollbar-color: hsl(var(--muted-foreground)) hsl(var(--input));
+    scrollbar-width: thin;
+  }
+
+  .comanga-dropdown-scrollbar::-webkit-scrollbar {
+    width: 10px;
+  }
+
+  .comanga-dropdown-scrollbar::-webkit-scrollbar-track {
+    background: hsl(var(--input));
+  }
+
+  .comanga-dropdown-scrollbar::-webkit-scrollbar-thumb {
+    border: 2px solid hsl(var(--input));
+    border-radius: 999px;
+    background: hsl(var(--muted-foreground));
+  }
+
   @media (max-width: 767px) {
     input,
     select,
