@@ -26,6 +26,7 @@ describe("opções nativas de Obra", () => {
       "Criador Original",
       "História Original",
       "Ilustrador",
+      "Design de Personagens",
     ]);
   });
 

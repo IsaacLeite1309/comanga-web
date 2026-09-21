@@ -7,6 +7,7 @@ export const NATIVE_AUTHOR_ROLE_OPTIONS: OptionValue[] = [
   { id: "Criador Original", value: "Criador Original", label: "Criador Original" },
   { id: "História Original", value: "História Original", label: "História Original" },
   { id: "Ilustrador", value: "Ilustrador", label: "Ilustrador" },
+  { id: "Design de Personagens", value: "Design de Personagens", label: "Design de Personagens" },
 ];
 
 const COMBINED_AUTHOR_ROLE = "História e Arte";
