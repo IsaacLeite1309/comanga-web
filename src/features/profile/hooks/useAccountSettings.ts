@@ -69,7 +69,6 @@ export function useAccountSettings(
       return "";
     } catch (error: unknown) {
       const message = readRequestError(error, "Erro ao alterar o nome de usuário.");
-      toast.error(message);
       return message;
     }
   }

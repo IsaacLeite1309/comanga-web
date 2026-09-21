@@ -36,13 +36,17 @@ export function UsernameForm({ currentUsername, onSubmit }: UsernameFormProps) {
 
   return (
     <form className="rounded-xl border border-border bg-muted/20 p-4 space-y-3" onSubmit={handleSubmit}>
-      <div className="flex items-center gap-2">
-        <UserCog className="h-4 w-4 text-primary" aria-hidden="true" />
-        <h3 className="text-sm font-bold text-foreground">Alterar nome de usuário</h3>
+      <div className="flex items-center gap-3">
+        <div className="flex h-10 w-10 shrink-0 items-center justify-center rounded-full bg-primary">
+          <UserCog className="h-5 w-5 text-white" aria-hidden="true" />
+        </div>
+        <h3 className="text-xs font-medium uppercase tracking-wider text-muted-foreground">Alterar nome de usuário</h3>
       </div>
-      <label className="block">
-        <span className="text-xs font-semibold text-muted-foreground">Novo nome de usuário</span>
+      <div>
         <input
+          aria-label="Novo nome de usuário"
+          aria-invalid={Boolean(error)}
+          placeholder="Novo nome de usuário"
           type="text"
           value={username}
           disabled={saving}
@@ -50,10 +54,12 @@ export function UsernameForm({ currentUsername, onSubmit }: UsernameFormProps) {
             setUsername(event.target.value);
             setError("");
           }}
-          className="mt-2 w-full rounded-lg border border-border bg-background px-3 py-2 text-base text-foreground outline-none transition-colors focus:border-primary disabled:opacity-50"
+          className={`h-12 w-full rounded-xl border bg-input px-4 text-sm text-foreground placeholder:text-muted-foreground outline-none transition-colors focus:ring-2 disabled:opacity-50 ${
+            error ? "border-red-500 focus:ring-red-500" : "border-border focus:ring-primary"
+          }`}
         />
-      </label>
-      {error && <p role="alert" className="rounded-lg bg-red-500/10 px-3 py-2 text-sm font-medium text-red-500">{error}</p>}
+      </div>
+      {error && <p role="alert" className="-mt-1 ml-1 text-xs text-red-500">{error}</p>}
       <button
         type="submit"
         disabled={saving}

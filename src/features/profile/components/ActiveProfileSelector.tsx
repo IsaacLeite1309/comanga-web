@@ -1,4 +1,5 @@
 import { ShieldCheck, Loader2 } from "lucide-react";
+import { SearchableSelect } from "@/components/forms/SearchableSelect";
 
 interface ActiveProfileSelectorProps {
   profiles: string[];
@@ -17,23 +18,18 @@ export function ActiveProfileSelector({ profiles, activeProfile, updating, onCha
         <ShieldCheck className="h-5 w-5 text-white" />
       </div>
       <div className="flex min-w-0 flex-1 flex-col">
-        <label htmlFor="active-profile" className="text-sm font-semibold text-foreground">
+        <span className="text-xs font-medium uppercase tracking-wider text-muted-foreground">
           Perfil ativo
-        </label>
-        <span className="text-xs text-muted-foreground mt-0.5">
-          Define o contexto de uso desta sessão. Não concede nem remove perfis da conta.
         </span>
-        <select
-          id="active-profile"
+        <SearchableSelect
+          ariaLabel="Perfil ativo"
           value={activeProfile}
           disabled={updating}
-          onChange={(event) => onChange(event.target.value)}
-          className="mt-2 w-full rounded-lg border border-border bg-background px-3 py-2 text-sm text-foreground outline-none transition-colors focus:border-primary disabled:opacity-50"
-        >
-          {profiles.map((profile) => (
-            <option key={profile} value={profile}>{profile}</option>
-          ))}
-        </select>
+          onChange={onChange}
+          options={profiles.map((profile) => ({ value: profile, label: profile }))}
+          allowEmptyOption={false}
+          className="mt-2"
+        />
       </div>
       {updating && <Loader2 aria-hidden="true" className="h-5 w-5 animate-spin text-primary" />}
     </div>
