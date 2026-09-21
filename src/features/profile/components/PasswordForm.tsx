@@ -71,11 +71,11 @@ export function PasswordForm({ onSubmit }: PasswordFormProps) {
         <h3 className="text-sm font-bold text-foreground">Alterar senha</h3>
       </div>
       {fields.map((field) => (
-        <label className="block" key={field.id}>
-          <span className="text-xs font-semibold text-muted-foreground">{field.label}</span>
-          <div className="relative mt-2">
+        <div key={field.id}>
+          <div className="relative">
             <input
               aria-label={field.label}
+              placeholder={field.label}
               type={visibleFields[field.id] ? "text" : "password"}
               value={form[field.id]}
               disabled={saving}
@@ -92,7 +92,7 @@ export function PasswordForm({ onSubmit }: PasswordFormProps) {
               {visibleFields[field.id] ? <EyeOff className="h-5 w-5" /> : <Eye className="h-5 w-5" />}
             </button>
           </div>
-        </label>
+        </div>
       ))}
       {error && <p role="alert" className="rounded-lg bg-red-500/10 px-3 py-2 text-sm font-medium text-red-500">{error}</p>}
       <button

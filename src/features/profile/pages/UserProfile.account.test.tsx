@@ -72,12 +72,9 @@ describe("UserProfile — perfil ativo", () => {
   it("oferece o seletor com os perfis da conta quando há mais de um", async () => {
     await renderProfile({ profiles: ["Administrador", "Usuário Padrão"], active_profile: "Administrador" });
 
-    const selector = screen.getByLabelText("Perfil ativo") as HTMLSelectElement;
-    expect(selector).toHaveValue("Administrador");
-    expect(Array.from(selector.options).map((option) => option.value)).toEqual([
-      "Administrador",
-      "Usuário Padrão",
-    ]);
+    expect(screen.getByLabelText("Perfil ativo")).toHaveTextContent("Administrador");
+    fireEvent.click(screen.getByLabelText("Perfil ativo"));
+    expect(screen.getByRole("button", { name: "Usuário Padrão" })).toBeInTheDocument();
   });
 
   it("oculta a configuração +18 para administrador e para conta sem elegibilidade", async () => {
@@ -101,7 +98,8 @@ describe("UserProfile — perfil ativo", () => {
       },
     });
 
-    fireEvent.change(screen.getByLabelText("Perfil ativo"), { target: { value: "Usuário Padrão" } });
+    fireEvent.click(screen.getByLabelText("Perfil ativo"));
+    fireEvent.click(screen.getByRole("button", { name: "Usuário Padrão" }));
 
     await waitFor(() => {
       expect(api.patch).toHaveBeenCalledWith("/users/me/active-profile", { profile: "Usuário Padrão" });
@@ -110,7 +108,7 @@ describe("UserProfile — perfil ativo", () => {
     expect(updateUserMock).toHaveBeenCalledWith(
       expect.objectContaining({ active_profile: "Usuário Padrão" })
     );
-    expect(screen.getByLabelText("Perfil ativo")).toHaveValue("Usuário Padrão");
+    expect(screen.getByLabelText("Perfil ativo")).toHaveTextContent("Usuário Padrão");
   });
 
   it("mantém o perfil anterior e notifica quando a API recusa a troca", async () => {
@@ -119,12 +117,13 @@ describe("UserProfile — perfil ativo", () => {
       axiosFailure(403, "Acesso negado: sua conta não possui este perfil de acesso.")
     );
 
-    fireEvent.change(screen.getByLabelText("Perfil ativo"), { target: { value: "Usuário Padrão" } });
+    fireEvent.click(screen.getByLabelText("Perfil ativo"));
+    fireEvent.click(screen.getByRole("button", { name: "Usuário Padrão" }));
 
     await waitFor(() => {
       expect(toast.error).toHaveBeenCalledWith("Acesso negado: sua conta não possui este perfil de acesso.");
     });
-    expect(screen.getByLabelText("Perfil ativo")).toHaveValue("Administrador");
+    expect(screen.getByLabelText("Perfil ativo")).toHaveTextContent("Administrador");
     expect(updateUserMock).not.toHaveBeenCalled();
   });
 });
@@ -137,6 +136,7 @@ describe("UserProfile — nome de usuário", () => {
   it("valida o formato antes de chamar a API", async () => {
     await renderProfile();
 
+    expect(screen.getByPlaceholderText("Novo nome de usuário")).toBeInTheDocument();
     fireEvent.change(screen.getByLabelText("Novo nome de usuário"), { target: { value: "ab" } });
     fireEvent.click(screen.getByRole("button", { name: "Salvar nome de usuário" }));
 
@@ -214,6 +214,9 @@ describe("UserProfile — senha", () => {
     expect(screen.getByLabelText("Nova senha")).toHaveAttribute("type", "password");
     expect(screen.getByLabelText("Confirmação da nova senha")).toHaveAttribute("type", "password");
     expect(screen.getByRole("button", { name: "Alterar senha" })).toBeEnabled();
+    expect(screen.getByPlaceholderText("Senha atual")).toBeInTheDocument();
+    expect(screen.getByPlaceholderText("Nova senha")).toBeInTheDocument();
+    expect(screen.getByPlaceholderText("Confirmação da nova senha")).toBeInTheDocument();
     fireEvent.click(screen.getByRole("button", { name: "Mostrar senha atual" }));
     expect(screen.getByLabelText("Senha atual")).toHaveAttribute("type", "text");
   });
