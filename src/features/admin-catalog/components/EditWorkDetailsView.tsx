@@ -203,7 +203,7 @@ function EditionListRow({
           </span>
         </div>
       </div>
-      <p className="hidden text-sm font-semibold text-muted-foreground md:block">
+      <p className="hidden min-w-0 break-words text-sm font-semibold text-muted-foreground md:block">
         {edition.brazilianPublisher?.label || "Editora não informada"}
       </p>
       <p className="hidden text-sm font-semibold text-muted-foreground md:block">{formatVolumesCount(edition.volumesCount)}</p>
@@ -313,8 +313,17 @@ function EditionsList({
 }) {
   return (
     <div className="overflow-hidden rounded-xl border border-border">
-      <EditionsListHeader />
-      <EditionsListBody collection={collection} work={work} workSlug={workSlug} actions={actions} />
+      <div
+        role="region"
+        aria-label="Tabela de edições"
+        tabIndex={0}
+        className="overflow-x-auto focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-inset focus-visible:ring-primary"
+      >
+        <div className="md:min-w-[1040px]">
+          <EditionsListHeader />
+          <EditionsListBody collection={collection} work={work} workSlug={workSlug} actions={actions} />
+        </div>
+      </div>
       <CatalogPaginationControls pagination={collection.pagination} itemsLabel="Edições" />
     </div>
   );

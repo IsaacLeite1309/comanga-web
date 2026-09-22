@@ -41,7 +41,7 @@ function DetailRow({
     <div className="grid min-w-0 grid-cols-[1.25rem_minmax(0,1fr)] gap-x-2 text-sm">
       <span className="mt-0.5 text-muted-foreground" aria-hidden="true">{icon}</span>
       <div className="min-w-0">
-        <dt className="text-xs font-bold uppercase tracking-wide text-muted-foreground">{label}</dt>
+        <dt className="break-words text-xs font-bold uppercase tracking-wide text-muted-foreground">{label}</dt>
         <dd className="mt-0.5 break-words font-semibold text-foreground">{value}</dd>
       </div>
     </div>
@@ -260,7 +260,7 @@ function VolumeArticle({ volume, volumeLabel, editionLabel }: VolumeSectionProps
       ) : null}
       <section className="px-5 py-6 sm:px-8" aria-labelledby="details-title">
         <h2 id="details-title" className="text-sm font-bold uppercase tracking-wide text-muted-foreground">Detalhes</h2>
-        <dl className="mt-4 grid grid-cols-[1.1fr_0.8fr_1fr_1.1fr_1.5fr] gap-x-3">
+        <dl className="mt-4 grid grid-cols-[repeat(auto-fit,minmax(min(100%,10rem),1fr))] gap-x-3 gap-y-4">
           {volume.releaseYear ? (
             <DetailRow
               icon={<Calendar className="h-4 w-4" />}

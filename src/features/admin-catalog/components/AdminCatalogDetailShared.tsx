@@ -148,7 +148,7 @@ export function DeleteCatalogItemDialog({
     <div className="fixed inset-0 z-50 flex items-center justify-center bg-background/80 px-4 backdrop-blur-sm">
       <div className="w-fit max-w-[calc(100vw-2rem)] rounded-2xl border border-red-500/30 bg-card p-6 shadow-2xl">
         <h2 className="text-xl font-bold text-foreground">{title}</h2>
-        <p className="mt-2 whitespace-nowrap text-sm text-muted-foreground max-sm:whitespace-normal">
+        <p className="mt-2 break-words text-sm text-muted-foreground">
           {description}
         </p>
         <div className="mt-6 flex justify-end gap-3">
