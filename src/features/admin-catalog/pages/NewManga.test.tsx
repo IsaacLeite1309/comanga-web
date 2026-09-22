@@ -533,7 +533,6 @@ describe("NewManga", () => {
 
     fireEvent.click(screen.getByRole("button", { name: /voltar/i }));
     fireEvent.click(screen.getByRole("button", { name: /voltar/i }));
-    fireEvent.click(screen.getByRole("button", { name: /voltar/i }));
     await chooseDropdown(/tipo de obra/i, /databook/i);
     fireEvent.click(screen.getByRole("button", { name: /continuar/i }));
     fireEvent.click(screen.getByRole("button", { name: /continuar/i }));
@@ -596,6 +595,7 @@ describe("NewManga", () => {
     expect(await screen.findByRole("heading", { name: /novo mang/i })).toBeInTheDocument();
     await fillRequiredFields();
 
+    fireEvent.click(screen.getByRole("button", { name: /voltar/i }));
     fireEvent.click(screen.getByRole("button", { name: /voltar/i }));
     fireEvent.click(screen.getByRole("button", { name: /voltar/i }));
     expect(screen.getAllByLabelText(/t.*tulo/i)[0]).toHaveValue("Naruto");
