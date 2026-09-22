@@ -182,9 +182,11 @@ function EditionListRow({
           <span className="rounded-full bg-muted px-2 py-1 text-xs font-semibold text-muted-foreground">
             {edition.brazilianPublisher?.label || "Editora não informada"}
           </span>
-          <span className="rounded-full bg-muted px-2 py-1 text-xs font-semibold text-muted-foreground">
-            {edition.editionType?.label || "Tipo não informado"}
-          </span>
+          {edition.editionType && (
+            <span className="rounded-full bg-muted px-2 py-1 text-xs font-semibold text-muted-foreground">
+              {edition.editionType.label}
+            </span>
+          )}
           <span className="rounded-full bg-muted px-2 py-1 text-xs font-semibold text-muted-foreground">
             {formatVolumesCount(edition.volumesCount)}
           </span>
@@ -193,7 +195,7 @@ function EditionListRow({
       <p className="hidden text-sm font-semibold text-muted-foreground md:block">
         {edition.brazilianPublisher?.label || "Editora não informada"}
       </p>
-      <p className="hidden text-sm font-semibold text-muted-foreground md:block">{edition.editionType?.label || "-"}</p>
+      <p className="hidden text-sm font-semibold text-muted-foreground md:block">{edition.editionType?.label || ""}</p>
       <p className="hidden text-sm font-semibold text-muted-foreground md:block">{formatVolumesCount(edition.volumesCount)}</p>
       <div className="hidden justify-self-start md:block">
         <CatalogVisibilityAction

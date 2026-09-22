@@ -73,10 +73,10 @@ export function editionToDraft(edition: Edition): EditionDraft {
 export function buildEditionPayload(draft: EditionDraft) {
   return {
     brazilianPublisherId: Number(draft.brazilianPublisherId),
-    editionTypeId: Number(draft.editionTypeId),
-    coverTypeId: Number(draft.coverTypeId),
-    formatId: Number(draft.formatId),
-    paperId: Number(draft.paperId),
+    editionTypeId: draft.editionTypeId ? Number(draft.editionTypeId) : null,
+    coverTypeId: draft.coverTypeId ? Number(draft.coverTypeId) : null,
+    formatId: draft.formatId ? Number(draft.formatId) : null,
+    paperId: draft.paperId ? Number(draft.paperId) : null,
     chronologicalNumber: Number(draft.chronologicalNumber),
     brazilPublicationStatus: draft.brazilPublicationStatus,
   };
@@ -85,10 +85,6 @@ export function buildEditionPayload(draft: EditionDraft) {
 export function isEditionDraftIncomplete(draft: EditionDraft) {
   const requiredValues = [
     draft.brazilianPublisherId,
-    draft.editionTypeId,
-    draft.coverTypeId,
-    draft.formatId,
-    draft.paperId,
     draft.chronologicalNumber,
     draft.brazilPublicationStatus,
   ];

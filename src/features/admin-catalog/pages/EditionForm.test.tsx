@@ -117,6 +117,26 @@ describe("EditionForm", () => {
     expect(screen.getByText("Edição cadastrada com sucesso")).toBeInTheDocument();
   });
 
+  it("permite cadastrar uma edição sem metadados ainda não informados", async () => {
+    vi.mocked(api.get).mockResolvedValueOnce({ data: editionOptions });
+    vi.mocked(api.post).mockResolvedValueOnce({ data: { edition: { id: 51 } } });
+
+    renderEditionForm();
+
+    await screen.findByRole("heading", { name: /nova edição/i });
+    chooseDropdown(/editora brasileira/i, /panini/i);
+    chooseDropdown(/número da edição/i, /1ª edição/i);
+    chooseDropdown(/status de publicação/i, /completa/i);
+    fireEvent.click(screen.getByRole("button", { name: /^salvar$/i }));
+
+    await waitFor(() => expect(api.post).toHaveBeenCalledWith("/admin/works/10/editions", expect.objectContaining({
+      editionTypeId: null,
+      coverTypeId: null,
+      formatId: null,
+      paperId: null,
+    })));
+  });
+
   it("carrega e atualiza uma edicao existente", async () => {
     vi.mocked(api.get)
       .mockResolvedValueOnce({ data: editionOptions })

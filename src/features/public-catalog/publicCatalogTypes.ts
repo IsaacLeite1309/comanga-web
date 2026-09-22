@@ -59,9 +59,10 @@ export interface PublicEditionDetails {
   chronologicalNumber: number;
   coverUrl?: string | null;
   brazilianPublisher: PublicOption;
-  editionType: PublicOption;
-  format: PublicOption;
-  coverType: PublicOption;
+  editionType: PublicOption | null;
+  format: PublicOption | null;
+  coverType: PublicOption | null;
+  paper?: PublicOption | null;
   brazilPublicationStatus: string;
   volumesCount: number;
   volumes: PublicVolumePreview[];
@@ -72,9 +73,10 @@ export interface PublicEditionPageDetails {
   chronologicalNumber: number;
   coverUrl?: string | null;
   brazilianPublisher: PublicOption;
-  editionType: PublicOption;
-  format: PublicOption;
-  coverType: PublicOption;
+  editionType: PublicOption | null;
+  format: PublicOption | null;
+  coverType: PublicOption | null;
+  paper?: PublicOption | null;
   brazilPublicationStatus: string;
   brazilPublicationStartYear?: number | null;
   brazilPublicationEndYear?: number | null;

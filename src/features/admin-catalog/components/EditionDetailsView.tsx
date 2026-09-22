@@ -57,9 +57,10 @@ export function EditionSummary({
             </p>
           </div>
           <div className="mt-5 grid gap-3 sm:grid-cols-2 lg:grid-cols-3">
-            <DetailInfoBlock label="Tipo de edição" value={edition.editionType?.label || "Tipo não informado"} />
-            <DetailInfoBlock label="Acabamento" value={edition.coverType?.label || "Acabamento não informado"} />
-            <DetailInfoBlock label="Formato" value={edition.format?.label || "Formato não informado"} />
+            {edition.editionType && <DetailInfoBlock label="Tipo de edição" value={edition.editionType.label} />}
+            {edition.coverType && <DetailInfoBlock label="Acabamento" value={edition.coverType.label} />}
+            {edition.format && <DetailInfoBlock label="Formato" value={edition.format.label} />}
+            {edition.paper && <DetailInfoBlock label="Miolo" value={edition.paper.label} />}
             <DetailInfoBlock label="Status no Brasil" value={getPublicationStatusLabel(edition.brazilPublicationStatus)} />
             <DetailInfoBlock label="Volumes" value={formatVolumesCount(edition.volumesCount)} />
             <DetailInfoBlock
