@@ -35,6 +35,7 @@ import {
   getDefaultWorkTypeLabels,
   getInvalidAuthorFields,
   getInvalidIdentificationFields,
+  getInvalidMediaFields,
   getInvalidPublicationFields,
   hasDuplicateAuthors,
   isHentaiGenre,
@@ -202,13 +203,19 @@ function useDerivedRules(
   setDraft: SetDraft,
   setInvalidFields: Dispatch<SetStateAction<string[]>>
 ) {
+  const hadHentaiGenre = useRef(derived.hasHentaiGenre);
   useEffect(() => {
     if (!derived.demographyDisabled) return;
     setDraft((current) => ({ ...current, demographies: [] }));
     setInvalidFields((current) => current.filter((field) => field !== "demographies"));
   }, [derived.demographyDisabled, setDraft, setInvalidFields]);
   useEffect(() => {
-    if (derived.hasHentaiGenre) setDraft((current) => ({ ...current, adultContent: true }));
+    if (derived.hasHentaiGenre) {
+      setDraft((current) => ({ ...current, adultContent: true }));
+    } else if (hadHentaiGenre.current) {
+      setDraft((current) => ({ ...current, adultContent: false }));
+    }
+    hadHentaiGenre.current = derived.hasHentaiGenre;
   }, [derived.hasHentaiGenre, setDraft]);
   useEffect(() => {
     if (derived.directReleaseBlockedByWorkType) {
@@ -259,7 +266,7 @@ function useDocumentSubmitShortcut(
         || active instanceof HTMLSelectElement
         || active instanceof HTMLButtonElement;
       if (isFormControl) return;
-      if (currentStep === "publication" && !saving && !optionsError) formRef.current?.requestSubmit();
+      if (currentStep === "media" && !saving && !optionsError) formRef.current?.requestSubmit();
     }
     window.addEventListener("keydown", handleKeyDown);
     return () => window.removeEventListener("keydown", handleKeyDown);
@@ -268,6 +275,7 @@ function useDocumentSubmitShortcut(
 
 function createStepActions(
   draft: NewMangaDraft,
+  derived: DerivedState,
   setFieldError: Dispatch<SetStateAction<string>>,
   setInvalidFields: Dispatch<SetStateAction<string[]>>,
   setCurrentStep: Dispatch<SetStateAction<NewMangaStep>>
@@ -295,6 +303,20 @@ function createStepActions(
     setInvalidFields([]);
     setCurrentStep("publication");
   }
+  function goToMediaStep() {
+    const fields = getInvalidPublicationFields(draft, derived);
+    if (fields.length > 0) return showInvalid(fields);
+    const startYear = Number(draft.originalPublicationStartYear);
+    const endYear = Number(draft.originalPublicationEndYear);
+    if (draft.originalPublicationEndYear && endYear < startYear) {
+      setFieldError("O fim da publicação original não pode ser anterior ao início.");
+      setInvalidFields(["originalPublicationEndYear"]);
+      return;
+    }
+    setFieldError("");
+    setInvalidFields([]);
+    setCurrentStep("media");
+  }
   function openPublicationStep() {
     const fields = getInvalidIdentificationFields(draft);
     if (fields.length > 0) {
@@ -305,7 +327,23 @@ function createStepActions(
     setCurrentStep("authors");
     goToPublicationStep();
   }
-  return { goToAuthorsStep, goToPublicationStep, openPublicationStep };
+  function openMediaStep() {
+    const identificationFields = getInvalidIdentificationFields(draft);
+    if (identificationFields.length > 0) {
+      showInvalid(identificationFields);
+      setCurrentStep("identification");
+      return;
+    }
+    const authorFields = getInvalidAuthorFields(draft);
+    if (authorFields.length > 0 || hasDuplicateAuthors(draft)) {
+      if (authorFields.length > 0) showInvalid(authorFields);
+      else setFieldError("Autor duplicado!");
+      setCurrentStep("authors");
+      return;
+    }
+    goToMediaStep();
+  }
+  return { goToAuthorsStep, goToPublicationStep, goToMediaStep, openMediaStep, openPublicationStep };
 }
 
 type SubmissionSettings = {
@@ -332,9 +370,10 @@ function createSubmissionHandler(settings: SubmissionSettings) {
       return;
     }
     const fields = [
-      ...getInvalidIdentificationFields(draft),
-      ...getInvalidAuthorFields(draft),
-      ...getInvalidPublicationFields(draft, derived),
+    ...getInvalidIdentificationFields(draft),
+    ...getInvalidAuthorFields(draft),
+    ...getInvalidPublicationFields(draft, derived),
+    ...getInvalidMediaFields(draft),
     ];
     settings.setFieldError(fields.length === 0 ? message : "");
     settings.setInvalidFields(fields);
@@ -367,6 +406,7 @@ function createSubmissionHandler(settings: SubmissionSettings) {
     event.preventDefault();
     if (settings.currentStep === "identification") return settings.stepActions.goToAuthorsStep();
     if (settings.currentStep === "authors") return settings.stepActions.goToPublicationStep();
+    if (settings.currentStep === "publication") return settings.stepActions.goToMediaStep();
     const validationError = validateCompleteForm(draft, derived);
     if (validationError) return showValidationError(validationError);
     settings.setFieldError("");
@@ -426,7 +466,7 @@ export function useNewMangaForm(mode: NewMangaMode, workId?: string) {
     setInvalidFields((current) => current.filter((field) => !fields.includes(field)));
   }, []);
   const clearInvalidField = useCallback((field: string) => clearInvalidFields([field]), [clearInvalidFields]);
-  const stepActions = createStepActions(draft, setFieldError, setInvalidFields, setCurrentStep);
+  const stepActions = createStepActions(draft, derived, setFieldError, setInvalidFields, setCurrentStep);
   const handleSubmit = createSubmissionHandler({
     currentStep,
     derived,
@@ -483,6 +523,7 @@ export function useNewMangaForm(mode: NewMangaMode, workId?: string) {
     formRef,
     goToAuthorsStep: stepActions.goToAuthorsStep,
     goToPublicationStep: stepActions.goToPublicationStep,
+    goToMediaStep: stepActions.goToMediaStep,
     handleFormKeyDown,
     handleSubmit,
     hasUnsavedChanges: Boolean(baselineSignature) && signature !== baselineSignature && !saving,
@@ -492,6 +533,7 @@ export function useNewMangaForm(mode: NewMangaMode, workId?: string) {
       updateDraft(field, moveValue(draft[field], from, to));
     },
     openPublicationStep: stepActions.openPublicationStep,
+    openMediaStep: stepActions.openMediaStep,
     removeAuthor: (index: number) => updateDraft("authors", draft.authors.length === 1
       ? draft.authors
       : draft.authors.filter((_, authorIndex) => authorIndex !== index)),

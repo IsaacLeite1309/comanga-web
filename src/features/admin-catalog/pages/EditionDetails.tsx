@@ -1,12 +1,12 @@
 import { useMemo } from "react";
-import { Link, useLocation, useParams } from "react-router-dom";
-import { ArrowLeft } from "lucide-react";
+import { useLocation, useParams } from "react-router-dom";
 import { DetailError, DetailLoading } from "../components/AdminCatalogDetailShared";
 import {
   DeleteVolumeDialog,
   EditionVolumesSection,
 } from "../components/EditionDetailsView";
 import { workAdminPath } from "../domain/catalogPaths";
+import { AdminCatalogBreadcrumb } from "../components/AdminCatalogBreadcrumb";
 import type { AdminCatalogLocationState } from "../domain/adminCatalogDetails";
 import { useCatalogDetailView } from "../hooks/useCatalogDetailView";
 import { useEditionDetails } from "../hooks/useEditionDetails";
@@ -48,14 +48,7 @@ const EditionDetails = () => {
   return (
     <div className="flex-1 min-w-0 px-3 py-6 sm:px-4 sm:py-8">
       <div className="mx-auto w-full max-w-6xl space-y-6">
-        <Link
-          to={workPath}
-          state={{ workId }}
-          className="inline-flex h-11 items-center gap-2 rounded-xl border border-border bg-input px-4 text-sm font-bold text-foreground transition-colors hover:border-primary hover:text-primary"
-        >
-          <ArrowLeft className="h-3.5 w-3.5" />
-          Voltar
-        </Link>
+        <AdminCatalogBreadcrumb backTo={workPath} backState={{ workId }} items={[{ label: "Gerenciar mangás", to: "/admin/gerenciar-mangas" }, { label: `Edições de ${decodeURIComponent(workSlug)}`, to: workPath, state: { workId } }, { label: `Volumes da ${details.edition.chronologicalNumber}ª edição` }]} />
         <EditionVolumesSection
           edition={details.edition}
           collection={volumesCollection}

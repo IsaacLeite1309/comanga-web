@@ -1,9 +1,9 @@
-import { Link } from "react-router-dom";
-import { ArrowLeft, Loader2 } from "lucide-react";
+import { Loader2 } from "lucide-react";
 import { VolumeFormActions } from "../components/VolumeFormActions";
 import { VolumeStepContent, VolumeStepNavigation } from "../components/VolumeFormSteps";
 import { UnsavedChangesPrompt } from "../hooks/useUnsavedChangesWarning";
 import { useVolumeFormController } from "../hooks/useVolumeFormController";
+import { AdminCatalogBreadcrumb } from "../components/AdminCatalogBreadcrumb";
 
 const VolumeForm = () => {
   const controller = useVolumeFormController();
@@ -31,18 +31,8 @@ const VolumeForm = () => {
         when={controller.hasUnsavedChanges}
         continueLabel={controller.isEditing ? "Continuar editando" : "Continuar cadastrando"}
       />
-      <div className="mx-auto w-full max-w-5xl space-y-6">
-        <Link
-          to={controller.editionPath}
-          state={{
-            workId: controller.state?.workId,
-            editionId: controller.state?.editionId || Number(controller.editionId),
-          }}
-          className="inline-flex h-11 items-center gap-2 rounded-xl border border-border bg-input px-4 text-sm font-bold text-foreground transition-colors hover:border-primary hover:text-primary"
-        >
-          <ArrowLeft className="h-4 w-4" />
-          Voltar
-        </Link>
+      <div className="mx-auto w-full max-w-6xl space-y-6">
+        <AdminCatalogBreadcrumb backTo={controller.editionPath} backState={{ workId: controller.state?.workId, editionId: controller.state?.editionId || Number(controller.editionId) }} items={[{ label: "Gerenciar mangás", to: "/admin/gerenciar-mangas" }, { label: `Edições de ${decodeURIComponent(controller.workSlug)}`, to: controller.editionPath.replace(/\/edicoes\/[^/]+\/volumes$/, "/edicoes"), state: { workId: controller.state?.workId } }, { label: "Volumes da edição", to: controller.editionPath, state: { workId: controller.state?.workId, editionId: Number(controller.editionId) } }, { label: controller.isEditing ? `Editar ${controller.form.singleVolume ? "volume único" : `Volume ${controller.form.number}`}` : "Novo volume" }]} />
 
         <div>
           <h1 className="text-3xl font-bold text-foreground">

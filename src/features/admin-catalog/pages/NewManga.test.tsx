@@ -157,19 +157,12 @@ async function fillIdentificationFields() {
   fireEvent.change(screen.getByLabelText(/^t.*tulo$/i), { target: { value: "Naruto" } });
   fireEvent.change(screen.getByLabelText(/^t.*tulo original$/i), { target: { value: "Naruto" } });
   fireEvent.change(screen.getByLabelText(/^t.*tulo romanizado$/i), { target: { value: "Naruto" } });
-  fireEvent.change(screen.getByLabelText(/^sinopse da obra$/i), {
-    target: { value: "Um ninja busca reconhecimento na própria vila." },
-  });
-
   await waitFor(() => {
     expect(api.get).toHaveBeenCalledWith("/admin/works/form-options");
     expect(screen.getByLabelText(/pa.*s de origem/i)).toHaveTextContent("Japão");
     expect(screen.getByLabelText(/tipo de obra/i)).toHaveTextContent("Manga");
   });
 
-  fireEvent.change(screen.getByLabelText(/url da capa/i), {
-    target: { value: "https://cdn.comanga.test/naruto.jpg" },
-  });
 }
 
 async function goToAuthorsStep() {
@@ -204,9 +197,25 @@ async function fillPublicationFields() {
   fireEvent.click(screen.getByRole("button", { name: /weekly shonen jump/i }));
 }
 
-async function fillRequiredFields() {
+async function goToMediaStep() {
   await goToPublicationStep();
   await fillPublicationFields();
+  fireEvent.click(screen.getByRole("button", { name: /continuar/i }));
+  expect(await screen.findByLabelText(/url da capa/i)).toBeInTheDocument();
+}
+
+async function fillMediaFields() {
+  fireEvent.change(screen.getByLabelText(/url da capa/i), {
+    target: { value: "https://cdn.comanga.test/naruto.jpg" },
+  });
+  fireEvent.change(screen.getByLabelText(/^sinopse da obra$/i), {
+    target: { value: "Um ninja busca reconhecimento na própria vila." },
+  });
+}
+
+async function fillRequiredFields() {
+  await goToMediaStep();
+  await fillMediaFields();
 }
 
 describe("NewManga", () => {
@@ -236,12 +245,14 @@ describe("NewManga", () => {
     expect(await screen.findByRole("heading", { name: /novo mang/i })).toBeInTheDocument();
 
     await fillIdentificationFields();
-    expect(screen.getByAltText(/pr.*via da capa/i)).toHaveAttribute("src", "https://cdn.comanga.test/naruto.jpg");
-    expect(screen.getByLabelText(/^sinopse da obra$/i)).toHaveValue("Um ninja busca reconhecimento na própria vila.");
     fireEvent.click(screen.getByRole("button", { name: /continuar/i }));
     await fillAuthorsFields();
     fireEvent.click(screen.getByRole("button", { name: /continuar/i }));
     await fillPublicationFields();
+    fireEvent.click(screen.getByRole("button", { name: /continuar/i }));
+    await fillMediaFields();
+    expect(screen.getByAltText(/pr.*via da capa/i)).toHaveAttribute("src", "https://cdn.comanga.test/naruto.jpg");
+    expect(screen.getByLabelText(/^sinopse da obra$/i)).toHaveValue("Um ninja busca reconhecimento na própria vila.");
     fireEvent.click(screen.getByRole("button", { name: /^salvar$/i }));
 
     await waitFor(() => {
@@ -301,6 +312,8 @@ describe("NewManga", () => {
     fireEvent.click(screen.getByRole("button", { name: /weekly shonen jump/i }));
     fireEvent.click(screen.getByRole("button", { name: /big comic original/i }));
     fireEvent.click(screen.getByRole("button", { name: /mover big comic original para cima/i }));
+    fireEvent.click(screen.getByRole("button", { name: /continuar/i }));
+    await fillMediaFields();
     fireEvent.click(screen.getByRole("button", { name: /^salvar$/i }));
 
     await waitFor(() => {
@@ -456,7 +469,8 @@ describe("NewManga", () => {
     renderNewManga();
 
     expect(await screen.findByRole("heading", { name: /novo mang/i })).toBeInTheDocument();
-    await fillRequiredFields();
+    await goToPublicationStep();
+    await fillPublicationFields();
 
     fireEvent.click(screen.getByRole("switch", { name: /lan.*amento direto/i }));
 
@@ -465,6 +479,8 @@ describe("NewManga", () => {
     expect(screen.getByLabelText(/selecionar pré-publicação/i)).toBeDisabled();
     expect(screen.getByLabelText(/selecionar pré-publicação/i)).toHaveTextContent("Incompatível");
 
+    fireEvent.click(screen.getByRole("button", { name: /continuar/i }));
+    await fillMediaFields();
     fireEvent.click(screen.getByRole("button", { name: /^salvar$/i }));
 
     await waitFor(() => {
@@ -541,7 +557,9 @@ describe("NewManga", () => {
 
     fireEvent.click(screen.getByRole("button", { name: /hentai/i }));
 
-    expect(screen.getByRole("switch", { name: /conte.*do \+18/i })).not.toBeDisabled();
+    const adultToggleAfterRemoval = screen.getByRole("switch", { name: /conte.*do \+18/i });
+    expect(adultToggleAfterRemoval).not.toBeDisabled();
+    expect(adultToggleAfterRemoval).toHaveAttribute("aria-checked", "false");
   });
 
   it("desabilita fim e volumes quando status original esta em andamento", async () => {
@@ -580,12 +598,9 @@ describe("NewManga", () => {
     fireEvent.click(screen.getByRole("button", { name: /voltar/i }));
     fireEvent.click(screen.getByRole("button", { name: /voltar/i }));
     expect(screen.getAllByLabelText(/t.*tulo/i)[0]).toHaveValue("Naruto");
-    expect(screen.getByLabelText(/url da capa/i)).toHaveValue("https://cdn.comanga.test/naruto.jpg");
-
     fireEvent.click(screen.getByRole("button", { name: /limpar formul.*rio/i }));
 
     expect(screen.getAllByLabelText(/t.*tulo/i)[0]).toHaveValue("");
-    expect(screen.getByLabelText(/url da capa/i)).toHaveValue("");
     expect(screen.getByRole("button", { name: /continuar/i })).toBeInTheDocument();
   }, 30000);
 
@@ -632,12 +647,14 @@ describe("NewManga", () => {
 
     expect(await screen.findByText(/atualize os dados da obra matriz/i)).toBeInTheDocument();
     expect(screen.getAllByLabelText(/t.*tulo/i)[0]).toHaveValue("Naruto");
-    expect(screen.getByLabelText(/url da capa/i)).toHaveValue("https://cdn.comanga.test/naruto.jpg");
-
     fireEvent.click(screen.getByRole("button", { name: /continuar/i }));
     expect(await screen.findByRole("heading", { name: /autor\(es\)/i })).toBeInTheDocument();
     fireEvent.click(screen.getByRole("button", { name: /continuar/i }));
     expect(await screen.findByLabelText(/editora original/i)).toBeInTheDocument();
+    fireEvent.click(screen.getByRole("button", { name: /continuar/i }));
+    expect(await screen.findByLabelText(/url da capa/i)).toHaveValue("https://cdn.comanga.test/naruto.jpg");
+    fireEvent.click(screen.getByRole("button", { name: /continuar/i }));
+    await fillMediaFields();
     fireEvent.click(screen.getByRole("button", { name: /^salvar$/i }));
 
     await waitFor(() => {
@@ -717,17 +734,16 @@ describe("NewManga", () => {
     });
   });
 
-  it("marca os campos obrigatorios e exige uma capa importada", async () => {
+  it("marca os campos obrigatorios e exige uma capa importada na etapa final", async () => {
     renderNewManga();
 
     expect(await screen.findByRole("heading", { name: /novo mang/i })).toBeInTheDocument();
     fireEvent.click(screen.getByRole("button", { name: /continuar/i }));
     expect(screen.getAllByText(/preencha o campo obrigat/i).length).toBeGreaterThan(0);
 
-    fireEvent.change(screen.getAllByLabelText(/t.*tulo/i)[0], { target: { value: "Naruto" } });
-    fireEvent.change(screen.getByLabelText(/^t.*tulo original$/i), { target: { value: "Naruto" } });
+    await goToMediaStep();
     fireEvent.change(screen.getByLabelText(/url da capa/i), { target: { value: "ftp://capas.test/naruto.jpg" } });
-    fireEvent.click(screen.getByRole("button", { name: /continuar/i }));
+    fireEvent.click(screen.getByRole("button", { name: /^salvar$/i }));
 
     expect(screen.getByText(/importe uma capa v.*lida antes de continuar/i)).toBeInTheDocument();
   });
@@ -771,6 +787,8 @@ describe("NewManga", () => {
     fireEvent.click(screen.getByLabelText(/selecionar g.*neros/i));
     fireEvent.click(screen.getByRole("button", { name: /^acao$/i }));
     fireEvent.click(screen.getByRole("switch", { name: /lan.*amento direto/i }));
+    fireEvent.click(screen.getByRole("button", { name: /continuar/i }));
+    await fillMediaFields();
     fireEvent.click(screen.getByRole("button", { name: /^salvar$/i }));
 
     await waitFor(() => {

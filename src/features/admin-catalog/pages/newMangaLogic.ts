@@ -115,10 +115,15 @@ export function getInvalidIdentificationFields(draft: NewMangaDraft) {
   if (!draft.title.trim()) fields.push("title");
   if (!draft.originalTitle.trim()) fields.push("originalTitle");
   if (!draft.romanizedTitle.trim()) fields.push("romanizedTitle");
-  if (!draft.synopsis.trim()) fields.push("synopsis");
   if (!draft.country) fields.push("country");
   if (!draft.typeId) fields.push("typeId");
+  return fields;
+}
+
+export function getInvalidMediaFields(draft: NewMangaDraft) {
+  const fields: string[] = [];
   if (!draft.coverAssetId) fields.push("coverAssetId");
+  if (!draft.synopsis.trim()) fields.push("synopsis");
   return fields;
 }
 
@@ -159,6 +164,7 @@ export function validateCompleteForm(draft: NewMangaDraft, rules: PublicationRul
     ...getInvalidIdentificationFields(draft),
     ...getInvalidAuthorFields(draft),
     ...getInvalidPublicationFields(draft, rules),
+    ...getInvalidMediaFields(draft),
   ];
   if (missingFields.length > 0) return "Preencha os campos obrigatórios da Obra.";
   if (hasDuplicateAuthors(draft)) return "Autor duplicado!";

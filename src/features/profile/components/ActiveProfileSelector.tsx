@@ -28,6 +28,7 @@ export function ActiveProfileSelector({ profiles, activeProfile, updating, onCha
           onChange={onChange}
           options={profiles.map((profile) => ({ value: profile, label: profile }))}
           allowEmptyOption={false}
+          deselectable={false}
           className="mt-2"
         />
       </div>

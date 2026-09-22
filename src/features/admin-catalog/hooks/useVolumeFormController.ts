@@ -171,6 +171,7 @@ export function useVolumeFormController() {
     updateField,
     updateReleaseDate,
     updateReleasePrecision,
+    workSlug,
   };
 }
 

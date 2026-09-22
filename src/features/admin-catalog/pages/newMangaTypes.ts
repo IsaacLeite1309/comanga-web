@@ -63,7 +63,7 @@ export interface AuthorField {
   roles: string[];
 }
 
-export type NewMangaStep = "identification" | "authors" | "publication";
+export type NewMangaStep = "identification" | "authors" | "publication" | "media";
 
 export type NewMangaDraft = {
   title: string;

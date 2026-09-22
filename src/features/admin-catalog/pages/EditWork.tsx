@@ -1,5 +1,4 @@
-import { Link, useParams } from "react-router-dom";
-import { ArrowLeft } from "lucide-react";
+import { useParams } from "react-router-dom";
 import { LoadingState } from "@/components/shared/AsyncState";
 import { DetailError } from "../components/AdminCatalogDetailShared";
 import {
@@ -7,6 +6,7 @@ import {
   WorkEditionsSection,
 } from "../components/EditWorkDetailsView";
 import { adminCatalogPath } from "../domain/catalogPaths";
+import { AdminCatalogBreadcrumb } from "../components/AdminCatalogBreadcrumb";
 import { useCatalogDetailView } from "../hooks/useCatalogDetailView";
 import { useWorkDetails } from "../hooks/useWorkDetails";
 
@@ -39,13 +39,7 @@ const EditWork = () => {
   return (
     <div className="flex-1 min-w-0 px-3 py-6 sm:px-4 sm:py-8">
       <div className="mx-auto w-full max-w-6xl space-y-6">
-        <Link
-          to={adminCatalogPath}
-          className="inline-flex h-11 items-center gap-2 rounded-xl border border-border bg-input px-4 text-sm font-bold text-foreground transition-colors hover:border-primary hover:text-primary"
-        >
-          <ArrowLeft className="h-3.5 w-3.5" />
-          Voltar
-        </Link>
+        <AdminCatalogBreadcrumb backTo={adminCatalogPath} items={[{ label: "Gerenciar mangás", to: adminCatalogPath }, { label: `Edições de ${details.work.title}` }]} />
         <WorkEditionsSection
           work={details.work}
           workSlug={workSlug}

@@ -100,12 +100,6 @@ async function fillIdentification() {
   fireEvent.change(screen.getByLabelText(/^título$/i), { target: { value: "Naruto" } });
   fireEvent.change(screen.getByLabelText(/^título original$/i), { target: { value: "ナルト" } });
   fireEvent.change(screen.getByLabelText(/^título romanizado$/i), { target: { value: "Naruto" } });
-  fireEvent.change(screen.getByLabelText(/^sinopse da obra$/i), {
-    target: { value: "Um ninja busca reconhecimento na própria vila." },
-  });
-  fireEvent.change(screen.getByLabelText(/url da capa/i), {
-    target: { value: "https://cdn.comanga.test/naruto.jpg" },
-  });
 }
 
 async function chooseDropdownAt(label: RegExp, index: number, optionName: RegExp) {
@@ -120,31 +114,29 @@ describe("metadados próprios da Obra no formulário administrativo", () => {
     mockRequests();
   });
 
-  it("apresenta os três títulos como campos separados e a sinopse da Obra", async () => {
+  it("apresenta os três títulos como campos separados e reserva capa e sinopse para a etapa 4", async () => {
     renderCreate();
     await waitForOptions();
 
     const title = screen.getByLabelText(/^título$/i);
     const originalTitle = screen.getByLabelText(/^título original$/i);
     const romanizedTitle = screen.getByLabelText(/^título romanizado$/i);
-    const synopsis = screen.getByLabelText(/^sinopse da obra$/i);
 
     expect(title).not.toBe(originalTitle);
     expect(romanizedTitle).not.toBe(originalTitle);
     expect(romanizedTitle).not.toBe(title);
-    expect(synopsis.tagName).toBe("TEXTAREA");
+    expect(screen.queryByLabelText(/^sinopse da obra$/i)).not.toBeInTheDocument();
+    expect(screen.getByRole("button", { name: /capa e sinopse/i })).toBeInTheDocument();
   });
 
-  it("impede avançar sem título romanizado e sem sinopse da Obra", async () => {
+  it("impede avançar sem título romanizado", async () => {
     renderCreate();
     await fillIdentification();
     fireEvent.change(screen.getByLabelText(/^título romanizado$/i), { target: { value: "  " } });
-    fireEvent.change(screen.getByLabelText(/^sinopse da obra$/i), { target: { value: "" } });
     fireEvent.click(screen.getByRole("button", { name: /continuar/i }));
 
     expect(screen.queryByRole("heading", { name: /autor\(es\)/i })).not.toBeInTheDocument();
     expect(screen.getByLabelText(/^título romanizado$/i)).toHaveClass("border-red-500");
-    expect(screen.getByLabelText(/^sinopse da obra$/i)).toHaveClass("border-red-500");
   });
 
   it("envia título romanizado e sinopse próprios no cadastro", async () => {
@@ -175,6 +167,14 @@ describe("metadados próprios da Obra no formulário administrativo", () => {
     fireEvent.click(screen.getByRole("button", { name: /shonen/i }));
     fireEvent.click(screen.getByLabelText(/selecionar pré-publicação/i));
     fireEvent.click(screen.getByRole("button", { name: /weekly shonen jump/i }));
+    fireEvent.click(screen.getByRole("button", { name: /continuar/i }));
+    await screen.findByLabelText(/url da capa/i);
+    fireEvent.change(screen.getByLabelText(/^sinopse da obra$/i), {
+      target: { value: "Um ninja busca reconhecimento na própria vila." },
+    });
+    fireEvent.change(screen.getByLabelText(/url da capa/i), {
+      target: { value: "https://cdn.comanga.test/naruto.jpg" },
+    });
     fireEvent.click(screen.getByRole("button", { name: /^salvar$/i }));
 
     await waitFor(() => {
@@ -194,6 +194,8 @@ describe("metadados próprios da Obra no formulário administrativo", () => {
       expect(screen.getByLabelText(/^título romanizado$/i)).toHaveValue("Naruto");
     });
     expect(screen.getByLabelText(/^título original$/i)).toHaveValue("ナルト");
+    fireEvent.click(screen.getByRole("button", { name: /capa e sinopse/i }));
+    await screen.findByLabelText(/^sinopse da obra$/i);
     expect(screen.getByLabelText(/^sinopse da obra$/i)).toHaveValue(
       "Um ninja busca reconhecimento na própria vila.",
     );
@@ -210,6 +212,8 @@ describe("metadados próprios da Obra no formulário administrativo", () => {
     fireEvent.click(screen.getByRole("button", { name: /continuar/i }));
     fireEvent.click(screen.getByRole("button", { name: /continuar/i }));
     expect(screen.getByLabelText(/selecionar g.neros/i)).toHaveTextContent("Gênero legado");
+    fireEvent.click(screen.getByRole("button", { name: /continuar/i }));
+    await screen.findByLabelText(/url da capa/i);
     fireEvent.click(screen.getByRole("button", { name: /^salvar$/i }));
     await waitFor(() => expect(api.patch).toHaveBeenCalledWith("/admin/works/10", expect.objectContaining({
       typeId: 99, genreIds: [98],

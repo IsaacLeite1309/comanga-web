@@ -100,7 +100,7 @@ describe("SearchableSelect", () => {
     expect(screen.queryByPlaceholderText("Digite para buscar...")).not.toBeInTheDocument();
   });
 
-  it("desmarca uma opção selecionada quando o campo é alternável", () => {
+  it("desmarca uma opção selecionada ao clicar nela novamente", () => {
     const onChange = vi.fn();
 
     render(
@@ -110,14 +110,31 @@ describe("SearchableSelect", () => {
         options={options}
         onChange={onChange}
         searchable
-        clearable
       />,
     );
 
     fireEvent.click(screen.getByRole("button", { name: "País de origem" }));
-    expect(screen.getByRole("button", { name: "Limpar País de origem" })).toBeInTheDocument();
     fireEvent.click(screen.getByRole("button", { name: "Japão" }));
 
     expect(onChange).toHaveBeenCalledWith("");
+  });
+
+  it("mantém a seleção quando a desseleção é desabilitada", () => {
+    const onChange = vi.fn();
+
+    render(
+      <SearchableSelect
+        ariaLabel="Perfil ativo"
+        value="Administrador"
+        options={[{ value: "Administrador", label: "Administrador" }]}
+        onChange={onChange}
+        deselectable={false}
+      />,
+    );
+
+    fireEvent.click(screen.getByRole("button", { name: "Perfil ativo" }));
+    fireEvent.click(screen.getByRole("button", { name: "Administrador" }));
+
+    expect(onChange).toHaveBeenCalledWith("Administrador");
   });
 });

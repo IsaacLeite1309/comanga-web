@@ -1,7 +1,7 @@
 import type { AuthorField } from "./NewManga";
 
 export type RememberedNewMangaDraft = {
-  currentStep: "identification" | "authors" | "publication";
+  currentStep: "identification" | "authors" | "publication" | "media";
   title: string;
   originalTitle: string;
   romanizedTitle: string;

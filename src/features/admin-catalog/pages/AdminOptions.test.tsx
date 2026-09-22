@@ -110,12 +110,11 @@ describe("AdminOptions", () => {
     });
 
     render(<AdminOptions />);
-    selectCategory(/tipo de obra/i, /obra/i);
+    selectCategory(/^autor$/i, null);
 
     await waitFor(() => {
-      expect(api.get).toHaveBeenCalledWith("/admin/options/tipos-obra", {
+      expect(api.get).toHaveBeenCalledWith("/admin/options/autores", {
         params: {
-          includeInactive: "true",
           order: "ASC",
           page: 1,
           limit: 5,
@@ -508,7 +507,8 @@ describe("AdminOptions", () => {
 
     expect(screen.queryByPlaceholderText(/pesquisar categoria/i)).not.toBeInTheDocument();
     expect(screen.getByRole("button", { name: /^autor$/i })).toBeInTheDocument();
-    expect(screen.getByRole("button", { name: /tipo de obra/i })).toBeInTheDocument();
+    expect(screen.queryByRole("button", { name: /tipo de obra/i })).not.toBeInTheDocument();
+    expect(screen.queryByRole("button", { name: /g.neros/i })).not.toBeInTheDocument();
     expect(screen.queryByRole("button", { name: /acabamento/i })).not.toBeInTheDocument();
     expect(screen.queryByRole("button", { name: /demografia/i })).not.toBeInTheDocument();
     expect(screen.queryByRole("button", { name: /país de origem/i })).not.toBeInTheDocument();
@@ -569,60 +569,4 @@ describe("AdminOptions", () => {
     expect(screen.queryByText("Ação")).not.toBeInTheDocument();
     expect(toast.success).toHaveBeenCalledWith("Valor excluído com sucesso.");
   });
-  function mockCategoryResponse(slug: string, name: string, values: Array<{
-    id: number; label: string; active?: boolean; position?: number; systemManaged?: boolean; code?: string;
-  }>, limit = 6) {
-    vi.mocked(api.get).mockResolvedValueOnce({
-      data: {
-        category: { slug, name },
-        values: values.map((value) => ({ ...value, category: { slug, name } })),
-        pagination: { page: 1, limit, total: values.length, totalPages: 1 },
-      },
-    });
-  }
-
-  it("nao oferece criar, renomear nem excluir em categoria controlada pelo sistema", async () => {
-    mockCategoryResponse("generos", "Gêneros", [
-      { id: 11, label: "Hentai", code: "hentai", systemManaged: true, position: 10, active: true },
-    ]);
-
-    render(<AdminOptions />);
-    selectCategory(/g.neros/i, /obra/i);
-
-    expect(await screen.findByText("Hentai")).toBeInTheDocument();
-    expect(api.get).toHaveBeenCalledWith("/admin/options/generos", {
-      params: { includeInactive: "true", order: "ASC", page: 1, limit: 6 },
-    });
-    expect(screen.queryByRole("button", { name: /adicionar/i })).not.toBeInTheDocument();
-    expect(screen.queryByPlaceholderText(/Adicionar em/i)).not.toBeInTheDocument();
-    expect(screen.queryByRole("button", { name: /^editar/i })).not.toBeInTheDocument();
-    expect(screen.queryByRole("button", { name: /excluir/i })).not.toBeInTheDocument();
-    expect(screen.getByText(/controlados pelo sistema/i)).toBeInTheDocument();
-    expect(screen.getByRole("switch", { name: /desativar hentai/i })).toBeInTheDocument();
-  });
-
-  it("desativa e reativa valor controlado pelo sistema", async () => {
-    mockCategoryResponse("generos", "Gêneros", [
-      { id: 11, label: "Hentai", code: "hentai", systemManaged: true, position: 10, active: true },
-    ]);
-    vi.mocked(api.patch).mockResolvedValueOnce({ data: { value: { id: 11, label: "Hentai", active: false } } });
-    mockCategoryResponse("generos", "Gêneros", [
-      { id: 11, label: "Hentai", code: "hentai", systemManaged: true, position: 10, active: false },
-    ]);
-
-    render(<AdminOptions />);
-    selectCategory(/g.neros/i, /obra/i);
-
-    const toggle = await screen.findByRole("switch", { name: /desativar hentai/i });
-    expect(toggle).toHaveAttribute("aria-checked", "true");
-    fireEvent.click(toggle);
-
-    await waitFor(() => {
-      expect(api.patch).toHaveBeenCalledWith("/admin/options/11", { active: false });
-    });
-    const reactivate = await screen.findByRole("switch", { name: /ativar hentai/i });
-    expect(reactivate).toHaveAttribute("aria-checked", "false");
-    expect(screen.getByText(/^(inativo|desativado)$/i)).toBeInTheDocument();
-  });
-
 });

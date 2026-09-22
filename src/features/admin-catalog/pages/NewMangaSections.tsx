@@ -1,8 +1,7 @@
-import { ArrowLeft, Loader2, Plus, RotateCcw, Save, Trash2 } from "lucide-react";
+import { Loader2, Plus, RotateCcw, Save, Trash2 } from "lucide-react";
 import { MultiSelect as MultiSelectDropdown } from "@/components/forms/MultiSelect";
 import { InputField, SelectField, ToggleField, YearSelectField } from "@/components/forms/FormFields";
 import { CoverImportField } from "@/features/admin-media";
-import type { NavigateFunction } from "react-router-dom";
 import {
   isAuthorRoleDisabled,
   NATIVE_AUTHOR_ROLE_OPTIONS,
@@ -11,6 +10,7 @@ import {
   NATIVE_ORIGINAL_STATUS_OPTIONS,
 } from "../domain/workOptions";
 import type { NewMangaController } from "./useNewMangaForm";
+import { AdminCatalogBreadcrumb } from "../components/AdminCatalogBreadcrumb";
 
 type ControllerProps = { controller: NewMangaController };
 
@@ -19,23 +19,16 @@ function errorMessage(controller: NewMangaController, field: string) {
   return "Preencha o campo obrigatório.";
 }
 
-export function NewMangaHeader({ isEditMode, returnPath, workId, navigate }: {
+export function NewMangaHeader({ isEditMode, returnPath, workId, title }: {
   isEditMode: boolean;
   returnPath: string;
   workId?: string;
-  navigate: NavigateFunction;
+  title: string;
 }) {
   return (
     <div>
       {isEditMode ? (
-        <button
-          type="button"
-          onClick={() => navigate(returnPath, { state: { workId: workId ? Number(workId) : undefined } })}
-          className="inline-flex h-11 items-center gap-2 rounded-xl border border-border bg-input px-4 text-sm font-bold text-foreground transition-colors hover:border-primary hover:text-primary"
-        >
-          <ArrowLeft className="h-4 w-4" />
-          Voltar
-        </button>
+        <AdminCatalogBreadcrumb backTo={returnPath} backState={{ workId: workId ? Number(workId) : undefined }} items={[{ label: "Gerenciar mangás", to: "/admin/gerenciar-mangas" }, { label: `Editar ${title || "Obra"}` }]} />
       ) : (
         <h1 className="text-2xl font-bold text-foreground sm:text-3xl">Novo mangá</h1>
       )}
@@ -50,11 +43,11 @@ export function NewMangaHeader({ isEditMode, returnPath, workId, navigate }: {
 
 export function NewMangaSteps({ controller }: ControllerProps) {
   return (
-    <div className="grid grid-cols-3 gap-2 md:gap-3">
+    <div className="grid grid-cols-4 gap-2 md:gap-3 md:[&>button>span:last-child]:!whitespace-nowrap md:[&>button>span:last-child]:!text-sm">
       <button
         type="button"
         onClick={() => controller.setCurrentStep("identification")}
-        className={`rounded-xl border px-4 py-3 text-left transition-colors ${
+        className={`rounded-xl border px-3 py-3 text-left transition-colors ${
           controller.currentStep === "identification"
             ? "border-primary bg-primary text-primary-foreground"
             : "border-border bg-card text-foreground hover:border-primary"
@@ -66,7 +59,7 @@ export function NewMangaSteps({ controller }: ControllerProps) {
       <button
         type="button"
         onClick={controller.goToAuthorsStep}
-        className={`rounded-xl border px-4 py-3 text-left transition-colors ${
+        className={`rounded-xl border px-3 py-3 text-left transition-colors ${
           controller.currentStep === "authors"
             ? "border-primary bg-primary text-primary-foreground"
             : "border-border bg-card text-foreground hover:border-primary"
@@ -78,14 +71,26 @@ export function NewMangaSteps({ controller }: ControllerProps) {
       <button
         type="button"
         onClick={controller.openPublicationStep}
-        className={`rounded-xl border px-4 py-3 text-left transition-colors ${
+        className={`rounded-xl border px-3 py-3 text-left transition-colors ${
           controller.currentStep === "publication"
             ? "border-primary bg-primary text-primary-foreground"
             : "border-border bg-card text-foreground hover:border-primary"
         }`}
       >
         <span className="block text-center text-xs font-bold uppercase tracking-wide opacity-80 md:text-left">Etapa 3</span>
-        <span className="hidden text-base font-bold md:block">Publicação original e classificação</span>
+        <span className="hidden whitespace-nowrap text-base font-bold md:block">Publicação original e classificação</span>
+      </button>
+      <button
+        type="button"
+        onClick={controller.openMediaStep}
+        className={`rounded-xl border px-3 py-3 text-left transition-colors ${
+          controller.currentStep === "media"
+            ? "border-primary bg-primary text-primary-foreground"
+            : "border-border bg-card text-foreground hover:border-primary"
+        }`}
+      >
+        <span className="block text-center text-xs font-bold uppercase tracking-wide opacity-80 md:text-left">Etapa 4</span>
+        <span className="hidden text-base font-bold md:block">Capa e sinopse</span>
       </button>
     </div>
   );
@@ -119,75 +124,41 @@ function WorkSynopsisField({ controller }: ControllerProps) {
 export function IdentificationStep({ controller }: ControllerProps) {
   const { draft } = controller;
   return (
-    <section className="grid gap-4 rounded-xl border border-border bg-card p-4 md:grid-cols-2">
-      <InputField
-        label="Título"
-        value={draft.title}
-        onChange={(value) => { controller.updateDraft("title", value); controller.clearInvalidField("title"); }}
+    <section className="grid gap-4 rounded-xl border border-border bg-card p-4">
+      <div>
+        <InputField label="Título" value={draft.title} onChange={(value) => { controller.updateDraft("title", value); controller.clearInvalidField("title"); }} required invalid={controller.isInvalidField("title")} errorMessage={errorMessage(controller, "title")} placeholder="Digite" />
+      </div>
+      <div>
+        <InputField label="Título original" value={draft.originalTitle} onChange={(value) => { controller.updateDraft("originalTitle", value); controller.clearInvalidField("originalTitle"); }} required invalid={controller.isInvalidField("originalTitle")} errorMessage={errorMessage(controller, "originalTitle")} placeholder="Digite" />
+      </div>
+      <div>
+        <InputField label="Título romanizado" value={draft.romanizedTitle} onChange={(value) => { controller.updateDraft("romanizedTitle", value); controller.clearInvalidField("romanizedTitle"); }} required invalid={controller.isInvalidField("romanizedTitle")} errorMessage={errorMessage(controller, "romanizedTitle")} placeholder="Digite" />
+      </div>
+      <div className="grid gap-4 md:w-1/2 md:grid-cols-2">
+        <SelectField label="País de origem" value={draft.country} onChange={(value) => { controller.updateDraft("country", value); controller.clearInvalidFields(["country", "typeId"]); }} onOpen={() => controller.clearInvalidField("country")} options={NATIVE_COUNTRY_OPTIONS} required invalid={controller.isInvalidField("country")} errorMessage={errorMessage(controller, "country")} searchable />
+        <SelectField label="Tipo de obra" value={draft.typeId} onChange={(value) => { controller.updateDraft("typeId", value); controller.clearInvalidField("typeId"); }} onOpen={() => controller.clearInvalidField("typeId")} options={controller.options.workTypes} required disabled={!draft.country} placeholder={draft.country ? "Selecione" : "Selecione o país primeiro"} invalid={controller.isInvalidField("typeId")} errorMessage={errorMessage(controller, "typeId")} searchable />
+      </div>
+    </section>
+  );
+}
+
+export function MediaStep({ controller }: ControllerProps) {
+  const { draft } = controller;
+  return (
+    <section className="space-y-4 rounded-xl border border-border bg-card p-4">
+      <CoverImportField
+        label="Capa da Obra"
         required
-        invalid={controller.isInvalidField("title")}
-        errorMessage={errorMessage(controller, "title")}
-        placeholder="Digite"
-      />
-      <InputField
-        label="Título original"
-        value={draft.originalTitle}
-        onChange={(value) => { controller.updateDraft("originalTitle", value); controller.clearInvalidField("originalTitle"); }}
-        required
-        invalid={controller.isInvalidField("originalTitle")}
-        errorMessage={errorMessage(controller, "originalTitle")}
-        placeholder="Digite"
-      />
-      <InputField
-        label="Título romanizado"
-        value={draft.romanizedTitle}
-        onChange={(value) => { controller.updateDraft("romanizedTitle", value); controller.clearInvalidField("romanizedTitle"); }}
-        required
-        invalid={controller.isInvalidField("romanizedTitle")}
-        errorMessage={errorMessage(controller, "romanizedTitle")}
-        placeholder="Digite"
-      />
-      <SelectField
-        label="País de origem"
-        value={draft.country}
-        onChange={(value) => { controller.updateDraft("country", value); controller.clearInvalidFields(["country", "typeId"]); }}
-        onOpen={() => controller.clearInvalidField("country")}
-        options={NATIVE_COUNTRY_OPTIONS}
-        required
-        invalid={controller.isInvalidField("country")}
-        errorMessage={errorMessage(controller, "country")}
-        searchable
-      />
-      <SelectField
-        label="Tipo de obra"
-        value={draft.typeId}
-        onChange={(value) => { controller.updateDraft("typeId", value); controller.clearInvalidField("typeId"); }}
-        onOpen={() => controller.clearInvalidField("typeId")}
-        options={controller.options.workTypes}
-        required
-        disabled={!draft.country}
-        placeholder={draft.country ? "Selecione" : "Selecione o país primeiro"}
-        invalid={controller.isInvalidField("typeId")}
-        errorMessage={errorMessage(controller, "typeId")}
-        searchable
+        invalid={controller.isInvalidField("coverAssetId")}
+        value={draft.coverAssetId ? { assetId: draft.coverAssetId, coverUrl: draft.coverUrl, pending: draft.coverPending } : null}
+        onChange={(cover) => {
+          controller.updateDraft("coverAssetId", cover?.assetId || "");
+          controller.updateDraft("coverUrl", cover?.coverUrl || "");
+          controller.updateDraft("coverPending", cover?.pending || false);
+          controller.clearInvalidField("coverAssetId");
+        }}
       />
       <WorkSynopsisField controller={controller} />
-      <div className="md:col-span-2">
-        <CoverImportField
-          label="Capa da Obra"
-          required
-          invalid={controller.isInvalidField("coverAssetId")}
-          value={draft.coverAssetId
-            ? { assetId: draft.coverAssetId, coverUrl: draft.coverUrl, pending: draft.coverPending }
-            : null}
-          onChange={(cover) => {
-            controller.updateDraft("coverAssetId", cover?.assetId || "");
-            controller.updateDraft("coverUrl", cover?.coverUrl || "");
-            controller.updateDraft("coverPending", cover?.pending || false);
-            controller.clearInvalidField("coverAssetId");
-          }}
-        />
-      </div>
     </section>
   );
 }
@@ -318,7 +289,7 @@ function ClassificationFields({ controller }: ControllerProps) {
   const { draft } = controller;
   return (
     <>
-      <div className="min-w-0 md:col-start-3 md:row-start-3 md:self-start">
+      <div className="min-w-0 md:col-start-2 md:row-start-3 md:self-start">
         <ToggleField
           label="Lançamento direto (sem pré-publicação)"
           checked={controller.effectiveDirectRelease}
@@ -333,7 +304,7 @@ function ClassificationFields({ controller }: ControllerProps) {
           }}
         />
       </div>
-      <div className="min-w-0 md:col-start-1 md:row-start-3">
+      <div className="min-w-0 md:col-start-3 md:row-start-2">
         <MultiSelectDropdown
           label="Demografias"
           options={NATIVE_DEMOGRAPHY_OPTIONS}
@@ -351,7 +322,7 @@ function ClassificationFields({ controller }: ControllerProps) {
           searchable
         />
       </div>
-      <div className="min-w-0 space-y-3 md:col-start-2 md:row-start-3">
+      <div className="min-w-0 space-y-3 md:col-start-1 md:row-start-3">
         <MultiSelectDropdown
           label="Gêneros"
           options={controller.options.genres}
@@ -425,7 +396,7 @@ export function PublicationStep({ controller }: ControllerProps) {
 
 export function NewMangaActions({ controller }: ControllerProps) {
   const goBack = () => controller.setCurrentStep(
-    controller.currentStep === "publication" ? "authors" : "identification"
+    controller.currentStep === "media" ? "publication" : controller.currentStep === "publication" ? "authors" : "identification"
   );
   return (
     <div className="flex flex-col-reverse gap-3 sm:flex-row sm:items-center sm:justify-between">
@@ -449,7 +420,7 @@ export function NewMangaActions({ controller }: ControllerProps) {
             Voltar
           </button>
         )}
-        {controller.currentStep === "publication" ? (
+        {controller.currentStep === "media" ? (
           <button
             key="save-work"
             type="submit"
@@ -465,7 +436,9 @@ export function NewMangaActions({ controller }: ControllerProps) {
             type="button"
             onClick={controller.currentStep === "identification"
               ? controller.goToAuthorsStep
-              : controller.goToPublicationStep}
+              : controller.currentStep === "authors"
+                ? controller.goToPublicationStep
+                : controller.goToMediaStep}
             disabled={controller.saving || Boolean(controller.optionsError)}
             className="inline-flex h-12 w-full items-center justify-center gap-2 rounded-xl bg-primary px-5 text-sm font-bold text-primary-foreground transition-opacity hover:opacity-90 disabled:opacity-60 sm:w-auto sm:min-w-44"
           >

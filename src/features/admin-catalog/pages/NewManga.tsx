@@ -1,9 +1,9 @@
 import { Loader2 } from "lucide-react";
-import { useNavigate } from "react-router-dom";
 import { UnsavedChangesPrompt } from "../hooks/useUnsavedChangesWarning";
 import {
   AuthorsStep,
   IdentificationStep,
+  MediaStep,
   NewMangaActions,
   NewMangaHeader,
   NewMangaSteps,
@@ -21,7 +21,6 @@ type NewMangaProps = {
 };
 
 const NewManga = ({ mode = "create", workId, returnPath = "/admin/gerenciar-mangas" }: NewMangaProps) => {
-  const navigate = useNavigate();
   const controller = useNewMangaForm(mode, workId);
   const isEditMode = mode === "edit";
 
@@ -44,18 +43,19 @@ const NewManga = ({ mode = "create", workId, returnPath = "/admin/gerenciar-mang
         ref={controller.formRef}
         onSubmit={controller.handleSubmit}
         onKeyDownCapture={controller.handleFormKeyDown}
-        className="mx-auto w-full max-w-5xl space-y-6"
+        className="mx-auto w-full max-w-6xl space-y-6"
       >
         <NewMangaHeader
           isEditMode={isEditMode}
           returnPath={returnPath}
           workId={workId}
-          navigate={navigate}
+          title={controller.draft.title}
         />
         <NewMangaSteps controller={controller} />
         {controller.currentStep === "identification" && <IdentificationStep controller={controller} />}
         {controller.currentStep === "authors" && <AuthorsStep controller={controller} />}
         {controller.currentStep === "publication" && <PublicationStep controller={controller} />}
+        {controller.currentStep === "media" && <MediaStep controller={controller} />}
         <NewMangaActions controller={controller} />
       </form>
     </div>

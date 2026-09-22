@@ -33,6 +33,7 @@ interface SearchableSelectProps {
   showIndicator?: boolean;
   allowEmptyOption?: boolean;
   clearable?: boolean;
+  deselectable?: boolean;
   tone?: SelectTone;
   textSize?: "sm" | "base";
 }
@@ -56,6 +57,7 @@ function resolveSearchableSelectProps({
   showIndicator = true,
   allowEmptyOption = true,
   clearable = false,
+  deselectable = true,
   tone = "default",
   textSize = "base",
 }: SearchableSelectProps) {
@@ -78,6 +80,7 @@ function resolveSearchableSelectProps({
     showIndicator,
     allowEmptyOption,
     clearable,
+    deselectable,
     tone,
     textSize,
   };
@@ -296,7 +299,7 @@ export function SearchableSelect(props: SearchableSelectProps) {
   const {
     ariaLabel, ariaLabelledBy, label, value, options, onChange, onOpen, disabled,
     placeholder, emptyMessage, maxVisibleItems, invalid, searchable, searchPlaceholder,
-    className, showIndicator, allowEmptyOption, clearable, tone, textSize,
+    className, showIndicator, allowEmptyOption, clearable, deselectable, tone, textSize,
   } = resolveSearchableSelectProps(props);
   const { isOpen, closeDropdown, toggleDropdown, rootProps } = useDropdown();
   const [searchTerm, setSearchTerm] = useState("");
@@ -319,7 +322,7 @@ export function SearchableSelect(props: SearchableSelectProps) {
   }
 
   function selectOption(nextValue: string) {
-    onChange(clearable && nextValue === value ? "" : nextValue);
+    onChange(deselectable && nextValue === value ? "" : nextValue);
     closeDropdown();
   }
 

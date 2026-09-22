@@ -47,8 +47,6 @@ export const FORM_OPTIONS: OptionCategory[] = [
 
 export const CATEGORIES: OptionCategory[] = [
   { slug: "autores", name: "Autor", form: "obra" },
-  { slug: "tipos-obra", name: "Tipo de obra", form: "obra" },
-  { slug: "generos", name: "Gêneros", form: "obra" },
   { slug: "revistas-serializacao", name: "Pré-publicação", form: "obra" },
   { slug: "editoras-originais", name: "Editora original", form: "obra" },
   { slug: "editoras-brasileiras", name: "Editora brasileira", form: "edicao" },
@@ -59,7 +57,6 @@ export const CATEGORIES: OptionCategory[] = [
 
 const COUNTRY_DEPENDENT_CATEGORY_SLUGS = new Set([
   "autores",
-  "tipos-obra",
   "revistas-serializacao",
   "editoras-originais",
 ]);
