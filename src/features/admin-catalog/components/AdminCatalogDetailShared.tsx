@@ -1,6 +1,7 @@
 import type React from "react";
 import { LayoutGrid, List, Loader2 } from "lucide-react";
 import type { CatalogViewMode } from "../hooks/useCatalogDetailView";
+import type { CatalogPaginationView } from "../hooks/useCatalogPagedList";
 
 export function DetailInfoBlock({
   label,
@@ -62,6 +63,54 @@ export function CatalogViewToggle({
         Grade
       </button>
     </div>
+  );
+}
+
+// Mesmo padrão visual e comportamental da paginação da lista de Obras.
+export function CatalogPaginationControls({
+  pagination,
+  itemsLabel,
+}: {
+  pagination: CatalogPaginationView;
+  itemsLabel: string;
+}) {
+  if (!pagination.visible) return null;
+
+  const navigationClassName = "rounded-lg border border-border bg-input px-3 py-2 font-semibold text-foreground transition-colors hover:border-primary hover:text-primary disabled:cursor-not-allowed disabled:opacity-50";
+
+  return (
+    <div className="flex flex-col gap-3 border-t border-border px-4 py-4 text-sm text-muted-foreground sm:flex-row sm:items-center sm:justify-between">
+      <span>Exibindo {pagination.shown} de {pagination.total} {itemsLabel}</span>
+      <div className="flex items-center gap-2">
+        <button
+          type="button"
+          onClick={pagination.goToPrevious}
+          disabled={!pagination.canGoPrevious}
+          aria-label={`Página anterior de ${itemsLabel}`}
+          className={navigationClassName}
+        >
+          Anterior
+        </button>
+        <span className="min-w-16 text-center font-semibold text-foreground">
+          {pagination.page} / {pagination.totalPages}
+        </span>
+        <button
+          type="button"
+          onClick={pagination.goToNext}
+          disabled={!pagination.canGoNext}
+          aria-label={`Próxima página de ${itemsLabel}`}
+          className={navigationClassName}
+        >
+          Próxima
+        </button>
+      </div>
+    </div>
+  );
+}
+
+export function DetailListError({ message }: { message: string }) {
+  return (
+    <div className="px-4 py-12 text-center text-sm font-semibold text-red-300">{message}</div>
   );
 }
 

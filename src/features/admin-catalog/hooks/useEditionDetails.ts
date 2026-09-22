@@ -1,8 +1,15 @@
-import { useEffect, useState } from "react";
+import { useCallback, useEffect, useState } from "react";
 import { toast } from "sonner";
 import { api } from "@/services/api";
 import { getApiError } from "@/lib/apiError";
 import type { EditionDetail, VolumeDetail } from "../domain/adminCatalogDetails";
+import {
+  VOLUMES_LIST_ORDER,
+  VOLUMES_PAGE_SIZE,
+  normalizeCatalogPagination,
+  type CatalogPagination,
+} from "../domain/catalogPagination";
+import { useCatalogPagedList } from "./useCatalogPagedList";
 
 interface EditionResponse {
   edition: EditionDetail;
@@ -10,15 +17,14 @@ interface EditionResponse {
 
 interface VolumesResponse {
   volumes: VolumeDetail[];
+  pagination?: Partial<CatalogPagination>;
 }
 
-export function useEditionDetails(editionId: string | number | undefined) {
+function useEditionSummary(editionId: string | number | undefined) {
   const [edition, setEdition] = useState<EditionDetail | null>(null);
-  const [volumes, setVolumes] = useState<VolumeDetail[]>([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState("");
-  const [deletingVolume, setDeletingVolume] = useState<VolumeDetail | null>(null);
-  const [deletingId, setDeletingId] = useState<number | null>(null);
+  const [revision, setRevision] = useState(0);
 
   useEffect(() => {
     let isMounted = true;
@@ -28,15 +34,9 @@ export function useEditionDetails(editionId: string | number | undefined) {
       setError("");
 
       try {
-        const [editionResponse, volumesResponse] = await Promise.all([
-          api.get<EditionResponse>(`/admin/editions/${editionId}`),
-          api.get<VolumesResponse>(`/admin/editions/${editionId}/volumes`, {
-            params: { order: "ASC", page: 1, limit: 50 },
-          }),
-        ]);
+        const editionResponse = await api.get<EditionResponse>(`/admin/editions/${editionId}`);
         if (!isMounted) return;
         setEdition(editionResponse.data.edition);
-        setVolumes(volumesResponse.data.volumes);
       } catch (loadError) {
         if (isMounted) setError(getApiError(loadError, "Erro ao carregar dados da Edição."));
       } finally {
@@ -48,7 +48,35 @@ export function useEditionDetails(editionId: string | number | undefined) {
     return () => {
       isMounted = false;
     };
+  }, [editionId, revision]);
+
+  return { edition, loading, error, refresh: () => setRevision(current => current + 1) };
+}
+
+export function useEditionDetails(editionId: string | number | undefined) {
+  const { edition, loading, error, refresh } = useEditionSummary(editionId);
+  const [deletingVolume, setDeletingVolume] = useState<VolumeDetail | null>(null);
+  const [deletingId, setDeletingId] = useState<number | null>(null);
+
+  const loadVolumesPage = useCallback(async (page: number, limit: number) => {
+    const response = await api.get<VolumesResponse>(`/admin/editions/${editionId}/volumes`, {
+      params: { order: VOLUMES_LIST_ORDER, page, limit },
+    });
+    const volumes = response.data.volumes;
+
+    return {
+      items: volumes,
+      pagination: normalizeCatalogPagination(response.data.pagination, page, limit, volumes.length),
+    };
   }, [editionId]);
+
+  const volumesList = useCatalogPagedList<VolumeDetail>({
+    enabled: Boolean(editionId),
+    listKey: `edition:${editionId}:volumes`,
+    pageSize: VOLUMES_PAGE_SIZE,
+    errorMessage: "Erro ao listar Volumes.",
+    loadPage: loadVolumesPage,
+  });
 
   async function confirmDeleteVolume() {
     if (!deletingVolume || deletingId) return;
@@ -56,11 +84,10 @@ export function useEditionDetails(editionId: string | number | undefined) {
 
     try {
       await api.delete(`/admin/volumes/${deletingVolume.id}`);
-      setVolumes((current) => current.filter((volume) => volume.id !== deletingVolume.id));
       toast.success("Volume excluído com sucesso.");
       setDeletingVolume(null);
-      const response = await api.get<EditionResponse>(`/admin/editions/${editionId}`);
-      setEdition(response.data.edition);
+      volumesList.refreshAfterRemoval();
+      refresh();
     } catch (deleteError) {
       toast.error(getApiError(deleteError, "Erro ao excluir Volume."));
     } finally {
@@ -70,7 +97,10 @@ export function useEditionDetails(editionId: string | number | undefined) {
 
   return {
     edition,
-    volumes,
+    volumes: volumesList.items,
+    volumesLoading: volumesList.loading,
+    volumesError: volumesList.error,
+    volumesPagination: volumesList.pagination,
     loading,
     error,
     deletingVolume,
