@@ -1,8 +1,15 @@
-import { useEffect, useState } from "react";
+import { useCallback, useEffect, useState } from "react";
 import { toast } from "sonner";
 import { api } from "@/services/api";
 import { getApiError } from "@/lib/apiError";
 import type { EditionDetail, WorkDetail } from "../domain/adminCatalogDetails";
+import {
+  EDITIONS_LIST_ORDER,
+  EDITIONS_PAGE_SIZE,
+  normalizeCatalogPagination,
+  type CatalogPagination,
+} from "../domain/catalogPagination";
+import { useCatalogPagedList } from "./useCatalogPagedList";
 
 interface WorkDetailResponse {
   work: WorkDetail;
@@ -10,21 +17,18 @@ interface WorkDetailResponse {
 
 interface EditionsResponse {
   editions: EditionDetail[];
+  pagination?: Partial<CatalogPagination>;
 }
 
-export function useWorkDetails(workSlug: string) {
+function useWorkSummary(workSlug: string) {
   const [work, setWork] = useState<WorkDetail | null>(null);
-  const [editions, setEditions] = useState<EditionDetail[]>([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState("");
-  const [deletingEdition, setDeletingEdition] = useState<EditionDetail | null>(null);
-  const [deletingId, setDeletingId] = useState<number | null>(null);
-  const [updatingVisibilityId, setUpdatingVisibilityId] = useState<number | null>(null);
 
   useEffect(() => {
     let isMounted = true;
 
-    async function loadWorkHub() {
+    async function loadWork() {
       setLoading(true);
       setError("");
 
@@ -33,14 +37,9 @@ export function useWorkDetails(workSlug: string) {
         const workResponse = await api.get<WorkDetailResponse>(
           `/admin/works/slug/${encodeURIComponent(workSlug)}`,
         );
-        const loadedWork = workResponse.data.work;
-        const editionsResponse = await api.get<EditionsResponse>(`/admin/works/${loadedWork.id}/editions`, {
-          params: { order: "DESC", page: 1, limit: 50 },
-        });
 
         if (!isMounted) return;
-        setWork(loadedWork);
-        setEditions(editionsResponse.data.editions);
+        setWork(workResponse.data.work);
       } catch (loadError) {
         if (!isMounted) return;
         const fallback = loadError instanceof Error ? loadError.message : "Erro ao carregar dados da Obra.";
@@ -50,11 +49,41 @@ export function useWorkDetails(workSlug: string) {
       }
     }
 
-    loadWorkHub();
+    loadWork();
     return () => {
       isMounted = false;
     };
   }, [workSlug]);
+
+  return { work, loading, error };
+}
+
+export function useWorkDetails(workSlug: string) {
+  const { work, loading, error } = useWorkSummary(workSlug);
+  const [deletingEdition, setDeletingEdition] = useState<EditionDetail | null>(null);
+  const [deletingId, setDeletingId] = useState<number | null>(null);
+  const [updatingVisibilityId, setUpdatingVisibilityId] = useState<number | null>(null);
+  const workId = work?.id;
+
+  const loadEditionsPage = useCallback(async (page: number, limit: number) => {
+    const response = await api.get<EditionsResponse>(`/admin/works/${workId}/editions`, {
+      params: { order: EDITIONS_LIST_ORDER, page, limit },
+    });
+    const editions = response.data.editions;
+
+    return {
+      items: editions,
+      pagination: normalizeCatalogPagination(response.data.pagination, page, limit, editions.length),
+    };
+  }, [workId]);
+
+  const editionsList = useCatalogPagedList<EditionDetail>({
+    enabled: Boolean(workId),
+    listKey: `work:${workId}:editions`,
+    pageSize: EDITIONS_PAGE_SIZE,
+    errorMessage: "Erro ao listar Edições.",
+    loadPage: loadEditionsPage,
+  });
 
   async function toggleEditionVisibility(edition: EditionDetail) {
     const nextVisibility = edition.visibility === "Público" ? "Privado" : "Público";
@@ -64,7 +93,10 @@ export function useWorkDetails(workSlug: string) {
       const response = await api.patch<{ edition: EditionDetail }>(`/admin/editions/${edition.id}/visibility`, {
         visibility: nextVisibility,
       });
-      setEditions((current) => current.map((item) => (item.id === edition.id ? response.data.edition : item)));
+      editionsList.setItems((current) => current.map((item) => (
+        item.id === edition.id ? response.data.edition : item
+      )));
+      editionsList.refresh();
       toast.success("Visibilidade da Edição atualizada com sucesso.");
     } catch (visibilityError) {
       toast.error(getApiError(visibilityError, "Erro ao alterar visibilidade da Edição."));
@@ -79,9 +111,9 @@ export function useWorkDetails(workSlug: string) {
 
     try {
       await api.delete(`/admin/editions/${deletingEdition.id}`);
-      setEditions((current) => current.filter((item) => item.id !== deletingEdition.id));
       toast.success("Edição excluída com sucesso.");
       setDeletingEdition(null);
+      editionsList.refreshAfterRemoval();
     } catch (deleteError) {
       toast.error(getApiError(deleteError, "Erro ao excluir Edição."));
     } finally {
@@ -91,7 +123,10 @@ export function useWorkDetails(workSlug: string) {
 
   return {
     work,
-    editions,
+    editions: editionsList.items,
+    editionsLoading: editionsList.loading,
+    editionsError: editionsList.error,
+    editionsPagination: editionsList.pagination,
     loading,
     error,
     deletingEdition,

@@ -43,6 +43,12 @@ export const EDITION_NUMBER_OPTIONS: EditionOption[] = Array.from({ length: 10 }
   label: `${index + 1}ª edição`,
 }));
 
+export function editionNumberOptions(currentValue: string): EditionOption[] {
+  const number = Number(currentValue);
+  if (!Number.isSafeInteger(number) || number <= 10) return EDITION_NUMBER_OPTIONS;
+  return [...EDITION_NUMBER_OPTIONS, { id: currentValue, label: `${number}ª edição` }];
+}
+
 export const EDITION_PUBLICATION_STATUS_OPTIONS: EditionOption[] = [
   { id: "Completa", label: "Completa" },
   { id: "Em andamento", label: "Em andamento" },

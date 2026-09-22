@@ -55,6 +55,23 @@ describe("EditionForm", () => {
     resetEditionDraftMemoryForTests();
   });
 
+  it("exibe e preserva o número existente acima das opções iniciais", async () => {
+    vi.mocked(api.get).mockResolvedValueOnce({ data: editionOptions }).mockResolvedValueOnce({
+      data: { edition: {
+        id: 50, workId: 10, chronologicalNumber: 17, brazilPublicationStatus: "Completa",
+        brazilianPublisher: { id: 30, label: "Panini" }, coverType: null, format: null, paper: null,
+      } },
+    });
+    vi.mocked(api.patch).mockResolvedValueOnce({ data: {} });
+    renderEditionForm("/admin/gerenciar-mangas/obras/Naruto/edicoes/50/editar");
+    await screen.findByRole("heading", { name: /editar edição/i });
+    expect(screen.getByLabelText(/número da edição/i)).toHaveTextContent("17ª edição");
+    fireEvent.click(screen.getByRole("button", { name: /^salvar$/i }));
+    await waitFor(() => expect(api.patch).toHaveBeenCalledWith("/admin/editions/50", expect.objectContaining({
+      chronologicalNumber: 17,
+    })));
+  });
+
   it("preserva o rascunho de uma nova edicao durante a navegacao SPA", async () => {
     vi.mocked(api.get).mockResolvedValue({ data: editionOptions });
     const firstRender = renderEditionForm();
