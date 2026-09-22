@@ -102,7 +102,7 @@ function CountryField({ model }: { model: AdminOptionsPageModel }) {
 function NewOptionForm({ model }: { model: AdminOptionsPageModel }) {
   if (model.systemManagedCategory) {
     return (
-      <div className="flex items-start gap-2 rounded-xl border border-border bg-muted/40 p-3 text-sm text-muted-foreground">
+      <div className="flex min-w-0 items-start gap-2 rounded-xl border border-border bg-muted/40 p-3 text-sm text-muted-foreground sm:col-span-2 xl:col-span-1">
         <Lock className="mt-0.5 h-4 w-4 shrink-0" />
         <p>
           {model.currentCategory
@@ -117,7 +117,7 @@ function NewOptionForm({ model }: { model: AdminOptionsPageModel }) {
 
   return (
     <form
-      className="flex flex-col gap-2 sm:grid sm:grid-cols-[minmax(0,1fr)_150px] sm:items-start"
+      className="flex min-w-0 flex-col gap-2 sm:col-span-2 sm:grid sm:grid-cols-[minmax(0,1fr)_150px] sm:items-start xl:col-span-1"
       onSubmit={model.handleCreate}
     >
       <label className="min-w-0 flex-1">
@@ -156,8 +156,8 @@ function NewOptionForm({ model }: { model: AdminOptionsPageModel }) {
 
 function AdminOptionsControls({ model }: { model: AdminOptionsPageModel }) {
   return (
-    <section className="grid gap-3 rounded-xl border border-border bg-card p-4 md:grid-cols-[150px_260px_1fr]">
-      <div className="block">
+    <section className="grid gap-3 rounded-xl border border-border bg-card p-4 sm:grid-cols-2 xl:grid-cols-[150px_260px_minmax(0,1fr)]">
+      <div className="min-w-0">
         <span className="text-xs font-bold uppercase tracking-wide text-muted-foreground">Formulário</span>
         <CategoryDropdown
           label="Selecionar formulário"
@@ -167,7 +167,7 @@ function AdminOptionsControls({ model }: { model: AdminOptionsPageModel }) {
           emptyMessage="Nenhum formulário encontrado."
         />
       </div>
-      <div className="block">
+      <div className="min-w-0">
         <span className="text-xs font-bold uppercase tracking-wide text-muted-foreground">Categoria</span>
         <CategoryDropdown
           label="Selecionar categoria"
