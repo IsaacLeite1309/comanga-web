@@ -61,7 +61,6 @@ describe("publicCatalogService", () => {
     await listPublicEditions({
       term: "Urasawa",
       brazilianPublisherId: 3,
-      editionTypeId: 6,
       formatId: 4,
       coverTypeId: 5,
       chronologicalNumber: 2,
@@ -76,7 +75,6 @@ describe("publicCatalogService", () => {
       params: {
         term: "Urasawa",
         brazilianPublisherId: 3,
-        editionTypeId: 6,
         formatId: 4,
         coverTypeId: 5,
         chronologicalNumber: 2,

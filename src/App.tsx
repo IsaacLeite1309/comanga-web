@@ -1,8 +1,8 @@
 import { lazy, Suspense } from "react";
 import { BrowserRouter, Route, Routes, Navigate } from "react-router-dom";
 import { Toaster as Sonner } from "@/components/ui/sonner";
-import NotFound from "./pages/NotFound.tsx";
-import { ActivatePage, AuthPage, ResendActivationPage, PasswordRecoveryPage } from "@/features/auth";
+import NotFound from "./app/NotFound.tsx";
+import { ActivatePage, AuthPage, AuthProvider, ResendActivationPage, PasswordRecoveryPage } from "@/features/auth";
 import { ChecklistPage, CollectionPage } from "@/features/collection";
 import { ProfilePage } from "@/features/profile";
 import {
@@ -14,9 +14,8 @@ import {
   PublicWorkDetailsPage,
 } from "@/features/public-catalog";
 import { WishlistPage } from "@/features/wishlist";
-import { PublicNav } from "@/components/PublicNav.tsx";
-import { AuthProvider } from "@/contexts/AuthContext";
-import { ProtectedRoute } from "@/components/ProtectedRoute";
+import { PublicNav } from "@/app/PublicNav";
+import { ProtectedRoute } from "@/app/ProtectedRoute";
 
 const AdminUsersPage = lazy(() => import("@/features/admin-users").then((module) => ({ default: module.AdminUsersPage })));
 const AdminOptionsPage = lazy(() => import("@/features/admin-catalog").then((module) => ({ default: module.AdminOptionsPage })));
@@ -27,7 +26,6 @@ const EditWorkFormPage = lazy(() => import("@/features/admin-catalog").then((mod
 const EditWorkPage = lazy(() => import("@/features/admin-catalog").then((module) => ({ default: module.EditWorkPage })));
 const NewMangaPage = lazy(() => import("@/features/admin-catalog").then((module) => ({ default: module.NewMangaPage })));
 const PostCreateActionsPage = lazy(() => import("@/features/admin-catalog").then((module) => ({ default: module.PostCreateActionsPage })));
-const VolumeDetailsPage = lazy(() => import("@/features/admin-catalog").then((module) => ({ default: module.VolumeDetailsPage })));
 const VolumeFormPage = lazy(() => import("@/features/admin-catalog").then((module) => ({ default: module.VolumeFormPage })));
 
 function AdminRoute({ children }: { children: React.ReactNode }) {
@@ -88,7 +86,7 @@ const App = () => (
                 }
               />
               <Route
-                path="/admin/editar-mangas"
+                path="/admin/gerenciar-mangas"
                 element={
                   <AdminRoute>
                     <EditMangasPage />
@@ -96,7 +94,7 @@ const App = () => (
                 }
               />
               <Route
-                path="/admin/editar-mangas/obras/:workSlug"
+                path="/admin/gerenciar-mangas/obras/:workSlug/edicoes"
                 element={
                   <AdminRoute>
                     <EditWorkPage />
@@ -104,7 +102,7 @@ const App = () => (
                 }
               />
               <Route
-                path="/admin/editar-mangas/obras/:workSlug/editar"
+                path="/admin/gerenciar-mangas/obras/:workSlug/editar"
                 element={
                   <AdminRoute>
                     <EditWorkFormPage />
@@ -112,7 +110,7 @@ const App = () => (
                 }
               />
               <Route
-                path="/admin/editar-mangas/obras/:workSlug/edicoes/nova"
+                path="/admin/gerenciar-mangas/obras/:workSlug/edicoes/nova"
                 element={
                   <AdminRoute>
                     <EditionFormPage />
@@ -120,7 +118,7 @@ const App = () => (
                 }
               />
               <Route
-                path="/admin/editar-mangas/obras/:workSlug/edicoes/:editionId"
+                path="/admin/gerenciar-mangas/obras/:workSlug/edicoes/:editionId/volumes"
                 element={
                   <AdminRoute>
                     <EditionDetailsPage />
@@ -128,7 +126,7 @@ const App = () => (
                 }
               />
               <Route
-                path="/admin/editar-mangas/obras/:workSlug/edicoes/:editionId/volumes/novo"
+                path="/admin/gerenciar-mangas/obras/:workSlug/edicoes/:editionId/volumes/novo"
                 element={
                   <AdminRoute>
                     <VolumeFormPage />
@@ -136,15 +134,15 @@ const App = () => (
                 }
               />
               <Route
-                path="/admin/editar-mangas/obras/:workSlug/edicoes/:editionId/volumes/:volumeId"
+                path="/admin/gerenciar-mangas/obras/:workSlug/edicoes/:editionId/volumes/:volumeId"
                 element={
-                  <AdminRoute>
-                    <VolumeDetailsPage />
+                <AdminRoute>
+                    <VolumeFormPage />
                   </AdminRoute>
                 }
               />
               <Route
-                path="/admin/editar-mangas/obras/:workSlug/edicoes/:editionId/volumes/:volumeId/editar"
+                path="/admin/gerenciar-mangas/obras/:workSlug/edicoes/:editionId/volumes/:volumeId/editar"
                 element={
                   <AdminRoute>
                     <VolumeFormPage />
@@ -152,7 +150,7 @@ const App = () => (
                 }
               />
               <Route
-                path="/admin/editar-mangas/obras/:workSlug/edicoes/:editionId/editar"
+                path="/admin/gerenciar-mangas/obras/:workSlug/edicoes/:editionId/editar"
                 element={
                   <AdminRoute>
                     <EditionFormPage />

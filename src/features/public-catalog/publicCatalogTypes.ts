@@ -8,8 +8,14 @@ export interface PublicOption {
   label: string;
 }
 
+// A API declara a que países cada Tipo de Obra pertence para o filtro restringir a lista.
+export interface PublicWorkTypeOption extends PublicOption {
+  countryIds: number[];
+  countries: string[];
+}
+
 export interface PublicCatalogOptions {
-  workTypes: PublicOption[];
+  workTypes: PublicWorkTypeOption[];
   countries: string[];
   demographics: string[];
   genres: PublicOption[];
@@ -18,7 +24,6 @@ export interface PublicCatalogOptions {
   originalPublicationStatuses: string[];
   brazilianPublishers: PublicOption[];
   brazilPublicationStatuses: string[];
-  editionTypes: PublicOption[];
   formats: PublicOption[];
   coverTypes: PublicOption[];
 }
@@ -28,6 +33,7 @@ export interface PublicWorkSummary {
   slug: string;
   title: string;
   originalTitle?: string | null;
+  romanizedTitle?: string | null;
   coverUrl?: string | null;
   type?: PublicOption | null;
   country?: string | null;
@@ -58,9 +64,9 @@ export interface PublicEditionDetails {
   chronologicalNumber: number;
   coverUrl?: string | null;
   brazilianPublisher: PublicOption;
-  editionType: PublicOption;
-  format: PublicOption;
-  coverType: PublicOption;
+  format: PublicOption | null;
+  coverType: PublicOption | null;
+  paper?: PublicOption | null;
   brazilPublicationStatus: string;
   volumesCount: number;
   volumes: PublicVolumePreview[];
@@ -71,9 +77,9 @@ export interface PublicEditionPageDetails {
   chronologicalNumber: number;
   coverUrl?: string | null;
   brazilianPublisher: PublicOption;
-  editionType: PublicOption;
-  format: PublicOption;
-  coverType: PublicOption;
+  format: PublicOption | null;
+  coverType: PublicOption | null;
+  paper?: PublicOption | null;
   brazilPublicationStatus: string;
   brazilPublicationStartYear?: number | null;
   brazilPublicationEndYear?: number | null;
@@ -92,12 +98,12 @@ export interface PublicWorkDetails {
   slug: string;
   title: string;
   originalTitle?: string | null;
+  romanizedTitle?: string | null;
   coverUrl?: string | null;
   type: PublicOption;
   country: string;
   originalPublicationStartYear?: number | null;
   originalPublicationEndYear?: number | null;
-  originalVolumeCount?: number | null;
   directRelease: boolean;
   originalPublicationStatus: string;
   synopsis?: string | null;
@@ -211,7 +217,6 @@ export interface PublicWorksQuery {
 export interface PublicEditionsQuery {
   term?: string;
   brazilianPublisherId?: number;
-  editionTypeId?: number;
   formatId?: number;
   coverTypeId?: number;
   chronologicalNumber?: number;

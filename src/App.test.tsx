@@ -5,12 +5,17 @@ import { api } from "@/services/api";
 
 vi.mock("@/services/api", () => ({ api: { get: vi.fn() } }));
 vi.mock("@/components/ui/sonner", () => ({ Toaster: () => null }));
-vi.mock("@/features/auth", () => ({
-  PasswordRecoveryPage: () => "Recuperar senha",
-  AuthPage: () => "Entrar na conta",
-  ActivatePage: () => "Ativar conta",
-  ResendActivationPage: () => "Reenviar ativação",
-}));
+vi.mock("@/features/auth", async () => {
+  const actual = await vi.importActual<typeof import("@/features/auth")>("@/features/auth");
+
+  return {
+    ...actual,
+    PasswordRecoveryPage: () => "Recuperar senha",
+    AuthPage: () => "Entrar na conta",
+    ActivatePage: () => "Ativar conta",
+    ResendActivationPage: () => "Reenviar ativação",
+  };
+});
 vi.mock("@/features/profile", () => ({ ProfilePage: () => "Meu perfil" }));
 vi.mock("@/features/admin-users", () => ({ AdminUsersPage: () => "Administrar usuários" }));
 vi.mock("@/features/public-catalog", () => ({
@@ -45,18 +50,52 @@ describe("navegação e acesso administrativo", () => {
   });
 
   it.each([
-    ["Administrador", "Administrar usuários"],
-    ["Usuário Padrão", "Meu perfil"],
-  ])("preserva a autorização para %s", async (role, expectedPage) => {
-    vi.mocked(api.get).mockResolvedValue({ data: { user: { id: "1", username: "leitor", role } } });
+    ["Administrador", ["Administrador", "Usuário Padrão"], "Administrar usuários"],
+    ["Usuário Padrão", ["Administrador", "Usuário Padrão"], "Meu perfil"],
+    ["Usuário Padrão", ["Usuário Padrão"], "Meu perfil"],
+  ])("preserva a autorização para o perfil ativo %s", async (activeProfile, profiles, expectedPage) => {
+    vi.mocked(api.get).mockResolvedValue({
+      data: {
+        user: {
+          id: "1",
+          username: "leitor",
+          profiles,
+          active_profile: activeProfile,
+        },
+      },
+    });
     window.history.replaceState({}, "", "/admin/users");
     render(<App />);
     expect(await screen.findByText(expectedPage)).toBeInTheDocument();
   });
 
-  it("preserva a página de rota inexistente", async () => {
-    window.history.replaceState({}, "", "/rota-inexistente");
+  it("não autoriza a administração quando o perfil ativo não pertence à conta", async () => {
+    vi.mocked(api.get).mockResolvedValue({
+      data: {
+        user: {
+          id: "1",
+          username: "leitor",
+          profiles: ["Usuário Padrão"],
+          active_profile: "Administrador",
+        },
+      },
+    });
+    window.history.replaceState({}, "", "/admin/users");
     render(<App />);
-    expect(await screen.findByText("404")).toBeInTheDocument();
+    expect(await screen.findByText("Meu perfil")).toBeInTheDocument();
+  });
+
+  it("preserva a página de rota inexistente", async () => {
+    const consoleError = vi.spyOn(console, "error").mockImplementation(() => {});
+    try {
+      window.history.replaceState({}, "", "/rota-inexistente");
+      render(<App />);
+      expect(await screen.findByText("404")).toBeInTheDocument();
+      expect(consoleError.mock.calls).toEqual([
+        ["404 Error: User attempted to access non-existent route:", "/rota-inexistente"],
+      ]);
+    } finally {
+      consoleError.mockRestore();
+    }
   });
 });

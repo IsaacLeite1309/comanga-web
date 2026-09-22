@@ -52,7 +52,7 @@ As páginas de Coleção, Checklist e Lista de Desejos existem como navegação/
 | Conta | `/entrar`, `/cadastrar`, `/activate/:token`, `/reenvio`, `/recuperar-senha`, `/redefinir-senha/:token`, `/perfil/:username` |
 | Catálogo público | `/pesquisa`, `/obras/:slug`, `/edicoes/:editionId`, `/volumes/:volumeId`, `/autores/:authorId` |
 | Área pessoal | `/colecao`, `/checklist`, `/desejos` |
-| Administração | `/admin/novo-manga`, `/admin/editar-mangas`, `/admin/opcoes`, `/admin/users` e rotas aninhadas de Edições/Volumes |
+| Administração | `/admin/novo-manga`, `/admin/gerenciar-mangas`, `/admin/opcoes`, `/admin/users` e rotas aninhadas de Edições/Volumes |
 
 ## Stack e organização
 
@@ -62,7 +62,15 @@ As páginas de Coleção, Checklist e Lista de Desejos existem como navegação/
 - Tailwind CSS, Radix UI, Lucide e Sonner para interface e feedback.
 - Vitest e React Testing Library para testes.
 
-O código é organizado por funcionalidade em `src/features`, incluindo `auth`, `profile`, `admin-catalog`, `admin-media`, `admin-users` e `public-catalog`. Componentes reutilizáveis ficam em `src/components`, serviços HTTP em `src/services` e utilitários em `src/lib`.
+O código é organizado por funcionalidade em `src/features`: `auth`, `profile`, `admin-catalog`, `admin-media`, `admin-users`, `public-catalog`, `collection` e `wishlist`. Cada feature é responsável pelas suas páginas, componentes específicos, estado, regras e testes, expondo sua API pública por `index.ts`. As duas últimas preservam as telas provisórias e não representam funcionalidades de coleção/desejos concluídas.
+
+`src/App.tsx` e `src/app` compõem rotas, navegação e proteção de páginas. O contexto de autenticação pertence a `features/auth`. Componentes reutilizáveis ficam em `src/components`, o cliente HTTP em `src/services` e utilitários transversais em `src/lib`; essa base compartilhada não depende das features.
+
+Imports entre features usam somente suas APIs públicas e as dependências permitidas em `eslint.config.js`. `npm run lint` verifica as fronteiras com `eslint-plugin-boundaries`, ciclos e resolução de imports com `eslint-plugin-import-x` e o resolver TypeScript. Todo arquivo de produção deve pertencer a uma feature, à composição ou à base compartilhada; arquivos sem classificação e imports de testes são recusados. O código de produção usa `import`: `require()`, `module.require()`, `require.resolve()` e imports dinâmicos com caminho calculado são recusados para manter a detecção de ciclos verificável.
+
+O ESLint também limita a complexidade ciclomática a 15, a profundidade de blocos a 4 e cada função a 150 linhas de código, sempre como erro. Comentários e linhas vazias não entram na contagem. Apenas testes (`*.test.*`, `*.spec.*`, `__tests__`) e arquivos gerados (`*.generated.*`, `src/generated/`) têm exceção de tamanho; complexidade e profundidade continuam obrigatórias. Saídas de build e dependências já ficam fora do lint. Os testes da configuração verificam os limites e o alcance dessas exceções.
+
+`npm run test:architecture` testa essa configuração com o próprio ESLint em projetos temporários, cobrindo também tentativas de contornar as fronteiras por arquivos intermediários. Essas regressões fazem parte de `npm run check`, enquanto a suíte Vitest concentra os testes funcionais. O frontend continua uma SPA separada da API.
 
 ## Requisitos
 
@@ -100,13 +108,14 @@ O Vite informa a URL local no terminal. A API precisa permitir essa origem em `C
 | `npm run preview` | Serve localmente o build gerado. |
 | `npm test` | Executa a suíte Vitest. |
 | `npm run test:coverage` | Executa testes com cobertura. |
-| `npm run lint` | Executa ESLint. |
+| `npm run lint` | Executa ESLint, incluindo fronteiras arquiteturais, imports e ciclos. |
 
 ## Verificações de qualidade
 
 Use Node.js 22 e `npm ci` para instalar as versões do lockfile.
 
-- `npm run check`: lint sem avisos, build e cobertura mínima de 80% em cada métrica.
+- `npm run check`: fronteiras arquiteturais, lint sem avisos, build e cobertura mínima de 80% em cada métrica.
+- `npm run test:architecture`: regressões da configuração arquitetural do ESLint em projetos temporários.
 - `npm run check:online`: auditoria de todas as dependências, incluindo ferramentas de desenvolvimento.
 - `npm run typecheck`: valida o código da aplicação, testes e configurações TypeScript; também faz parte do build.
 
@@ -131,3 +140,19 @@ Calendário público, Estante Digital funcional, Lista de Desejos funcional, dad
 
 - [comanga-api](https://github.com/IsaacLeite1309/comanga-api) - API REST, autenticação, catálogo e mídia.
 - [comanga-docs](https://github.com/IsaacLeite1309/comanga-docs) - documentação técnica e acadêmica.
+
+## Perfis e conta
+
+Contas com múltiplos perfis podem escolher o perfil ativo na tela de perfil. As rotas administrativas exigem perfil Administrador ativo; possuir a atribuição não basta durante uso como Usuário Padrão. A mesma tela permite alterar username e senha, mantendo a sessão atual e revogando as outras na troca autenticada. Requer os endpoints de perfis/conta da API e a migration `20260920120000_perfis_de_acesso`.
+
+## Metadados e créditos da Obra
+
+Cadastro e edição exigem título romanizado e sinopse própria; o título original continua opcional. A ficha pública distingue títulos e usa a sinopse da Obra. Autores podem ser reordenados por controles acessíveis e o backend preserva a ordem do array. Requer a frente correspondente da API e revisão editorial dos valores preenchidos pelo backfill.
+
+## Capa da Edição
+
+A Edição usa a capa do Volume de número 1 e não oferece importação de capa própria. Sem essa origem, exibe estado vazio e permanece privada até ter um Volume 1 com capa. Excluir um Volume atualiza também a capa e a contagem do resumo da Edição. Requer a API correspondente; coordenar a publicação com a migration que remove editions.cover_asset_id.
+
+## Gerenciamento e miolo da Edição
+
+O gerenciamento usa caminhos explícitos: `/admin/gerenciar-mangas/obras/:slug/edicoes` para as Edições da Obra e `/admin/gerenciar-mangas/obras/:slug/edicoes/:editionId/volumes` para os Volumes. Os formulários de Edição incluem o campo pesquisável obrigatório `Miolo`, alimentado pelas opções administrativas da categoria correspondente.

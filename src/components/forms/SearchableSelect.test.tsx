@@ -23,6 +23,32 @@ describe("SearchableSelect", () => {
     expect(screen.getByText("Todos")).toHaveClass("text-muted-foreground");
   });
 
+  it("mantém os defaults quando props opcionais são explicitamente undefined", () => {
+    render(
+      <SearchableSelect
+        ariaLabel="País de origem"
+        value=""
+        options={[]}
+        onChange={vi.fn()}
+        allowEmptyOption={undefined}
+        emptyMessage={undefined}
+        maxVisibleItems={undefined}
+        placeholder={undefined}
+        textSize={undefined}
+        tone={undefined}
+      />,
+    );
+
+    const trigger = screen.getByRole("button", { name: "País de origem" });
+    expect(trigger).toHaveTextContent("Selecione");
+    expect(trigger).toHaveClass("text-base", "bg-input");
+    fireEvent.click(trigger);
+
+    const emptyMessage = screen.getByText("Nenhum resultado encontrado.");
+    expect(screen.getByRole("button", { name: "Selecione" })).toBeInTheDocument();
+    expect(emptyMessage.parentElement).toHaveStyle({ maxHeight: "266px" });
+  });
+
   it("pesquisa, seleciona e fecha a lista com interacao consistente", () => {
     const onChange = vi.fn();
 
@@ -64,7 +90,9 @@ describe("SearchableSelect", () => {
     );
 
     fireEvent.click(screen.getByRole("button", { name: "Tipo de obra" }));
-    fireEvent.keyDown(screen.getByPlaceholderText("Digite para buscar..."), { key: "Escape" });
+    const searchInput = screen.getByPlaceholderText("Digite para buscar...");
+    expect(searchInput).toHaveFocus();
+    fireEvent.keyDown(searchInput, { key: "Escape" });
     expect(screen.queryByPlaceholderText("Digite para buscar...")).not.toBeInTheDocument();
 
     fireEvent.click(screen.getByRole("button", { name: "Tipo de obra" }));
@@ -72,7 +100,7 @@ describe("SearchableSelect", () => {
     expect(screen.queryByPlaceholderText("Digite para buscar...")).not.toBeInTheDocument();
   });
 
-  it("desmarca uma opção selecionada quando o campo é alternável", () => {
+  it("desmarca uma opção selecionada ao clicar nela novamente", () => {
     const onChange = vi.fn();
 
     render(
@@ -82,14 +110,31 @@ describe("SearchableSelect", () => {
         options={options}
         onChange={onChange}
         searchable
-        clearable
       />,
     );
 
     fireEvent.click(screen.getByRole("button", { name: "País de origem" }));
-    expect(screen.getByRole("button", { name: "Limpar País de origem" })).toBeInTheDocument();
     fireEvent.click(screen.getByRole("button", { name: "Japão" }));
 
     expect(onChange).toHaveBeenCalledWith("");
+  });
+
+  it("mantém a seleção quando a desseleção é desabilitada", () => {
+    const onChange = vi.fn();
+
+    render(
+      <SearchableSelect
+        ariaLabel="Perfil ativo"
+        value="Administrador"
+        options={[{ value: "Administrador", label: "Administrador" }]}
+        onChange={onChange}
+        deselectable={false}
+      />,
+    );
+
+    fireEvent.click(screen.getByRole("button", { name: "Perfil ativo" }));
+    fireEvent.click(screen.getByRole("button", { name: "Administrador" }));
+
+    expect(onChange).toHaveBeenCalledWith("Administrador");
   });
 });

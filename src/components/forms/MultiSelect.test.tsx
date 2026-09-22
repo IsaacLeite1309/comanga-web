@@ -24,6 +24,30 @@ describe("MultiSelect", () => {
     expect(screen.getByText("Todos")).toHaveClass("text-muted-foreground");
   });
 
+  it("mantém os defaults quando props opcionais são explicitamente undefined", () => {
+    render(
+      <MultiSelect
+        label="Gêneros"
+        options={[]}
+        selectedIds={[]}
+        onToggle={vi.fn()}
+        emptyMessage={undefined}
+        maxVisibleItems={undefined}
+        placeholder={undefined}
+        textSize={undefined}
+        tone={undefined}
+      />,
+    );
+
+    const trigger = screen.getByRole("button", { name: "Selecionar Gêneros" });
+    expect(trigger).toHaveTextContent("Selecione");
+    expect(trigger).toHaveClass("text-base", "bg-input");
+    fireEvent.click(trigger);
+
+    const emptyMessage = screen.getByText("Nenhum valor cadastrado para esta lista.");
+    expect(emptyMessage.parentElement).toHaveStyle({ maxHeight: "266px" });
+  });
+
   it("filtra, seleciona e mantem a opcao selecionada disponivel", () => {
     const onToggle = vi.fn();
     const onClear = vi.fn();
@@ -40,7 +64,9 @@ describe("MultiSelect", () => {
 
     fireEvent.click(screen.getByLabelText(/selecionar editoras originais/i));
     expect(screen.getByRole("button", { name: "Limpar Editoras originais" })).toBeInTheDocument();
-    fireEvent.change(screen.getByLabelText(/selecionar editoras originais/i), {
+    const searchInput = screen.getByLabelText(/selecionar editoras originais/i);
+    expect(searchInput).toHaveFocus();
+    fireEvent.change(searchInput, {
       target: { value: "Shuei" },
     });
 
