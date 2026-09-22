@@ -1,7 +1,7 @@
 import { SearchableSelect } from "@/components/forms/SearchableSelect";
 import type { EditionDraft } from "../pages/editionDraftMemory";
 import {
-  EDITION_NUMBER_OPTIONS,
+  editionNumberOptions,
   EDITION_PUBLICATION_STATUS_OPTIONS,
   type EditionFormOptions,
   type EditionOption,
@@ -16,7 +16,7 @@ interface EditionFormFieldsProps {
 export function EditionFormFields({ draft, options, onChange }: EditionFormFieldsProps) {
   return (
     <section className="grid gap-4 rounded-xl border border-border bg-card p-4 md:grid-cols-6">
-      <EditionSelect className="md:col-span-2" label="Número da edição" value={draft.chronologicalNumber} onChange={(value) => onChange("chronologicalNumber", value)} options={EDITION_NUMBER_OPTIONS} required />
+      <EditionSelect className="md:col-span-2" label="Número da edição" value={draft.chronologicalNumber} onChange={(value) => onChange("chronologicalNumber", value)} options={editionNumberOptions(draft.chronologicalNumber)} required />
       <EditionSelect className="md:col-span-2" label="Editora brasileira" value={draft.brazilianPublisherId} onChange={(value) => onChange("brazilianPublisherId", value)} options={options.brazilianPublishers} required />
       <EditionSelect className="md:col-span-2" label="Status de publicação" value={draft.brazilPublicationStatus} onChange={(value) => onChange("brazilPublicationStatus", value)} options={EDITION_PUBLICATION_STATUS_OPTIONS} required />
       <EditionSelect className="md:col-span-3" label="Acabamento" value={draft.coverTypeId} onChange={(value) => onChange("coverTypeId", value)} options={options.coverTypes} />
