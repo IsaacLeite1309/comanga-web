@@ -20,6 +20,7 @@ export function EditionFormFields({ draft, options, onChange }: EditionFormField
       <EditionSelect label="Tipo de edição" value={draft.editionTypeId} onChange={(value) => onChange("editionTypeId", value)} options={options.editionTypes} />
       <EditionSelect label="Acabamento" value={draft.coverTypeId} onChange={(value) => onChange("coverTypeId", value)} options={options.coverTypes} />
       <EditionSelect label="Formato" value={draft.formatId} onChange={(value) => onChange("formatId", value)} options={options.formats} />
+      <EditionSelect label="Miolo" value={draft.paperId} onChange={(value) => onChange("paperId", value)} options={options.papers} />
       <EditionSelect label="Número da edição" value={draft.chronologicalNumber} onChange={(value) => onChange("chronologicalNumber", value)} options={EDITION_NUMBER_OPTIONS} />
       <EditionSelect label="Status de publicação" value={draft.brazilPublicationStatus} onChange={(value) => onChange("brazilPublicationStatus", value)} options={EDITION_PUBLICATION_STATUS_OPTIONS} />
     </section>

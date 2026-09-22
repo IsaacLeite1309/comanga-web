@@ -32,7 +32,7 @@ const collectorNavItems: NavItem[] = [
 
 const adminNavItems: NavItem[] = [
   { label: "Novo mangá", icon: PlusCircle, href: "/admin/novo-manga" },
-  { label: "Gerenciar Mangás", icon: BookOpen, href: "/admin/editar-mangas" },
+  { label: "Gerenciar Mangás", icon: BookOpen, href: "/admin/gerenciar-mangas" },
   { label: "Gerenciar Opções", icon: SlidersHorizontal, href: "/admin/opcoes" },
   { label: "Gerenciar Usuários", icon: Users, href: "/admin/users" },
 ];

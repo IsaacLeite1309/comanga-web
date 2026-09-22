@@ -52,7 +52,7 @@ As páginas de Coleção, Checklist e Lista de Desejos existem como navegação/
 | Conta | `/entrar`, `/cadastrar`, `/activate/:token`, `/reenvio`, `/recuperar-senha`, `/redefinir-senha/:token`, `/perfil/:username` |
 | Catálogo público | `/pesquisa`, `/obras/:slug`, `/edicoes/:editionId`, `/volumes/:volumeId`, `/autores/:authorId` |
 | Área pessoal | `/colecao`, `/checklist`, `/desejos` |
-| Administração | `/admin/novo-manga`, `/admin/editar-mangas`, `/admin/opcoes`, `/admin/users` e rotas aninhadas de Edições/Volumes |
+| Administração | `/admin/novo-manga`, `/admin/gerenciar-mangas`, `/admin/opcoes`, `/admin/users` e rotas aninhadas de Edições/Volumes |
 
 ## Stack e organização
 
@@ -152,3 +152,7 @@ Cadastro e edição exigem título romanizado e sinopse própria; o título orig
 ## Capa da Edição
 
 A Edição usa a capa do Volume de número 1 e não oferece importação de capa própria. Sem essa origem, exibe estado vazio e permanece privada até ter um Volume 1 com capa. Excluir um Volume atualiza também a capa e a contagem do resumo da Edição. Requer a API correspondente; coordenar a publicação com a migration que remove editions.cover_asset_id.
+
+## Gerenciamento e miolo da Edição
+
+O gerenciamento usa caminhos explícitos: `/admin/gerenciar-mangas/obras/:slug/edicoes` para as Edições da Obra e `/admin/gerenciar-mangas/obras/:slug/edicoes/:editionId/volumes` para os Volumes. Os formulários de Edição incluem o campo pesquisável obrigatório `Miolo`, alimentado pelas opções administrativas da categoria correspondente.

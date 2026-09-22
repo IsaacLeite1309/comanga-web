@@ -27,17 +27,18 @@ const editionOptions = {
     editionTypes: [{ id: 31, label: "Tankobon" }],
     coverTypes: [{ id: 32, label: "Capa comum" }],
     formats: [{ id: 33, label: "Impresso" }],
+    papers: [{ id: 34, label: "Papel" }],
   },
 };
 
-function renderEditionForm(path = "/admin/editar-mangas/obras/Naruto/edicoes/nova") {
+function renderEditionForm(path = "/admin/gerenciar-mangas/obras/Naruto/edicoes/nova") {
   return render(
     <MemoryRouter initialEntries={[{ pathname: path, state: { workId: 10 } }]}>
       <Routes>
-        <Route path="/admin/editar-mangas/obras/:workSlug/edicoes/nova" element={<EditionForm />} />
-        <Route path="/admin/editar-mangas/obras/:workSlug/edicoes/:editionId/editar" element={<EditionForm />} />
-        <Route path="/admin/editar-mangas/obras/:workSlug/edicoes/:editionId" element={<div>Detalhes da Edição</div>} />
-        <Route path="/admin/editar-mangas/obras/:workSlug" element={<div>Hub da Obra</div>} />
+        <Route path="/admin/gerenciar-mangas/obras/:workSlug/edicoes/nova" element={<EditionForm />} />
+        <Route path="/admin/gerenciar-mangas/obras/:workSlug/edicoes/:editionId/editar" element={<EditionForm />} />
+        <Route path="/admin/gerenciar-mangas/obras/:workSlug/edicoes/:editionId/volumes" element={<div>Detalhes da Edição</div>} />
+        <Route path="/admin/gerenciar-mangas/obras/:workSlug/edicoes" element={<div>Hub da Obra</div>} />
         <Route path="/admin/pos-cadastro" element={<div>Edição cadastrada com sucesso</div>} />
       </Routes>
     </MemoryRouter>
@@ -94,6 +95,7 @@ describe("EditionForm", () => {
     chooseDropdown(/tipo de edição/i, /tankobon/i);
     chooseDropdown(/acabamento/i, /capa comum/i);
     chooseDropdown(/formato/i, /impresso/i);
+    chooseDropdown(/miolo/i, /papel/i);
     chooseDropdown(/número da edição/i, /1ª edição/i);
     chooseDropdown(/status de publicação/i, /completa/i);
     fireEvent.click(screen.getByRole("button", { name: /^salvar$/i }));
@@ -104,6 +106,7 @@ describe("EditionForm", () => {
         editionTypeId: 31,
         coverTypeId: 32,
         formatId: 33,
+        paperId: 34,
         chronologicalNumber: 1,
         brazilPublicationStatus: "Completa",
       }));
@@ -129,13 +132,14 @@ describe("EditionForm", () => {
             editionType: { id: 31, label: "Tankobon" },
             coverType: { id: 32, label: "Capa comum" },
             format: { id: 33, label: "Impresso" },
+            paper: { id: 34, label: "Papel" },
             brazilPublicationStatus: { id: "Em andamento", label: "Em andamento" },
           },
         },
       });
     vi.mocked(api.patch).mockResolvedValueOnce({ data: {} });
 
-    renderEditionForm("/admin/editar-mangas/obras/Naruto/edicoes/50/editar");
+    renderEditionForm("/admin/gerenciar-mangas/obras/Naruto/edicoes/50/editar");
 
     expect(await screen.findByRole("heading", { name: /editar edi/i })).toBeInTheDocument();
     chooseDropdown(/número da edição/i, /^3ª edição$/i);
@@ -156,9 +160,9 @@ describe("EditionForm", () => {
       .mockResolvedValueOnce({ data: editionOptions });
 
     render(
-      <MemoryRouter initialEntries={["/admin/editar-mangas/obras/naruto/edicoes/nova"]}>
+      <MemoryRouter initialEntries={["/admin/gerenciar-mangas/obras/naruto/edicoes/nova"]}>
         <Routes>
-          <Route path="/admin/editar-mangas/obras/:workSlug/edicoes/nova" element={<EditionForm />} />
+          <Route path="/admin/gerenciar-mangas/obras/:workSlug/edicoes/nova" element={<EditionForm />} />
         </Routes>
       </MemoryRouter>,
     );
@@ -175,9 +179,9 @@ describe("EditionForm", () => {
     });
 
     render(
-      <MemoryRouter initialEntries={["/admin/editar-mangas/obras/Inexistente/edicoes/nova"]}>
+      <MemoryRouter initialEntries={["/admin/gerenciar-mangas/obras/Inexistente/edicoes/nova"]}>
         <Routes>
-          <Route path="/admin/editar-mangas/obras/:workSlug/edicoes/nova" element={<EditionForm />} />
+          <Route path="/admin/gerenciar-mangas/obras/:workSlug/edicoes/nova" element={<EditionForm />} />
         </Routes>
       </MemoryRouter>,
     );
@@ -222,6 +226,7 @@ describe("EditionForm", () => {
     chooseDropdown(/tipo de edi/i, /tankobon/i);
     chooseDropdown(/acabamento/i, /capa comum/i);
     chooseDropdown(/formato/i, /impresso/i);
+    chooseDropdown(/miolo/i, /papel/i);
     chooseDropdown(/n.*mero da edi/i, /^1ª edição$/i);
     chooseDropdown(/status de publica/i, /completa/i);
     fireEvent.click(screen.getByRole("button", { name: /^salvar$/i }));

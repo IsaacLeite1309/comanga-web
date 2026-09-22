@@ -61,14 +61,14 @@ const editionsResponse = {
 function renderEditWork() {
   return render(
     <MemoryRouter
-      initialEntries={["/admin/editar-mangas/obras/naruto"]}
+      initialEntries={["/admin/gerenciar-mangas/obras/naruto/edicoes"]}
     >
       <Routes>
-        <Route path="/admin/editar-mangas/obras/:workSlug" element={<EditWork />} />
-        <Route path="/admin/editar-mangas/obras/:workSlug/editar" element={<div>Formulário de Obra</div>} />
-        <Route path="/admin/editar-mangas/obras/:workSlug/edicoes/nova" element={<div>Formulário de Edição</div>} />
-        <Route path="/admin/editar-mangas/obras/:workSlug/edicoes/:editionId" element={<div>Gerenciamento da Edição</div>} />
-        <Route path="/admin/editar-mangas" element={<div>Listagem de Obras</div>} />
+        <Route path="/admin/gerenciar-mangas/obras/:workSlug/edicoes" element={<EditWork />} />
+        <Route path="/admin/gerenciar-mangas/obras/:workSlug/editar" element={<div>Formulário de Obra</div>} />
+        <Route path="/admin/gerenciar-mangas/obras/:workSlug/edicoes/nova" element={<div>Formulário de Edição</div>} />
+        <Route path="/admin/gerenciar-mangas/obras/:workSlug/edicoes/:editionId/volumes" element={<div>Gerenciamento da Edição</div>} />
+        <Route path="/admin/gerenciar-mangas" element={<div>Listagem de Obras</div>} />
       </Routes>
     </MemoryRouter>
   );
@@ -86,15 +86,12 @@ describe("EditWork", () => {
 
     renderEditWork();
 
-    expect(await screen.findByRole("heading", { name: "Naruto" })).toBeInTheDocument();
-    expect(screen.getByText("Masashi Kishimoto")).toBeInTheDocument();
-    expect(screen.getByText("Mangá")).toBeInTheDocument();
+    expect(await screen.findByText("1ª edição")).toBeInTheDocument();
     expect(screen.getAllByText("1ª edição")[0]).toBeInTheDocument();
     expect(screen.getAllByText("0 volumes")[0]).toBeInTheDocument();
-    expect(screen.getByRole("link", { name: /editar obra/i })).toHaveAttribute("href", "/admin/editar-mangas/obras/naruto/editar");
-    expect(screen.getByRole("link", { name: /adicionar edição/i })).toHaveAttribute("href", "/admin/editar-mangas/obras/naruto/edicoes/nova");
-    expect(screen.getByRole("link", { name: /editar 1ª edição/i })).toHaveAttribute("href", "/admin/editar-mangas/obras/naruto/edicoes/20/editar");
-    expect(screen.getByRole("link", { name: /gerenciar 1ª edição/i })).toHaveAttribute("href", "/admin/editar-mangas/obras/naruto/edicoes/20");
+    expect(screen.getByRole("link", { name: /adicionar edição/i })).toHaveAttribute("href", "/admin/gerenciar-mangas/obras/naruto/edicoes/nova");
+    expect(screen.getByRole("link", { name: /editar 1ª edição/i })).toHaveAttribute("href", "/admin/gerenciar-mangas/obras/naruto/edicoes/20/editar");
+    expect(screen.getByRole("link", { name: /gerenciar volumes da 1ª edição/i })).toHaveAttribute("href", "/admin/gerenciar-mangas/obras/naruto/edicoes/20/volumes");
   });
 
   it("resolve a obra diretamente pelo slug quando a pagina e recarregada", async () => {
@@ -104,7 +101,7 @@ describe("EditWork", () => {
 
     renderEditWork();
 
-    expect(await screen.findByRole("heading", { name: "Naruto" })).toBeInTheDocument();
+    expect(await screen.findByText("1ª edição")).toBeInTheDocument();
     expect(api.get).toHaveBeenCalledWith("/admin/works/slug/naruto");
     expect(api.get).toHaveBeenCalledWith("/admin/works/10/editions", {
       params: { order: "DESC", page: 1, limit: 50 },
@@ -132,7 +129,7 @@ describe("EditWork", () => {
     renderEditWork();
 
     expect(screen.queryByText(/Exibindo/i)).not.toBeInTheDocument();
-    await waitFor(() => expect(screen.getByRole("heading", { name: "Naruto" })).toBeInTheDocument());
+    await waitFor(() => expect(screen.getByRole("heading", { name: "Edições" })).toBeInTheDocument());
   });
 
   it("alterna para grade e mostra fallbacks de metadados", async () => {
@@ -153,11 +150,10 @@ describe("EditWork", () => {
       });
 
     renderEditWork();
-    await screen.findByRole("heading", { name: "Naruto" });
+    await screen.findByRole("heading", { name: "Edições" });
     expect(screen.getAllByText("1 volume").length).toBeGreaterThan(0);
     fireEvent.click(screen.getByRole("button", { name: /grade/i }));
 
-    expect(screen.getAllByText("Sem capa")).toHaveLength(1);
     expect(screen.getAllByText("Sem capa (cadastre o Volume 1)")).toHaveLength(1);
   });
 

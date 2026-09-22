@@ -86,7 +86,7 @@ const App = () => (
                 }
               />
               <Route
-                path="/admin/editar-mangas"
+                path="/admin/gerenciar-mangas"
                 element={
                   <AdminRoute>
                     <EditMangasPage />
@@ -94,7 +94,7 @@ const App = () => (
                 }
               />
               <Route
-                path="/admin/editar-mangas/obras/:workSlug"
+                path="/admin/gerenciar-mangas/obras/:workSlug/edicoes"
                 element={
                   <AdminRoute>
                     <EditWorkPage />
@@ -102,7 +102,7 @@ const App = () => (
                 }
               />
               <Route
-                path="/admin/editar-mangas/obras/:workSlug/editar"
+                path="/admin/gerenciar-mangas/obras/:workSlug/editar"
                 element={
                   <AdminRoute>
                     <EditWorkFormPage />
@@ -110,7 +110,7 @@ const App = () => (
                 }
               />
               <Route
-                path="/admin/editar-mangas/obras/:workSlug/edicoes/nova"
+                path="/admin/gerenciar-mangas/obras/:workSlug/edicoes/nova"
                 element={
                   <AdminRoute>
                     <EditionFormPage />
@@ -118,7 +118,7 @@ const App = () => (
                 }
               />
               <Route
-                path="/admin/editar-mangas/obras/:workSlug/edicoes/:editionId"
+                path="/admin/gerenciar-mangas/obras/:workSlug/edicoes/:editionId/volumes"
                 element={
                   <AdminRoute>
                     <EditionDetailsPage />
@@ -126,7 +126,7 @@ const App = () => (
                 }
               />
               <Route
-                path="/admin/editar-mangas/obras/:workSlug/edicoes/:editionId/volumes/novo"
+                path="/admin/gerenciar-mangas/obras/:workSlug/edicoes/:editionId/volumes/novo"
                 element={
                   <AdminRoute>
                     <VolumeFormPage />
@@ -134,7 +134,7 @@ const App = () => (
                 }
               />
               <Route
-                path="/admin/editar-mangas/obras/:workSlug/edicoes/:editionId/volumes/:volumeId"
+                path="/admin/gerenciar-mangas/obras/:workSlug/edicoes/:editionId/volumes/:volumeId"
                 element={
                 <AdminRoute>
                     <VolumeFormPage />
@@ -142,7 +142,7 @@ const App = () => (
                 }
               />
               <Route
-                path="/admin/editar-mangas/obras/:workSlug/edicoes/:editionId/volumes/:volumeId/editar"
+                path="/admin/gerenciar-mangas/obras/:workSlug/edicoes/:editionId/volumes/:volumeId/editar"
                 element={
                   <AdminRoute>
                     <VolumeFormPage />
@@ -150,7 +150,7 @@ const App = () => (
                 }
               />
               <Route
-                path="/admin/editar-mangas/obras/:workSlug/edicoes/:editionId/editar"
+                path="/admin/gerenciar-mangas/obras/:workSlug/edicoes/:editionId/editar"
                 element={
                   <AdminRoute>
                     <EditionFormPage />

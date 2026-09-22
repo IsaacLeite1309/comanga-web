@@ -51,6 +51,7 @@ export const CATEGORIES: OptionCategory[] = [
   { slug: "tipos-edicao", name: "Tipo de edição", form: "edicao" },
   { slug: "tipos-capa", name: "Acabamento", form: "edicao" },
   { slug: "formatos-fisicos", name: "Formato", form: "edicao" },
+  { slug: "miolos", name: "Miolo", form: "edicao" },
 ];
 
 const COUNTRY_DEPENDENT_CATEGORY_SLUGS = new Set([
@@ -59,7 +60,7 @@ const COUNTRY_DEPENDENT_CATEGORY_SLUGS = new Set([
   "revistas-serializacao",
   "editoras-originais",
 ]);
-const COMMA_LITERAL_CATEGORY_SLUGS = new Set(["formatos-fisicos"]);
+const COMMA_LITERAL_CATEGORY_SLUGS = new Set(["formatos-fisicos", "miolos"]);
 
 export function getPageSizeForCategory(categorySlug: string) {
   return COUNTRY_DEPENDENT_CATEGORY_SLUGS.has(categorySlug) ? 5 : DEFAULT_PAGE_SIZE;

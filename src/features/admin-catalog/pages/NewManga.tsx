@@ -20,7 +20,7 @@ type NewMangaProps = {
   returnPath?: string;
 };
 
-const NewManga = ({ mode = "create", workId, returnPath = "/admin/editar-mangas" }: NewMangaProps) => {
+const NewManga = ({ mode = "create", workId, returnPath = "/admin/gerenciar-mangas" }: NewMangaProps) => {
   const navigate = useNavigate();
   const controller = useNewMangaForm(mode, workId);
   const isEditMode = mode === "edit";

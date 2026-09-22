@@ -165,7 +165,7 @@ function WorkManageActions({ model, work, compact = false }: {
       <Link
         to={workAdminPath(work.slug)}
         state={{ workId: work.id }}
-        aria-label={`Gerenciar ${work.title}`}
+        aria-label={`Gerenciar edições de ${work.title}`}
         className={`inline-flex items-center justify-center border border-border bg-input text-foreground transition-colors hover:border-primary hover:text-primary ${sizeClass} ${radiusClass} ${compact ? "" : "md:justify-self-center"}`}
       >
         <Settings className="h-3.5 w-3.5" />
@@ -232,7 +232,7 @@ function WorksListHeader({ model }: { model: EditMangasPageModel }) {
       <span className="hidden justify-self-start md:block">EDIÇÕES</span>
       <span className="hidden justify-self-start md:block">VISIBILIDADE</span>
       <span className="hidden justify-self-center md:block">EDITAR</span>
-      <span className="hidden justify-self-center md:block">GERENCIAR</span>
+      <span className="hidden justify-self-center md:block">GERENCIAR EDIÇÕES</span>
       <span className="hidden justify-self-center md:block">EXCLUIR</span>
     </div>
   );
@@ -242,7 +242,6 @@ function WorkTitle({ model, work }: { model: EditMangasPageModel; work: WorkSumm
   return (
     <div className="min-w-0">
       <h2 className="truncate text-base font-bold text-foreground">{work.title}</h2>
-      {work.originalTitle && <p className="truncate text-sm text-muted-foreground">{work.originalTitle}</p>}
       <div className="mt-2 flex flex-wrap gap-2 md:hidden">
         <span className="rounded-full bg-muted px-2 py-1 text-xs font-semibold text-muted-foreground">
           {work.type?.label || "Tipo não informado"}

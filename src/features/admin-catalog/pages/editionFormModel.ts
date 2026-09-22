@@ -10,6 +10,7 @@ export interface EditionFormOptions {
   editionTypes: EditionOption[];
   coverTypes: EditionOption[];
   formats: EditionOption[];
+  papers: EditionOption[];
 }
 
 export interface Edition {
@@ -23,6 +24,7 @@ export interface Edition {
   editionType: EditionOption | null;
   coverType: EditionOption | null;
   format: EditionOption | null;
+  paper: EditionOption | null;
   brazilPublicationStatus: string | EditionOption | null;
 }
 
@@ -60,6 +62,7 @@ export function editionToDraft(edition: Edition): EditionDraft {
     editionTypeId: optionId(edition.editionType),
     coverTypeId: optionId(edition.coverType),
     formatId: optionId(edition.format),
+    paperId: optionId(edition.paper),
     chronologicalNumber: String(edition.chronologicalNumber),
     brazilPublicationStatus: typeof edition.brazilPublicationStatus === "string"
       ? edition.brazilPublicationStatus
@@ -73,6 +76,7 @@ export function buildEditionPayload(draft: EditionDraft) {
     editionTypeId: Number(draft.editionTypeId),
     coverTypeId: Number(draft.coverTypeId),
     formatId: Number(draft.formatId),
+    paperId: Number(draft.paperId),
     chronologicalNumber: Number(draft.chronologicalNumber),
     brazilPublicationStatus: draft.brazilPublicationStatus,
   };
@@ -84,6 +88,7 @@ export function isEditionDraftIncomplete(draft: EditionDraft) {
     draft.editionTypeId,
     draft.coverTypeId,
     draft.formatId,
+    draft.paperId,
     draft.chronologicalNumber,
     draft.brazilPublicationStatus,
   ];

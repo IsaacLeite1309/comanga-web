@@ -18,11 +18,11 @@ function renderPage(withState = false, slug = "joao") {
   return render(
     <MemoryRouter initialEntries={[
       withState
-        ? { pathname: `/admin/editar-mangas/obras/${slug}/editar`, state: { workId: 42 } }
-        : `/admin/editar-mangas/obras/${slug}/editar`,
+        ? { pathname: `/admin/gerenciar-mangas/obras/${slug}/editar`, state: { workId: 42 } }
+        : `/admin/gerenciar-mangas/obras/${slug}/editar`,
     ]}>
       <Routes>
-        <Route path="/admin/editar-mangas/obras/:workSlug/editar" element={<EditWorkForm />} />
+        <Route path="/admin/gerenciar-mangas/obras/:workSlug/editar" element={<EditWorkForm />} />
       </Routes>
     </MemoryRouter>,
   );
@@ -34,7 +34,7 @@ describe("EditWorkForm", () => {
   it("usa o id recebido pela navegacao sem consultar a API", () => {
     renderPage(true, "naruto");
 
-    expect(screen.getByText("edit|42|/admin/editar-mangas/obras/naruto")).toBeInTheDocument();
+    expect(screen.getByText("edit|42|/admin/gerenciar-mangas/obras/naruto/edicoes")).toBeInTheDocument();
     expect(api.get).not.toHaveBeenCalled();
   });
 
@@ -46,7 +46,7 @@ describe("EditWorkForm", () => {
     renderPage(false, "joao");
 
     expect(screen.getByText(/carregando dados da obra/i)).toBeInTheDocument();
-    expect(await screen.findByText("edit|7|/admin/editar-mangas/obras/joao")).toBeInTheDocument();
+    expect(await screen.findByText("edit|7|/admin/gerenciar-mangas/obras/joao/edicoes")).toBeInTheDocument();
     expect(api.get).toHaveBeenCalledWith("/admin/works/slug/joao");
   });
 

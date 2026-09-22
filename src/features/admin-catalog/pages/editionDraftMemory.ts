@@ -3,6 +3,7 @@ export interface EditionDraft {
   editionTypeId: string;
   coverTypeId: string;
   formatId: string;
+  paperId: string;
   chronologicalNumber: string;
   brazilPublicationStatus: string;
 }
@@ -12,6 +13,7 @@ export const emptyEditionDraft: EditionDraft = {
   editionTypeId: "",
   coverTypeId: "",
   formatId: "",
+  paperId: "",
   chronologicalNumber: "",
   brazilPublicationStatus: "",
 };
