@@ -112,6 +112,8 @@ function PasswordInput({ placeholder, name, value, onChange, error }: PasswordIn
           value={value}
           onChange={onChange}
           placeholder={placeholder}
+          aria-label={placeholder}
+          aria-invalid={Boolean(error)}
           className={`w-full h-12 px-4 pr-12 rounded-xl bg-input border text-foreground placeholder:text-muted-foreground focus:outline-none focus:ring-2 text-sm transition-colors ${
             error
               ? "border-red-500 focus:ring-red-500"
@@ -127,7 +129,7 @@ function PasswordInput({ placeholder, name, value, onChange, error }: PasswordIn
           {show ? <EyeOff className="h-5 w-5" /> : <Eye className="h-5 w-5" />}
         </button>
       </div>
-      {error && <span className="block text-xs text-red-500 mt-1 ml-1">{error}</span>}
+      {error && <span role="alert" className="block text-xs text-red-500 mt-1 ml-1">{error}</span>}
     </div>
   );
 }
@@ -152,13 +154,15 @@ function TextInput({ type = "text", placeholder, name, value, onChange, error }:
         value={value}
         onChange={onChange}
         placeholder={placeholder}
+        aria-label={placeholder}
+        aria-invalid={Boolean(error)}
         className={`w-full h-12 px-4 rounded-xl bg-input border text-foreground placeholder:text-muted-foreground focus:outline-none focus:ring-2 text-sm transition-colors ${
           error
             ? "border-red-500 focus:ring-red-500"
             : "border-border focus:ring-primary"
         }`}
       />
-      {error && <span className="block text-xs text-red-500 mt-1 ml-1">{error}</span>}
+      {error && <span role="alert" className="block text-xs text-red-500 mt-1 ml-1">{error}</span>}
     </div>
   );
 }
