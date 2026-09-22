@@ -166,7 +166,7 @@ function EditionListRow({
   const deleting = actions.deletingId === edition.id;
 
   return (
-    <article className="grid grid-cols-[72px_minmax(0,1fr)_auto] gap-4 border-b border-border px-4 py-4 last:border-b-0 md:grid-cols-[72px_minmax(140px,1fr)_120px_minmax(140px,0.9fr)_100px_132px_92px_92px_92px] md:items-center">
+    <article className="grid grid-cols-[72px_minmax(0,1fr)_auto] gap-4 border-b border-border px-4 py-4 last:border-b-0 md:grid-cols-[72px_minmax(140px,1fr)_120px_100px_132px_92px_92px_92px] md:items-center">
       <div className="aspect-[2/3] w-16 overflow-hidden rounded-md border border-border bg-input">
         {edition.coverUrl ? (
           <img src={edition.coverUrl} alt={`Capa da ${label}`} className="h-full w-full object-cover" />
@@ -182,11 +182,6 @@ function EditionListRow({
           <span className="rounded-full bg-muted px-2 py-1 text-xs font-semibold text-muted-foreground">
             {edition.brazilianPublisher?.label || "Editora não informada"}
           </span>
-          {edition.editionType && (
-            <span className="rounded-full bg-muted px-2 py-1 text-xs font-semibold text-muted-foreground">
-              {edition.editionType.label}
-            </span>
-          )}
           <span className="rounded-full bg-muted px-2 py-1 text-xs font-semibold text-muted-foreground">
             {formatVolumesCount(edition.volumesCount)}
           </span>
@@ -195,7 +190,6 @@ function EditionListRow({
       <p className="hidden text-sm font-semibold text-muted-foreground md:block">
         {edition.brazilianPublisher?.label || "Editora não informada"}
       </p>
-      <p className="hidden text-sm font-semibold text-muted-foreground md:block">{edition.editionType?.label || ""}</p>
       <p className="hidden text-sm font-semibold text-muted-foreground md:block">{formatVolumesCount(edition.volumesCount)}</p>
       <div className="hidden justify-self-start md:block">
         <CatalogVisibilityAction
@@ -245,11 +239,10 @@ function EditionListRow({
 
 function EditionsListHeader() {
   return (
-    <div className="grid grid-cols-[72px_minmax(0,1fr)_auto] items-center gap-4 border-b border-border bg-muted/20 px-4 py-3 text-xs font-bold uppercase tracking-wide text-muted-foreground md:grid-cols-[72px_minmax(140px,1fr)_120px_minmax(140px,0.9fr)_100px_132px_92px_92px_92px]">
+    <div className="grid grid-cols-[72px_minmax(0,1fr)_auto] items-center gap-4 border-b border-border bg-muted/20 px-4 py-3 text-xs font-bold uppercase tracking-wide text-muted-foreground md:grid-cols-[72px_minmax(140px,1fr)_120px_100px_132px_92px_92px_92px]">
       <span>Capa</span>
       <span>Número da edição</span>
       <span className="hidden md:block">Editora</span>
-      <span className="hidden md:block">Tipo de edição</span>
       <span className="hidden md:block">Volumes</span>
       <span className="hidden md:block">Visibilidade</span>
       <span className="hidden justify-self-center md:block">Editar</span>

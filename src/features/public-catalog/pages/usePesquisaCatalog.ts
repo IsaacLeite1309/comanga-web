@@ -28,7 +28,6 @@ const EMPTY_OPTIONS: PublicCatalogOptions = {
   originalPublicationStatuses: [],
   brazilianPublishers: [],
   brazilPublicationStatuses: [],
-  editionTypes: [],
   formats: [],
   coverTypes: [],
 };
@@ -51,7 +50,6 @@ const WORK_FILTER_KEYS = [
 ];
 const EDITION_FILTER_KEYS = [
   "brazilianPublisherId",
-  "editionTypeId",
   "formatId",
   "coverTypeId",
   "chronologicalNumber",
@@ -67,7 +65,6 @@ const ADVANCED_FILTER_KEYS = [
   "serializationMagazineId",
   "originalPublicationStartYear",
   "originalPublicationEndYear",
-  "editionTypeId",
   "formatId",
   "coverTypeId",
   "chronologicalNumber",
@@ -118,7 +115,6 @@ function readCatalogParams(params: URLSearchParams) {
     originalPublicationStartYear: optionalInteger(params.get("originalPublicationStartYear")),
     originalPublicationEndYear: optionalInteger(params.get("originalPublicationEndYear")),
     brazilianPublisherId: optionalInteger(params.get("brazilianPublisherId")),
-    editionTypeId: optionalInteger(params.get("editionTypeId")),
     formatId: optionalInteger(params.get("formatId")),
     coverTypeId: optionalInteger(params.get("coverTypeId")),
     chronologicalNumber: optionalInteger(params.get("chronologicalNumber")),
@@ -153,7 +149,6 @@ function buildEditionQuery(params: CatalogParams): PublicEditionsQuery {
   return {
     ...(params.urlTerm.trim() ? { term: params.urlTerm.trim() } : {}),
     ...(params.brazilianPublisherId ? { brazilianPublisherId: params.brazilianPublisherId } : {}),
-    ...(params.editionTypeId ? { editionTypeId: params.editionTypeId } : {}),
     ...(params.formatId ? { formatId: params.formatId } : {}),
     ...(params.coverTypeId ? { coverTypeId: params.coverTypeId } : {}),
     ...(params.chronologicalNumber ? { chronologicalNumber: params.chronologicalNumber } : {}),
@@ -407,7 +402,6 @@ export function advancedFilterCount(params: CatalogParams) {
     ].filter(Boolean).length;
   }
   return [
-    params.editionTypeId,
     params.formatId,
     params.coverTypeId,
     params.chronologicalNumber,

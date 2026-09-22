@@ -48,7 +48,6 @@ export const CATEGORIES: OptionCategory[] = [
   { slug: "revistas-serializacao", name: "Pré-publicação", form: "obra" },
   { slug: "editoras-originais", name: "Editora original", form: "obra" },
   { slug: "editoras-brasileiras", name: "Editora brasileira", form: "edicao" },
-  { slug: "tipos-edicao", name: "Tipo de edição", form: "edicao" },
   { slug: "tipos-capa", name: "Acabamento", form: "edicao" },
   { slug: "formatos-fisicos", name: "Formato", form: "edicao" },
   { slug: "miolos", name: "Miolo", form: "edicao" },

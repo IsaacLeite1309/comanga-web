@@ -33,7 +33,6 @@ export interface EditionDetail {
   coverUrl?: string | null;
   visibility: CatalogVisibility;
   brazilianPublisher: OptionValue | null;
-  editionType: OptionValue | null;
   coverType?: OptionValue | null;
   format?: OptionValue | null;
   paper?: OptionValue | null;

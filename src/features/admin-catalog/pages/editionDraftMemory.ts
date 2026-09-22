@@ -1,6 +1,5 @@
 export interface EditionDraft {
   brazilianPublisherId: string;
-  editionTypeId: string;
   coverTypeId: string;
   formatId: string;
   paperId: string;
@@ -10,7 +9,6 @@ export interface EditionDraft {
 
 export const emptyEditionDraft: EditionDraft = {
   brazilianPublisherId: "",
-  editionTypeId: "",
   coverTypeId: "",
   formatId: "",
   paperId: "",

@@ -68,7 +68,6 @@ export function draftFromWork(work: WorkDetail): NewMangaDraft {
     synopsis: work.synopsis || "",
     originalPublicationStartYear: work.originalPublicationStartYear ? String(work.originalPublicationStartYear) : "",
     originalPublicationEndYear: work.originalPublicationEndYear ? String(work.originalPublicationEndYear) : "",
-    originalVolumeCount: work.originalVolumeCount ? String(work.originalVolumeCount) : "",
     coverAssetId: work.coverAssetId || "",
     coverUrl: work.coverUrl || "",
     coverPending: false,
@@ -127,7 +126,6 @@ export function getInvalidPublicationFields(draft: NewMangaDraft, rules: Publica
   if (!draft.originalPublicationStatus) fields.push("originalPublicationStatus");
   if (!draft.originalPublicationStartYear) fields.push("originalPublicationStartYear");
   if (!rules.isOpenOriginalPublication && !draft.originalPublicationEndYear) fields.push("originalPublicationEndYear");
-  if (!rules.isOpenOriginalPublication && Number(draft.originalVolumeCount) <= 0) fields.push("originalVolumeCount");
   if (draft.genreIds.length === 0) fields.push("genreIds");
   if (!rules.demographyDisabled && draft.demographies.length === 0) fields.push("demographies");
   if (!rules.effectiveDirectRelease && draft.magazineIds.length === 0) fields.push("magazineIds");
@@ -168,9 +166,6 @@ export function buildWorkPayload(draft: NewMangaDraft, rules: PublicationRules) 
     originalPublicationStartYear: draft.originalPublicationStartYear ? Number(draft.originalPublicationStartYear) : null,
     originalPublicationEndYear: !rules.isOpenOriginalPublication && draft.originalPublicationEndYear
       ? Number(draft.originalPublicationEndYear)
-      : null,
-    originalVolumeCount: !rules.isOpenOriginalPublication && draft.originalVolumeCount
-      ? Number(draft.originalVolumeCount)
       : null,
     coverAssetId: draft.coverAssetId || null,
     typeId: Number(draft.typeId),

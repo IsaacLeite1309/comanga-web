@@ -509,7 +509,6 @@ describe("AdminOptions", () => {
     expect(screen.queryByPlaceholderText(/pesquisar categoria/i)).not.toBeInTheDocument();
     expect(screen.getByRole("button", { name: /^autor$/i })).toBeInTheDocument();
     expect(screen.getByRole("button", { name: /tipo de obra/i })).toBeInTheDocument();
-    expect(screen.queryByRole("button", { name: /tipo de edição/i })).not.toBeInTheDocument();
     expect(screen.queryByRole("button", { name: /acabamento/i })).not.toBeInTheDocument();
     expect(screen.queryByRole("button", { name: /demografia/i })).not.toBeInTheDocument();
     expect(screen.queryByRole("button", { name: /país de origem/i })).not.toBeInTheDocument();

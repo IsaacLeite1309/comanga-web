@@ -24,7 +24,6 @@ vi.mock("sonner", () => ({
 const editionOptions = {
   options: {
     brazilianPublishers: [{ id: 30, label: "Panini" }],
-    editionTypes: [{ id: 31, label: "Tankobon" }],
     coverTypes: [{ id: 32, label: "Capa comum" }],
     formats: [{ id: 33, label: "Impresso" }],
     papers: [{ id: 34, label: "Papel" }],
@@ -62,13 +61,11 @@ describe("EditionForm", () => {
 
     await screen.findByRole("heading", { name: /nova edição/i });
     chooseDropdown(/editora brasileira/i, /panini/i);
-    chooseDropdown(/tipo de edição/i, /tankobon/i);
     firstRender.unmount();
 
     renderEditionForm();
 
     expect(await screen.findByLabelText(/editora brasileira/i)).toHaveTextContent("Panini");
-    expect(screen.getByLabelText(/tipo de edição/i)).toHaveTextContent("Tankobon");
   });
 
   it("não oferece importação de capa própria", async () => {
@@ -77,6 +74,7 @@ describe("EditionForm", () => {
 
     await screen.findByRole("heading", { name: /nova edição/i });
 
+    expect(screen.queryByLabelText(/tipo de edi/i)).not.toBeInTheDocument();
     expect(screen.queryByLabelText(/capa da edi/i)).not.toBeInTheDocument();
     expect(screen.queryByText(/a capa desta Edição é a capa do Volume 1/i)).not.toBeInTheDocument();
   });
@@ -92,7 +90,6 @@ describe("EditionForm", () => {
     expect(await screen.findByRole("heading", { name: /nova edição/i })).toBeInTheDocument();
 
     chooseDropdown(/editora brasileira/i, /panini/i);
-    chooseDropdown(/tipo de edição/i, /tankobon/i);
     chooseDropdown(/acabamento/i, /capa comum/i);
     chooseDropdown(/formato/i, /impresso/i);
     chooseDropdown(/miolo/i, /papel/i);
@@ -103,7 +100,6 @@ describe("EditionForm", () => {
     await waitFor(() => {
       expect(api.post).toHaveBeenCalledWith("/admin/works/10/editions", expect.objectContaining({
         brazilianPublisherId: 30,
-        editionTypeId: 31,
         coverTypeId: 32,
         formatId: 33,
         paperId: 34,
@@ -130,7 +126,6 @@ describe("EditionForm", () => {
     fireEvent.click(screen.getByRole("button", { name: /^salvar$/i }));
 
     await waitFor(() => expect(api.post).toHaveBeenCalledWith("/admin/works/10/editions", expect.objectContaining({
-      editionTypeId: null,
       coverTypeId: null,
       formatId: null,
       paperId: null,
@@ -149,7 +144,6 @@ describe("EditionForm", () => {
             coverAssetId: null,
             coverUrl: null,
             brazilianPublisher: { id: 30, label: "Panini" },
-            editionType: { id: 31, label: "Tankobon" },
             coverType: { id: 32, label: "Capa comum" },
             format: { id: 33, label: "Impresso" },
             paper: { id: 34, label: "Papel" },
@@ -243,7 +237,6 @@ describe("EditionForm", () => {
 
     await screen.findByRole("heading", { name: /nova edi/i });
     chooseDropdown(/editora brasileira/i, /panini/i);
-    chooseDropdown(/tipo de edi/i, /tankobon/i);
     chooseDropdown(/acabamento/i, /capa comum/i);
     chooseDropdown(/formato/i, /impresso/i);
     chooseDropdown(/miolo/i, /papel/i);

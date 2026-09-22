@@ -14,7 +14,6 @@ const response = {
     chronologicalNumber: 1,
     coverUrl: null,
     brazilianPublisher: { id: 1, label: "Panini" },
-    editionType: { id: 2, label: "Padrão" },
     format: { id: 3, label: "Tankobon" },
     coverType: { id: 4, label: "Brochura" },
     brazilPublicationStatus: "Em publicação",
