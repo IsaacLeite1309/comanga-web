@@ -84,7 +84,7 @@ function EditionVolumeSelection() {
   const isCollectionContext = location.pathname.startsWith("/colecao/");
   const editionPath = slug
     ? `${isCollectionContext ? "/colecao" : "/obras"}/${encodeURIComponent(slug)}/edicao/${editionId}`
-    : `/edicoes/${editionId}`;
+    : "";
   const [data, setData] = useState<PublicEditionDetailsResponse | null>(null);
   // Futuramente, estes IDs virão da Estante ou da Lista de Desejos. Por ora, a tela é somente visual.
   const [initialSelectedIds] = useState<Set<number>>(() => new Set());
@@ -95,7 +95,7 @@ function EditionVolumeSelection() {
 
   useEffect(() => {
     let active = true;
-    if (!validMode || !Number.isInteger(numericEditionId) || numericEditionId <= 0) {
+    if (!slug || !validMode || !Number.isInteger(numericEditionId) || numericEditionId <= 0) {
       setError("Seleção de Volumes inválida.");
       setLoading(false);
       return () => { active = false; };
@@ -104,7 +104,13 @@ function EditionVolumeSelection() {
     setLoading(true);
     loadCompleteEdition(numericEditionId)
       .then((result) => {
-        if (active) setData(result);
+        if (!active) return;
+        if (result.edition.work.slug !== slug) {
+          setData(null);
+          setError("Seleção de Volumes inválida.");
+          return;
+        }
+        setData(result);
       })
       .catch((requestError) => {
         if (active) setError(getApiError(requestError, "Não foi possível carregar os Volumes."));
@@ -114,7 +120,7 @@ function EditionVolumeSelection() {
       });
 
     return () => { active = false; };
-  }, [numericEditionId, validMode]);
+  }, [numericEditionId, slug, validMode]);
 
   const toggleVolume = (volumeId: number) => {
     setSelectedIds((current) => {

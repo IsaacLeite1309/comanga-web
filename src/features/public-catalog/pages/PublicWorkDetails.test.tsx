@@ -160,7 +160,7 @@ describe("PublicWorkDetails", () => {
     expect(screen.getByText("Volume 1")).toBeInTheDocument();
     expect(screen.getByRole("link", { name: "Ver detalhes do Volume 1" })).toHaveAttribute(
       "href",
-      "/volumes/30",
+      "/obras/monster/edicao/20/volume/30",
     );
     expect(screen.queryByText("15/05/2024")).not.toBeInTheDocument();
     expect(screen.queryByAltText("Capa da 1ª edição de Monster")).not.toBeInTheDocument();

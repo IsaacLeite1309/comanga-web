@@ -11,6 +11,7 @@ import type {
 import { LoadingState } from "@/components/shared/AsyncState";
 import { getApiError } from "@/lib/apiError";
 import { formatPublicationStatus, publicVolumeLabel } from "@/features/public-catalog/publicCatalogFormatters";
+import { publicEditionPath, publicVolumePath } from "@/features/public-catalog/publicCatalogPaths";
 
 function publicationPeriod(work: PublicWorkDetailsData) {
   const start = work.originalPublicationStartYear;
@@ -40,12 +41,17 @@ function StackedValues({ values }: { values: string[] }) {
   );
 }
 
-function VolumePreview({ volume, workTitle }: { volume: PublicVolumePreview; workTitle: string }) {
+function VolumePreview({ volume, workSlug, workTitle, editionId }: {
+  volume: PublicVolumePreview;
+  workSlug: string;
+  workTitle: string;
+  editionId: number;
+}) {
   const label = publicVolumeLabel(volume);
   return (
     <article className="min-w-0">
       <Link
-        to={`/volumes/${volume.id}`}
+        to={publicVolumePath(workSlug, editionId, volume.id)}
         aria-label={`Ver detalhes do ${label}`}
         className="group block rounded-lg outline-none focus-visible:ring-2 focus-visible:ring-primary"
       >
@@ -70,7 +76,7 @@ function EditionCard({ edition, workSlug, workTitle }: { edition: PublicEditionD
   return (
     <article className="min-w-0 py-5 first:pt-0">
       <Link
-        to={`/obras/${encodeURIComponent(workSlug)}/edicao/${edition.id}`}
+        to={publicEditionPath(workSlug, edition.id)}
         className="-ml-3 flex w-[calc(100%+0.75rem)] flex-col items-start rounded-2xl bg-background px-3 py-3 text-left transition-colors hover:bg-sidebar-accent/30 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary focus-visible:ring-offset-2 focus-visible:ring-offset-background"
       >
         <h3 className="flex flex-wrap items-center gap-2 text-base font-bold text-primary">
@@ -86,7 +92,13 @@ function EditionCard({ edition, workSlug, workTitle }: { edition: PublicEditionD
         <section className="mt-5" aria-label={`Prévia de Volumes da ${label}`}>
           <div className="grid grid-cols-2 gap-3 sm:grid-cols-3 lg:grid-cols-5">
             {edition.volumes.map((volume) => (
-              <VolumePreview key={volume.id} volume={volume} workTitle={workTitle} />
+              <VolumePreview
+                key={volume.id}
+                volume={volume}
+                workSlug={workSlug}
+                workTitle={workTitle}
+                editionId={edition.id}
+              />
             ))}
           </div>
         </section>

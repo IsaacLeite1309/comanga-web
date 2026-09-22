@@ -11,6 +11,7 @@ import type {
   PublicEditionVolumeSummary,
 } from "@/features/public-catalog/publicCatalogTypes";
 import { getApiError } from "@/lib/apiError";
+import { publicVolumePath, publicWorkPath } from "@/features/public-catalog/publicCatalogPaths";
 
 const PAGE_SIZE = 24;
 
@@ -37,12 +38,17 @@ function MetaItem({ label, value }: { label: string; value: string | number }) {
   );
 }
 
-function VolumeCard({ volume, workTitle }: { volume: PublicEditionVolumeSummary; workTitle: string }) {
+function VolumeCard({ volume, workSlug, workTitle, editionId }: {
+  volume: PublicEditionVolumeSummary;
+  workSlug: string;
+  workTitle: string;
+  editionId: number;
+}) {
   const label = publicVolumeLabel(volume);
   return (
     <article className="min-w-0">
       <Link
-        to={`/volumes/${volume.id}`}
+        to={publicVolumePath(workSlug, editionId, volume.id)}
         aria-label={`Ver detalhes do ${label}`}
         className="group block rounded-lg outline-none focus-visible:ring-2 focus-visible:ring-primary"
       >
@@ -89,7 +95,7 @@ interface EditionContentProps {
 function EditionContent({ data, editionPath, isCollectionContext, onPageChange }: EditionContentProps) {
   const { edition, volumes, pagination } = data;
   const editionLabel = `${edition.chronologicalNumber}ª edição`;
-  const workPath = `/obras/${encodeURIComponent(edition.work.slug)}`;
+  const workPath = publicWorkPath(edition.work.slug);
   const rootPath = isCollectionContext ? "/colecao" : "/pesquisa?tab=works&sortBy=title&order=ASC&page=1";
   const rootLabel = isCollectionContext ? "Coleção" : "Pesquisar";
   const backPath = isCollectionContext ? "/colecao" : workPath;
@@ -144,7 +150,7 @@ function EditionContent({ data, editionPath, isCollectionContext, onPageChange }
               <div className="mt-3">
                 <p className="text-sm font-bold uppercase tracking-wide text-muted-foreground">Obra</p>
                 <Link
-                  to={`/obras/${encodeURIComponent(edition.work.slug)}`}
+                  to={workPath}
                   aria-label={`Ver detalhes da Obra ${edition.work.title}`}
                   className="-ml-3 -mt-1 inline-flex w-fit max-w-[calc(100%+0.75rem)] rounded-2xl bg-background px-3 py-2 text-left transition-colors hover:bg-sidebar-accent/30 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary focus-visible:ring-offset-2 focus-visible:ring-offset-background"
                 >
@@ -193,7 +199,15 @@ function EditionContent({ data, editionPath, isCollectionContext, onPageChange }
               {volumes.length > 0 ? (
                 <>
                   <div className="mt-5 grid grid-cols-2 gap-x-3 gap-y-7 sm:grid-cols-3 sm:gap-x-4 lg:grid-cols-5" aria-label="Volumes da Edição">
-                    {volumes.map((volume) => <VolumeCard key={volume.id} volume={volume} workTitle={edition.work.title} />)}
+                    {volumes.map((volume) => (
+                      <VolumeCard
+                        key={volume.id}
+                        volume={volume}
+                        workSlug={edition.work.slug}
+                        workTitle={edition.work.title}
+                        editionId={edition.id}
+                      />
+                    ))}
                   </div>
                   <CatalogPagination pagination={pagination} onPageChange={onPageChange} ariaLabel="Paginação dos Volumes" />
                 </>
@@ -210,14 +224,14 @@ function EditionContent({ data, editionPath, isCollectionContext, onPageChange }
   );
 }
 
-function useEditionDetails(editionId: number, page: number, retry: number) {
+function useEditionDetails(editionId: number, workSlug: string, page: number, retry: number) {
   const [data, setData] = useState<PublicEditionDetailsResponse | null>(null);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState("");
 
   useEffect(() => {
     let active = true;
-    if (!Number.isInteger(editionId) || editionId <= 0) {
+    if (!workSlug || !Number.isInteger(editionId) || editionId <= 0) {
       setData(null);
       setError("Edição não encontrada.");
       setLoading(false);
@@ -226,7 +240,15 @@ function useEditionDetails(editionId: number, page: number, retry: number) {
     setLoading(true);
     setError("");
     getPublicEditionDetails(editionId, { page, limit: PAGE_SIZE })
-      .then((result) => { if (active) setData(result); })
+      .then((result) => {
+        if (!active) return;
+        if (result.edition.work.slug !== workSlug) {
+          setData(null);
+          setError("Edição não encontrada.");
+          return;
+        }
+        setData(result);
+      })
       .catch((requestError) => {
         if (!active) return;
         setData(null);
@@ -234,7 +256,7 @@ function useEditionDetails(editionId: number, page: number, retry: number) {
       })
       .finally(() => { if (active) setLoading(false); });
     return () => { active = false; };
-  }, [editionId, page, retry]);
+  }, [editionId, page, retry, workSlug]);
 
   return { data, loading, error };
 }
@@ -245,11 +267,9 @@ function PublicEditionDetails() {
   const [searchParams, setSearchParams] = useSearchParams();
   const [retry, setRetry] = useState(0);
   const page = positiveInteger(searchParams.get("page"));
-  const { data, loading, error } = useEditionDetails(Number(editionId), page, retry);
+  const { data, loading, error } = useEditionDetails(Number(editionId), slug || "", page, retry);
   const isCollectionContext = location.pathname.startsWith("/colecao/");
-  const editionPath = slug
-    ? `${isCollectionContext ? "/colecao" : "/obras"}/${encodeURIComponent(slug)}/edicao/${editionId}`
-    : `/edicoes/${editionId}`;
+  const editionPath = `${isCollectionContext ? "/colecao" : "/obras"}/${encodeURIComponent(slug || "")}/edicao/${editionId}`;
   const changePage = (nextPage: number) => {
     const next = new URLSearchParams(searchParams);
     next.set("page", String(nextPage));

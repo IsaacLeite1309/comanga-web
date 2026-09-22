@@ -48,7 +48,7 @@ const EditionDetails = () => {
   return (
     <div className="flex-1 min-w-0 px-3 py-6 sm:px-4 sm:py-8">
       <div className="mx-auto w-full max-w-6xl space-y-6">
-        <AdminCatalogBreadcrumb backTo={workPath} backState={{ workId }} items={[{ label: "Gerenciar mangás", to: "/admin/gerenciar-mangas" }, { label: `Edições de ${decodeURIComponent(workSlug)}`, to: workPath, state: { workId } }, { label: `Volumes da ${details.edition.chronologicalNumber}ª edição` }]} />
+        <AdminCatalogBreadcrumb backTo={workPath} backState={{ workId }} items={[{ label: "Gerenciar mangás", to: "/admin/gerenciar-mangas" }, { label: `Edições de ${details.edition.work?.title || decodeURIComponent(workSlug)}`, to: workPath, state: { workId } }, { label: `Volumes da ${details.edition.chronologicalNumber}ª edição` }]} />
         <EditionVolumesSection
           edition={details.edition}
           collection={volumesCollection}

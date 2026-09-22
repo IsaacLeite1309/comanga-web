@@ -16,6 +16,8 @@ import {
 import { WishlistPage } from "@/features/wishlist";
 import { PublicNav } from "@/app/PublicNav";
 import { ProtectedRoute } from "@/app/ProtectedRoute";
+import { GuestRoute } from "@/app/GuestRoute";
+import { PublicProfileRoute } from "@/app/PublicProfileRoute";
 
 const AdminUsersPage = lazy(() => import("@/features/admin-users").then((module) => ({ default: module.AdminUsersPage })));
 const AdminOptionsPage = lazy(() => import("@/features/admin-catalog").then((module) => ({ default: module.AdminOptionsPage })));
@@ -38,6 +40,18 @@ function AdminRoute({ children }: { children: React.ReactNode }) {
   );
 }
 
+function GuestPage({ children }: { children: React.ReactNode }) {
+  return <GuestRoute>{children}</GuestRoute>;
+}
+
+function PublicPage({ children }: { children: React.ReactNode }) {
+  return <PublicProfileRoute>{children}</PublicProfileRoute>;
+}
+
+function adminPage(page: React.ReactNode) {
+  return <AdminRoute>{page}</AdminRoute>;
+}
+
 const App = () => (
   <>
     <Sonner />
@@ -47,13 +61,13 @@ const App = () => (
           <PublicNav />
           <main className="min-w-0 flex-1 flex flex-col md:ml-20 lg:ml-64 pb-16 md:pb-0">
             <Routes>
-              <Route path="/recuperar-senha" element={<PasswordRecoveryPage />} />
-              <Route path="/redefinir-senha/:token?" element={<PasswordRecoveryPage reset />} />
+              <Route path="/recuperar-senha" element={<GuestPage><PasswordRecoveryPage /></GuestPage>} />
+              <Route path="/redefinir-senha/:token?" element={<GuestPage><PasswordRecoveryPage reset /></GuestPage>} />
               <Route path="/" element={<Navigate to="/entrar" replace />} />
-              <Route path="/entrar" element={<AuthPage />} />
-              <Route path="/cadastrar" element={<AuthPage />} />
+              <Route path="/entrar" element={<GuestPage><AuthPage /></GuestPage>} />
+              <Route path="/cadastrar" element={<GuestPage><AuthPage /></GuestPage>} />
               <Route path="/activate/:token" element={<ActivatePage />} />
-              <Route path="/reenvio" element={<ResendActivationPage />} />
+              <Route path="/reenvio" element={<GuestPage><ResendActivationPage /></GuestPage>} />
               
               <Route 
                 path="/perfil/:username" 
@@ -63,15 +77,21 @@ const App = () => (
                   </ProtectedRoute>
                 } 
               />
+              <Route
+                path="/perfil"
+                element={
+                  <ProtectedRoute>
+                    <ProfilePage />
+                  </ProtectedRoute>
+                }
+              />
               
-              <Route path="/pesquisa" element={<PublicCatalogPage />} />
-              <Route path="/autores/:authorId" element={<PublicAuthorWorksPage />} />
-              <Route path="/obras/:slug" element={<PublicWorkDetailsPage />} />
-              <Route path="/obras/:slug/edicao/:editionId" element={<PublicEditionDetailsPage />} />
-              <Route path="/obras/:slug/edicao/:editionId/selecionar/:mode" element={<EditionVolumeSelectionPage />} />
-              <Route path="/edicoes/:editionId" element={<PublicEditionDetailsPage />} />
-              <Route path="/edicoes/:editionId/selecionar/:mode" element={<EditionVolumeSelectionPage />} />
-              <Route path="/volumes/:volumeId" element={<PublicVolumeDetailsPage />} />
+              <Route path="/pesquisa" element={<PublicPage><PublicCatalogPage /></PublicPage>} />
+              <Route path="/autores/:authorId" element={<PublicPage><PublicAuthorWorksPage /></PublicPage>} />
+              <Route path="/obras/:slug" element={<PublicPage><PublicWorkDetailsPage /></PublicPage>} />
+              <Route path="/obras/:slug/edicao/:editionId" element={<PublicPage><PublicEditionDetailsPage /></PublicPage>} />
+              <Route path="/obras/:slug/edicao/:editionId/selecionar/:mode" element={<PublicPage><EditionVolumeSelectionPage /></PublicPage>} />
+              <Route path="/obras/:slug/edicao/:editionId/volume/:volumeId" element={<PublicPage><PublicVolumeDetailsPage /></PublicPage>} />
               <Route path="/colecao" element={<CollectionPage />} />
               <Route path="/colecao/:slug/edicao/:editionId" element={<PublicEditionDetailsPage />} />
               <Route path="/colecao/:slug/edicao/:editionId/selecionar/:mode" element={<EditionVolumeSelectionPage />} />
@@ -79,107 +99,55 @@ const App = () => (
               <Route path="/desejos" element={<WishlistPage />} />
               <Route
                 path="/admin/novo-manga"
-                element={
-                  <AdminRoute>
-                    <NewMangaPage />
-                  </AdminRoute>
-                }
+                element={adminPage(<NewMangaPage />)}
               />
               <Route
                 path="/admin/gerenciar-mangas"
-                element={
-                  <AdminRoute>
-                    <EditMangasPage />
-                  </AdminRoute>
-                }
+                element={adminPage(<EditMangasPage />)}
               />
               <Route
                 path="/admin/gerenciar-mangas/obras/:workSlug/edicoes"
-                element={
-                  <AdminRoute>
-                    <EditWorkPage />
-                  </AdminRoute>
-                }
+                element={adminPage(<EditWorkPage />)}
               />
               <Route
                 path="/admin/gerenciar-mangas/obras/:workSlug/editar"
-                element={
-                  <AdminRoute>
-                    <EditWorkFormPage />
-                  </AdminRoute>
-                }
+                element={adminPage(<EditWorkFormPage />)}
               />
               <Route
                 path="/admin/gerenciar-mangas/obras/:workSlug/edicoes/nova"
-                element={
-                  <AdminRoute>
-                    <EditionFormPage />
-                  </AdminRoute>
-                }
+                element={adminPage(<EditionFormPage />)}
               />
               <Route
                 path="/admin/gerenciar-mangas/obras/:workSlug/edicoes/:editionId/volumes"
-                element={
-                  <AdminRoute>
-                    <EditionDetailsPage />
-                  </AdminRoute>
-                }
+                element={adminPage(<EditionDetailsPage />)}
               />
               <Route
                 path="/admin/gerenciar-mangas/obras/:workSlug/edicoes/:editionId/volumes/novo"
-                element={
-                  <AdminRoute>
-                    <VolumeFormPage />
-                  </AdminRoute>
-                }
+                element={adminPage(<VolumeFormPage />)}
               />
               <Route
                 path="/admin/gerenciar-mangas/obras/:workSlug/edicoes/:editionId/volumes/:volumeId"
-                element={
-                <AdminRoute>
-                    <VolumeFormPage />
-                  </AdminRoute>
-                }
+                element={adminPage(<VolumeFormPage />)}
               />
               <Route
                 path="/admin/gerenciar-mangas/obras/:workSlug/edicoes/:editionId/volumes/:volumeId/editar"
-                element={
-                  <AdminRoute>
-                    <VolumeFormPage />
-                  </AdminRoute>
-                }
+                element={adminPage(<VolumeFormPage />)}
               />
               <Route
                 path="/admin/gerenciar-mangas/obras/:workSlug/edicoes/:editionId/editar"
-                element={
-                  <AdminRoute>
-                    <EditionFormPage />
-                  </AdminRoute>
-                }
+                element={adminPage(<EditionFormPage />)}
               />
               <Route
                 path="/admin/pos-cadastro"
-                element={
-                  <AdminRoute>
-                    <PostCreateActionsPage />
-                  </AdminRoute>
-                }
+                element={adminPage(<PostCreateActionsPage />)}
               />
               <Route
                 path="/admin/opcoes"
-                element={
-                  <AdminRoute>
-                    <AdminOptionsPage />
-                  </AdminRoute>
-                }
+                element={adminPage(<AdminOptionsPage />)}
               />
               <Route
                 path="/admin/users"
-                element={
-                  <AdminRoute>
-                    <AdminUsersPage />
-                  </AdminRoute>
-                }
+                element={adminPage(<AdminUsersPage />)}
               />
               
               {/* ADD ALL CUSTOM ROUTES ABOVE THE CATCH-ALL "*" ROUTE */}

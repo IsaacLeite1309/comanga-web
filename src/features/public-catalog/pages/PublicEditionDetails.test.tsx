@@ -121,8 +121,8 @@ describe("PublicEditionDetails", () => {
     expect(screen.queryByText("416 páginas")).not.toBeInTheDocument();
     expect(screen.getByText("2027")).toBeInTheDocument();
     expect(screen.getByText("Sem capa")).toBeInTheDocument();
-    expect(screen.getByRole("link", { name: "Ver detalhes do Volume 1" })).toHaveAttribute("href", "/volumes/30");
-    expect(screen.getByRole("link", { name: "Ver detalhes do Volume 2" })).toHaveAttribute("href", "/volumes/31");
+    expect(screen.getByRole("link", { name: "Ver detalhes do Volume 1" })).toHaveAttribute("href", "/obras/monster/edicao/20/volume/30");
+    expect(screen.getByRole("link", { name: "Ver detalhes do Volume 2" })).toHaveAttribute("href", "/obras/monster/edicao/20/volume/31");
   });
 
   it("pagina os Volumes e preserva a página na URL", async () => {

@@ -2,9 +2,11 @@ import { fireEvent, render, screen } from "@testing-library/react";
 import { beforeEach, describe, expect, it, vi } from "vitest";
 import App from "./App";
 import { api } from "@/services/api";
+import { toast } from "sonner";
 
 vi.mock("@/services/api", () => ({ api: { get: vi.fn() } }));
 vi.mock("@/components/ui/sonner", () => ({ Toaster: () => null }));
+vi.mock("sonner", () => ({ toast: { error: vi.fn(), success: vi.fn(), warning: vi.fn() } }));
 vi.mock("@/features/auth", async () => {
   const actual = await vi.importActual<typeof import("@/features/auth")>("@/features/auth");
 
@@ -83,6 +85,34 @@ describe("navegação e acesso administrativo", () => {
     window.history.replaceState({}, "", "/admin/users");
     render(<App />);
     expect(await screen.findByText("Meu perfil")).toBeInTheDocument();
+  });
+
+  it("redireciona usuários autenticados das páginas de visitante para o perfil", async () => {
+    vi.mocked(api.get).mockResolvedValue({
+      data: { user: { id: "1", username: "leitor", profiles: ["Usuário Padrão"], active_profile: "Usuário Padrão" } },
+    });
+    window.history.replaceState({}, "", "/entrar");
+    render(<App />);
+
+    expect(await screen.findByText("Meu perfil")).toBeInTheDocument();
+    expect(screen.queryByText("Entrar na conta")).not.toBeInTheDocument();
+  });
+
+  it("desvia o perfil administrativo das páginas públicas e orienta a troca de perfil", async () => {
+    vi.mocked(api.get).mockResolvedValue({
+      data: { user: { id: "1", username: "admin", profiles: ["Administrador", "Usuário Padrão"], active_profile: "Administrador" } },
+    });
+    window.history.replaceState({}, "", "/pesquisa");
+    render(<App />);
+
+    expect(await screen.findByText("Meu perfil")).toBeInTheDocument();
+    expect(toast.warning).toHaveBeenCalledWith("Mude o perfil para usuário padrão para acessar essa página.");
+  });
+
+  it.each(["/edicoes/20", "/volumes/30"])("invalida a URL pública isolada %s", async (path) => {
+    window.history.replaceState({}, "", path);
+    render(<App />);
+    expect(await screen.findByText("404")).toBeInTheDocument();
   });
 
   it("preserva a página de rota inexistente", async () => {

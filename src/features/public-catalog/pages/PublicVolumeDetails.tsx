@@ -2,10 +2,12 @@ import { useEffect, useState } from "react";
 import {
   AlertCircle,
   ArrowLeft,
+  ArrowRight,
   Barcode,
   BookOpen,
   Calendar,
   ChevronRight,
+  Layers3,
   Plus,
   ShoppingCart,
 } from "lucide-react";
@@ -19,6 +21,7 @@ import {
 import { getPublicVolumeDetails } from "@/features/public-catalog/publicCatalogService";
 import type { PublicVolumeDetails as PublicVolume } from "@/features/public-catalog/publicCatalogTypes";
 import { getApiError } from "@/lib/apiError";
+import { publicEditionPath, publicVolumePath, publicWorkPath } from "@/features/public-catalog/publicCatalogPaths";
 
 function formatPrice(price: number, currency: string) {
   const formatted = new Intl.NumberFormat("pt-BR", {
@@ -32,13 +35,15 @@ function DetailRow({
   icon,
   label,
   value,
+  className = "",
 }: {
   icon: React.ReactNode;
   label: string;
   value: string;
+  className?: string;
 }) {
   return (
-    <div className="grid min-w-0 grid-cols-[1.25rem_minmax(0,1fr)] gap-x-2 text-sm">
+    <div className={`grid min-w-0 grid-cols-[1.25rem_minmax(0,1fr)] gap-x-2 text-sm ${className}`}>
       <span className="mt-0.5 text-muted-foreground" aria-hidden="true">{icon}</span>
       <div className="min-w-0">
         <dt className="break-words text-xs font-bold uppercase tracking-wide text-muted-foreground">{label}</dt>
@@ -48,7 +53,7 @@ function DetailRow({
   );
 }
 
-function useVolumeDetails(volumeId: number, retry: number) {
+function useVolumeDetails(volumeId: number, workSlug: string, editionId: number, retry: number) {
   const [volume, setVolume] = useState<PublicVolume | null>(null);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState("");
@@ -56,7 +61,7 @@ function useVolumeDetails(volumeId: number, retry: number) {
   useEffect(() => {
     let active = true;
 
-    if (!Number.isInteger(volumeId) || volumeId <= 0) {
+    if (!workSlug || !Number.isInteger(editionId) || editionId <= 0 || !Number.isInteger(volumeId) || volumeId <= 0) {
       setVolume(null);
       setError("Volume não encontrado.");
       setLoading(false);
@@ -67,7 +72,13 @@ function useVolumeDetails(volumeId: number, retry: number) {
     setError("");
     getPublicVolumeDetails(volumeId)
       .then((result) => {
-        if (active) setVolume(result);
+        if (!active) return;
+        if (result.edition.id !== editionId || result.edition.work.slug !== workSlug) {
+          setVolume(null);
+          setError("Volume não encontrado.");
+          return;
+        }
+        setVolume(result);
       })
       .catch((requestError) => {
         if (!active) return;
@@ -79,7 +90,7 @@ function useVolumeDetails(volumeId: number, retry: number) {
       });
 
     return () => { active = false; };
-  }, [retry, volumeId]);
+  }, [editionId, retry, volumeId, workSlug]);
 
   return { volume, loading, error };
 }
@@ -111,11 +122,12 @@ interface VolumeSectionProps {
 }
 
 function VolumeBreadcrumb({ volume, volumeLabel, editionLabel }: VolumeSectionProps) {
+  const editionPath = publicEditionPath(volume.edition.work.slug, volume.edition.id);
   return (
     <div className="fixed inset-x-0 top-0 z-50 flex h-16 min-w-0 items-center gap-3 border-b border-border bg-background px-4 md:left-20 sm:px-6 lg:left-64 xl:px-10">
       <Link
         aria-label={`Voltar para ${editionLabel}`}
-        to={`/edicoes/${volume.edition.id}`}
+        to={editionPath}
         className="inline-flex shrink-0 items-center gap-2 rounded-lg px-2 py-1 text-base font-bold leading-none text-foreground transition-colors hover:bg-sidebar-accent/30 hover:text-foreground"
       >
         <ArrowLeft className="h-5 w-5 text-primary" aria-hidden="true" />
@@ -130,7 +142,7 @@ function VolumeBreadcrumb({ volume, volumeLabel, editionLabel }: VolumeSectionPr
         </Link>
         <ChevronRight className="h-5 w-5 shrink-0 text-muted-foreground" aria-hidden="true" />
         <Link
-          to={`/obras/${encodeURIComponent(volume.edition.work.slug)}`}
+          to={publicWorkPath(volume.edition.work.slug)}
           className="truncate rounded-lg px-2 py-1 text-muted-foreground transition-colors hover:bg-sidebar-accent/30 hover:text-foreground"
           title={volume.edition.work.title}
         >
@@ -138,7 +150,7 @@ function VolumeBreadcrumb({ volume, volumeLabel, editionLabel }: VolumeSectionPr
         </Link>
         <ChevronRight className="h-5 w-5 shrink-0 text-muted-foreground" aria-hidden="true" />
         <Link
-          to={`/edicoes/${volume.edition.id}`}
+          to={editionPath}
           className="shrink-0 rounded-lg px-2 py-1 text-muted-foreground transition-colors hover:bg-sidebar-accent/30 hover:text-foreground"
         >
           {editionLabel}
@@ -153,6 +165,7 @@ function VolumeBreadcrumb({ volume, volumeLabel, editionLabel }: VolumeSectionPr
 }
 
 function VolumeCover({ volume, volumeLabel }: Omit<VolumeSectionProps, "editionLabel">) {
+  const hasNavigation = volume.previousVolume || volume.nextVolume;
   return (
     <section className="relative isolate flex min-h-[34rem] items-center justify-center overflow-hidden border-b border-border p-8 sm:min-h-[42rem] sm:p-12 lg:fixed lg:bottom-0 lg:left-64 lg:top-16 lg:h-[calc(100dvh-4rem)] lg:w-[calc((100vw-16rem)*0.425)] lg:min-h-0 lg:border-b-0 lg:border-r">
       {volume.coverUrl ? (
@@ -163,13 +176,37 @@ function VolumeCover({ volume, volumeLabel }: Omit<VolumeSectionProps, "editionL
       ) : (
         <div className="absolute inset-0 -z-10 bg-gradient-to-br from-card via-background to-input" aria-hidden="true" />
       )}
-      <CatalogCover
-        key={volume.coverUrl || "empty"}
-        src={volume.coverUrl}
-        alt={`Capa do ${volumeLabel} de ${volume.edition.work.title}`}
-        eager
-        className="w-full max-w-sm shadow-2xl shadow-black/50 sm:max-w-md lg:max-w-[23rem] lg:-translate-y-8"
-      />
+      <div className="flex w-full max-w-md flex-col items-center gap-6 lg:-translate-y-3">
+        <CatalogCover
+          key={volume.coverUrl || "empty"}
+          src={volume.coverUrl}
+          alt={`Capa do ${volumeLabel} de ${volume.edition.work.title}`}
+          eager
+          className="w-full max-w-sm shadow-2xl shadow-black/50 sm:max-w-md lg:max-w-[23rem]"
+        />
+        {hasNavigation ? (
+          <nav className="grid w-full grid-cols-2 gap-3" aria-label="Navegação entre Volumes">
+            {volume.previousVolume ? (
+              <Link
+                to={publicVolumePath(volume.edition.work.slug, volume.edition.id, volume.previousVolume.id)}
+                className="inline-flex w-fit items-center gap-2 rounded-full bg-sidebar px-4 py-2 text-sm font-semibold text-white shadow-md transition-colors hover:bg-sidebar-accent"
+              >
+                <ArrowLeft className="h-4 w-4" aria-hidden="true" />
+                {publicVolumeLabel(volume.previousVolume)}
+              </Link>
+            ) : null}
+            {volume.nextVolume ? (
+              <Link
+                to={publicVolumePath(volume.edition.work.slug, volume.edition.id, volume.nextVolume.id)}
+                className="col-start-2 inline-flex w-fit items-center gap-2 justify-self-end rounded-full bg-sidebar px-4 py-2 text-sm font-semibold text-white shadow-md transition-colors hover:bg-sidebar-accent"
+              >
+                {publicVolumeLabel(volume.nextVolume)}
+                <ArrowRight className="h-4 w-4" aria-hidden="true" />
+              </Link>
+            ) : null}
+          </nav>
+        ) : null}
+      </div>
     </section>
   );
 }
@@ -220,6 +257,7 @@ function PurchaseActions({ affiliateLink }: { affiliateLink?: string | null }) {
 
 function VolumeArticle({ volume, volumeLabel, editionLabel }: VolumeSectionProps) {
   const volumePageTitle = `${volume.edition.work.title} ${volumeLabel.replace(/^Volume\b/, "volume")}`;
+  const editionPath = publicEditionPath(volume.edition.work.slug, volume.edition.id);
   return (
     <article className="flex min-w-0 flex-col bg-card/30 lg:col-start-2 lg:row-start-1">
       <div className="px-5 pb-0 pt-6 sm:px-8">
@@ -228,7 +266,7 @@ function VolumeArticle({ volume, volumeLabel, editionLabel }: VolumeSectionProps
           <div>
             <p className="text-sm font-bold uppercase tracking-wide text-muted-foreground">Obra</p>
             <Link
-              to={`/obras/${encodeURIComponent(volume.edition.work.slug)}`}
+              to={publicWorkPath(volume.edition.work.slug)}
               aria-label={`Ver detalhes da Obra ${volume.edition.work.title}`}
               className="-ml-3 -mt-1 inline-flex w-fit rounded-2xl bg-background px-3 py-2 text-left transition-colors hover:bg-sidebar-accent/30 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary focus-visible:ring-offset-2 focus-visible:ring-offset-background"
             >
@@ -238,7 +276,7 @@ function VolumeArticle({ volume, volumeLabel, editionLabel }: VolumeSectionProps
           <div>
             <p className="text-sm font-bold uppercase tracking-wide text-muted-foreground">Edição</p>
             <Link
-              to={`/edicoes/${volume.edition.id}`}
+              to={editionPath}
               aria-label={`Ver ${editionLabel}`}
               className="-ml-3 -mt-1 inline-flex w-fit rounded-2xl bg-background px-3 py-2 text-left transition-colors hover:bg-sidebar-accent/30 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary focus-visible:ring-offset-2 focus-visible:ring-offset-background"
             >
@@ -260,7 +298,7 @@ function VolumeArticle({ volume, volumeLabel, editionLabel }: VolumeSectionProps
       ) : null}
       <section className="px-5 py-6 sm:px-8" aria-labelledby="details-title">
         <h2 id="details-title" className="text-sm font-bold uppercase tracking-wide text-muted-foreground">Detalhes</h2>
-        <dl className="mt-4 grid grid-cols-[repeat(auto-fit,minmax(min(100%,10rem),1fr))] gap-x-3 gap-y-4">
+        <dl className="mt-4 grid grid-cols-2 gap-x-3 gap-y-4 xl:grid-cols-4">
           {volume.releaseYear ? (
             <DetailRow
               icon={<Calendar className="h-4 w-4" />}
@@ -282,6 +320,12 @@ function VolumeArticle({ volume, volumeLabel, editionLabel }: VolumeSectionProps
               value={`${volume.pages} ${volume.pages === 1 ? "página" : "páginas"}`}
             />
           ) : null}
+          <DetailRow
+            icon={<Layers3 className="h-4 w-4" />}
+            label="Miolo"
+            value={volume.edition.paper?.label || ""}
+            className="xl:col-start-4"
+          />
           {volume.isbn10 ? (
             <DetailRow icon={<Barcode className="h-4 w-4" />} label="ISBN-10" value={volume.isbn10} />
           ) : null}
@@ -295,9 +339,9 @@ function VolumeArticle({ volume, volumeLabel, editionLabel }: VolumeSectionProps
 }
 
 function PublicVolumeDetails() {
-  const { volumeId = "" } = useParams();
+  const { slug = "", editionId = "", volumeId = "" } = useParams();
   const [retry, setRetry] = useState(0);
-  const { volume, loading, error } = useVolumeDetails(Number(volumeId), retry);
+  const { volume, loading, error } = useVolumeDetails(Number(volumeId), slug, Number(editionId), retry);
   if (loading) return <LoadingState message="Carregando Volume..." fullPage />;
   if (!volume) return <VolumeUnavailable error={error} onRetry={() => setRetry((value) => value + 1)} />;
   const volumeLabel = publicVolumeLabel(volume);

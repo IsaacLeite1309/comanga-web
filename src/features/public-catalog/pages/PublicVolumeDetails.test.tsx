@@ -25,10 +25,13 @@ const volume = {
   isbn13: "9781234567890",
   affiliateLink: "https://shop.example/volume-1",
   synopsis: "Uma sinopse pública.",
+  previousVolume: { id: 29, number: 0, singleVolume: false },
+  nextVolume: { id: 31, number: 2, singleVolume: false },
   edition: {
     id: 20,
     chronologicalNumber: 2,
     brazilianPublisher: { id: 4, label: "Panini" },
+    paper: { id: 7, label: "Offset" },
     work: {
       id: 8,
       slug: "monster",
@@ -38,11 +41,11 @@ const volume = {
   },
 };
 
-function renderPage(entry = "/volumes/30") {
+function renderPage(entry = "/obras/monster/edicao/20/volume/30") {
   return render(
     <MemoryRouter initialEntries={[entry]}>
       <Routes>
-        <Route path="/volumes/:volumeId" element={<PublicVolumeDetails />} />
+        <Route path="/obras/:slug/edicao/:editionId/volume/:volumeId" element={<PublicVolumeDetails />} />
       </Routes>
     </MemoryRouter>,
   );
@@ -66,6 +69,7 @@ describe("PublicVolumeDetails", () => {
     expect(screen.getByText("R$ 79,90")).toBeInTheDocument();
     expect(screen.getByText("1234567890")).toBeInTheDocument();
     expect(screen.getByText("9781234567890")).toBeInTheDocument();
+    expect(screen.getByText("Offset")).toBeInTheDocument();
     expect(screen.getByText("Uma sinopse pública.")).toBeInTheDocument();
 
     const cover = screen.getByAltText("Capa do Volume 1 de Monster");
@@ -82,11 +86,25 @@ describe("PublicVolumeDetails", () => {
     renderPage();
     await screen.findByRole("heading", { name: "Monster volume 1" });
 
-    expect(screen.getByRole("link", { name: "Voltar para 2ª edição" })).toHaveAttribute("href", "/edicoes/20");
+    expect(screen.getByRole("link", { name: "Voltar para 2ª edição" })).toHaveAttribute("href", "/obras/monster/edicao/20");
     expect(screen.getByRole("link", { name: "Pesquisar" })).toHaveAttribute("href", "/pesquisa?tab=works&sortBy=title&order=ASC&page=1");
     expect(screen.getByRole("link", { name: "Monster" })).toHaveAttribute("href", "/obras/monster");
-    expect(screen.getByRole("link", { name: "Ver 2ª edição" })).toHaveAttribute("href", "/edicoes/20");
+    expect(screen.getByRole("link", { name: "Ver 2ª edição" })).toHaveAttribute("href", "/obras/monster/edicao/20");
     expect(screen.getByRole("link", { name: "Ver detalhes da Obra Monster" })).toHaveAttribute("href", "/obras/monster");
+  });
+
+  it("navega para os Volumes público anterior e seguinte da mesma Edição", async () => {
+    renderPage();
+    await screen.findByRole("heading", { name: "Monster volume 1" });
+
+    expect(screen.getByRole("link", { name: "Volume 0" })).toHaveAttribute(
+      "href",
+      "/obras/monster/edicao/20/volume/29",
+    );
+    expect(screen.getByRole("link", { name: "Volume 2" })).toHaveAttribute(
+      "href",
+      "/obras/monster/edicao/20/volume/31",
+    );
   });
 
   it("não inventa valores nem ações ainda inaplicáveis quando campos opcionais estão ausentes", async () => {
@@ -104,8 +122,11 @@ describe("PublicVolumeDetails", () => {
       isbn13: null,
       affiliateLink: null,
       synopsis: null,
+      previousVolume: null,
+      nextVolume: null,
       edition: {
         ...volume.edition,
+        paper: null,
         work: { ...volume.edition.work, originalTitle: null },
       },
     });
@@ -119,6 +140,8 @@ describe("PublicVolumeDetails", () => {
     expect(screen.queryByText("ISBN-10")).not.toBeInTheDocument();
     expect(screen.queryByText("ISBN-13")).not.toBeInTheDocument();
     expect(screen.queryByText("Sinopse")).not.toBeInTheDocument();
+    expect(screen.getByText("Miolo")).toBeInTheDocument();
+    expect(screen.queryByRole("navigation", { name: "Navegação entre Volumes" })).not.toBeInTheDocument();
     expect(screen.queryByRole("link", { name: "Comprar em loja parceira" })).not.toBeInTheDocument();
     expect(screen.getByRole("button", { name: "Coleção" })).toBeInTheDocument();
     expect(screen.getByRole("button", { name: "Lista de Desejos" })).toBeInTheDocument();
@@ -161,7 +184,7 @@ describe("PublicVolumeDetails", () => {
 
     unmount();
     vi.clearAllMocks();
-    renderPage("/volumes/invalido");
+    renderPage("/obras/monster/edicao/20/volume/invalido");
     expect(await screen.findByText("Volume não encontrado.")).toBeInTheDocument();
     expect(getPublicVolumeDetails).not.toHaveBeenCalled();
   });

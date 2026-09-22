@@ -22,6 +22,7 @@ const editionResponse = {
   edition: {
     id: 20,
     workId: 10,
+    work: { id: 10, slug: "naruto", title: "Naruto" },
     chronologicalNumber: 1,
     coverUrl: "https://cdn.comanga.test/edicao.jpg",
     visibility: "Privado",
@@ -86,9 +87,9 @@ function arrangeVolumes(respond: (page: number) => Promise<unknown>) {
   });
 }
 
-function renderEditionDetails() {
+function renderEditionDetails(path = "/admin/gerenciar-mangas/obras/Naruto/edicoes/20/volumes") {
   return render(
-    <MemoryRouter initialEntries={[{ pathname: "/admin/gerenciar-mangas/obras/Naruto/edicoes/20/volumes", state: { workId: 10, editionId: 20 } }]}>
+    <MemoryRouter initialEntries={[{ pathname: path, state: { workId: 10, editionId: 20 } }]}>
       <Routes>
         <Route path="/admin/gerenciar-mangas/obras/:workSlug/edicoes/:editionId/volumes" element={<EditionDetails />} />
       </Routes>
@@ -100,6 +101,17 @@ describe("EditionDetails", () => {
   beforeEach(() => {
     resetCatalogPagesForTests();
     vi.clearAllMocks();
+  });
+
+  it("usa o título da Obra retornado pela API no caminho de navegação", async () => {
+    vi.mocked(api.get)
+      .mockResolvedValueOnce({ data: editionResponse })
+      .mockResolvedValueOnce({ data: emptyVolumesResponse });
+
+    renderEditionDetails("/admin/gerenciar-mangas/obras/naruto/edicoes/20/volumes");
+
+    expect(await screen.findByRole("link", { name: "Edições de Naruto" })).toBeInTheDocument();
+    expect(screen.queryByText("Edições de naruto")).not.toBeInTheDocument();
   });
 
   it("mostra a previa da edicao e o estado vazio de volumes", async () => {

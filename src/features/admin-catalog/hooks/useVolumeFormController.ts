@@ -21,6 +21,7 @@ import {
   type ReleaseDatePrecision,
   type VolumeResponse,
 } from "../pages/volumeFormModel";
+import { useWorkSummary } from "./useWorkDetails";
 
 interface LocationState {
   workId?: number;
@@ -33,6 +34,7 @@ export function useVolumeFormController() {
   const { workSlug = "", editionId = "", volumeId = "" } = useParams();
   const state = useLocation().state as LocationState | null;
   const navigate = useNavigate();
+  const workSummary = useWorkSummary(workSlug);
   const isEditing = Boolean(volumeId);
   const draftKey = `${workSlug.toLocaleLowerCase("pt-BR")}:${editionId || state?.editionId || ""}`;
   const rememberedDraft = useMemo(() => getRememberedVolumeDraft(draftKey), [draftKey]);
@@ -172,6 +174,7 @@ export function useVolumeFormController() {
     updateReleaseDate,
     updateReleasePrecision,
     workSlug,
+    workTitle: workSummary.work?.title || decodeURIComponent(workSlug),
   };
 }
 
