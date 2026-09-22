@@ -533,6 +533,7 @@ describe("NewManga", () => {
 
     fireEvent.click(screen.getByRole("button", { name: /voltar/i }));
     fireEvent.click(screen.getByRole("button", { name: /voltar/i }));
+    fireEvent.click(screen.getByRole("button", { name: /voltar/i }));
     await chooseDropdown(/tipo de obra/i, /databook/i);
     fireEvent.click(screen.getByRole("button", { name: /continuar/i }));
     fireEvent.click(screen.getByRole("button", { name: /continuar/i }));
@@ -653,8 +654,6 @@ describe("NewManga", () => {
     expect(await screen.findByLabelText(/editora original/i)).toBeInTheDocument();
     fireEvent.click(screen.getByRole("button", { name: /continuar/i }));
     expect(await screen.findByLabelText(/url da capa/i)).toHaveValue("https://cdn.comanga.test/naruto.jpg");
-    fireEvent.click(screen.getByRole("button", { name: /continuar/i }));
-    await fillMediaFields();
     fireEvent.click(screen.getByRole("button", { name: /^salvar$/i }));
 
     await waitFor(() => {
@@ -685,8 +684,7 @@ describe("NewManga", () => {
       </MemoryRouter>
     );
 
-    const backButton = await screen.findByRole("button", { name: /voltar/i });
-    expect(backButton).toHaveClass("h-11");
+    const backButton = await screen.findByRole("link", { name: /voltar/i });
     fireEvent.click(backButton);
 
     expect(await screen.findByText("Obra de retorno: 10")).toBeInTheDocument();
