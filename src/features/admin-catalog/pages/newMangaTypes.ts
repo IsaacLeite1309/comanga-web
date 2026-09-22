@@ -38,7 +38,6 @@ export interface WorkDetail {
   adultContent: boolean;
   originalPublicationStartYear?: number | null;
   originalPublicationEndYear?: number | null;
-  originalVolumeCount?: number | null;
   directRelease: boolean;
   originalPublishers: OptionValue[];
   originalPublicationStatus?: string | null;
@@ -69,7 +68,6 @@ export type NewMangaDraft = {
   synopsis: string;
   originalPublicationStartYear: string;
   originalPublicationEndYear: string;
-  originalVolumeCount: string;
   coverAssetId: string;
   coverUrl: string;
   coverPending: boolean;

@@ -243,7 +243,6 @@ function PublicWorkDetails() {
               <MetaItem label="Tipo de obra" value={work.type.label} />
               <MetaItem label="Publicação original" value={publicationPeriod(work)} />
               <MetaItem label="Status Original" value={formatPublicationStatus(work.originalPublicationStatus)} />
-              <MetaItem label="Volumes originais" value={work.originalVolumeCount} />
               <MetaItem label="Editora Original" value={work.originalPublishers.length > 0 ? <StackedValues values={work.originalPublishers.map(({ label }) => label)} /> : null} />
               <MetaItem label="Pré-publicação" value={work.serializationMagazines.length > 0 ? <StackedValues values={work.serializationMagazines.map(({ label }) => label)} /> : null} />
               <MetaItem label="Demografia" value={work.demographics.length > 0 ? <StackedValues values={work.demographics} /> : null} />

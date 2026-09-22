@@ -7,7 +7,6 @@ export interface EditionOption {
 
 export interface EditionFormOptions {
   brazilianPublishers: EditionOption[];
-  editionTypes: EditionOption[];
   coverTypes: EditionOption[];
   formats: EditionOption[];
   papers: EditionOption[];
@@ -21,7 +20,6 @@ export interface Edition {
   coverAssetId?: string | null;
   coverUrl?: string | null;
   brazilianPublisher: EditionOption | null;
-  editionType: EditionOption | null;
   coverType: EditionOption | null;
   format: EditionOption | null;
   paper: EditionOption | null;
@@ -59,7 +57,6 @@ function optionId(option: EditionOption | null) {
 export function editionToDraft(edition: Edition): EditionDraft {
   return {
     brazilianPublisherId: optionId(edition.brazilianPublisher),
-    editionTypeId: optionId(edition.editionType),
     coverTypeId: optionId(edition.coverType),
     formatId: optionId(edition.format),
     paperId: optionId(edition.paper),
@@ -73,7 +70,6 @@ export function editionToDraft(edition: Edition): EditionDraft {
 export function buildEditionPayload(draft: EditionDraft) {
   return {
     brazilianPublisherId: Number(draft.brazilianPublisherId),
-    editionTypeId: draft.editionTypeId ? Number(draft.editionTypeId) : null,
     coverTypeId: draft.coverTypeId ? Number(draft.coverTypeId) : null,
     formatId: draft.formatId ? Number(draft.formatId) : null,
     paperId: draft.paperId ? Number(draft.paperId) : null,

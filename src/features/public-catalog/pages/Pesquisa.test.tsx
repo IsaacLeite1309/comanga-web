@@ -24,7 +24,6 @@ const options = {
   originalPublicationStatuses: ["Completa", "Em andamento", "Em hiato", "Cancelada"],
   brazilianPublishers: [{ id: 11, label: "Panini" }],
   brazilPublicationStatuses: ["Completa", "Em andamento", "Em hiato", "Cancelada"],
-  editionTypes: [{ id: 14, label: "Tankobon" }],
   formats: [{ id: 12, label: "13,7 × 20 cm" }],
   coverTypes: [{ id: 13, label: "Brochura" }],
 };
@@ -354,8 +353,6 @@ describe("Pesquisa", () => {
     fireEvent.click(screen.getByRole("button", { name: /filtros avançados/i }));
     fireEvent.click(screen.getByLabelText("Número da edição"));
     fireEvent.click(screen.getByRole("button", { name: "2ª edição" }));
-    fireEvent.click(screen.getByLabelText("Tipo de Edição"));
-    fireEvent.click(screen.getByRole("button", { name: "Tankobon" }));
     fireEvent.click(screen.getByLabelText("Acabamento"));
     fireEvent.click(screen.getByRole("button", { name: "Brochura" }));
     fireEvent.click(screen.getByLabelText("Formato"));
@@ -366,7 +363,6 @@ describe("Pesquisa", () => {
     fireEvent.click(screen.getByRole("button", { name: "2024" }));
     await waitFor(() => expect(listPublicEditions).toHaveBeenCalledWith(expect.objectContaining({
       brazilianPublisherId: 11,
-      editionTypeId: 14,
       formatId: 12,
       coverTypeId: 13,
       chronologicalNumber: 2,
@@ -378,7 +374,6 @@ describe("Pesquisa", () => {
 
     const params = currentParams();
     expect(params.get("brazilianPublisherId")).toBe("11");
-    expect(params.get("editionTypeId")).toBe("14");
     expect(params.get("formatId")).toBe("12");
     expect(params.get("coverTypeId")).toBe("13");
     expect(params.get("chronologicalNumber")).toBe("2");

@@ -15,7 +15,6 @@ const response = {
     chronologicalNumber: 2,
     coverUrl: "https://cdn.comanga.test/monster-edition.jpg",
     brazilianPublisher: { id: 1, label: "Panini" },
-    editionType: { id: 2, label: "Deluxe" },
     format: { id: 3, label: "Kanzenban" },
     coverType: { id: 4, label: "Capa dura" },
     brazilPublicationStatus: "Em publicação",
@@ -90,7 +89,7 @@ describe("PublicEditionDetails", () => {
     expect(screen.queryByText("MONSTER")).not.toBeInTheDocument();
     expect(screen.queryByText("Naoki Urasawa")).not.toBeInTheDocument();
     expect(screen.getByText("Panini")).toBeInTheDocument();
-    expect(screen.getByText("Deluxe")).toBeInTheDocument();
+    expect(screen.queryByText("Tipo de Edição")).not.toBeInTheDocument();
     expect(screen.getByText("Kanzenban")).toBeInTheDocument();
     expect(screen.getByText("Capa dura")).toBeInTheDocument();
     expect(screen.getByRole("heading", { name: "Em publicação com 25 volumes" })).toBeInTheDocument();

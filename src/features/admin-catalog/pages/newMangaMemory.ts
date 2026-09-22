@@ -8,7 +8,6 @@ export type RememberedNewMangaDraft = {
   synopsis: string;
   originalPublicationStartYear: string;
   originalPublicationEndYear: string;
-  originalVolumeCount: string;
   coverAssetId: string;
   coverUrl: string;
   coverPending: boolean;
@@ -32,7 +31,6 @@ export const emptyNewMangaDraft: RememberedNewMangaDraft = {
   synopsis: "",
   originalPublicationStartYear: "",
   originalPublicationEndYear: "",
-  originalVolumeCount: "",
   coverAssetId: "",
   coverUrl: "",
   coverPending: false,

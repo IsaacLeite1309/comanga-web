@@ -61,7 +61,6 @@ const workDetail = {
   adultContent: false,
   originalPublicationStartYear: 1999,
   originalPublicationEndYear: 2014,
-  originalVolumeCount: 72,
   directRelease: false,
   originalPublishers: [{ id: 19, label: "Shueisha" }],
   originalPublicationStatus: "Completa",
@@ -170,7 +169,6 @@ describe("metadados próprios da Obra no formulário administrativo", () => {
     fireEvent.click(screen.getByRole("button", { name: /^1999$/ }));
     fireEvent.click(screen.getByLabelText(/fim da publica.*o original/i));
     fireEvent.click(screen.getByRole("button", { name: /^2014$/ }));
-    fireEvent.change(screen.getByLabelText(/n.*mero de volumes originais/i), { target: { value: "72" } });
     fireEvent.click(screen.getByLabelText(/selecionar g.*neros/i));
     fireEvent.click(screen.getByRole("button", { name: /^acao$/i }));
     fireEvent.click(screen.getByLabelText(/selecionar demografias/i));

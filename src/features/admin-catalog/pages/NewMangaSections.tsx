@@ -16,13 +16,6 @@ type ControllerProps = { controller: NewMangaController };
 
 function errorMessage(controller: NewMangaController, field: string) {
   if (!controller.isInvalidField(field)) return "";
-  if (
-    field === "originalVolumeCount"
-    && controller.draft.originalVolumeCount
-    && Number(controller.draft.originalVolumeCount) <= 0
-  ) {
-    return "Informe um número maior que zero.";
-  }
   return "Preencha o campo obrigatório.";
 }
 
@@ -394,7 +387,7 @@ export function PublicationStep({ controller }: ControllerProps) {
         value={draft.originalPublicationStatus}
         onChange={(value) => {
           controller.updateDraft("originalPublicationStatus", value);
-          controller.clearInvalidFields(["originalPublicationStatus", "originalPublicationEndYear", "originalVolumeCount"]);
+          controller.clearInvalidFields(["originalPublicationStatus", "originalPublicationEndYear"]);
         }}
         onOpen={() => controller.clearInvalidField("originalPublicationStatus")}
         options={NATIVE_ORIGINAL_STATUS_OPTIONS}
@@ -423,17 +416,6 @@ export function PublicationStep({ controller }: ControllerProps) {
         invalid={controller.isInvalidField("originalPublicationEndYear")}
         errorMessage={errorMessage(controller, "originalPublicationEndYear")}
         searchable
-      />
-      <InputField
-        label="Número de volumes originais"
-        value={draft.originalVolumeCount}
-        onChange={(value) => { controller.updateDraft("originalVolumeCount", value); controller.clearInvalidField("originalVolumeCount"); }}
-        type="number"
-        required={!controller.isOpenOriginalPublication}
-        disabled={controller.isOpenOriginalPublication}
-        invalid={controller.isInvalidField("originalVolumeCount")}
-        errorMessage={errorMessage(controller, "originalVolumeCount")}
-        placeholder="Digite"
       />
       <PublisherAndMagazineFields controller={controller} />
       <ClassificationFields controller={controller} />

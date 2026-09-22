@@ -200,9 +200,9 @@ function useDerivedRules(
   }, [derived.directReleaseBlockedByWorkType, setDraft]);
   useEffect(() => {
     if (!derived.isOpenOriginalPublication) return;
-    setDraft((current) => ({ ...current, originalPublicationEndYear: "", originalVolumeCount: "" }));
+    setDraft((current) => ({ ...current, originalPublicationEndYear: "" }));
     setInvalidFields((current) => current.filter(
-      (field) => !["originalPublicationEndYear", "originalVolumeCount"].includes(field)
+      (field) => !["originalPublicationEndYear"].includes(field)
     ));
   }, [derived.isOpenOriginalPublication, setDraft, setInvalidFields]);
 }

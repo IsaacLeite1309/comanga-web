@@ -104,7 +104,6 @@ const workDetail = {
   adultContent: false,
   originalPublicationStartYear: 1999,
   originalPublicationEndYear: 2014,
-  originalVolumeCount: 72,
   directRelease: false,
   originalPublishers: [{ id: 19, label: "Shueisha" }],
   originalPublicationStatus: "Completa",
@@ -197,7 +196,6 @@ async function fillPublicationFields() {
   await chooseDropdown(/status de publica.*o original/i, /completa/i);
   await chooseDropdown(/in.*cio da publica.*o original/i, /1999/i);
   await chooseDropdown(/fim da publica.*o original/i, /2014/i);
-  fireEvent.change(screen.getByLabelText(/n.*mero de volumes originais/i), { target: { value: "72" } });
   fireEvent.click(screen.getByLabelText(/selecionar g.*neros/i));
   fireEvent.click(screen.getByRole("button", { name: /^acao$/i }));
   fireEvent.click(screen.getByLabelText(/selecionar demografias/i));
@@ -255,7 +253,6 @@ describe("NewManga", () => {
         originalPublicationStatus: "Completa",
         originalPublicationStartYear: 1999,
         originalPublicationEndYear: 2014,
-        originalVolumeCount: 72,
         coverAssetId: "7f28c7f0-c94f-46e8-b61c-6ea716f8f28e",
         directRelease: false,
         authors: [{ authorId: 1, roles: ["História e Arte"] }],
@@ -296,7 +293,6 @@ describe("NewManga", () => {
     await chooseDropdown(/status de publica.*o original/i, /completa/i);
     await chooseDropdown(/in.*cio da publica.*o original/i, /1999/i);
     await chooseDropdown(/fim da publica.*o original/i, /2014/i);
-    fireEvent.change(screen.getByLabelText(/n.*mero de volumes originais/i), { target: { value: "72" } });
     fireEvent.click(screen.getByLabelText(/selecionar g.*neros/i));
     fireEvent.click(screen.getByRole("button", { name: /^acao$/i }));
     fireEvent.click(screen.getByLabelText(/selecionar demografias/i));
@@ -532,7 +528,6 @@ describe("NewManga", () => {
     await chooseDropdown(/status de publica.*o original/i, /em andamento/i);
 
     expect(screen.getByLabelText(/fim da publica.*o original/i)).toBeDisabled();
-    expect(screen.getByLabelText(/n.*mero de volumes originais/i)).toBeDisabled();
   });
 
   it("fecha dropdown multiplo ao clicar fora", async () => {
@@ -624,7 +619,6 @@ describe("NewManga", () => {
       expect(api.patch).toHaveBeenCalledWith("/admin/works/10", expect.objectContaining({
         title: "Naruto",
         typeId: 9,
-        originalVolumeCount: 72,
       }));
     });
     expect(api.post).not.toHaveBeenCalled();
@@ -757,7 +751,6 @@ describe("NewManga", () => {
     await waitFor(() => {
       expect(api.post).toHaveBeenCalledWith("/admin/works", expect.objectContaining({
         originalPublicationEndYear: null,
-        originalVolumeCount: null,
         directRelease: true,
         demographies: [],
         magazineIds: [],

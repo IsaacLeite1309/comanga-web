@@ -20,7 +20,6 @@ const work = {
   country: "Japão",
   originalPublicationStartYear: 1994,
   originalPublicationEndYear: 2001,
-  originalVolumeCount: 18,
   directRelease: false,
   originalPublicationStatus: "Finalizada",
   synopsis: "A sinopse canônica da Obra.",
@@ -35,7 +34,6 @@ const work = {
       chronologicalNumber: 1,
       coverUrl: "https://cdn.comanga.test/monster-edition.jpg",
       brazilianPublisher: { id: 7, label: "Panini" },
-      editionType: { id: 8, label: "Regular" },
       format: { id: 9, label: "Tankobon" },
       coverType: { id: 10, label: "Brochura" },
       brazilPublicationStatus: "Em publicação",
@@ -132,7 +130,6 @@ describe("PublicWorkDetails", () => {
     vi.mocked(getPublicWorkDetails).mockResolvedValue({
       ...work,
       originalTitle: null,
-      originalVolumeCount: null,
       synopsis: null,
       authors: [],
       genres: [],

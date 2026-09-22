@@ -302,14 +302,6 @@ function EditionAdvancedFilters({ catalog }: { catalog: PesquisaCatalog }) {
         onChange={(value) => catalog.updateParam("chronologicalNumber", value)}
       />
       <FilterField
-        label="Tipo de Edição"
-        value={catalog.editionTypeId ? String(catalog.editionTypeId) : ""}
-        options={catalog.options.editionTypes}
-        onChange={(value) => catalog.updateParam("editionTypeId", value)}
-        disabled={catalog.optionsLoading}
-        searchable
-      />
-      <FilterField
         label="Acabamento"
         value={catalog.coverTypeId ? String(catalog.coverTypeId) : ""}
         options={catalog.options.coverTypes}

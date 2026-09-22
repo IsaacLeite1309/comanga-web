@@ -18,7 +18,6 @@ export interface PublicCatalogOptions {
   originalPublicationStatuses: string[];
   brazilianPublishers: PublicOption[];
   brazilPublicationStatuses: string[];
-  editionTypes: PublicOption[];
   formats: PublicOption[];
   coverTypes: PublicOption[];
 }
@@ -59,7 +58,6 @@ export interface PublicEditionDetails {
   chronologicalNumber: number;
   coverUrl?: string | null;
   brazilianPublisher: PublicOption;
-  editionType: PublicOption | null;
   format: PublicOption | null;
   coverType: PublicOption | null;
   paper?: PublicOption | null;
@@ -73,7 +71,6 @@ export interface PublicEditionPageDetails {
   chronologicalNumber: number;
   coverUrl?: string | null;
   brazilianPublisher: PublicOption;
-  editionType: PublicOption | null;
   format: PublicOption | null;
   coverType: PublicOption | null;
   paper?: PublicOption | null;
@@ -101,7 +98,6 @@ export interface PublicWorkDetails {
   country: string;
   originalPublicationStartYear?: number | null;
   originalPublicationEndYear?: number | null;
-  originalVolumeCount?: number | null;
   directRelease: boolean;
   originalPublicationStatus: string;
   synopsis?: string | null;
@@ -215,7 +211,6 @@ export interface PublicWorksQuery {
 export interface PublicEditionsQuery {
   term?: string;
   brazilianPublisherId?: number;
-  editionTypeId?: number;
   formatId?: number;
   coverTypeId?: number;
   chronologicalNumber?: number;

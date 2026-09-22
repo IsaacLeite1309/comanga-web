@@ -1,7 +1,7 @@
 import { useEffect, useState, type ReactNode } from "react";
 import { api } from "@/services/api";
 import { toast } from "sonner";
-import { useNavigate } from "react-router-dom";
+import { useLocation, useNavigate } from "react-router-dom";
 import {
   ADMIN_PROFILE,
   AuthContext,
@@ -15,6 +15,11 @@ export function AuthProvider({ children }: { children: ReactNode }) {
   const [loading, setLoading] = useState(true);
   const [isSessionEnding, setIsSessionEnding] = useState(false);
   const navigate = useNavigate();
+  const { pathname } = useLocation();
+
+  useEffect(() => {
+    if (isSessionEnding && pathname === "/entrar") setIsSessionEnding(false);
+  }, [isSessionEnding, pathname]);
 
   useEffect(() => {
     async function validateSession() {
@@ -45,7 +50,6 @@ export function AuthProvider({ children }: { children: ReactNode }) {
     setIsSessionEnding(true);
     navigate("/entrar");
     setUser(null);
-    window.setTimeout(() => setIsSessionEnding(false), 0);
   }
 
   async function logout() {
