@@ -162,7 +162,7 @@ function buildEditionQuery(params: CatalogParams): PublicEditionsQuery {
   };
 }
 
-function useCatalogLocation() {
+function useCatalogLocation(workTypes: PublicCatalogOptions["workTypes"]) {
   const [searchParams, setSearchParams] = useSearchParams();
   const serializedParams = searchParams.toString();
   const params = useMemo(() => readCatalogParams(new URLSearchParams(serializedParams)), [serializedParams]);
@@ -202,6 +202,10 @@ function useCatalogLocation() {
     const next = new URLSearchParams(searchParams);
     if (value === undefined || value === "") next.delete(key);
     else next.set(key, String(value));
+    if (key === "country" && value && params.typeId
+      && !filterWorkTypesByCountry(workTypes, String(value)).some(type => type.id === params.typeId)) {
+      next.delete("typeId");
+    }
     next.set("page", "1");
     setSearchParams(next);
   }
@@ -299,6 +303,18 @@ function useCatalogOptions() {
     optionsError,
     retryOptions: () => setRetry((value) => value + 1),
   };
+}
+
+// Com um país escolhido, só os Tipos de Obra declarados pela API para ele continuam
+// disponíveis; sem país, a lista completa é oferecida.
+export function filterWorkTypesByCountry(
+  workTypes: PublicCatalogOptions["workTypes"],
+  country: string
+) {
+  if (!country) return workTypes;
+  return workTypes.filter((workType) => (
+    !workType.countries || workType.countries.length === 0 || workType.countries.includes(country)
+  ));
 }
 
 function useCatalogResults(location: ReturnType<typeof useCatalogLocation>) {
@@ -411,11 +427,15 @@ export function advancedFilterCount(params: CatalogParams) {
 }
 
 export function usePesquisaCatalog() {
-  const location = useCatalogLocation();
   const optionState = useCatalogOptions();
+  const location = useCatalogLocation(optionState.options.workTypes);
   const resultState = useCatalogResults(location);
   const advancedFilters = useAdvancedFilters(location.searchParams);
-  return { ...location, ...optionState, ...resultState, ...advancedFilters };
+  const workTypeOptions = useMemo(
+    () => filterWorkTypesByCountry(optionState.options.workTypes, location.params.country),
+    [location.params.country, optionState.options.workTypes]
+  );
+  return { ...location, ...optionState, ...resultState, ...advancedFilters, workTypeOptions };
 }
 
 export type PesquisaCatalog = ReturnType<typeof usePesquisaCatalog>;
