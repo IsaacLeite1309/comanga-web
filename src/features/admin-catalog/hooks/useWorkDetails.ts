@@ -20,7 +20,7 @@ interface EditionsResponse {
   pagination?: Partial<CatalogPagination>;
 }
 
-function useWorkSummary(workSlug: string) {
+export function useWorkSummary(workSlug: string) {
   const [work, setWork] = useState<WorkDetail | null>(null);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState("");

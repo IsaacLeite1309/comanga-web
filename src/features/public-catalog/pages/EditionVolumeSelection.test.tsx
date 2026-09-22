@@ -55,10 +55,10 @@ const response = {
 
 function renderPage(mode = "estante") {
   return render(
-    <MemoryRouter initialEntries={[`/edicoes/20/selecionar/${mode}`]}>
+    <MemoryRouter initialEntries={[`/obras/monster/edicao/20/selecionar/${mode}`]}>
       <Routes>
-        <Route path="/edicoes/:editionId/selecionar/:mode" element={<EditionVolumeSelection />} />
-        <Route path="/edicoes/:editionId" element={<div>Edição</div>} />
+        <Route path="/obras/:slug/edicao/:editionId/selecionar/:mode" element={<EditionVolumeSelection />} />
+        <Route path="/obras/:slug/edicao/:editionId" element={<div>Edição</div>} />
       </Routes>
     </MemoryRouter>,
   );

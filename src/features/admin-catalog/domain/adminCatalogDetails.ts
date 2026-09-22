@@ -29,6 +29,11 @@ export interface WorkDetail {
 export interface EditionDetail {
   id: number;
   workId: number;
+  work?: {
+    id: number;
+    slug: string;
+    title: string;
+  };
   chronologicalNumber: number;
   coverUrl?: string | null;
   visibility: CatalogVisibility;

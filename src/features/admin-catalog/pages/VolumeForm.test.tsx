@@ -68,6 +68,16 @@ describe("VolumeForm", () => {
   beforeEach(() => {
     vi.clearAllMocks();
     resetVolumeDraftMemoryForTests();
+    vi.mocked(api.get).mockResolvedValue({
+      data: { work: { id: 10, slug: "naruto", title: "Naruto" } },
+    });
+  });
+
+  it("usa o título da Obra retornado pela API no caminho de edição do Volume", async () => {
+    renderVolumeForm("/admin/gerenciar-mangas/obras/naruto/edicoes/20/volumes/novo");
+
+    expect(await screen.findByRole("link", { name: "Edições de Naruto" })).toBeInTheDocument();
+    expect(screen.queryByText("Edições de naruto")).not.toBeInTheDocument();
   });
 
   it("preserva o rascunho e a etapa de um novo volume durante a navegacao SPA", () => {
@@ -159,7 +169,9 @@ describe("VolumeForm", () => {
   });
 
   it("carrega e atualiza um volume existente com dados opcionais vazios", async () => {
-    vi.mocked(api.get).mockResolvedValueOnce({
+    vi.mocked(api.get).mockImplementation((url: string) => Promise.resolve(url.includes("/admin/works/slug/") ? {
+      data: { work: { id: 10, slug: "naruto", title: "Naruto" } },
+    } : {
       data: {
         volume: {
           id: 30,
@@ -181,7 +193,7 @@ describe("VolumeForm", () => {
           synopsis: null,
         },
       },
-    });
+    }));
     vi.mocked(api.patch).mockResolvedValueOnce({ data: {} });
 
     renderVolumeForm("/admin/gerenciar-mangas/obras/Naruto/edicoes/20/volumes/30/editar");
@@ -251,10 +263,14 @@ describe("VolumeForm", () => {
   });
 
   it("exibe erro devolvido pela API ao carregar um volume", async () => {
-    vi.mocked(api.get).mockRejectedValueOnce({
-      isAxiosError: true,
-      response: { data: { error: "Volume nao encontrado." } },
-    });
+    vi.mocked(api.get).mockImplementation((url: string) => (
+      url.includes("/admin/works/slug/")
+        ? Promise.resolve({ data: { work: { id: 10, slug: "naruto", title: "Naruto" } } })
+        : Promise.reject({
+          isAxiosError: true,
+          response: { data: { error: "Volume nao encontrado." } },
+        })
+    ));
 
     renderVolumeForm("/admin/gerenciar-mangas/obras/Naruto/edicoes/20/volumes/30/editar");
 

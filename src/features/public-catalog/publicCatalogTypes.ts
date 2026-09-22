@@ -180,10 +180,13 @@ export interface PublicVolumeDetails extends PublicVolumePreview {
   isbn13?: string | null;
   affiliateLink?: string | null;
   synopsis?: string | null;
+  previousVolume: Pick<PublicVolumePreview, "id" | "number" | "singleVolume"> | null;
+  nextVolume: Pick<PublicVolumePreview, "id" | "number" | "singleVolume"> | null;
   edition: {
     id: number;
     chronologicalNumber: number;
     brazilianPublisher: PublicOption;
+    paper?: PublicOption | null;
     work: {
       id: number;
       slug: string;
