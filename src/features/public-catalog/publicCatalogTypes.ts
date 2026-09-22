@@ -8,8 +8,14 @@ export interface PublicOption {
   label: string;
 }
 
+// A API declara a que países cada Tipo de Obra pertence para o filtro restringir a lista.
+export interface PublicWorkTypeOption extends PublicOption {
+  countryIds: number[];
+  countries: string[];
+}
+
 export interface PublicCatalogOptions {
-  workTypes: PublicOption[];
+  workTypes: PublicWorkTypeOption[];
   countries: string[];
   demographics: string[];
   genres: PublicOption[];

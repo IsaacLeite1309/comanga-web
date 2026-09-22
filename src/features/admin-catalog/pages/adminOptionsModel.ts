@@ -10,6 +10,10 @@ export type SortOrder = "ASC" | "DESC";
 export interface DomainOptionValue {
   id: number;
   label: string;
+  code?: string | null;
+  systemManaged?: boolean;
+  position?: number;
+  active?: boolean;
   category: OptionCategory;
   depends_on?: DomainOptionValueDependency[];
 }
@@ -60,10 +64,16 @@ const COUNTRY_DEPENDENT_CATEGORY_SLUGS = new Set([
   "editoras-originais",
 ]);
 const COMMA_LITERAL_CATEGORY_SLUGS = new Set(["formatos-fisicos", "miolos"]);
+const SYSTEM_MANAGED_CATEGORY_SLUGS = new Set(["tipos-obra", "generos"]);
 
 export function getPageSizeForCategory(categorySlug: string) {
   return COUNTRY_DEPENDENT_CATEGORY_SLUGS.has(categorySlug) ? 5 : DEFAULT_PAGE_SIZE;
 }
+
+export function isSystemManagedCategory(categorySlug: string) {
+  return SYSTEM_MANAGED_CATEGORY_SLUGS.has(categorySlug);
+}
+
 
 export function getCategoryForm(categorySlug: string): OptionForm | undefined {
   return CATEGORIES.find((category) => category.slug === categorySlug)?.form;

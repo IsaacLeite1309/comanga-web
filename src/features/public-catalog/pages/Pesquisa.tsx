@@ -54,6 +54,7 @@ function EditionCard({ edition }: { edition: PublicEditionSummary }) {
           key={edition.coverUrl || "empty"}
           src={edition.coverUrl}
           alt={`Capa da ${editionLabel} de ${edition.work.title}`}
+          emptyLabel="Capa indisponível"
           className="transition-transform group-hover:-translate-y-1"
         />
         <h2 className="mt-2 truncate text-sm font-bold text-foreground group-hover:text-primary sm:text-base" title={edition.work.title}>
@@ -167,7 +168,7 @@ function WorkPrimaryFilters({ catalog }: { catalog: PesquisaCatalog }) {
       <PrimaryFilter
         label="Tipo de Obra"
         value={catalog.typeId ? String(catalog.typeId) : ""}
-        options={catalog.options.workTypes}
+        options={catalog.workTypeOptions}
         onChange={(value) => catalog.updateParam("typeId", value)}
         disabled={catalog.optionsLoading}
       />

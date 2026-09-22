@@ -22,6 +22,7 @@ import {
   getCategoryForm,
   getPageSizeForCategory,
   isCountryDependent,
+  isSystemManagedCategory,
   OptionForm,
   OptionsPagination,
   OptionsResponse,
@@ -154,6 +155,7 @@ function useAdminOptionsData(selection: Selection) {
     totalPages: 1,
   });
   const countryDependent = isCountryDependent(selection.selectedCategory);
+  const systemManagedCategory = isSystemManagedCategory(selection.selectedCategory);
   const pageSize = selection.selectedCategory
     ? getPageSizeForCategory(selection.selectedCategory)
     : DEFAULT_PAGE_SIZE;
@@ -170,6 +172,10 @@ function useAdminOptionsData(selection: Selection) {
       const response = await api.get<OptionsResponse>(`/admin/options/${categorySlug}`, {
         params: {
           ...(term ? { term } : {}),
+          // Valores desativados precisam aparecer para poderem ser reativados.
+          ...(isSystemManagedCategory(categorySlug)
+            ? { includeInactive: "true" }
+            : {}),
           order: sortOrder,
           page: currentPage,
           limit: getPageSizeForCategory(categorySlug),
@@ -250,6 +256,7 @@ function useAdminOptionsData(selection: Selection) {
 
   return {
     countryDependent,
+    systemManagedCategory,
     countryError,
     countryLoading,
     countryOptions,
@@ -416,11 +423,43 @@ function useAdminOptionMutations(selection: Selection, data: Data, editing: Edit
   };
 }
 
+// Ativar/desativar é a única alteração permitida nas listas controladas.
+function useOptionStatusMutations(selection: Selection, data: Data) {
+  const [togglingId, setTogglingId] = useState<number | null>(null);
+
+  function refreshCurrentPage() {
+    return data.fetchOptions(
+      selection.selectedCategory,
+      selection.debouncedSearchTerm,
+      selection.order,
+      data.page
+    );
+  }
+
+  async function toggleActive(value: DomainOptionValue) {
+    setTogglingId(value.id);
+    try {
+      await api.patch<{ value: DomainOptionValue }>(`/admin/options/${value.id}`, {
+        active: value.active === false,
+      });
+      await refreshCurrentPage();
+      toast.success(value.active === false ? "Valor ativado." : "Valor desativado.");
+    } catch (requestError) {
+      toast.error(getApiError(requestError, "Erro ao alterar a situação do valor."));
+    } finally {
+      setTogglingId(null);
+    }
+  }
+
+  return { toggleActive, togglingId };
+}
+
 export function useAdminOptionsPage() {
   const selection = useAdminOptionsSelection();
   const data = useAdminOptionsData(selection);
   const editing = useEditingState();
   const mutations = useAdminOptionMutations(selection, data, editing);
+  const statusMutations = useOptionStatusMutations(selection, data);
   const {
     setEditingCountryIds,
     setEditingId,
@@ -459,6 +498,7 @@ export function useAdminOptionsPage() {
     ...data,
     ...editing,
     ...mutations,
+    ...statusMutations,
     changeForm,
   };
 }
