@@ -18,7 +18,7 @@ const PostCreateActions = () => {
   const state = location.state as LocationState | null;
 
   if (!state?.title || !state.actions?.length) {
-    return <Navigate to="/admin/editar-mangas" replace />;
+    return <Navigate to="/admin/gerenciar-mangas" replace />;
   }
 
   return (

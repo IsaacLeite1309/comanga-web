@@ -51,13 +51,13 @@ vi.mock("sonner", () => ({
   },
 }));
 
-function renderVolumeForm(path = "/admin/editar-mangas/obras/Naruto/edicoes/20/volumes/novo") {
+function renderVolumeForm(path = "/admin/gerenciar-mangas/obras/Naruto/edicoes/20/volumes/novo") {
   return render(
     <MemoryRouter initialEntries={[{ pathname: path, state: { workId: 10, editionId: 20 } }]}>
       <Routes>
-        <Route path="/admin/editar-mangas/obras/:workSlug/edicoes/:editionId/volumes/novo" element={<VolumeForm />} />
-        <Route path="/admin/editar-mangas/obras/:workSlug/edicoes/:editionId/volumes/:volumeId/editar" element={<VolumeForm />} />
-        <Route path="/admin/editar-mangas/obras/:workSlug/edicoes/:editionId" element={<div>Detalhe da Edição</div>} />
+        <Route path="/admin/gerenciar-mangas/obras/:workSlug/edicoes/:editionId/volumes/novo" element={<VolumeForm />} />
+        <Route path="/admin/gerenciar-mangas/obras/:workSlug/edicoes/:editionId/volumes/:volumeId/editar" element={<VolumeForm />} />
+        <Route path="/admin/gerenciar-mangas/obras/:workSlug/edicoes/:editionId/volumes" element={<div>Detalhe da Edição</div>} />
         <Route path="/admin/pos-cadastro" element={<PostCreateActions />} />
       </Routes>
     </MemoryRouter>
@@ -121,7 +121,7 @@ describe("VolumeForm", () => {
     });
     expect(await screen.findByRole("heading", { name: "Volume cadastrado com sucesso!" })).toBeInTheDocument();
     expect(screen.getByRole("link", { name: "Gerenciar este Volume" })).toHaveAttribute(
-      "href", "/admin/editar-mangas/obras/Naruto/edicoes/20/volumes/30/editar"
+      "href", "/admin/gerenciar-mangas/obras/Naruto/edicoes/20/volumes/30/editar"
     );
   });
 
@@ -184,7 +184,7 @@ describe("VolumeForm", () => {
     });
     vi.mocked(api.patch).mockResolvedValueOnce({ data: {} });
 
-    renderVolumeForm("/admin/editar-mangas/obras/Naruto/edicoes/20/volumes/30/editar");
+    renderVolumeForm("/admin/gerenciar-mangas/obras/Naruto/edicoes/20/volumes/30/editar");
 
     expect(await screen.findByRole("heading", { name: /editar volume/i })).toBeInTheDocument();
     expect(screen.getByLabelText(/n.*mero do volume/i)).toHaveValue(2);
@@ -230,7 +230,7 @@ describe("VolumeForm", () => {
     })));
     expect(await screen.findByRole("heading", { name: "Volume cadastrado com sucesso!" })).toBeInTheDocument();
     expect(screen.getByRole("link", { name: "Gerenciar este Volume" })).toHaveAttribute(
-      "href", "/admin/editar-mangas/obras/Naruto/edicoes/20/volumes/31/editar"
+      "href", "/admin/gerenciar-mangas/obras/Naruto/edicoes/20/volumes/31/editar"
     );
   });
 
@@ -256,7 +256,7 @@ describe("VolumeForm", () => {
       response: { data: { error: "Volume nao encontrado." } },
     });
 
-    renderVolumeForm("/admin/editar-mangas/obras/Naruto/edicoes/20/volumes/30/editar");
+    renderVolumeForm("/admin/gerenciar-mangas/obras/Naruto/edicoes/20/volumes/30/editar");
 
     expect(await screen.findByText("Volume nao encontrado.")).toBeInTheDocument();
   });

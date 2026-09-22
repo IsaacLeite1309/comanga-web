@@ -131,7 +131,7 @@ function EditionGridCard({
         <Link
           to={editionAdminPath(workSlug, edition.id)}
           state={{ workId: work.id, editionId: edition.id }}
-          aria-label={`Gerenciar ${label}`}
+          aria-label={`Gerenciar volumes da ${label}`}
           className="inline-flex h-8 items-center justify-center rounded-md border border-border bg-card text-foreground transition-colors hover:border-primary hover:text-primary"
         >
           <Settings className="h-3.5 w-3.5" />
@@ -182,9 +182,11 @@ function EditionListRow({
           <span className="rounded-full bg-muted px-2 py-1 text-xs font-semibold text-muted-foreground">
             {edition.brazilianPublisher?.label || "Editora não informada"}
           </span>
-          <span className="rounded-full bg-muted px-2 py-1 text-xs font-semibold text-muted-foreground">
-            {edition.editionType?.label || "Tipo não informado"}
-          </span>
+          {edition.editionType && (
+            <span className="rounded-full bg-muted px-2 py-1 text-xs font-semibold text-muted-foreground">
+              {edition.editionType.label}
+            </span>
+          )}
           <span className="rounded-full bg-muted px-2 py-1 text-xs font-semibold text-muted-foreground">
             {formatVolumesCount(edition.volumesCount)}
           </span>
@@ -193,7 +195,7 @@ function EditionListRow({
       <p className="hidden text-sm font-semibold text-muted-foreground md:block">
         {edition.brazilianPublisher?.label || "Editora não informada"}
       </p>
-      <p className="hidden text-sm font-semibold text-muted-foreground md:block">{edition.editionType?.label || "-"}</p>
+      <p className="hidden text-sm font-semibold text-muted-foreground md:block">{edition.editionType?.label || ""}</p>
       <p className="hidden text-sm font-semibold text-muted-foreground md:block">{formatVolumesCount(edition.volumesCount)}</p>
       <div className="hidden justify-self-start md:block">
         <CatalogVisibilityAction
@@ -222,7 +224,7 @@ function EditionListRow({
         <Link
           to={editionAdminPath(workSlug, edition.id)}
           state={{ workId: work.id, editionId: edition.id }}
-          aria-label={`Gerenciar ${label}`}
+          aria-label={`Gerenciar volumes da ${label}`}
           className="inline-flex h-10 w-10 items-center justify-center rounded-lg border border-border bg-input text-foreground transition-colors hover:border-primary hover:text-primary md:justify-self-center"
         >
           <Settings className="h-3.5 w-3.5" />
@@ -251,7 +253,7 @@ function EditionsListHeader() {
       <span className="hidden md:block">Volumes</span>
       <span className="hidden md:block">Visibilidade</span>
       <span className="hidden justify-self-center md:block">Editar</span>
-      <span className="hidden justify-self-center md:block">Gerenciar</span>
+      <span className="hidden justify-self-center md:block">Gerenciar volumes</span>
       <span className="hidden justify-self-center md:block">Excluir</span>
     </div>
   );

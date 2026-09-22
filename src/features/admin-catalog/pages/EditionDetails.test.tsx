@@ -58,9 +58,9 @@ const volumesResponse = {
 
 function renderEditionDetails() {
   return render(
-    <MemoryRouter initialEntries={[{ pathname: "/admin/editar-mangas/obras/Naruto/edicoes/20", state: { workId: 10, editionId: 20 } }]}>
+    <MemoryRouter initialEntries={[{ pathname: "/admin/gerenciar-mangas/obras/Naruto/edicoes/20/volumes", state: { workId: 10, editionId: 20 } }]}>
       <Routes>
-        <Route path="/admin/editar-mangas/obras/:workSlug/edicoes/:editionId" element={<EditionDetails />} />
+        <Route path="/admin/gerenciar-mangas/obras/:workSlug/edicoes/:editionId/volumes" element={<EditionDetails />} />
       </Routes>
     </MemoryRouter>
   );
@@ -78,12 +78,7 @@ describe("EditionDetails", () => {
 
     renderEditionDetails();
 
-    expect(await screen.findByRole("heading", { name: /1.*edi/i })).toBeInTheDocument();
-    expect(screen.getByText("Panini")).toBeInTheDocument();
-    expect(screen.getByText("Tankobon")).toBeInTheDocument();
-    expect(screen.getByText("0 volumes")).toBeInTheDocument();
-    expect(screen.getByText(/nenhum volume cadastrado/i)).toBeInTheDocument();
-    expect(screen.getByRole("link", { name: /editar edi/i })).toHaveAttribute("href", "/admin/editar-mangas/obras/Naruto/edicoes/20/editar");
+    expect(await screen.findByText(/nenhum volume cadastrado/i)).toBeInTheDocument();
   });
 
   it("lista volumes da edicao com link direto de edição", async () => {
@@ -96,7 +91,7 @@ describe("EditionDetails", () => {
     expect(await screen.findByText("Volume 1")).toBeInTheDocument();
     expect(screen.getByText("208")).toBeInTheDocument();
     expect(screen.getAllByText("R$ 39,90").length).toBeGreaterThan(0);
-    expect(screen.getByRole("link", { name: /editar volume 1/i })).toHaveAttribute("href", "/admin/editar-mangas/obras/Naruto/edicoes/20/volumes/30/editar");
+    expect(screen.getByRole("link", { name: /editar volume 1/i })).toHaveAttribute("href", "/admin/gerenciar-mangas/obras/Naruto/edicoes/20/volumes/30/editar");
   });
 
   it("alterna para grade e mostra volume unico sem capa", async () => {
@@ -117,7 +112,7 @@ describe("EditionDetails", () => {
       });
 
     renderEditionDetails();
-    await screen.findByRole("heading", { name: /1.*edi/i });
+    await screen.findByRole("heading", { name: /volumes/i });
     fireEvent.click(screen.getByRole("button", { name: /grade/i }));
 
     expect(screen.getAllByText("Sem capa").length).toBeGreaterThan(0);
@@ -190,8 +185,7 @@ describe("EditionDetails", () => {
     await screen.findByText("Volume 1");
     fireEvent.click(screen.getByRole("button", { name: /excluir volume 1/i }));
     fireEvent.click(screen.getByRole("button", { name: /confirmar exclus/i }));
-    expect(await screen.findByText("Sem capa (cadastre o Volume 1)")).toBeInTheDocument();
-    expect(screen.getByText("0 volumes")).toBeInTheDocument();
+    expect(await screen.findByText(/nenhum volume cadastrado/i)).toBeInTheDocument();
   });
 
 });

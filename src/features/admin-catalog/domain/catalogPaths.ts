@@ -1,29 +1,35 @@
+export const adminCatalogPath = "/admin/gerenciar-mangas";
+
+function workBaseAdminPath(slug: string) {
+  return `${adminCatalogPath}/obras/${encodeURIComponent(decodeURIComponent(slug))}`;
+}
+
 export function workAdminPath(slug: string) {
-  return `/admin/editar-mangas/obras/${encodeURIComponent(decodeURIComponent(slug))}`;
+  return `${workBaseAdminPath(slug)}/edicoes`;
 }
 
 export function workEditAdminPath(slug: string) {
-  return `${workAdminPath(slug)}/editar`;
+  return `${workBaseAdminPath(slug)}/editar`;
 }
 
 export function editionAdminPath(workSlug: string, editionId: number | string) {
-  return `${workAdminPath(workSlug)}/edicoes/${editionId}`;
+  return `${workBaseAdminPath(workSlug)}/edicoes/${editionId}/volumes`;
 }
 
 export function newEditionAdminPath(workSlug: string) {
-  return `${workAdminPath(workSlug)}/edicoes/nova`;
+  return `${workBaseAdminPath(workSlug)}/edicoes/nova`;
 }
 
 export function editionEditAdminPath(workSlug: string, editionId: number | string) {
-  return `${editionAdminPath(workSlug, editionId)}/editar`;
+  return `${workBaseAdminPath(workSlug)}/edicoes/${editionId}/editar`;
 }
 
 export function volumeAdminPath(workSlug: string, editionId: number | string, volumeId: number | string) {
-  return `${editionAdminPath(workSlug, editionId)}/volumes/${volumeId}`;
+  return `${editionAdminPath(workSlug, editionId)}/${volumeId}`;
 }
 
 export function newVolumeAdminPath(workSlug: string, editionId: number | string) {
-  return `${editionAdminPath(workSlug, editionId)}/volumes/novo`;
+  return `${editionAdminPath(workSlug, editionId)}/novo`;
 }
 
 export function volumeEditAdminPath(

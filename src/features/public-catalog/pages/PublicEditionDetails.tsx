@@ -174,9 +174,10 @@ function EditionContent({ data, editionPath, isCollectionContext, onPageChange }
               <span className="absolute bottom-0 right-0 top-0 hidden w-px bg-border md:top-[14.25rem] md:block" aria-hidden="true" />
               <dl className="grid grid-cols-2 gap-x-4 gap-y-4 md:grid-cols-1">
                 <MetaItem label="Editora Brasileira" value={edition.brazilianPublisher.label} />
-                <MetaItem label="Tipo de Edição" value={edition.editionType.label} />
-                <MetaItem label="Formato" value={edition.format.label} />
-                <MetaItem label="Acabamento" value={edition.coverType.label} />
+                {edition.editionType && <MetaItem label="Tipo de Edição" value={edition.editionType.label} />}
+                {edition.format && <MetaItem label="Formato" value={edition.format.label} />}
+                {edition.coverType && <MetaItem label="Acabamento" value={edition.coverType.label} />}
+                {edition.paper && <MetaItem label="Miolo" value={edition.paper.label} />}
                 <MetaItem
                   label="Publicação no Brasil"
                   value={brazilPublicationPeriod(edition.brazilPublicationStartYear, edition.brazilPublicationEndYear)}

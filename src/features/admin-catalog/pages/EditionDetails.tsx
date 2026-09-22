@@ -4,7 +4,6 @@ import { ArrowLeft } from "lucide-react";
 import { DetailError, DetailLoading } from "../components/AdminCatalogDetailShared";
 import {
   DeleteVolumeDialog,
-  EditionSummary,
   EditionVolumesSection,
 } from "../components/EditionDetailsView";
 import { workAdminPath } from "../domain/catalogPaths";
@@ -51,7 +50,6 @@ const EditionDetails = () => {
           <ArrowLeft className="h-3.5 w-3.5" />
           Voltar
         </Link>
-        <EditionSummary edition={details.edition} workId={workId} workSlug={workSlug} />
         <EditionVolumesSection
           edition={details.edition}
           volumes={details.volumes}

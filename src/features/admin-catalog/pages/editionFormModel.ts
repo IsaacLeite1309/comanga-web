@@ -10,6 +10,7 @@ export interface EditionFormOptions {
   editionTypes: EditionOption[];
   coverTypes: EditionOption[];
   formats: EditionOption[];
+  papers: EditionOption[];
 }
 
 export interface Edition {
@@ -23,6 +24,7 @@ export interface Edition {
   editionType: EditionOption | null;
   coverType: EditionOption | null;
   format: EditionOption | null;
+  paper: EditionOption | null;
   brazilPublicationStatus: string | EditionOption | null;
 }
 
@@ -60,6 +62,7 @@ export function editionToDraft(edition: Edition): EditionDraft {
     editionTypeId: optionId(edition.editionType),
     coverTypeId: optionId(edition.coverType),
     formatId: optionId(edition.format),
+    paperId: optionId(edition.paper),
     chronologicalNumber: String(edition.chronologicalNumber),
     brazilPublicationStatus: typeof edition.brazilPublicationStatus === "string"
       ? edition.brazilPublicationStatus
@@ -70,9 +73,10 @@ export function editionToDraft(edition: Edition): EditionDraft {
 export function buildEditionPayload(draft: EditionDraft) {
   return {
     brazilianPublisherId: Number(draft.brazilianPublisherId),
-    editionTypeId: Number(draft.editionTypeId),
-    coverTypeId: Number(draft.coverTypeId),
-    formatId: Number(draft.formatId),
+    editionTypeId: draft.editionTypeId ? Number(draft.editionTypeId) : null,
+    coverTypeId: draft.coverTypeId ? Number(draft.coverTypeId) : null,
+    formatId: draft.formatId ? Number(draft.formatId) : null,
+    paperId: draft.paperId ? Number(draft.paperId) : null,
     chronologicalNumber: Number(draft.chronologicalNumber),
     brazilPublicationStatus: draft.brazilPublicationStatus,
   };
@@ -81,9 +85,6 @@ export function buildEditionPayload(draft: EditionDraft) {
 export function isEditionDraftIncomplete(draft: EditionDraft) {
   const requiredValues = [
     draft.brazilianPublisherId,
-    draft.editionTypeId,
-    draft.coverTypeId,
-    draft.formatId,
     draft.chronologicalNumber,
     draft.brazilPublicationStatus,
   ];

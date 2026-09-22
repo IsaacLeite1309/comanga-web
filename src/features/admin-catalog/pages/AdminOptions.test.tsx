@@ -534,7 +534,7 @@ describe("AdminOptions", () => {
     expect(screen.getByRole("button", { name: /editora brasileira/i })).toBeInTheDocument();
     expect(screen.getByRole("button", { name: /acabamento/i })).toBeInTheDocument();
     expect(screen.getByRole("button", { name: /formato/i })).toBeInTheDocument();
-    expect(screen.queryByRole("button", { name: /miolo/i })).not.toBeInTheDocument();
+    expect(screen.getByRole("button", { name: /miolo/i })).toBeInTheDocument();
     expect(screen.queryByRole("button", { name: /^autor$/i })).not.toBeInTheDocument();
   });
 

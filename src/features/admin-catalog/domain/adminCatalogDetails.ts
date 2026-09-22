@@ -36,6 +36,7 @@ export interface EditionDetail {
   editionType: OptionValue | null;
   coverType?: OptionValue | null;
   format?: OptionValue | null;
+  paper?: OptionValue | null;
   brazilPublicationStatus: string | OptionValue | null;
   volumesCount?: number;
 }

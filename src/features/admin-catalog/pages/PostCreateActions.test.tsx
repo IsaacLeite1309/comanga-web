@@ -8,7 +8,7 @@ function renderPage(state?: Record<string, unknown>) {
     <MemoryRouter initialEntries={[{ pathname: "/admin/pos-cadastro", state }]}>
       <Routes>
         <Route path="/admin/pos-cadastro" element={<PostCreateActions />} />
-        <Route path="/admin/editar-mangas" element={<div>Gerenciar mangas</div>} />
+        <Route path="/admin/gerenciar-mangas" element={<div>Gerenciar mangas</div>} />
       </Routes>
     </MemoryRouter>,
   );
