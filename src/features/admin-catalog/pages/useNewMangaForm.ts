@@ -384,6 +384,7 @@ function createSubmissionHandler(settings: SubmissionSettings) {
       await api.patch(`/admin/works/${workId}`, payload);
       toast.success("Obra atualizada com sucesso.");
       settings.setBaselineSignature(signature);
+      navigate("/admin/gerenciar-mangas");
       return;
     }
     const response = await api.post<WorkDetailResponse>("/admin/works", payload);

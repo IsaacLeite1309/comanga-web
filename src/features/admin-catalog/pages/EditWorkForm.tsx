@@ -3,7 +3,7 @@ import { useLocation, useParams } from "react-router-dom";
 import { Loader2 } from "lucide-react";
 import { api } from "@/services/api";
 import { getApiError } from "@/lib/apiError";
-import { workAdminPath } from "../domain/catalogPaths";
+import { adminCatalogPath } from "../domain/catalogPaths";
 import NewManga from "./NewManga";
 
 interface LocationState {
@@ -71,7 +71,7 @@ const EditWorkForm = () => {
     );
   }
 
-  return <NewManga mode="edit" workId={resolvedWorkId} returnPath={workAdminPath(workSlug || "")} />;
+  return <NewManga mode="edit" workId={resolvedWorkId} returnPath={adminCatalogPath} />;
 };
 
 export default EditWorkForm;

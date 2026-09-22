@@ -34,7 +34,7 @@ describe("EditWorkForm", () => {
   it("usa o id recebido pela navegacao sem consultar a API", () => {
     renderPage(true, "naruto");
 
-    expect(screen.getByText("edit|42|/admin/gerenciar-mangas/obras/naruto/edicoes")).toBeInTheDocument();
+    expect(screen.getByText("edit|42|/admin/gerenciar-mangas")).toBeInTheDocument();
     expect(api.get).not.toHaveBeenCalled();
   });
 
@@ -46,7 +46,7 @@ describe("EditWorkForm", () => {
     renderPage(false, "joao");
 
     expect(screen.getByText(/carregando dados da obra/i)).toBeInTheDocument();
-    expect(await screen.findByText("edit|7|/admin/gerenciar-mangas/obras/joao/edicoes")).toBeInTheDocument();
+    expect(await screen.findByText("edit|7|/admin/gerenciar-mangas")).toBeInTheDocument();
     expect(api.get).toHaveBeenCalledWith("/admin/works/slug/joao");
   });
 
