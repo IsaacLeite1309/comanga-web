@@ -6,6 +6,7 @@ export type EditionSort = "title" | "chronologicalNumber" | "createdAt";
 export interface PublicOption {
   id: number;
   label: string;
+  slug?: string | null;
 }
 
 // A API declara a que países cada Tipo de Obra pertence para o filtro restringir a lista.

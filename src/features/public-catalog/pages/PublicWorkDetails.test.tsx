@@ -23,7 +23,7 @@ const work = {
   directRelease: false,
   originalPublicationStatus: "Finalizada",
   synopsis: "A sinopse canônica da Obra.",
-  authors: [{ id: 3, label: "Naoki Urasawa", roles: ["Roteiro", "Arte"] }],
+  authors: [{ id: 3, label: "Naoki Urasawa", slug: "naoki-urasawa", roles: ["Roteiro", "Arte"] }],
   genres: [{ id: 4, label: "Suspense" }],
   demographics: ["Seinen"],
   serializationMagazines: [{ id: 5, label: "Big Comic Original" }],
@@ -86,7 +86,7 @@ describe("PublicWorkDetails", () => {
     expect(screen.getByText("Mangá").tagName).toBe("DD");
     expect(screen.getByText("Japão").tagName).toBe("DD");
     expect(screen.getByText("Naoki Urasawa")).toBeInTheDocument();
-    expect(screen.getByRole("link", { name: "Ver Obras de Naoki Urasawa" })).toHaveAttribute("href", "/autores/3");
+    expect(screen.getByRole("link", { name: "Ver Obras de Naoki Urasawa" })).toHaveAttribute("href", "/autores/naoki-urasawa");
     expect(screen.getByText("Roteiro · Arte")).toBeInTheDocument();
     expect(screen.getByText("Suspense")).toBeInTheDocument();
     expect(screen.getByText("Seinen")).toBeInTheDocument();
@@ -160,13 +160,13 @@ describe("PublicWorkDetails", () => {
     expect(screen.getByText("Volume 1")).toBeInTheDocument();
     expect(screen.getByRole("link", { name: "Ver detalhes do Volume 1" })).toHaveAttribute(
       "href",
-      "/obras/monster/edicao/20/volume/30",
+      "/obras/monster/edicao/1/volume/1",
     );
     expect(screen.queryByText("15/05/2024")).not.toBeInTheDocument();
     expect(screen.queryByAltText("Capa da 1ª edição de Monster")).not.toBeInTheDocument();
     expect(screen.getByRole("link", { name: /1ª edição\s*Panini Em publicação com 9 volumes/ })).toHaveAttribute(
       "href",
-      "/obras/monster/edicao/20",
+      "/obras/monster/edicao/1",
     );
   });
 

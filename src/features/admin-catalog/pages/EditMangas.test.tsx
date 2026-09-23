@@ -83,6 +83,7 @@ describe("EditMangas", () => {
     renderEditMangas();
 
     expect(await screen.findByRole("heading", { name: /gerenciar mang.s/i })).toBeInTheDocument();
+    expect(screen.getByRole("link", { name: "+ Obra" })).toHaveAttribute("href", "/admin/novo-manga");
     expect((await screen.findAllByText("Naruto"))[0]).toBeInTheDocument();
     expect(screen.getByText("Masashi Kishimoto")).toBeInTheDocument();
     expect(screen.getAllByText("Japão")[0]).toBeInTheDocument();

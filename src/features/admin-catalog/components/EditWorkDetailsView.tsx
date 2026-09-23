@@ -137,7 +137,7 @@ function EditionGridCard({
           className="h-8 w-full rounded-md"
         />
         <Link
-          to={editionEditAdminPath(workSlug, edition.id)}
+          to={editionEditAdminPath(workSlug, edition.chronologicalNumber)}
           state={{ workId: work.id, editionId: edition.id }}
           aria-label={`Editar ${label}`}
           className="inline-flex h-8 items-center justify-center rounded-md border border-border bg-card text-foreground transition-colors hover:border-primary hover:text-primary"
@@ -145,7 +145,7 @@ function EditionGridCard({
           <Pencil className="h-3.5 w-3.5" />
         </Link>
         <Link
-          to={editionAdminPath(workSlug, edition.id)}
+          to={editionAdminPath(workSlug, edition.chronologicalNumber)}
           state={{ workId: work.id, editionId: edition.id }}
           aria-label={`Gerenciar volumes da ${label}`}
           className="inline-flex h-8 items-center justify-center rounded-md border border-border bg-card text-foreground transition-colors hover:border-primary hover:text-primary"
@@ -224,7 +224,7 @@ function EditionListRow({
           className="h-7 min-w-0 px-2 text-xs md:hidden"
         />
         <Link
-          to={editionEditAdminPath(workSlug, edition.id)}
+          to={editionEditAdminPath(workSlug, edition.chronologicalNumber)}
           state={{ workId: work.id, editionId: edition.id }}
           aria-label={`Editar ${label}`}
           className="inline-flex h-10 w-10 items-center justify-center rounded-lg border border-border bg-input text-foreground transition-colors hover:border-primary hover:text-primary md:justify-self-center"
@@ -232,7 +232,7 @@ function EditionListRow({
           <Pencil className="h-3.5 w-3.5" />
         </Link>
         <Link
-          to={editionAdminPath(workSlug, edition.id)}
+          to={editionAdminPath(workSlug, edition.chronologicalNumber)}
           state={{ workId: work.id, editionId: edition.id }}
           aria-label={`Gerenciar volumes da ${label}`}
           className="inline-flex h-10 w-10 items-center justify-center rounded-lg border border-border bg-input text-foreground transition-colors hover:border-primary hover:text-primary md:justify-self-center"

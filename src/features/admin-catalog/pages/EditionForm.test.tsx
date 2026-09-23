@@ -66,14 +66,14 @@ describe("EditionForm", () => {
     vi.mocked(api.get).mockImplementation(async (url) => {
       if (url === "/admin/works/slug/naruto") return { data: { work: { id: 10, slug: "naruto", title: "Naruto" } } };
       if (url === "/admin/editions/form-options") return { data: editionOptions };
-      if (url === "/admin/editions/50") return { data: { edition: {
+      if (url === "/admin/works/slug/naruto/editions/17") return { data: { edition: {
         id: 50, workId: 10, work: { id: 10, slug: "naruto", title: "Naruto" }, chronologicalNumber: 17, brazilPublicationStatus: "Completa",
         brazilianPublisher: { id: 30, label: "Panini" }, coverType: null, format: null, papers: [],
       } } };
       throw new Error(`Requisição inesperada: ${url}`);
     });
     vi.mocked(api.patch).mockResolvedValueOnce({ data: {} });
-    renderEditionForm("/admin/gerenciar-mangas/obras/naruto/edicoes/50/editar");
+    renderEditionForm("/admin/gerenciar-mangas/obras/naruto/edicoes/17/editar");
     await screen.findByRole("heading", { name: /editar edição/i });
     expect(screen.getByRole("link", { name: "Edições de Naruto" })).toBeInTheDocument();
     expect(screen.queryByText("Edições de naruto")).not.toBeInTheDocument();
@@ -162,7 +162,7 @@ describe("EditionForm", () => {
     vi.mocked(api.get).mockImplementation(async (url) => {
       if (url === "/admin/works/slug/Naruto") return { data: { work: { id: 10, slug: "naruto", title: "Naruto" } } };
       if (url === "/admin/editions/form-options") return { data: editionOptions };
-      if (url === "/admin/editions/50") return {
+      if (url === "/admin/works/slug/Naruto/editions/2") return {
         data: { edition: {
             id: 50,
             workId: 10,
@@ -181,7 +181,7 @@ describe("EditionForm", () => {
     });
     vi.mocked(api.patch).mockResolvedValueOnce({ data: {} });
 
-    renderEditionForm("/admin/gerenciar-mangas/obras/Naruto/edicoes/50/editar");
+    renderEditionForm("/admin/gerenciar-mangas/obras/Naruto/edicoes/2/editar");
 
     expect(await screen.findByRole("heading", { name: /editar edi/i })).toBeInTheDocument();
     chooseDropdown(/número da edição/i, /^3ª edição$/i);

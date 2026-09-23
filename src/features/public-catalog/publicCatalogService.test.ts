@@ -111,8 +111,8 @@ describe("publicCatalogService", () => {
     };
     vi.mocked(api.get).mockResolvedValueOnce({ data });
 
-    await expect(getPublicEditionDetails(20, { page: 2, limit: 24 })).resolves.toEqual(data);
-    expect(api.get).toHaveBeenCalledWith("/public/editions/20", {
+    await expect(getPublicEditionDetails("monster", 1, { page: 2, limit: 24 })).resolves.toEqual(data);
+    expect(api.get).toHaveBeenCalledWith("/public/works/monster/editions/1", {
       params: { page: 2, limit: 24 },
     });
   });
@@ -125,13 +125,13 @@ describe("publicCatalogService", () => {
     };
     vi.mocked(api.get).mockResolvedValueOnce({ data });
 
-    await expect(getPublicAuthorWorks(5, {
+    await expect(getPublicAuthorWorks("naoki-urasawa", {
       page: 2,
       limit: 24,
       sortBy: "title",
       order: "ASC",
     })).resolves.toEqual(data);
-    expect(api.get).toHaveBeenCalledWith("/public/authors/5/works", {
+    expect(api.get).toHaveBeenCalledWith("/public/authors/naoki-urasawa/works", {
       params: { page: 2, limit: 24, sortBy: "title", order: "ASC" },
     });
   });
@@ -140,7 +140,7 @@ describe("publicCatalogService", () => {
     const volume = { id: 30, number: 1, edition: { id: 20 } };
     vi.mocked(api.get).mockResolvedValueOnce({ data: { volume } });
 
-    await expect(getPublicVolumeDetails(30)).resolves.toEqual(volume);
-    expect(api.get).toHaveBeenCalledWith("/public/volumes/30");
+    await expect(getPublicVolumeDetails("monster", 1, 1)).resolves.toEqual(volume);
+    expect(api.get).toHaveBeenCalledWith("/public/works/monster/editions/1/volumes/1");
   });
 });

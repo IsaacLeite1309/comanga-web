@@ -4,6 +4,7 @@ import { toast } from "sonner";
 import { getApiError } from "@/lib/apiError";
 import { api } from "@/services/api";
 import { editionAdminPath, newVolumeAdminPath, volumeEditAdminPath } from "../domain/catalogPaths";
+import { getEditionByNumber, getVolumeByNumber } from "../domain/contextualAdminCatalog";
 import {
   emptyVolumeDraft,
   getRememberedVolumeDraft,
@@ -36,15 +37,18 @@ export function useVolumeFormController() {
   const navigate = useNavigate();
   const workSummary = useWorkSummary(workSlug);
   const isEditing = Boolean(volumeId);
-  const draftKey = `${workSlug.toLocaleLowerCase("pt-BR")}:${editionId || state?.editionId || ""}`;
+  const draftKey = `${workSlug.toLocaleLowerCase("pt-BR")}:${editionId}`;
   const rememberedDraft = useMemo(() => getRememberedVolumeDraft(draftKey), [draftKey]);
   const editionPath = useMemo(() => editionAdminPath(workSlug, editionId), [workSlug, editionId]);
   const [form, setForm] = useState<VolumeDraft>(() => (isEditing ? emptyVolumeDraft : rememberedDraft.form));
+  const [resolvedEditionId, setResolvedEditionId] = useState<number | null>(state?.editionId ?? null);
+  const [resolvedVolumeId, setResolvedVolumeId] = useState<number | null>(null);
   const [currentStep, setCurrentStep] = useState<VolumeStep>(() => (isEditing ? "details" : rememberedDraft.currentStep));
-  const [loading, setLoading] = useState(isEditing);
+  const [loading, setLoading] = useState(isEditing || !state?.editionId);
   const [saving, setSaving] = useState(false);
   const [invalidFields, setInvalidFields] = useState<string[]>([]);
   const [error, setError] = useState("");
+  const singleVolumeUnavailable = useSingleVolumeAvailability(resolvedEditionId, resolvedVolumeId, isEditing);
   const [baselineSignature, setBaselineSignature] = useState("");
   const formSignature = useMemo(() => JSON.stringify(form), [form]);
   const hasUnsavedChanges = Boolean(baselineSignature) && formSignature !== baselineSignature && !saving;
@@ -53,15 +57,8 @@ export function useVolumeFormController() {
     if (!isEditing) rememberVolumeDraft(draftKey, { form, currentStep });
   }, [currentStep, draftKey, form, isEditing]);
 
-  useLoadVolume({
-    fallbackVolumeId: state?.volumeId,
-    isEditing,
-    setBaselineSignature,
-    setError,
-    setForm,
-    setLoading,
-    volumeId,
-  });
+  useLoadContextualVolume({ workSlug, editionId, volumeId, isEditing, fallbackEditionId: state?.editionId, setResolvedEditionId,
+    setResolvedVolumeId, setForm, setBaselineSignature, setError, setLoading });
 
   useEffect(() => {
     if (!isEditing && !baselineSignature) setBaselineSignature(JSON.stringify(emptyVolumeDraft));
@@ -133,7 +130,8 @@ export function useVolumeFormController() {
     try {
       await saveVolume({
         draftKey,
-        editionId,
+        editionId: String(resolvedEditionId),
+        editionNumber: editionId,
         editionPath,
         form,
         formSignature,
@@ -141,7 +139,7 @@ export function useVolumeFormController() {
         navigate,
         setBaselineSignature,
         state,
-        volumeId,
+        volumeId: String(resolvedVolumeId),
         workSlug,
       });
     } catch (saveError) {
@@ -155,6 +153,7 @@ export function useVolumeFormController() {
     changeStep,
     currentStep,
     editionId,
+    resolvedEditionId,
     editionPath,
     error,
     form,
@@ -166,6 +165,7 @@ export function useVolumeFormController() {
     loading,
     resetForm,
     saving,
+    singleVolumeUnavailable,
     setCurrentStep,
     setForm,
     state,
@@ -178,53 +178,69 @@ export function useVolumeFormController() {
   };
 }
 
-interface LoadVolumeArgs {
-  fallbackVolumeId?: number;
-  isEditing: boolean;
-  setBaselineSignature: Dispatch<SetStateAction<string>>;
-  setError: Dispatch<SetStateAction<string>>;
-  setForm: Dispatch<SetStateAction<VolumeDraft>>;
-  setLoading: Dispatch<SetStateAction<boolean>>;
-  volumeId: string;
+function useSingleVolumeAvailability(editionId: number | null, volumeId: number | null, isEditing: boolean) {
+  const [unavailable, setUnavailable] = useState(false);
+  useEffect(() => {
+    let active = true;
+    if (!editionId) return;
+    api.get<{ volumes: Array<{ id: number }>; pagination: { total: number } }>(`/admin/editions/${editionId}/volumes`, {
+      params: { page: 1, limit: 2 },
+    }).then(({ data }) => {
+      if (!active) return;
+      const hasOtherVolume = data.pagination.total > 1
+        || (data.pagination.total === 1 && (!isEditing || data.volumes[0]?.id !== volumeId));
+      setUnavailable(hasOtherVolume);
+    }).catch(() => {});
+    return () => { active = false; };
+  }, [editionId, volumeId, isEditing]);
+  return unavailable;
 }
 
-function useLoadVolume({
-  fallbackVolumeId,
-  isEditing,
-  setBaselineSignature,
-  setError,
-  setForm,
-  setLoading,
-  volumeId,
-}: LoadVolumeArgs) {
+interface LoadContextualVolumeArgs {
+  workSlug: string;
+  editionId: string;
+  volumeId: string;
+  isEditing: boolean;
+  fallbackEditionId?: number;
+  setResolvedEditionId: Dispatch<SetStateAction<number | null>>;
+  setResolvedVolumeId: Dispatch<SetStateAction<number | null>>;
+  setForm: Dispatch<SetStateAction<VolumeDraft>>;
+  setBaselineSignature: Dispatch<SetStateAction<string>>;
+  setError: Dispatch<SetStateAction<string>>;
+  setLoading: Dispatch<SetStateAction<boolean>>;
+}
+
+function useLoadContextualVolume(args: LoadContextualVolumeArgs) {
+  const { workSlug, editionId, volumeId, isEditing, fallbackEditionId, setResolvedEditionId, setResolvedVolumeId,
+    setForm, setBaselineSignature, setError, setLoading } = args;
   useEffect(() => {
-    let isMounted = true;
-    async function loadVolume() {
-      if (!isEditing) return;
-      setLoading(true);
-      setError("");
-      try {
-        const response = await api.get<VolumeResponse>(`/admin/volumes/${volumeId || fallbackVolumeId}`);
-        if (!isMounted) return;
-        const loadedForm = volumeToDraft(response.data.volume);
-        setForm(loadedForm);
-        setBaselineSignature(JSON.stringify(loadedForm));
-      } catch (loadError) {
-        if (isMounted) setError(getApiError(loadError, "Erro ao carregar dados do Volume."));
-      } finally {
-        if (isMounted) setLoading(false);
+    let active = true;
+    setLoading(isEditing || !fallbackEditionId);
+    setError("");
+    Promise.all([
+      getEditionByNumber(workSlug, editionId),
+      isEditing ? getVolumeByNumber<VolumeResponse["volume"]>(workSlug, editionId, volumeId) : Promise.resolve(null),
+    ]).then(([edition, volume]) => {
+      if (!active) return;
+      setResolvedEditionId(edition.id);
+      setResolvedVolumeId(volume?.id ?? null);
+      if (volume) {
+        const loaded = volumeToDraft(volume);
+        setForm(loaded);
+        setBaselineSignature(JSON.stringify(loaded));
       }
-    }
-    loadVolume();
-    return () => {
-      isMounted = false;
-    };
-  }, [fallbackVolumeId, isEditing, setBaselineSignature, setError, setForm, setLoading, volumeId]);
+    }).catch((loadError) => {
+      if (active) setError(getApiError(loadError, "Erro ao carregar dados do Volume."));
+    }).finally(() => { if (active) setLoading(false); });
+    return () => { active = false; };
+  }, [workSlug, editionId, volumeId, isEditing, fallbackEditionId, setResolvedEditionId, setResolvedVolumeId,
+    setForm, setBaselineSignature, setError, setLoading]);
 }
 
 interface SaveVolumeArgs {
   draftKey: string;
   editionId: string;
+  editionNumber: string;
   editionPath: string;
   form: VolumeDraft;
   formSignature: string;
@@ -249,7 +265,7 @@ async function saveVolume(args: SaveVolumeArgs) {
   toast.success("Volume cadastrado com sucesso.");
   resetVolumeDraftMemory(args.draftKey);
   args.setBaselineSignature(args.formSignature);
-  args.navigate("/admin/pos-cadastro", { state: postCreateState(args, response.data.volume.id) });
+  args.navigate("/admin/pos-cadastro", { state: postCreateState(args, response.data.volume.id, response.data.volume.number) });
 }
 
 function resolvedEditionId(args: SaveVolumeArgs) {
@@ -259,26 +275,27 @@ function resolvedEditionId(args: SaveVolumeArgs) {
 function editionLocationState(args: SaveVolumeArgs) {
   return {
     workId: args.state?.workId,
-    editionId: args.state?.editionId || Number(args.editionId),
+    editionId: Number(args.editionId),
   };
 }
 
-function postCreateState(args: SaveVolumeArgs, volumeId: number) {
-  const editionId = resolvedEditionId(args);
+function postCreateState(args: SaveVolumeArgs, volumeId: number, volumeNumber: number) {
   return {
     title: "Volume cadastrado com sucesso!",
     description: "Escolha o próximo passo para continuar esta Edição.",
     actions: [
       {
         label: "Gerenciar este Volume",
-        to: volumeEditAdminPath(args.workSlug, editionId, volumeId),
+        to: volumeEditAdminPath(args.workSlug, args.editionNumber, volumeNumber),
         state: { ...editionLocationState(args), volumeId },
       },
-      {
-        label: "Cadastrar novo Volume",
-        to: newVolumeAdminPath(args.workSlug, editionId),
-        state: editionLocationState(args),
-      },
+      ...(!args.form.singleVolume
+        ? [{
+          label: "Cadastrar novo Volume",
+          to: newVolumeAdminPath(args.workSlug, args.editionNumber),
+          state: editionLocationState(args),
+        }]
+        : []),
     ],
   };
 }

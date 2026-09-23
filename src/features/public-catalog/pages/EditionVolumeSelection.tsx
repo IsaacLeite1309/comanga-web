@@ -13,13 +13,13 @@ import { getApiError } from "@/lib/apiError";
 
 const PAGE_SIZE = 50;
 
-async function loadCompleteEdition(editionId: number) {
-  const firstPage = await getPublicEditionDetails(editionId, { page: 1, limit: PAGE_SIZE });
+async function loadCompleteEdition(workSlug: string, editionNumber: number) {
+  const firstPage = await getPublicEditionDetails(workSlug, editionNumber, { page: 1, limit: PAGE_SIZE });
   if (firstPage.pagination.totalPages <= 1) return firstPage;
 
   const remainingPages = await Promise.all(
     Array.from({ length: firstPage.pagination.totalPages - 1 }, (_, index) => (
-      getPublicEditionDetails(editionId, { page: index + 2, limit: PAGE_SIZE })
+      getPublicEditionDetails(workSlug, editionNumber, { page: index + 2, limit: PAGE_SIZE })
     )),
   );
   return {
@@ -77,13 +77,13 @@ function SelectableVolume({
 }
 
 function EditionVolumeSelection() {
-  const { editionId = "", mode = "", slug } = useParams();
+  const { editionNumber = "", mode = "", slug } = useParams();
   const location = useLocation();
-  const numericEditionId = Number(editionId);
+  const numericEditionNumber = Number(editionNumber);
   const navigate = useNavigate();
   const isCollectionContext = location.pathname.startsWith("/colecao/");
   const editionPath = slug
-    ? `${isCollectionContext ? "/colecao" : "/obras"}/${encodeURIComponent(slug)}/edicao/${editionId}`
+    ? `${isCollectionContext ? "/colecao" : "/obras"}/${encodeURIComponent(slug)}/edicao/${editionNumber}`
     : "";
   const [data, setData] = useState<PublicEditionDetailsResponse | null>(null);
   // Futuramente, estes IDs virão da Estante ou da Lista de Desejos. Por ora, a tela é somente visual.
@@ -95,17 +95,17 @@ function EditionVolumeSelection() {
 
   useEffect(() => {
     let active = true;
-    if (!slug || !validMode || !Number.isInteger(numericEditionId) || numericEditionId <= 0) {
+    if (!slug || !validMode || !Number.isInteger(numericEditionNumber) || numericEditionNumber <= 0) {
       setError("Seleção de Volumes inválida.");
       setLoading(false);
       return () => { active = false; };
     }
 
     setLoading(true);
-    loadCompleteEdition(numericEditionId)
+    loadCompleteEdition(slug, numericEditionNumber)
       .then((result) => {
         if (!active) return;
-        if (result.edition.work.slug !== slug) {
+        if (result.edition.work.slug !== slug || result.edition.chronologicalNumber !== numericEditionNumber) {
           setData(null);
           setError("Seleção de Volumes inválida.");
           return;
@@ -120,7 +120,7 @@ function EditionVolumeSelection() {
       });
 
     return () => { active = false; };
-  }, [numericEditionId, slug, validMode]);
+  }, [numericEditionNumber, slug, validMode]);
 
   const toggleVolume = (volumeId: number) => {
     setSelectedIds((current) => {

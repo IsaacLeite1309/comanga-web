@@ -87,14 +87,14 @@ const App = () => (
               />
               
               <Route path="/pesquisa" element={<PublicPage><PublicCatalogPage /></PublicPage>} />
-              <Route path="/autores/:authorId" element={<PublicPage><PublicAuthorWorksPage /></PublicPage>} />
+              <Route path="/autores/:authorSlug" element={<PublicPage><PublicAuthorWorksPage /></PublicPage>} />
               <Route path="/obras/:slug" element={<PublicPage><PublicWorkDetailsPage /></PublicPage>} />
-              <Route path="/obras/:slug/edicao/:editionId" element={<PublicPage><PublicEditionDetailsPage /></PublicPage>} />
-              <Route path="/obras/:slug/edicao/:editionId/selecionar/:mode" element={<PublicPage><EditionVolumeSelectionPage /></PublicPage>} />
-              <Route path="/obras/:slug/edicao/:editionId/volume/:volumeId" element={<PublicPage><PublicVolumeDetailsPage /></PublicPage>} />
+              <Route path="/obras/:slug/edicao/:editionNumber" element={<PublicPage><PublicEditionDetailsPage /></PublicPage>} />
+              <Route path="/obras/:slug/edicao/:editionNumber/selecionar/:mode" element={<PublicPage><EditionVolumeSelectionPage /></PublicPage>} />
+              <Route path="/obras/:slug/edicao/:editionNumber/volume/:volumeNumber" element={<PublicPage><PublicVolumeDetailsPage /></PublicPage>} />
               <Route path="/colecao" element={<CollectionPage />} />
-              <Route path="/colecao/:slug/edicao/:editionId" element={<PublicEditionDetailsPage />} />
-              <Route path="/colecao/:slug/edicao/:editionId/selecionar/:mode" element={<EditionVolumeSelectionPage />} />
+              <Route path="/colecao/:slug/edicao/:editionNumber" element={<PublicEditionDetailsPage />} />
+              <Route path="/colecao/:slug/edicao/:editionNumber/selecionar/:mode" element={<EditionVolumeSelectionPage />} />
               <Route path="/checklist" element={<ChecklistPage />} />
               <Route path="/desejos" element={<WishlistPage />} />
               <Route

@@ -48,7 +48,7 @@ function valueOrDefault<T>(value: T | null | undefined, fallback: T) {
 
 export function volumeToDraft(volume: Volume): VolumeDraft {
   return {
-    number: nullishNumberString(volume.number),
+    number: volume.singleVolume ? "1" : nullishNumberString(volume.number),
     singleVolume: Boolean(volume.singleVolume),
     coverAssetId: valueOrDefault(volume.coverAssetId, ""),
     coverUrl: valueOrDefault(volume.coverUrl, ""),

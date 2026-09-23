@@ -41,11 +41,11 @@ function LocationProbe() {
   return <output data-testid="location-search">{location.search}</output>;
 }
 
-function renderPage(entry = "/autores/5?page=1") {
+function renderPage(entry = "/autores/naoki-urasawa?page=1") {
   return render(
     <MemoryRouter initialEntries={[entry]}>
       <Routes>
-        <Route path="/autores/:authorId" element={<><PublicAuthorWorks /><LocationProbe /></>} />
+        <Route path="/autores/:authorSlug" element={<><PublicAuthorWorks /><LocationProbe /></>} />
       </Routes>
     </MemoryRouter>,
   );
@@ -62,7 +62,7 @@ describe("PublicAuthorWorks", () => {
 
     expect(screen.getByText("Carregando Obras do Autor...")).toBeInTheDocument();
     expect(await screen.findByRole("heading", { name: "Mangás de Naoki Urasawa", level: 1 })).toBeInTheDocument();
-    expect(getPublicAuthorWorks).toHaveBeenCalledWith(5, {
+    expect(getPublicAuthorWorks).toHaveBeenCalledWith("naoki-urasawa", {
       page: 1,
       limit: 24,
       sortBy: "title",
@@ -81,7 +81,7 @@ describe("PublicAuthorWorks", () => {
 
     fireEvent.click(screen.getByRole("button", { name: "Próxima" }));
 
-    await waitFor(() => expect(getPublicAuthorWorks).toHaveBeenLastCalledWith(5, {
+    await waitFor(() => expect(getPublicAuthorWorks).toHaveBeenLastCalledWith("naoki-urasawa", {
       page: 2,
       limit: 24,
       sortBy: "title",
@@ -122,7 +122,7 @@ describe("PublicAuthorWorks", () => {
 
     unmount();
     vi.clearAllMocks();
-    renderPage("/autores/invalido");
+    renderPage("/autores/autor invalido");
     expect(await screen.findByText("Autor não encontrado.")).toBeInTheDocument();
     expect(getPublicAuthorWorks).not.toHaveBeenCalled();
   });

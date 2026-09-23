@@ -20,7 +20,5 @@ export function formatPublicReleaseDate(
 }
 
 export function formatPublicationStatus(status?: string | null) {
-  if (status === "Completa") return "Completo";
-  if (status === "Cancelada") return "Cancelado";
   return status || "Não informado";
 }

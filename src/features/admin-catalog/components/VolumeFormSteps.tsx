@@ -53,6 +53,7 @@ interface VolumeStepContentProps {
   updateField: (field: keyof VolumeDraft, value: string) => void;
   updateReleaseDate: (value: string) => void;
   updateReleasePrecision: (value: ReleaseDatePrecision) => void;
+  singleVolumeUnavailable?: boolean;
 }
 
 export function VolumeStepContent(props: VolumeStepContentProps) {
@@ -70,6 +71,7 @@ function VolumeDetailsStep({
   updateField,
   updateReleaseDate,
   updateReleasePrecision,
+  singleVolumeUnavailable,
 }: VolumeStepContentProps) {
   return (
     <div className="space-y-4">
@@ -79,6 +81,7 @@ function VolumeDetailsStep({
           value={form.number}
           onChange={(value) => updateField("number", value)}
           type="number"
+          disabled={form.singleVolume}
           required
           invalid={invalidFields.includes("number")}
           errorMessage="Preencha o campo obrigatório."
@@ -96,8 +99,12 @@ function VolumeDetailsStep({
       <ToggleField
         label="Volume único"
         checked={form.singleVolume}
-        onChange={(checked) => setForm((current) => ({ ...current, singleVolume: checked }))}
+        disabled={singleVolumeUnavailable && !form.singleVolume}
+        onChange={(checked) => setForm((current) => ({ ...current, singleVolume: checked, number: checked ? "1" : current.number }))}
       />
+      {singleVolumeUnavailable && !form.singleVolume && (
+        <p className="text-sm text-muted-foreground">Volume único só pode ser ativado se esta Edição não tiver outros Volumes.</p>
+      )}
 
       <div className="grid gap-4 lg:grid-cols-3">
         <SelectField

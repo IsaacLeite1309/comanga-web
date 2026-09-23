@@ -1,4 +1,5 @@
 import { Link } from "react-router-dom";
+import { publicAuthorPath } from "./publicCatalogPaths";
 import { CatalogCover } from "@/features/public-catalog/CatalogCover";
 import type { PublicWorkSummary } from "@/features/public-catalog/publicCatalogTypes";
 
@@ -29,7 +30,7 @@ export function PublicWorkCard({
             {work.authors.map((author, index) => (
               <span key={author.id}>
                 {index > 0 ? ", " : null}
-                <Link to={`/autores/${author.id}`} aria-label={`Ver Obras de ${author.label}`} className="hover:text-primary hover:underline">
+                <Link to={publicAuthorPath(author.slug || "")} aria-label={`Ver Obras de ${author.label}`} className="hover:text-primary hover:underline">
                   {author.label}
                 </Link>
               </span>

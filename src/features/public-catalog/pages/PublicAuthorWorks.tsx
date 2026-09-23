@@ -21,8 +21,7 @@ function worksCount(total: number) {
 }
 
 function PublicAuthorWorks() {
-  const { authorId = "" } = useParams();
-  const numericAuthorId = Number(authorId);
+  const { authorSlug = "" } = useParams();
   const [searchParams, setSearchParams] = useSearchParams();
   const page = positiveInteger(searchParams.get("page"));
   const [data, setData] = useState<PublicAuthorWorksResponse | null>(null);
@@ -33,7 +32,7 @@ function PublicAuthorWorks() {
   useEffect(() => {
     let active = true;
 
-    if (!Number.isInteger(numericAuthorId) || numericAuthorId <= 0) {
+    if (!/^[\p{L}\p{N}]+(?:-[\p{L}\p{N}]+)*$/u.test(authorSlug)) {
       setData(null);
       setError("Autor não encontrado.");
       setLoading(false);
@@ -42,7 +41,7 @@ function PublicAuthorWorks() {
 
     setLoading(true);
     setError("");
-    getPublicAuthorWorks(numericAuthorId, {
+    getPublicAuthorWorks(authorSlug, {
       page,
       limit: PAGE_SIZE,
       sortBy: "title",
@@ -61,7 +60,7 @@ function PublicAuthorWorks() {
       });
 
     return () => { active = false; };
-  }, [numericAuthorId, page, retry]);
+  }, [authorSlug, page, retry]);
 
   const changePage = (nextPage: number) => {
     const next = new URLSearchParams(searchParams);

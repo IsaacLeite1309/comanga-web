@@ -63,11 +63,11 @@ function LocationProbe() {
   return <output data-testid="location-search">{location.search}</output>;
 }
 
-function renderPage(entry = "/obras/monster/edicao/20?page=1") {
+function renderPage(entry = "/obras/monster/edicao/2?page=1") {
   return render(
     <MemoryRouter initialEntries={[entry]}>
       <Routes>
-        <Route path="/obras/:slug/edicao/:editionId" element={<><PublicEditionDetails /><LocationProbe /></>} />
+        <Route path="/obras/:slug/edicao/:editionNumber" element={<><PublicEditionDetails /><LocationProbe /></>} />
       </Routes>
     </MemoryRouter>,
   );
@@ -84,7 +84,7 @@ describe("PublicEditionDetails", () => {
 
     expect(screen.getByText("Carregando Edição...")).toBeInTheDocument();
     expect(await screen.findByRole("heading", { name: "2ª edição", level: 1 })).toBeInTheDocument();
-    expect(getPublicEditionDetails).toHaveBeenCalledWith(20, { page: 1, limit: 24 });
+    expect(getPublicEditionDetails).toHaveBeenCalledWith("monster", 2, { page: 1, limit: 24 });
     expect(screen.getByText("Obra")).toBeInTheDocument();
     expect(screen.getByRole("link", { name: "Ver detalhes da Obra Monster" })).toHaveAttribute("href", "/obras/monster");
     expect(screen.queryByText("MONSTER")).not.toBeInTheDocument();
@@ -100,11 +100,11 @@ describe("PublicEditionDetails", () => {
     expect(screen.getByText("2026-??")).toBeInTheDocument();
     expect(screen.getByRole("link", { name: "Coleção" })).toHaveAttribute(
       "href",
-      "/obras/monster/edicao/20/selecionar/estante",
+      "/obras/monster/edicao/2/selecionar/estante",
     );
     expect(screen.getByRole("link", { name: "Lista de Desejos" })).toHaveAttribute(
       "href",
-      "/obras/monster/edicao/20/selecionar/desejos",
+      "/obras/monster/edicao/2/selecionar/desejos",
     );
 
     const cover = screen.getByAltText("Capa da 2ª edição de Monster");
@@ -124,8 +124,8 @@ describe("PublicEditionDetails", () => {
     expect(screen.queryByText("416 páginas")).not.toBeInTheDocument();
     expect(screen.getByText("2027")).toBeInTheDocument();
     expect(screen.getByText("Sem capa")).toBeInTheDocument();
-    expect(screen.getByRole("link", { name: "Ver detalhes do Volume 1" })).toHaveAttribute("href", "/obras/monster/edicao/20/volume/30");
-    expect(screen.getByRole("link", { name: "Ver detalhes do Volume 2" })).toHaveAttribute("href", "/obras/monster/edicao/20/volume/31");
+    expect(screen.getByRole("link", { name: "Ver detalhes do Volume 1" })).toHaveAttribute("href", "/obras/monster/edicao/2/volume/1");
+    expect(screen.getByRole("link", { name: "Ver detalhes do Volume 2" })).toHaveAttribute("href", "/obras/monster/edicao/2/volume/2");
   });
 
   it("pagina os Volumes e preserva a página na URL", async () => {
@@ -134,7 +134,7 @@ describe("PublicEditionDetails", () => {
 
     fireEvent.click(screen.getByRole("button", { name: "Próxima" }));
 
-    await waitFor(() => expect(getPublicEditionDetails).toHaveBeenLastCalledWith(20, {
+    await waitFor(() => expect(getPublicEditionDetails).toHaveBeenLastCalledWith("monster", 2, {
       page: 2,
       limit: 24,
     }));
@@ -151,6 +151,16 @@ describe("PublicEditionDetails", () => {
     renderPage();
 
     expect(await screen.findByText("Nenhum Volume público cadastrado nesta Edição.")).toBeInTheDocument();
+  });
+
+  it("mostra apenas o ano quando a publicação começou e terminou no mesmo ano", async () => {
+    vi.mocked(getPublicEditionDetails).mockResolvedValue({
+      ...response,
+      edition: { ...response.edition, brazilPublicationEndYear: 2026 },
+    });
+    renderPage();
+    expect(await screen.findByText("2026")).toBeInTheDocument();
+    expect(screen.queryByText("2026-2026")).not.toBeInTheDocument();
   });
 
   it("exibe erro seguro e permite tentar novamente", async () => {

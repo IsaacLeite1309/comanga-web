@@ -3,6 +3,7 @@ import { toast } from "sonner";
 import { api } from "@/services/api";
 import { getApiError } from "@/lib/apiError";
 import type { EditionDetail, VolumeDetail } from "../domain/adminCatalogDetails";
+import { getEditionByNumber } from "../domain/contextualAdminCatalog";
 import {
   VOLUMES_LIST_ORDER,
   VOLUMES_PAGE_SIZE,
@@ -11,16 +12,12 @@ import {
 } from "../domain/catalogPagination";
 import { useCatalogPagedList } from "./useCatalogPagedList";
 
-interface EditionResponse {
-  edition: EditionDetail;
-}
-
 interface VolumesResponse {
   volumes: VolumeDetail[];
   pagination?: Partial<CatalogPagination>;
 }
 
-function useEditionSummary(editionId: string | number | undefined) {
+function useEditionSummary(workSlug: string, editionNumber: string | number | undefined) {
   const [edition, setEdition] = useState<EditionDetail | null>(null);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState("");
@@ -34,7 +31,7 @@ function useEditionSummary(editionId: string | number | undefined) {
       setError("");
 
       try {
-        const editionResponse = await api.get<EditionResponse>(`/admin/editions/${editionId}`);
+        const editionResponse = { data: { edition: await getEditionByNumber(workSlug, editionNumber || "") } };
         if (!isMounted) return;
         setEdition(editionResponse.data.edition);
       } catch (loadError) {
@@ -48,13 +45,14 @@ function useEditionSummary(editionId: string | number | undefined) {
     return () => {
       isMounted = false;
     };
-  }, [editionId, revision]);
+  }, [workSlug, editionNumber, revision]);
 
   return { edition, loading, error, refresh: () => setRevision(current => current + 1) };
 }
 
-export function useEditionDetails(editionId: string | number | undefined) {
-  const { edition, loading, error, refresh } = useEditionSummary(editionId);
+export function useEditionDetails(workSlug: string, editionNumber: string | number | undefined) {
+  const { edition, loading, error, refresh } = useEditionSummary(workSlug, editionNumber);
+  const editionId = edition?.id;
   const [deletingVolume, setDeletingVolume] = useState<VolumeDetail | null>(null);
   const [deletingId, setDeletingId] = useState<number | null>(null);
 
