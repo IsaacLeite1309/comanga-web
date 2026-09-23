@@ -40,7 +40,7 @@ export interface EditionDetail {
   brazilianPublisher: OptionValue | null;
   coverType?: OptionValue | null;
   format?: OptionValue | null;
-  paper?: OptionValue | null;
+  papers?: OptionValue[];
   brazilPublicationStatus: string | OptionValue | null;
   volumesCount?: number;
 }

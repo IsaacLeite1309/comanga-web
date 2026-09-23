@@ -31,7 +31,6 @@ const volume = {
     id: 20,
     chronologicalNumber: 2,
     brazilianPublisher: { id: 4, label: "Panini" },
-    paper: { id: 7, label: "Offset" },
     work: {
       id: 8,
       slug: "monster",
@@ -69,7 +68,6 @@ describe("PublicVolumeDetails", () => {
     expect(screen.getByText("R$ 79,90")).toBeInTheDocument();
     expect(screen.getByText("1234567890")).toBeInTheDocument();
     expect(screen.getByText("9781234567890")).toBeInTheDocument();
-    expect(screen.getByText("Offset")).toBeInTheDocument();
     expect(screen.getByText("Uma sinopse pública.")).toBeInTheDocument();
 
     const cover = screen.getByAltText("Capa do Volume 1 de Monster");
@@ -124,23 +122,19 @@ describe("PublicVolumeDetails", () => {
       synopsis: null,
       previousVolume: null,
       nextVolume: null,
-      edition: {
-        ...volume.edition,
-        paper: null,
-        work: { ...volume.edition.work, originalTitle: null },
-      },
+      edition: { ...volume.edition, work: { ...volume.edition.work, originalTitle: null } },
     });
     renderPage();
 
     expect(await screen.findByRole("heading", { name: "Monster volume único" })).toBeInTheDocument();
     expect(screen.getByText("Sem capa")).toBeInTheDocument();
-    expect(screen.queryByText("Páginas")).not.toBeInTheDocument();
+    expect(screen.queryByText("Número de páginas")).not.toBeInTheDocument();
     expect(screen.queryByText("Preço")).not.toBeInTheDocument();
     expect(screen.queryByText("Lançamento")).not.toBeInTheDocument();
     expect(screen.queryByText("ISBN-10")).not.toBeInTheDocument();
     expect(screen.queryByText("ISBN-13")).not.toBeInTheDocument();
     expect(screen.queryByText("Sinopse")).not.toBeInTheDocument();
-    expect(screen.getByText("Miolo")).toBeInTheDocument();
+    expect(screen.queryByText("Miolo")).not.toBeInTheDocument();
     expect(screen.queryByRole("navigation", { name: "Navegação entre Volumes" })).not.toBeInTheDocument();
     expect(screen.queryByRole("link", { name: "Comprar em loja parceira" })).not.toBeInTheDocument();
     expect(screen.getByRole("button", { name: "Coleção" })).toBeInTheDocument();

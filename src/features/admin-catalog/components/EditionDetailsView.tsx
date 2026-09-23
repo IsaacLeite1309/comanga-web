@@ -41,6 +41,14 @@ interface VolumeNavigation {
   editionId: number;
 }
 
+function StackedValues({ values }: { values: string[] }) {
+  return (
+    <span className="flex flex-col gap-1">
+      {values.map((value, index) => <span key={`${value}-${index}`}>{value}</span>)}
+    </span>
+  );
+}
+
 export function EditionSummary({
   edition,
   workId,
@@ -74,7 +82,7 @@ export function EditionSummary({
           <div className="mt-5 grid gap-3 sm:grid-cols-2 lg:grid-cols-3">
             {edition.coverType && <DetailInfoBlock label="Acabamento" value={edition.coverType.label} />}
             {edition.format && <DetailInfoBlock label="Formato" value={edition.format.label} />}
-            {edition.paper && <DetailInfoBlock label="Miolo" value={edition.paper.label} />}
+            {edition.papers && edition.papers.length > 0 && <DetailInfoBlock label="Miolo" value={<StackedValues values={edition.papers.map(({ label }) => label)} />} />}
             <DetailInfoBlock label="Status no Brasil" value={getPublicationStatusLabel(edition.brazilPublicationStatus)} />
             <DetailInfoBlock label="Volumes" value={formatVolumesCount(edition.volumesCount)} />
             <DetailInfoBlock

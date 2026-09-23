@@ -1,4 +1,5 @@
 import { SearchableSelect } from "@/components/forms/SearchableSelect";
+import { MultiSelect } from "@/components/forms/MultiSelect";
 import type { EditionDraft } from "../pages/editionDraftMemory";
 import {
   editionNumberOptions,
@@ -10,7 +11,7 @@ import {
 interface EditionFormFieldsProps {
   draft: EditionDraft;
   options: EditionFormOptions;
-  onChange: (field: keyof EditionDraft, value: string) => void;
+  onChange: <K extends keyof EditionDraft>(field: K, value: EditionDraft[K]) => void;
 }
 
 export function EditionFormFields({ draft, options, onChange }: EditionFormFieldsProps) {
@@ -21,7 +22,24 @@ export function EditionFormFields({ draft, options, onChange }: EditionFormField
       <EditionSelect className="md:col-span-2" label="Status de publicação" value={draft.brazilPublicationStatus} onChange={(value) => onChange("brazilPublicationStatus", value)} options={EDITION_PUBLICATION_STATUS_OPTIONS} required />
       <EditionSelect className="md:col-span-2" label="Acabamento" value={draft.coverTypeId} onChange={(value) => onChange("coverTypeId", value)} options={options.coverTypes} />
       <EditionSelect className="md:col-span-2" label="Formato" value={draft.formatId} onChange={(value) => onChange("formatId", value)} options={options.formats} />
-      <EditionSelect className="md:col-span-2" label="Miolo" value={draft.paperId} onChange={(value) => onChange("paperId", value)} options={options.papers} />
+      <div className="min-w-0 md:col-span-2">
+        <MultiSelect
+          label="Miolo"
+          selectedIds={draft.paperIds.map(Number)}
+          onToggle={(id) => {
+            const value = String(id);
+            onChange(
+              "paperIds",
+              draft.paperIds.includes(value)
+                ? draft.paperIds.filter((paperId) => paperId !== value)
+                : [...draft.paperIds, value],
+            );
+          }}
+          onClear={() => onChange("paperIds", [])}
+          options={options.papers}
+          searchable
+        />
+      </div>
     </section>
   );
 }

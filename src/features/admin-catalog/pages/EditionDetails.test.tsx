@@ -29,6 +29,7 @@ const editionResponse = {
     brazilianPublisher: { id: 30, label: "Panini" },
     coverType: { id: 32, label: "Capa comum" },
     format: { id: 33, label: "Impresso" },
+    papers: [{ id: 34, label: "Offset" }, { id: 35, label: "Couché" }],
     brazilPublicationStatus: "Completa",
     volumesCount: 0,
   },

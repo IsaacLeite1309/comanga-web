@@ -29,7 +29,7 @@ const EditionForm = () => {
       <UnsavedChangesPrompt when={controller.hasUnsavedChanges} continueLabel={controller.isEditMode ? "Continuar editando" : "Continuar cadastrando"} />
       <form onSubmit={controller.handleSubmit} className="mx-auto w-full max-w-6xl space-y-6">
         <div>
-          <AdminCatalogBreadcrumb backTo={controller.workPath} backState={{ workId: Number(controller.workId) }} items={[{ label: "Gerenciar mangás", to: "/admin/gerenciar-mangas" }, { label: `Edições de ${decodeURIComponent(controller.workPath.split("/").at(-2) || "Obra")}`, to: controller.workPath, state: { workId: Number(controller.workId) } }, { label: controller.isEditMode ? `Editar ${controller.draft.chronologicalNumber}ª edição` : "Nova edição" }]} />
+          <AdminCatalogBreadcrumb backTo={controller.workPath} backState={{ workId: Number(controller.workId) }} items={[{ label: "Gerenciar mangás", to: "/admin/gerenciar-mangas" }, { label: `Edições de ${controller.workTitle || "Obra"}`, to: controller.workPath, state: { workId: Number(controller.workId) } }, { label: controller.isEditMode ? `Editar ${controller.draft.chronologicalNumber}ª edição` : "Nova edição" }]} />
           <h1 className="mt-4 text-2xl font-bold text-foreground sm:text-3xl">
             {controller.isEditMode ? "Editar Edição" : "Nova Edição"}
           </h1>

@@ -7,7 +7,6 @@ import {
   BookOpen,
   Calendar,
   ChevronRight,
-  Layers3,
   Plus,
   ShoppingCart,
 } from "lucide-react";
@@ -298,12 +297,13 @@ function VolumeArticle({ volume, volumeLabel, editionLabel }: VolumeSectionProps
       ) : null}
       <section className="px-5 py-6 sm:px-8" aria-labelledby="details-title">
         <h2 id="details-title" className="text-sm font-bold uppercase tracking-wide text-muted-foreground">Detalhes</h2>
-        <dl className="mt-4 grid grid-cols-2 gap-x-3 gap-y-4 xl:grid-cols-4">
+        <dl className="mt-4 grid gap-x-3 gap-y-3 sm:grid-cols-3">
           {volume.releaseYear ? (
             <DetailRow
               icon={<Calendar className="h-4 w-4" />}
               label="Lançamento"
               value={formatPublicReleaseDate(volume)}
+              className="sm:col-start-1 sm:row-start-1"
             />
           ) : null}
           {volume.price !== null && volume.price !== undefined ? (
@@ -311,26 +311,32 @@ function VolumeArticle({ volume, volumeLabel, editionLabel }: VolumeSectionProps
               icon={<ShoppingCart className="h-4 w-4" />}
               label="Preço"
               value={formatPrice(volume.price, volume.priceCurrency)}
+              className="sm:col-start-2 sm:row-start-1"
             />
           ) : null}
           {volume.pages ? (
             <DetailRow
               icon={<BookOpen className="h-4 w-4" />}
-              label="Páginas"
+              label="Número de páginas"
               value={`${volume.pages} ${volume.pages === 1 ? "página" : "páginas"}`}
+              className="sm:col-start-3 sm:row-start-1"
             />
           ) : null}
-          <DetailRow
-            icon={<Layers3 className="h-4 w-4" />}
-            label="Miolo"
-            value={volume.edition.paper?.label || ""}
-            className="xl:col-start-4"
-          />
           {volume.isbn10 ? (
-            <DetailRow icon={<Barcode className="h-4 w-4" />} label="ISBN-10" value={volume.isbn10} />
+            <DetailRow
+              icon={<Barcode className="h-4 w-4" />}
+              label="ISBN-10"
+              value={volume.isbn10}
+              className="sm:col-start-1 sm:row-start-2"
+            />
           ) : null}
           {volume.isbn13 ? (
-            <DetailRow icon={<Barcode className="h-4 w-4" />} label="ISBN-13" value={volume.isbn13} />
+            <DetailRow
+              icon={<Barcode className="h-4 w-4" />}
+              label="ISBN-13"
+              value={volume.isbn13}
+              className="sm:col-start-2 sm:row-start-2"
+            />
           ) : null}
         </dl>
       </section>

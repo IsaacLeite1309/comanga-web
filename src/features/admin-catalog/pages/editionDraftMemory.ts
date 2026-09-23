@@ -2,7 +2,7 @@ export interface EditionDraft {
   brazilianPublisherId: string;
   coverTypeId: string;
   formatId: string;
-  paperId: string;
+  paperIds: string[];
   chronologicalNumber: string;
   brazilPublicationStatus: string;
 }
@@ -11,7 +11,7 @@ export const emptyEditionDraft: EditionDraft = {
   brazilianPublisherId: "",
   coverTypeId: "",
   formatId: "",
-  paperId: "",
+  paperIds: [],
   chronologicalNumber: "",
   brazilPublicationStatus: "",
 };

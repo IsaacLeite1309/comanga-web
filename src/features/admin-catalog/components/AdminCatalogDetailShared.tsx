@@ -11,7 +11,7 @@ export function DetailInfoBlock({
   withIconLayout = true,
 }: {
   label: string;
-  value: string;
+  value: React.ReactNode;
   badgeClassName?: string;
   icon?: React.ReactNode;
   withIconLayout?: boolean;
@@ -22,7 +22,7 @@ export function DetailInfoBlock({
     <div className="min-w-0 rounded-xl border border-border bg-input px-4 py-3">
       <p className="text-xs font-bold uppercase tracking-wide text-muted-foreground">{label}</p>
       <p
-        className={`mt-1 inline-flex max-w-full ${layoutClassName}truncate text-base font-bold text-foreground ${
+        className={`mt-1 inline-flex max-w-full ${layoutClassName}${typeof value === "string" ? "truncate " : ""}text-base font-bold text-foreground ${
           badgeClassName ? `rounded-lg border px-3 py-1 text-sm ${badgeClassName}` : ""
         }`}
       >

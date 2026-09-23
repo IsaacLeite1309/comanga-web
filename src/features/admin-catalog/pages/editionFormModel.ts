@@ -15,6 +15,7 @@ export interface EditionFormOptions {
 export interface Edition {
   id: number;
   workId: number;
+  work: { id: number; slug: string; title: string };
   chronologicalNumber: number;
   // Somente leitura: derivada do Volume 1 da mesma Edição.
   coverAssetId?: string | null;
@@ -22,7 +23,7 @@ export interface Edition {
   brazilianPublisher: EditionOption | null;
   coverType: EditionOption | null;
   format: EditionOption | null;
-  paper: EditionOption | null;
+  papers: EditionOption[];
   brazilPublicationStatus: string | EditionOption | null;
 }
 
@@ -65,7 +66,7 @@ export function editionToDraft(edition: Edition): EditionDraft {
     brazilianPublisherId: optionId(edition.brazilianPublisher),
     coverTypeId: optionId(edition.coverType),
     formatId: optionId(edition.format),
-    paperId: optionId(edition.paper),
+    paperIds: edition.papers.map((paper) => String(paper.id)),
     chronologicalNumber: String(edition.chronologicalNumber),
     brazilPublicationStatus: typeof edition.brazilPublicationStatus === "string"
       ? edition.brazilPublicationStatus
@@ -78,7 +79,7 @@ export function buildEditionPayload(draft: EditionDraft) {
     brazilianPublisherId: Number(draft.brazilianPublisherId),
     coverTypeId: draft.coverTypeId ? Number(draft.coverTypeId) : null,
     formatId: draft.formatId ? Number(draft.formatId) : null,
-    paperId: draft.paperId ? Number(draft.paperId) : null,
+    paperIds: draft.paperIds.map(Number),
     chronologicalNumber: Number(draft.chronologicalNumber),
     brazilPublicationStatus: draft.brazilPublicationStatus,
   };
