@@ -101,7 +101,7 @@ function renderEditionDetails(path = "/admin/gerenciar-mangas/obras/Naruto/edico
 describe("EditionDetails", () => {
   beforeEach(() => {
     resetCatalogPagesForTests();
-    vi.clearAllMocks();
+    vi.resetAllMocks();
   });
 
   it("usa o título da Obra retornado pela API no caminho de navegação", async () => {
