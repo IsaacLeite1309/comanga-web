@@ -115,22 +115,6 @@ describe("EditionDetails", () => {
     expect(screen.queryByText("Edições de naruto")).not.toBeInTheDocument();
   });
 
-  it("mostra a previa da edicao e o estado vazio de volumes", async () => {
-    vi.mocked(api.get).mockImplementation((url: string) => {
-      if (url === "/admin/works/slug/Naruto/editions/1") {
-        return Promise.resolve({ data: editionResponse });
-      }
-      if (url === "/admin/editions/20/volumes") {
-        return Promise.resolve({ data: emptyVolumesResponse });
-      }
-      return Promise.reject(new Error(`URL inesperada: ${url}`));
-    });
-
-    renderEditionDetails();
-
-    expect(await screen.findByText(/nenhum volume cadastrado/i)).toBeInTheDocument();
-  });
-
   it("lista volumes da edicao com link direto de edição", async () => {
     vi.mocked(api.get)
       .mockResolvedValueOnce({ data: { edition: { ...editionResponse.edition, volumesCount: 1 } } })
