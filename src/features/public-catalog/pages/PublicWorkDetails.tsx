@@ -11,7 +11,7 @@ import type {
 import { LoadingState } from "@/components/shared/AsyncState";
 import { getApiError } from "@/lib/apiError";
 import { formatPublicationStatus, publicVolumeLabel } from "@/features/public-catalog/publicCatalogFormatters";
-import { publicEditionPath, publicVolumePath } from "@/features/public-catalog/publicCatalogPaths";
+import { publicAuthorPath, publicEditionPath, publicVolumePath } from "@/features/public-catalog/publicCatalogPaths";
 
 function publicationPeriod(work: PublicWorkDetailsData) {
   const start = work.originalPublicationStartYear;
@@ -41,17 +41,17 @@ function StackedValues({ values }: { values: string[] }) {
   );
 }
 
-function VolumePreview({ volume, workSlug, workTitle, editionId }: {
+function VolumePreview({ volume, workSlug, workTitle, editionNumber }: {
   volume: PublicVolumePreview;
   workSlug: string;
   workTitle: string;
-  editionId: number;
+  editionNumber: number;
 }) {
   const label = publicVolumeLabel(volume);
   return (
     <article className="min-w-0">
       <Link
-        to={publicVolumePath(workSlug, editionId, volume.id)}
+        to={publicVolumePath(workSlug, editionNumber, volume.number)}
         aria-label={`Ver detalhes do ${label}`}
         className="group block rounded-lg outline-none focus-visible:ring-2 focus-visible:ring-primary"
       >
@@ -76,7 +76,7 @@ function EditionCard({ edition, workSlug, workTitle }: { edition: PublicEditionD
   return (
     <article className="min-w-0 py-5 first:pt-0">
       <Link
-        to={publicEditionPath(workSlug, edition.id)}
+        to={publicEditionPath(workSlug, edition.chronologicalNumber)}
         className="-ml-3 flex w-[calc(100%+0.75rem)] flex-col items-start rounded-2xl bg-background px-3 py-3 text-left transition-colors hover:bg-sidebar-accent/30 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary focus-visible:ring-offset-2 focus-visible:ring-offset-background"
       >
         <h3 className="flex flex-wrap items-center gap-2 text-base font-bold text-primary">
@@ -97,7 +97,7 @@ function EditionCard({ edition, workSlug, workTitle }: { edition: PublicEditionD
                 volume={volume}
                 workSlug={workSlug}
                 workTitle={workTitle}
-                editionId={edition.id}
+                editionNumber={edition.chronologicalNumber}
               />
             ))}
           </div>
@@ -239,7 +239,7 @@ function PublicWorkDetails() {
                 {work.authors.map((author) => (
                   <Link
                     key={author.id}
-                    to={`/autores/${author.id}`}
+                    to={publicAuthorPath(author.slug || "")}
                     aria-label={`Ver Obras de ${author.label}`}
                     className="-ml-3 -mt-1 flex w-[calc(100%+0.75rem)] flex-col items-start rounded-2xl bg-background px-3 pb-2 pt-1 text-left transition-colors hover:bg-sidebar-accent/30 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary focus-visible:ring-offset-2 focus-visible:ring-offset-background"
                   >

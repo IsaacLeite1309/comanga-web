@@ -40,11 +40,11 @@ const volume = {
   },
 };
 
-function renderPage(entry = "/obras/monster/edicao/20/volume/30") {
+function renderPage(entry = "/obras/monster/edicao/2/volume/1") {
   return render(
     <MemoryRouter initialEntries={[entry]}>
       <Routes>
-        <Route path="/obras/:slug/edicao/:editionId/volume/:volumeId" element={<PublicVolumeDetails />} />
+        <Route path="/obras/:slug/edicao/:editionNumber/volume/:volumeNumber" element={<PublicVolumeDetails />} />
       </Routes>
     </MemoryRouter>,
   );
@@ -61,7 +61,7 @@ describe("PublicVolumeDetails", () => {
 
     expect(screen.getByText("Carregando Volume...")).toBeInTheDocument();
     expect(await screen.findByRole("heading", { name: "Monster volume 1", level: 1 })).toBeInTheDocument();
-    expect(getPublicVolumeDetails).toHaveBeenCalledWith(30);
+    expect(getPublicVolumeDetails).toHaveBeenCalledWith("monster", 2, 1);
     expect(screen.getByText("2ª edição · Panini")).toBeInTheDocument();
     expect(screen.getByText("20/08/2026")).toBeInTheDocument();
     expect(screen.getByText("416 páginas")).toBeInTheDocument();
@@ -84,10 +84,10 @@ describe("PublicVolumeDetails", () => {
     renderPage();
     await screen.findByRole("heading", { name: "Monster volume 1" });
 
-    expect(screen.getByRole("link", { name: "Voltar para 2ª edição" })).toHaveAttribute("href", "/obras/monster/edicao/20");
+    expect(screen.getByRole("link", { name: "Voltar para 2ª edição" })).toHaveAttribute("href", "/obras/monster/edicao/2");
     expect(screen.getByRole("link", { name: "Pesquisar" })).toHaveAttribute("href", "/pesquisa?tab=works&sortBy=title&order=ASC&page=1");
     expect(screen.getByRole("link", { name: "Monster" })).toHaveAttribute("href", "/obras/monster");
-    expect(screen.getByRole("link", { name: "Ver 2ª edição" })).toHaveAttribute("href", "/obras/monster/edicao/20");
+    expect(screen.getByRole("link", { name: "Ver 2ª edição" })).toHaveAttribute("href", "/obras/monster/edicao/2");
     expect(screen.getByRole("link", { name: "Ver detalhes da Obra Monster" })).toHaveAttribute("href", "/obras/monster");
   });
 
@@ -97,11 +97,11 @@ describe("PublicVolumeDetails", () => {
 
     expect(screen.getByRole("link", { name: "Volume 0" })).toHaveAttribute(
       "href",
-      "/obras/monster/edicao/20/volume/29",
+      "/obras/monster/edicao/2/volume/0",
     );
     expect(screen.getByRole("link", { name: "Volume 2" })).toHaveAttribute(
       "href",
-      "/obras/monster/edicao/20/volume/31",
+      "/obras/monster/edicao/2/volume/2",
     );
   });
 
@@ -178,7 +178,7 @@ describe("PublicVolumeDetails", () => {
 
     unmount();
     vi.clearAllMocks();
-    renderPage("/obras/monster/edicao/20/volume/invalido");
+    renderPage("/obras/monster/edicao/2/volume/invalido");
     expect(await screen.findByText("Volume não encontrado.")).toBeInTheDocument();
     expect(getPublicVolumeDetails).not.toHaveBeenCalled();
   });

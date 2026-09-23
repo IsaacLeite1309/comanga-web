@@ -39,6 +39,7 @@ interface VolumeNavigation {
   workSlug: string;
   workId: number;
   editionId: number;
+  editionNumber: number;
 }
 
 function StackedValues({ values }: { values: string[] }) {
@@ -94,7 +95,7 @@ export function EditionSummary({
           </div>
           <div className="mt-6 flex justify-end">
             <Link
-              to={editionEditAdminPath(workSlug, edition.id)}
+              to={editionEditAdminPath(workSlug, edition.chronologicalNumber)}
               state={{ workId, editionId: edition.id }}
               className="inline-flex h-11 items-center justify-center gap-2 rounded-xl bg-primary px-5 text-sm font-bold text-primary-foreground transition-opacity hover:opacity-90"
             >
@@ -141,7 +142,7 @@ function VolumeGridCard({
           <VisibilityIcon visibility={volume.visibility} />
         </button>
         <Link
-          to={volumeEditAdminPath(navigation.workSlug, navigation.editionId, volume.id)}
+          to={volumeEditAdminPath(navigation.workSlug, navigation.editionNumber, volume.number)}
           state={{ workId: navigation.workId, editionId: navigation.editionId, volumeId: volume.id }}
           aria-label={`Editar ${label}`}
           className="inline-flex h-8 items-center justify-center rounded-md border border-border bg-card text-foreground transition-colors hover:border-primary hover:text-primary"
@@ -213,7 +214,7 @@ function VolumeListRow({
           {volume.visibility}
         </span>
         <Link
-          to={volumeEditAdminPath(navigation.workSlug, navigation.editionId, volume.id)}
+          to={volumeEditAdminPath(navigation.workSlug, navigation.editionNumber, volume.number)}
           state={{ workId: navigation.workId, editionId: navigation.editionId, volumeId: volume.id }}
           aria-label={`Editar ${label}`}
           className="inline-flex h-10 w-10 items-center justify-center rounded-lg border border-border bg-input text-foreground transition-colors hover:border-primary hover:text-primary md:justify-self-center"
@@ -364,14 +365,14 @@ export function EditionVolumesSection({
         </div>
         <div className="flex flex-col gap-2 sm:flex-row sm:items-center">
           <CatalogViewToggle viewMode={viewMode} onChange={onViewModeChange} />
-          <Link
-            to={newVolumeAdminPath(navigation.workSlug, edition.id)}
+          {!collection.volumes.some((volume) => volume.singleVolume) && <Link
+            to={newVolumeAdminPath(navigation.workSlug, edition.chronologicalNumber)}
             state={{ workId: navigation.workId, editionId: edition.id }}
             className="inline-flex h-10 items-center justify-center gap-2 rounded-lg bg-primary px-4 text-sm font-bold text-primary-foreground transition-opacity hover:opacity-90"
           >
             <Plus className="h-3.5 w-3.5" />
             Adicionar volume
-          </Link>
+          </Link>}
         </div>
       </div>
       {showGridView && !collection.loading && !collection.error ? (

@@ -32,8 +32,8 @@ function renderPage(state = true) {
   return render(
     <MemoryRouter initialEntries={[
       state
-        ? { pathname: "/admin/gerenciar-mangas/obras/Naruto/edicoes/20/volumes/30", state: { workId: 10, editionId: 20, volumeId: 30 } }
-        : "/admin/gerenciar-mangas/obras/Naruto/edicoes/20/volumes/30",
+        ? { pathname: "/admin/gerenciar-mangas/obras/Naruto/edicoes/1/volumes/2", state: { workId: 10, editionId: 20, volumeId: 30 } }
+        : "/admin/gerenciar-mangas/obras/Naruto/edicoes/1/volumes/2",
     ]}>
       <Routes>
         <Route path="/admin/gerenciar-mangas/obras/:workSlug/edicoes/:editionId/volumes/:volumeId" element={<VolumeDetails />} />
@@ -57,11 +57,11 @@ describe("VolumeDetails", () => {
     expect(screen.getByText("Sinopse do volume.")).toBeInTheDocument();
     expect(screen.getByRole("link", { name: /editar volume/i })).toHaveAttribute(
       "href",
-      "/admin/gerenciar-mangas/obras/Naruto/edicoes/20/volumes/30/editar",
+      "/admin/gerenciar-mangas/obras/Naruto/edicoes/1/volumes/2/editar",
     );
     expect(screen.getByRole("link", { name: /voltar/i })).toHaveAttribute(
       "href",
-      "/admin/gerenciar-mangas/obras/Naruto/edicoes/20/volumes",
+      "/admin/gerenciar-mangas/obras/Naruto/edicoes/1/volumes",
     );
   });
 

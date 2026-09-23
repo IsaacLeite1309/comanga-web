@@ -86,7 +86,7 @@ export function VolumeSummary({
           )}
           <div className="mt-6 flex justify-end">
             <Link
-              to={volumeEditAdminPath(workSlug, editionId, volume.id)}
+              to={volumeEditAdminPath(workSlug, editionId, volume.number)}
               state={{ workId, editionId: stateEditionId || volume.editionId, volumeId: volume.id }}
               className="inline-flex h-11 items-center justify-center gap-2 rounded-xl bg-primary px-5 text-sm font-bold text-primary-foreground transition-opacity hover:opacity-90"
             >

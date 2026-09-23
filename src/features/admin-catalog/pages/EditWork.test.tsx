@@ -134,8 +134,8 @@ describe("EditWork", () => {
     expect(screen.getAllByText("1ª edição")[0]).toBeInTheDocument();
     expect(screen.getAllByText("0 volumes")[0]).toBeInTheDocument();
     expect(screen.getByRole("link", { name: /adicionar edição/i })).toHaveAttribute("href", "/admin/gerenciar-mangas/obras/naruto/edicoes/nova");
-    expect(screen.getByRole("link", { name: /editar 1ª edição/i })).toHaveAttribute("href", "/admin/gerenciar-mangas/obras/naruto/edicoes/20/editar");
-    expect(screen.getByRole("link", { name: /gerenciar volumes da 1ª edição/i })).toHaveAttribute("href", "/admin/gerenciar-mangas/obras/naruto/edicoes/20/volumes");
+    expect(screen.getByRole("link", { name: /editar 1ª edição/i })).toHaveAttribute("href", "/admin/gerenciar-mangas/obras/naruto/edicoes/1/editar");
+    expect(screen.getByRole("link", { name: /gerenciar volumes da 1ª edição/i })).toHaveAttribute("href", "/admin/gerenciar-mangas/obras/naruto/edicoes/1/volumes");
   });
 
   it("resolve a obra diretamente pelo slug quando a pagina e recarregada", async () => {

@@ -26,6 +26,7 @@ function volumesCount(total: number) {
 
 function brazilPublicationPeriod(startYear?: number | null, endYear?: number | null) {
   if (!startYear) return "Não informada";
+  if (startYear === endYear) return String(startYear);
   return `${startYear}-${endYear ?? "??"}`;
 }
 
@@ -46,17 +47,17 @@ function StackedValues({ values }: { values: string[] }) {
   );
 }
 
-function VolumeCard({ volume, workSlug, workTitle, editionId }: {
+function VolumeCard({ volume, workSlug, workTitle, editionNumber }: {
   volume: PublicEditionVolumeSummary;
   workSlug: string;
   workTitle: string;
-  editionId: number;
+  editionNumber: number;
 }) {
   const label = publicVolumeLabel(volume);
   return (
     <article className="min-w-0">
       <Link
-        to={publicVolumePath(workSlug, editionId, volume.id)}
+        to={publicVolumePath(workSlug, editionNumber, volume.number)}
         aria-label={`Ver detalhes do ${label}`}
         className="group block rounded-lg outline-none focus-visible:ring-2 focus-visible:ring-primary"
       >
@@ -213,7 +214,7 @@ function EditionContent({ data, editionPath, isCollectionContext, onPageChange }
                         volume={volume}
                         workSlug={edition.work.slug}
                         workTitle={edition.work.title}
-                        editionId={edition.id}
+                        editionNumber={edition.chronologicalNumber}
                       />
                     ))}
                   </div>
@@ -232,14 +233,14 @@ function EditionContent({ data, editionPath, isCollectionContext, onPageChange }
   );
 }
 
-function useEditionDetails(editionId: number, workSlug: string, page: number, retry: number) {
+function useEditionDetails(editionNumber: number, workSlug: string, page: number, retry: number) {
   const [data, setData] = useState<PublicEditionDetailsResponse | null>(null);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState("");
 
   useEffect(() => {
     let active = true;
-    if (!workSlug || !Number.isInteger(editionId) || editionId <= 0) {
+    if (!workSlug || !Number.isInteger(editionNumber) || editionNumber <= 0) {
       setData(null);
       setError("Edição não encontrada.");
       setLoading(false);
@@ -247,10 +248,10 @@ function useEditionDetails(editionId: number, workSlug: string, page: number, re
     }
     setLoading(true);
     setError("");
-    getPublicEditionDetails(editionId, { page, limit: PAGE_SIZE })
+    getPublicEditionDetails(workSlug, editionNumber, { page, limit: PAGE_SIZE })
       .then((result) => {
         if (!active) return;
-        if (result.edition.work.slug !== workSlug) {
+        if (result.edition.work.slug !== workSlug || result.edition.chronologicalNumber !== editionNumber) {
           setData(null);
           setError("Edição não encontrada.");
           return;
@@ -264,20 +265,20 @@ function useEditionDetails(editionId: number, workSlug: string, page: number, re
       })
       .finally(() => { if (active) setLoading(false); });
     return () => { active = false; };
-  }, [editionId, page, retry, workSlug]);
+  }, [editionNumber, page, retry, workSlug]);
 
   return { data, loading, error };
 }
 
 function PublicEditionDetails() {
-  const { editionId = "", slug } = useParams();
+  const { editionNumber = "", slug } = useParams();
   const location = useLocation();
   const [searchParams, setSearchParams] = useSearchParams();
   const [retry, setRetry] = useState(0);
   const page = positiveInteger(searchParams.get("page"));
-  const { data, loading, error } = useEditionDetails(Number(editionId), slug || "", page, retry);
+  const { data, loading, error } = useEditionDetails(Number(editionNumber), slug || "", page, retry);
   const isCollectionContext = location.pathname.startsWith("/colecao/");
-  const editionPath = `${isCollectionContext ? "/colecao" : "/obras"}/${encodeURIComponent(slug || "")}/edicao/${editionId}`;
+  const editionPath = `${isCollectionContext ? "/colecao" : "/obras"}/${encodeURIComponent(slug || "")}/edicao/${editionNumber}`;
   const changePage = (nextPage: number) => {
     const next = new URLSearchParams(searchParams);
     next.set("page", String(nextPage));

@@ -32,7 +32,7 @@ const VolumeForm = () => {
         continueLabel={controller.isEditing ? "Continuar editando" : "Continuar cadastrando"}
       />
       <div className="mx-auto w-full max-w-6xl space-y-6">
-        <AdminCatalogBreadcrumb backTo={controller.editionPath} backState={{ workId: controller.state?.workId, editionId: controller.state?.editionId || Number(controller.editionId) }} items={[{ label: "Gerenciar mangás", to: "/admin/gerenciar-mangas" }, { label: `Edições de ${controller.workTitle}`, to: controller.editionPath.replace(/\/edicoes\/[^/]+\/volumes$/, "/edicoes"), state: { workId: controller.state?.workId } }, { label: "Volumes da edição", to: controller.editionPath, state: { workId: controller.state?.workId, editionId: Number(controller.editionId) } }, { label: controller.isEditing ? `Editar ${controller.form.singleVolume ? "volume único" : `Volume ${controller.form.number}`}` : "Novo volume" }]} />
+        <AdminCatalogBreadcrumb backTo={controller.editionPath} backState={{ workId: controller.state?.workId, editionId: controller.resolvedEditionId }} items={[{ label: "Gerenciar mangás", to: "/admin/gerenciar-mangas" }, { label: `Edições de ${controller.workTitle}`, to: controller.editionPath.replace(/\/edicoes\/[^/]+\/volumes$/, "/edicoes"), state: { workId: controller.state?.workId } }, { label: "Volumes da edição", to: controller.editionPath, state: { workId: controller.state?.workId, editionId: controller.resolvedEditionId } }, { label: controller.isEditing ? `Editar ${controller.form.singleVolume ? "volume único" : `Volume ${controller.form.number}`}` : "Novo volume" }]} />
 
         <div>
           <h1 className="text-3xl font-bold text-foreground">
@@ -57,6 +57,7 @@ const VolumeForm = () => {
             updateField={controller.updateField}
             updateReleaseDate={controller.updateReleaseDate}
             updateReleasePrecision={controller.updateReleasePrecision}
+            singleVolumeUnavailable={controller.singleVolumeUnavailable}
           />
           <VolumeFormActions
             currentStep={controller.currentStep}

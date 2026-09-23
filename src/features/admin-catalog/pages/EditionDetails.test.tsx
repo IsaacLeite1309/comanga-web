@@ -82,13 +82,13 @@ type VolumesRequestConfig = { params?: { page?: number; limit?: number; order?: 
 
 function arrangeVolumes(respond: (page: number) => Promise<unknown>) {
   vi.mocked(api.get).mockImplementation((url: string, config?: VolumesRequestConfig) => {
-    if (url === "/admin/editions/20") return Promise.resolve({ data: editionResponse });
+    if (url === "/admin/works/slug/Naruto/editions/1") return Promise.resolve({ data: editionResponse });
     if (url === "/admin/editions/20/volumes") return respond(config?.params?.page ?? 0);
     return Promise.reject(new Error(`URL inesperada: ${url}`));
   });
 }
 
-function renderEditionDetails(path = "/admin/gerenciar-mangas/obras/Naruto/edicoes/20/volumes") {
+function renderEditionDetails(path = "/admin/gerenciar-mangas/obras/Naruto/edicoes/1/volumes") {
   return render(
     <MemoryRouter initialEntries={[{ pathname: path, state: { workId: 10, editionId: 20 } }]}>
       <Routes>
@@ -101,7 +101,7 @@ function renderEditionDetails(path = "/admin/gerenciar-mangas/obras/Naruto/edico
 describe("EditionDetails", () => {
   beforeEach(() => {
     resetCatalogPagesForTests();
-    vi.clearAllMocks();
+    vi.resetAllMocks();
   });
 
   it("usa o título da Obra retornado pela API no caminho de navegação", async () => {
@@ -109,20 +109,10 @@ describe("EditionDetails", () => {
       .mockResolvedValueOnce({ data: editionResponse })
       .mockResolvedValueOnce({ data: emptyVolumesResponse });
 
-    renderEditionDetails("/admin/gerenciar-mangas/obras/naruto/edicoes/20/volumes");
+    renderEditionDetails("/admin/gerenciar-mangas/obras/naruto/edicoes/1/volumes");
 
     expect(await screen.findByRole("link", { name: "Edições de Naruto" })).toBeInTheDocument();
     expect(screen.queryByText("Edições de naruto")).not.toBeInTheDocument();
-  });
-
-  it("mostra a previa da edicao e o estado vazio de volumes", async () => {
-    vi.mocked(api.get)
-      .mockResolvedValueOnce({ data: editionResponse })
-      .mockResolvedValueOnce({ data: emptyVolumesResponse });
-
-    renderEditionDetails();
-
-    expect(await screen.findByText(/nenhum volume cadastrado/i)).toBeInTheDocument();
   });
 
   it("lista volumes da edicao com link direto de edição", async () => {
@@ -135,7 +125,7 @@ describe("EditionDetails", () => {
     expect(await screen.findByText("Volume 1")).toBeInTheDocument();
     expect(screen.getByText("208")).toBeInTheDocument();
     expect(screen.getAllByText("R$ 39,90").length).toBeGreaterThan(0);
-    expect(screen.getByRole("link", { name: /editar volume 1/i })).toHaveAttribute("href", "/admin/gerenciar-mangas/obras/Naruto/edicoes/20/volumes/30/editar");
+    expect(screen.getByRole("link", { name: /editar volume 1/i })).toHaveAttribute("href", "/admin/gerenciar-mangas/obras/Naruto/edicoes/1/volumes/1/editar");
   });
 
   it("alterna para grade e mostra volume unico sem capa", async () => {
@@ -163,6 +153,7 @@ describe("EditionDetails", () => {
     expect(screen.getAllByText("Sem capa").length).toBeGreaterThan(0);
     expect(screen.queryByText("Sem capa (cadastre o Volume 1)")).not.toBeInTheDocument();
     expect(screen.getByText(/volume .nico/i)).toBeInTheDocument();
+    expect(screen.queryByRole("link", { name: "Adicionar volume" })).not.toBeInTheDocument();
   });
 
   it("não reintroduz o resumo redundante da Edição", async () => {

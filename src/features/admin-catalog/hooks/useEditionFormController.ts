@@ -4,6 +4,7 @@ import { toast } from "sonner";
 import { getApiError } from "@/lib/apiError";
 import { api } from "@/services/api";
 import { editionAdminPath, newEditionAdminPath, newVolumeAdminPath, workAdminPath } from "../domain/catalogPaths";
+import { getEditionByNumber } from "../domain/contextualAdminCatalog";
 import {
   emptyEditionDraft,
   getRememberedEditionDraft,
@@ -27,6 +28,7 @@ export function useEditionFormController() {
   const draftKey = workSlug.toLocaleLowerCase("pt-BR");
   const isEditMode = Boolean(editionId);
   const [workId, setWorkId] = useState("");
+  const [resolvedEditionId, setResolvedEditionId] = useState<number | null>(null);
   const [workTitle, setWorkTitle] = useState("");
   const [options, setOptions] = useState<EditionFormOptions | null>(null);
   const [draft, setDraft] = useState(() => (editionId ? emptyEditionDraft : getRememberedEditionDraft(draftKey)));
@@ -50,11 +52,13 @@ export function useEditionFormController() {
       try {
         const [workResponse, optionsResponse, editionResponse] = await Promise.all([
           resolveWork(workSlug),
-          ...loadEditionData(editionId),
+          api.get<EditionFormOptionsResponse>("/admin/editions/form-options"),
+          editionId ? getEditionByNumber<EditionResponse["edition"]>(workSlug, editionId).then((edition) => ({ data: { edition } })) : Promise.resolve(null),
         ]);
         if (!isMounted) return;
         const loadedDraft = editionResponse ? editionToDraft(editionResponse.data.edition) : emptyEditionDraft;
         setWorkId(String(workResponse.data.work.id));
+        setResolvedEditionId(editionResponse?.data.edition.id ?? null);
         setWorkTitle(editionResponse?.data.edition.work.title || workResponse.data.work.title);
         setOptions(optionsResponse.data.options);
         if (editionResponse) setDraft(loadedDraft);
@@ -89,6 +93,7 @@ export function useEditionFormController() {
         draftKey,
         draftSignature,
         editionId,
+        resolvedEditionId,
         isEditMode,
         workId,
         workSlug,
@@ -122,12 +127,6 @@ async function resolveWork(workSlug: string) {
   return api.get<WorkResponse>(`/admin/works/slug/${encodeURIComponent(workSlug)}`);
 }
 
-function loadEditionData(editionId?: string) {
-  const optionsResponse = api.get<EditionFormOptionsResponse>("/admin/editions/form-options");
-  const editionResponse = editionId ? api.get<EditionResponse>(`/admin/editions/${editionId}`) : Promise.resolve(null);
-  return [optionsResponse, editionResponse] as const;
-}
-
 function getLoadError(loadError: unknown) {
   const fallback = loadError instanceof Error ? loadError.message : "Erro ao carregar formulário da Edição.";
   return getApiError(loadError, fallback);
@@ -138,6 +137,7 @@ interface SaveEditionArgs {
   draftKey: string;
   draftSignature: string;
   editionId?: string;
+  resolvedEditionId: number | null;
   isEditMode: boolean;
   workId: string;
   workSlug: string;
@@ -148,11 +148,11 @@ interface SaveEditionArgs {
 async function saveEdition(args: SaveEditionArgs) {
   const payload = buildEditionPayload(args.draft);
   if (args.isEditMode) {
-    await api.patch(`/admin/editions/${args.editionId}`, payload);
+    await api.patch(`/admin/editions/${args.resolvedEditionId}`, payload);
     toast.success("Edição atualizada com sucesso.");
     args.setBaselineSignature(args.draftSignature);
-    args.navigate(editionAdminPath(args.workSlug, args.editionId || ""), {
-      state: { workId: Number(args.workId), editionId: Number(args.editionId) },
+    args.navigate(editionAdminPath(args.workSlug, args.draft.chronologicalNumber), {
+      state: { workId: Number(args.workId), editionId: args.resolvedEditionId },
     });
     return;
   }
@@ -160,17 +160,19 @@ async function saveEdition(args: SaveEditionArgs) {
   toast.success("Edição cadastrada com sucesso.");
   resetEditionDraftMemory(args.draftKey);
   args.setBaselineSignature(args.draftSignature);
-  args.navigate("/admin/pos-cadastro", { state: buildPostCreateState(args, response.data.edition.id) });
+  args.navigate("/admin/pos-cadastro", { state: buildPostCreateState(args, response.data.edition) });
 }
 
-function buildPostCreateState(args: SaveEditionArgs, editionId: number) {
+function buildPostCreateState(args: SaveEditionArgs, edition: { id: number; chronologicalNumber: number }) {
+  const editionId = edition.id;
+  const editionNumber = edition.chronologicalNumber;
   return {
     title: "Edição cadastrada com sucesso!",
     description: "Escolha o próximo passo para continuar organizando esta Obra.",
     actions: [
       {
         label: "Gerenciar esta Edição",
-        to: editionAdminPath(args.workSlug, editionId),
+        to: editionAdminPath(args.workSlug, editionNumber),
         state: { workId: Number(args.workId), editionId },
       },
       {
@@ -180,7 +182,7 @@ function buildPostCreateState(args: SaveEditionArgs, editionId: number) {
       },
       {
         label: "Cadastrar Volume para esta Edição",
-        to: newVolumeAdminPath(args.workSlug, editionId),
+        to: newVolumeAdminPath(args.workSlug, editionNumber),
         state: { workId: Number(args.workId), editionId },
       },
     ],

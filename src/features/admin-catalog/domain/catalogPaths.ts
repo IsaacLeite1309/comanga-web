@@ -12,30 +12,30 @@ export function workEditAdminPath(slug: string) {
   return `${workBaseAdminPath(slug)}/editar`;
 }
 
-export function editionAdminPath(workSlug: string, editionId: number | string) {
-  return `${workBaseAdminPath(workSlug)}/edicoes/${editionId}/volumes`;
+export function editionAdminPath(workSlug: string, editionNumber: number | string) {
+  return `${workBaseAdminPath(workSlug)}/edicoes/${editionNumber}/volumes`;
 }
 
 export function newEditionAdminPath(workSlug: string) {
   return `${workBaseAdminPath(workSlug)}/edicoes/nova`;
 }
 
-export function editionEditAdminPath(workSlug: string, editionId: number | string) {
-  return `${workBaseAdminPath(workSlug)}/edicoes/${editionId}/editar`;
+export function editionEditAdminPath(workSlug: string, editionNumber: number | string) {
+  return `${workBaseAdminPath(workSlug)}/edicoes/${editionNumber}/editar`;
 }
 
-export function volumeAdminPath(workSlug: string, editionId: number | string, volumeId: number | string) {
-  return `${editionAdminPath(workSlug, editionId)}/${volumeId}`;
+export function volumeAdminPath(workSlug: string, editionNumber: number | string, volumeNumber: number | string) {
+  return `${editionAdminPath(workSlug, editionNumber)}/${volumeNumber}`;
 }
 
-export function newVolumeAdminPath(workSlug: string, editionId: number | string) {
-  return `${editionAdminPath(workSlug, editionId)}/novo`;
+export function newVolumeAdminPath(workSlug: string, editionNumber: number | string) {
+  return `${editionAdminPath(workSlug, editionNumber)}/novo`;
 }
 
 export function volumeEditAdminPath(
   workSlug: string,
-  editionId: number | string,
-  volumeId: number | string,
+  editionNumber: number | string,
+  volumeNumber: number | string,
 ) {
-  return `${volumeAdminPath(workSlug, editionId, volumeId)}/editar`;
+  return `${volumeAdminPath(workSlug, editionNumber, volumeNumber)}/editar`;
 }

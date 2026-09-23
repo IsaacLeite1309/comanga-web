@@ -68,8 +68,11 @@ describe("VolumeForm", () => {
   beforeEach(() => {
     vi.clearAllMocks();
     resetVolumeDraftMemoryForTests();
-    vi.mocked(api.get).mockResolvedValue({
-      data: { work: { id: 10, slug: "naruto", title: "Naruto" } },
+    vi.mocked(api.get).mockImplementation(async (url: string) => {
+      if (/\/admin\/works\/slug\/[^/]+\/editions\/20$/.test(url)) return { data: { edition: { id: 20, chronologicalNumber: 20 } } };
+      if (url.startsWith("/admin/works/slug/")) return { data: { work: { id: 10, slug: "naruto", title: "Naruto" } } };
+      if (url === "/admin/editions/20/volumes") return { data: { volumes: [], pagination: { total: 0 } } };
+      throw new Error(`URL inesperada: ${url}`);
     });
   });
 
@@ -98,12 +101,14 @@ describe("VolumeForm", () => {
   });
 
   it("cadastra volume enviando os dados para a API da edicao", async () => {
-    vi.mocked(api.post).mockResolvedValueOnce({ data: { volume: { id: 30 } } });
+    vi.mocked(api.post).mockResolvedValueOnce({ data: { volume: { id: 30, number: 1 } } });
 
     renderVolumeForm();
 
     fireEvent.change(screen.getByLabelText(/n.*mero do volume/i), { target: { value: "0" } });
     fireEvent.click(screen.getByRole("switch", { name: /^volume único$/i }));
+    expect(screen.getByLabelText(/n.*mero do volume/i)).toHaveValue(1);
+    expect(screen.getByLabelText(/n.*mero do volume/i)).toBeDisabled();
     fireEvent.change(screen.getByLabelText(/^data de publica/i), { target: { value: "2026-01-10" } });
     fireEvent.change(screen.getByLabelText(/pre.*o de capa/i), { target: { value: "39.9" } });
     fireEvent.change(screen.getByLabelText(/n.*mero de p.*ginas/i), { target: { value: "208" } });
@@ -115,7 +120,7 @@ describe("VolumeForm", () => {
 
     await waitFor(() => {
       expect(api.post).toHaveBeenCalledWith("/admin/editions/20/volumes", expect.objectContaining({
-        number: 0,
+        number: 1,
         singleVolume: true,
         pages: 208,
         price: 39.9,
@@ -131,8 +136,9 @@ describe("VolumeForm", () => {
     });
     expect(await screen.findByRole("heading", { name: "Volume cadastrado com sucesso!" })).toBeInTheDocument();
     expect(screen.getByRole("link", { name: "Gerenciar este Volume" })).toHaveAttribute(
-      "href", "/admin/gerenciar-mangas/obras/Naruto/edicoes/20/volumes/30/editar"
+      "href", "/admin/gerenciar-mangas/obras/Naruto/edicoes/20/volumes/1/editar"
     );
+    expect(screen.queryByRole("link", { name: "Cadastrar novo Volume" })).not.toBeInTheDocument();
   });
 
   it("impede avancar para capa e sinopse sem informar o numero do volume", () => {
@@ -169,7 +175,20 @@ describe("VolumeForm", () => {
   });
 
   it("carrega e atualiza um volume existente com dados opcionais vazios", async () => {
-    vi.mocked(api.get).mockImplementation((url: string) => Promise.resolve(url.includes("/admin/works/slug/") ? {
+    vi.mocked(api.get).mockImplementation((url: string) => Promise.resolve(url.includes("/editions/20/volumes/30") ? {
+      data: {
+        volume: {
+          id: 30, editionId: 20, number: 2, singleVolume: false,
+          coverAssetId: "7f28c7f0-c94f-46e8-b61c-6ea716f8f28e",
+          coverUrl: "https://cdn.comanga.test/volume-2.jpg",
+          pages: null, price: null, priceCurrency: null,
+          releaseDatePrecision: "Ano", releaseYear: 2020, releaseMonth: null, releaseDay: null,
+          isbn10: null, isbn13: null, affiliateLink: null, synopsis: null,
+        },
+      },
+    } : url === "/admin/works/slug/Naruto/editions/20" ? {
+      data: { edition: { id: 20, chronologicalNumber: 20 } },
+    } : url.includes("/admin/works/slug/") ? {
       data: { work: { id: 10, slug: "naruto", title: "Naruto" } },
     } : {
       data: {
@@ -223,7 +242,7 @@ describe("VolumeForm", () => {
   });
 
   it("envia publicacao com precisao de mes e ano", async () => {
-    vi.mocked(api.post).mockResolvedValueOnce({ data: { volume: { id: 31 } } });
+    vi.mocked(api.post).mockResolvedValueOnce({ data: { volume: { id: 31, number: 3 } } });
     renderVolumeForm();
 
     fireEvent.change(screen.getByLabelText(/n.*mero do volume/i), { target: { value: "3" } });
@@ -242,7 +261,7 @@ describe("VolumeForm", () => {
     })));
     expect(await screen.findByRole("heading", { name: "Volume cadastrado com sucesso!" })).toBeInTheDocument();
     expect(screen.getByRole("link", { name: "Gerenciar este Volume" })).toHaveAttribute(
-      "href", "/admin/gerenciar-mangas/obras/Naruto/edicoes/20/volumes/31/editar"
+      "href", "/admin/gerenciar-mangas/obras/Naruto/edicoes/20/volumes/3/editar"
     );
   });
 
@@ -264,7 +283,11 @@ describe("VolumeForm", () => {
 
   it("exibe erro devolvido pela API ao carregar um volume", async () => {
     vi.mocked(api.get).mockImplementation((url: string) => (
-      url.includes("/admin/works/slug/")
+      url.includes("/editions/20/volumes/30")
+        ? Promise.reject({ isAxiosError: true, response: { data: { error: "Volume nao encontrado." } } })
+        : url === "/admin/works/slug/Naruto/editions/20"
+        ? Promise.resolve({ data: { edition: { id: 20, chronologicalNumber: 20 } } })
+        : url.includes("/admin/works/slug/")
         ? Promise.resolve({ data: { work: { id: 10, slug: "naruto", title: "Naruto" } } })
         : Promise.reject({
           isAxiosError: true,

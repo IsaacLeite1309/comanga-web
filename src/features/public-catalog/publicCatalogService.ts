@@ -49,23 +49,24 @@ export async function getPublicWorkDetails(slug: string) {
 }
 
 export async function getPublicEditionDetails(
-  editionId: number,
+  workSlug: string,
+  editionNumber: number,
   query: { page: number; limit: number },
 ) {
-  const response = await api.get<PublicEditionDetailsResponse>(`/public/editions/${editionId}`, {
+  const response = await api.get<PublicEditionDetailsResponse>(`/public/works/${encodeURIComponent(workSlug)}/editions/${editionNumber}`, {
     params: query,
   });
   return response.data;
 }
 
-export async function getPublicAuthorWorks(authorId: number, query: PublicAuthorWorksQuery) {
-  const response = await api.get<PublicAuthorWorksResponse>(`/public/authors/${authorId}/works`, {
+export async function getPublicAuthorWorks(authorSlug: string, query: PublicAuthorWorksQuery) {
+  const response = await api.get<PublicAuthorWorksResponse>(`/public/authors/${encodeURIComponent(authorSlug)}/works`, {
     params: query,
   });
   return response.data;
 }
 
-export async function getPublicVolumeDetails(volumeId: number) {
-  const response = await api.get<PublicVolumeDetailsResponse>(`/public/volumes/${volumeId}`);
+export async function getPublicVolumeDetails(workSlug: string, editionNumber: number, volumeNumber: number) {
+  const response = await api.get<PublicVolumeDetailsResponse>(`/public/works/${encodeURIComponent(workSlug)}/editions/${editionNumber}/volumes/${volumeNumber}`);
   return response.data.volume;
 }

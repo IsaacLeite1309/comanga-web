@@ -1,13 +1,9 @@
 import { useEffect, useState } from "react";
-import { api } from "@/services/api";
 import { getApiError } from "@/lib/apiError";
 import type { VolumeDetail } from "../domain/adminCatalogDetails";
+import { getVolumeByNumber } from "../domain/contextualAdminCatalog";
 
-interface VolumeResponse {
-  volume: VolumeDetail;
-}
-
-export function useVolumeDetails(volumeId: string | number | undefined) {
+export function useVolumeDetails(workSlug: string, editionNumber: string, volumeNumber: string | number | undefined) {
   const [volume, setVolume] = useState<VolumeDetail | null>(null);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState("");
@@ -20,8 +16,8 @@ export function useVolumeDetails(volumeId: string | number | undefined) {
       setError("");
 
       try {
-        const response = await api.get<VolumeResponse>(`/admin/volumes/${volumeId}`);
-        if (isMounted) setVolume(response.data.volume);
+        const volume = await getVolumeByNumber(workSlug, editionNumber, volumeNumber || "");
+        if (isMounted) setVolume(volume);
       } catch (loadError) {
         if (isMounted) setError(getApiError(loadError, "Erro ao carregar dados do Volume."));
       } finally {
@@ -33,7 +29,7 @@ export function useVolumeDetails(volumeId: string | number | undefined) {
     return () => {
       isMounted = false;
     };
-  }, [volumeId]);
+  }, [workSlug, editionNumber, volumeNumber]);
 
   return { volume, loading, error };
 }

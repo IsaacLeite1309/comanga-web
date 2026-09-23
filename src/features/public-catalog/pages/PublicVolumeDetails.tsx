@@ -52,7 +52,7 @@ function DetailRow({
   );
 }
 
-function useVolumeDetails(volumeId: number, workSlug: string, editionId: number, retry: number) {
+function useVolumeDetails(volumeNumber: number, workSlug: string, editionNumber: number, retry: number) {
   const [volume, setVolume] = useState<PublicVolume | null>(null);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState("");
@@ -60,7 +60,7 @@ function useVolumeDetails(volumeId: number, workSlug: string, editionId: number,
   useEffect(() => {
     let active = true;
 
-    if (!workSlug || !Number.isInteger(editionId) || editionId <= 0 || !Number.isInteger(volumeId) || volumeId <= 0) {
+    if (!workSlug || !Number.isInteger(editionNumber) || editionNumber <= 0 || !Number.isInteger(volumeNumber) || volumeNumber < 0) {
       setVolume(null);
       setError("Volume não encontrado.");
       setLoading(false);
@@ -69,10 +69,10 @@ function useVolumeDetails(volumeId: number, workSlug: string, editionId: number,
 
     setLoading(true);
     setError("");
-    getPublicVolumeDetails(volumeId)
+    getPublicVolumeDetails(workSlug, editionNumber, volumeNumber)
       .then((result) => {
         if (!active) return;
-        if (result.edition.id !== editionId || result.edition.work.slug !== workSlug) {
+        if (result.edition.chronologicalNumber !== editionNumber || result.number !== volumeNumber || result.edition.work.slug !== workSlug) {
           setVolume(null);
           setError("Volume não encontrado.");
           return;
@@ -89,7 +89,7 @@ function useVolumeDetails(volumeId: number, workSlug: string, editionId: number,
       });
 
     return () => { active = false; };
-  }, [editionId, retry, volumeId, workSlug]);
+  }, [editionNumber, retry, volumeNumber, workSlug]);
 
   return { volume, loading, error };
 }
@@ -121,7 +121,7 @@ interface VolumeSectionProps {
 }
 
 function VolumeBreadcrumb({ volume, volumeLabel, editionLabel }: VolumeSectionProps) {
-  const editionPath = publicEditionPath(volume.edition.work.slug, volume.edition.id);
+  const editionPath = publicEditionPath(volume.edition.work.slug, volume.edition.chronologicalNumber);
   return (
     <div className="fixed inset-x-0 top-0 z-50 flex h-16 min-w-0 items-center gap-3 border-b border-border bg-background px-4 md:left-20 sm:px-6 lg:left-64 xl:px-10">
       <Link
@@ -187,7 +187,7 @@ function VolumeCover({ volume, volumeLabel }: Omit<VolumeSectionProps, "editionL
           <nav className="grid w-full grid-cols-2 gap-3" aria-label="Navegação entre Volumes">
             {volume.previousVolume ? (
               <Link
-                to={publicVolumePath(volume.edition.work.slug, volume.edition.id, volume.previousVolume.id)}
+                to={publicVolumePath(volume.edition.work.slug, volume.edition.chronologicalNumber, volume.previousVolume.number)}
                 className="inline-flex w-fit items-center gap-2 rounded-full bg-sidebar px-4 py-2 text-sm font-semibold text-white shadow-md transition-colors hover:bg-sidebar-accent"
               >
                 <ArrowLeft className="h-4 w-4" aria-hidden="true" />
@@ -196,7 +196,7 @@ function VolumeCover({ volume, volumeLabel }: Omit<VolumeSectionProps, "editionL
             ) : null}
             {volume.nextVolume ? (
               <Link
-                to={publicVolumePath(volume.edition.work.slug, volume.edition.id, volume.nextVolume.id)}
+                to={publicVolumePath(volume.edition.work.slug, volume.edition.chronologicalNumber, volume.nextVolume.number)}
                 className="col-start-2 inline-flex w-fit items-center gap-2 justify-self-end rounded-full bg-sidebar px-4 py-2 text-sm font-semibold text-white shadow-md transition-colors hover:bg-sidebar-accent"
               >
                 {publicVolumeLabel(volume.nextVolume)}
@@ -256,7 +256,7 @@ function PurchaseActions({ affiliateLink }: { affiliateLink?: string | null }) {
 
 function VolumeArticle({ volume, volumeLabel, editionLabel }: VolumeSectionProps) {
   const volumePageTitle = `${volume.edition.work.title} ${volumeLabel.replace(/^Volume\b/, "volume")}`;
-  const editionPath = publicEditionPath(volume.edition.work.slug, volume.edition.id);
+  const editionPath = publicEditionPath(volume.edition.work.slug, volume.edition.chronologicalNumber);
   return (
     <article className="flex min-w-0 flex-col bg-card/30 lg:col-start-2 lg:row-start-1">
       <div className="px-5 pb-0 pt-6 sm:px-8">
@@ -345,9 +345,9 @@ function VolumeArticle({ volume, volumeLabel, editionLabel }: VolumeSectionProps
 }
 
 function PublicVolumeDetails() {
-  const { slug = "", editionId = "", volumeId = "" } = useParams();
+  const { slug = "", editionNumber = "", volumeNumber = "" } = useParams();
   const [retry, setRetry] = useState(0);
-  const { volume, loading, error } = useVolumeDetails(Number(volumeId), slug, Number(editionId), retry);
+  const { volume, loading, error } = useVolumeDetails(Number(volumeNumber), slug, Number(editionNumber), retry);
   if (loading) return <LoadingState message="Carregando Volume..." fullPage />;
   if (!volume) return <VolumeUnavailable error={error} onRetry={() => setRetry((value) => value + 1)} />;
   const volumeLabel = publicVolumeLabel(volume);

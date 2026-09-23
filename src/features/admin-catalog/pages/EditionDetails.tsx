@@ -15,9 +15,8 @@ const EditionDetails = () => {
   const { workSlug = "", editionId = "" } = useParams();
   const location = useLocation();
   const state = location.state as AdminCatalogLocationState | null;
-  const currentEditionId = editionId || state?.editionId;
   const workPath = useMemo(() => workAdminPath(workSlug), [workSlug]);
-  const details = useEditionDetails(currentEditionId);
+  const details = useEditionDetails(workSlug, editionId);
   const view = useCatalogDetailView(details.volumes.length);
 
   if (details.loading) {
@@ -33,6 +32,7 @@ const EditionDetails = () => {
     workSlug,
     workId,
     editionId: details.edition.id,
+    editionNumber: details.edition.chronologicalNumber,
   };
   const volumeActions = {
     deletingId: details.deletingId,

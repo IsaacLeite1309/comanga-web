@@ -10,7 +10,7 @@
     "lint": "eslint . --max-warnings=0",
     "preview": "vite preview",
     "test": "vitest run",
-    "test:coverage": "vitest run --coverage",
+    "test:coverage": "vitest run --coverage --maxWorkers=2",
     "test:watch": "vitest",
     "typecheck": "tsc --noEmit -p tsconfig.app.json && tsc --noEmit -p tsconfig.node.json",
     "check": "npm run lint && npm run test:architecture && npm run build && npm run test:coverage",

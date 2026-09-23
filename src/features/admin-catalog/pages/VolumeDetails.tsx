@@ -11,12 +11,11 @@ const VolumeDetails = () => {
   const { workSlug = "", editionId = "", volumeId = "" } = useParams();
   const location = useLocation();
   const state = location.state as AdminCatalogLocationState | null;
-  const currentVolumeId = volumeId || state?.volumeId;
   const editionPath = useMemo(
     () => editionAdminPath(workSlug, editionId),
     [workSlug, editionId],
   );
-  const details = useVolumeDetails(currentVolumeId);
+  const details = useVolumeDetails(workSlug, editionId, volumeId);
 
   if (details.loading) {
     return <DetailLoading message="Carregando dados do Volume..." />;

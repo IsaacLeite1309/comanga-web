@@ -389,11 +389,19 @@ export function EditMangasView({ model }: { model: EditMangasPageModel }) {
   return (
     <div className="flex-1 min-w-0 px-3 py-6 sm:px-4 sm:py-8">
       <div className="mx-auto w-full max-w-6xl space-y-6">
-        <div>
-          <h1 className="text-2xl font-bold text-foreground sm:text-3xl">Gerenciar Mangás</h1>
-          <p className="mt-2 text-sm text-muted-foreground">
-            Localize Obras cadastradas, revise metadados e controle a visibilidade no catálogo.
-          </p>
+        <div className="flex flex-wrap items-start justify-between gap-4">
+          <div>
+            <h1 className="text-2xl font-bold text-foreground sm:text-3xl">Gerenciar Mangás</h1>
+            <p className="mt-2 text-sm text-muted-foreground">
+              Localize Obras cadastradas, revise metadados e controle a visibilidade no catálogo.
+            </p>
+          </div>
+          <Link
+            to="/admin/novo-manga"
+            className="inline-flex items-center rounded-lg bg-primary px-4 py-2 text-sm font-bold text-primary-foreground hover:bg-primary/90"
+          >
+            + Obra
+          </Link>
         </div>
         <ViewModePicker model={model} />
         <WorkFilters model={model} />

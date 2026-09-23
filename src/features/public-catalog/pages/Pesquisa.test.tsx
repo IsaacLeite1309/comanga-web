@@ -305,8 +305,8 @@ describe("Pesquisa", () => {
     fireEvent.click(screen.getByRole("button", { name: "Mangá" }));
     expect(screen.getByRole("button", { name: "Limpar Tipo de Obra" })).toBeInTheDocument();
     fireEvent.click(screen.getByLabelText("Status Original"));
-    expect(screen.getByRole("button", { name: "Completo" })).toBeInTheDocument();
-    expect(screen.getByRole("button", { name: "Cancelado" })).toBeInTheDocument();
+    expect(screen.getByRole("button", { name: "Completa" })).toBeInTheDocument();
+    expect(screen.getByRole("button", { name: "Cancelada" })).toBeInTheDocument();
     fireEvent.click(screen.getByRole("button", { name: "Em andamento" }));
     fireEvent.click(screen.getByRole("button", { name: /filtros avançados/i }));
     fireEvent.click(screen.getByLabelText("País de Origem"));
@@ -440,7 +440,7 @@ describe("Pesquisa", () => {
     expect(screen.queryByText("3 Volumes")).not.toBeInTheDocument();
     expect(screen.queryByText("13,7 × 20 cm · Brochura")).not.toBeInTheDocument();
     expect(screen.getByText("1 edição encontrada")).toBeInTheDocument();
-    expect(screen.getByRole("link", { name: "Ver detalhes da 2ª edição de Monster" })).toHaveAttribute("href", "/obras/monster/edicao/20");
+    expect(screen.getByRole("link", { name: "Ver detalhes da 2ª edição de Monster" })).toHaveAttribute("href", "/obras/monster/edicao/2");
 
     fireEvent.error(screen.getByAltText("Capa da 2ª edição de Monster"));
     // A capa da Edição vem do Volume 1: quando falta, o estado vazio é explícito.
@@ -454,8 +454,8 @@ describe("Pesquisa", () => {
     fireEvent.click(screen.getByLabelText("Editora brasileira"));
     fireEvent.click(screen.getByRole("button", { name: "Panini" }));
     fireEvent.click(screen.getByLabelText("Status no Brasil"));
-    expect(screen.getByRole("button", { name: "Completo" })).toBeInTheDocument();
-    expect(screen.getByRole("button", { name: "Cancelado" })).toBeInTheDocument();
+    expect(screen.getByRole("button", { name: "Completa" })).toBeInTheDocument();
+    expect(screen.getByRole("button", { name: "Cancelada" })).toBeInTheDocument();
     fireEvent.click(screen.getByRole("button", { name: "Em hiato" }));
     fireEvent.click(screen.getByRole("button", { name: /filtros avançados/i }));
     fireEvent.click(screen.getByLabelText("Número da edição"));

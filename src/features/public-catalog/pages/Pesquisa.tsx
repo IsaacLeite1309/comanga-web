@@ -46,7 +46,7 @@ function EditionCard({ edition }: { edition: PublicEditionSummary }) {
   return (
     <article className="min-w-0">
       <Link
-        to={`/obras/${encodeURIComponent(edition.work.slug)}/edicao/${edition.id}`}
+        to={`/obras/${encodeURIComponent(edition.work.slug)}/edicao/${edition.chronologicalNumber}`}
         aria-label={`Ver detalhes da ${editionLabel} de ${edition.work.title}`}
         className="group block rounded-lg outline-none focus-visible:ring-2 focus-visible:ring-primary"
       >
