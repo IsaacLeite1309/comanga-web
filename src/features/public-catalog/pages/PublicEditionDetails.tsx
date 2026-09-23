@@ -29,12 +29,20 @@ function brazilPublicationPeriod(startYear?: number | null, endYear?: number | n
   return `${startYear}-${endYear ?? "??"}`;
 }
 
-function MetaItem({ label, value }: { label: string; value: string | number }) {
+function MetaItem({ label, value }: { label: string; value: React.ReactNode }) {
   return (
     <div className="min-w-0">
       <dt className="text-xs font-bold uppercase tracking-wide text-muted-foreground">{label}</dt>
       <dd className="mt-1 text-sm font-semibold text-foreground">{value}</dd>
     </div>
+  );
+}
+
+function StackedValues({ values }: { values: string[] }) {
+  return (
+    <span className="flex flex-col gap-1">
+      {values.map((value, index) => <span key={`${value}-${index}`}>{value}</span>)}
+    </span>
   );
 }
 
@@ -183,7 +191,7 @@ function EditionContent({ data, editionPath, isCollectionContext, onPageChange }
                 <MetaItem label="Editora Brasileira" value={edition.brazilianPublisher.label} />
                 {edition.format && <MetaItem label="Formato" value={edition.format.label} />}
                 {edition.coverType && <MetaItem label="Acabamento" value={edition.coverType.label} />}
-                {edition.paper && <MetaItem label="Miolo" value={edition.paper.label} />}
+                {edition.papers && edition.papers.length > 0 && <MetaItem label="Miolo" value={<StackedValues values={edition.papers.map(({ label }) => label)} />} />}
                 <MetaItem
                   label="Publicação no Brasil"
                   value={brazilPublicationPeriod(edition.brazilPublicationStartYear, edition.brazilPublicationEndYear)}

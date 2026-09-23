@@ -17,6 +17,7 @@ const response = {
     brazilianPublisher: { id: 1, label: "Panini" },
     format: { id: 3, label: "Kanzenban" },
     coverType: { id: 4, label: "Capa dura" },
+    papers: [{ id: 5, label: "Offset" }, { id: 6, label: "Couché" }],
     brazilPublicationStatus: "Em publicação",
     brazilPublicationStartYear: 2026,
     brazilPublicationEndYear: null,
@@ -92,6 +93,8 @@ describe("PublicEditionDetails", () => {
     expect(screen.queryByText("Tipo de Edição")).not.toBeInTheDocument();
     expect(screen.getByText("Kanzenban")).toBeInTheDocument();
     expect(screen.getByText("Capa dura")).toBeInTheDocument();
+    expect(screen.getByText("Offset")).toBeInTheDocument();
+    expect(screen.getByText("Couché")).toBeInTheDocument();
     expect(screen.getByRole("heading", { name: "Em publicação com 25 volumes" })).toBeInTheDocument();
     expect(screen.queryByText("Status no Brasil")).not.toBeInTheDocument();
     expect(screen.getByText("2026-??")).toBeInTheDocument();

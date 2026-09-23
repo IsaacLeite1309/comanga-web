@@ -53,18 +53,30 @@ describe("EditionForm", () => {
   beforeEach(() => {
     vi.clearAllMocks();
     resetEditionDraftMemoryForTests();
+    vi.mocked(api.get).mockImplementation(async (url) => {
+      if (url === "/admin/works/slug/Naruto" || url === "/admin/works/slug/naruto") {
+        return { data: { work: { id: 10, slug: "naruto", title: "Naruto" } } };
+      }
+      if (url === "/admin/editions/form-options") return { data: editionOptions };
+      throw new Error(`Requisição inesperada: ${url}`);
+    });
   });
 
   it("exibe e preserva o número existente acima das opções iniciais", async () => {
-    vi.mocked(api.get).mockResolvedValueOnce({ data: editionOptions }).mockResolvedValueOnce({
-      data: { edition: {
-        id: 50, workId: 10, chronologicalNumber: 17, brazilPublicationStatus: "Completa",
-        brazilianPublisher: { id: 30, label: "Panini" }, coverType: null, format: null, paper: null,
-      } },
+    vi.mocked(api.get).mockImplementation(async (url) => {
+      if (url === "/admin/works/slug/naruto") return { data: { work: { id: 10, slug: "naruto", title: "Naruto" } } };
+      if (url === "/admin/editions/form-options") return { data: editionOptions };
+      if (url === "/admin/editions/50") return { data: { edition: {
+        id: 50, workId: 10, work: { id: 10, slug: "naruto", title: "Naruto" }, chronologicalNumber: 17, brazilPublicationStatus: "Completa",
+        brazilianPublisher: { id: 30, label: "Panini" }, coverType: null, format: null, papers: [],
+      } } };
+      throw new Error(`Requisição inesperada: ${url}`);
     });
     vi.mocked(api.patch).mockResolvedValueOnce({ data: {} });
-    renderEditionForm("/admin/gerenciar-mangas/obras/Naruto/edicoes/50/editar");
+    renderEditionForm("/admin/gerenciar-mangas/obras/naruto/edicoes/50/editar");
     await screen.findByRole("heading", { name: /editar edição/i });
+    expect(screen.getByRole("link", { name: "Edições de Naruto" })).toBeInTheDocument();
+    expect(screen.queryByText("Edições de naruto")).not.toBeInTheDocument();
     expect(screen.getByLabelText(/número da edição/i)).toHaveTextContent("17ª edição");
     fireEvent.click(screen.getByRole("button", { name: /^salvar$/i }));
     await waitFor(() => expect(api.patch).toHaveBeenCalledWith("/admin/editions/50", expect.objectContaining({
@@ -73,7 +85,6 @@ describe("EditionForm", () => {
   });
 
   it("preserva o rascunho de uma nova edicao durante a navegacao SPA", async () => {
-    vi.mocked(api.get).mockResolvedValue({ data: editionOptions });
     const firstRender = renderEditionForm();
 
     await screen.findByRole("heading", { name: /nova edição/i });
@@ -86,7 +97,6 @@ describe("EditionForm", () => {
   });
 
   it("não oferece importação de capa própria", async () => {
-    vi.mocked(api.get).mockResolvedValueOnce({ data: editionOptions });
     renderEditionForm();
 
     await screen.findByRole("heading", { name: /nova edição/i });
@@ -97,7 +107,6 @@ describe("EditionForm", () => {
   });
 
   it("cadastra uma nova edição vinculada à Obra atual", async () => {
-    vi.mocked(api.get).mockResolvedValueOnce({ data: editionOptions });
     vi.mocked(api.post).mockResolvedValueOnce({
       data: { edition: { id: 50 } },
     });
@@ -110,6 +119,7 @@ describe("EditionForm", () => {
     chooseDropdown(/acabamento/i, /capa comum/i);
     chooseDropdown(/formato/i, /impresso/i);
     chooseDropdown(/miolo/i, /papel/i);
+    expect(screen.getByRole("button", { name: "Papel" })).toHaveClass("bg-primary");
     chooseDropdown(/número da edição/i, /1ª edição/i);
     chooseDropdown(/status de publicação/i, /completa/i);
     fireEvent.click(screen.getByRole("button", { name: /^salvar$/i }));
@@ -119,7 +129,7 @@ describe("EditionForm", () => {
         brazilianPublisherId: 30,
         coverTypeId: 32,
         formatId: 33,
-        paperId: 34,
+        paperIds: [34],
         chronologicalNumber: 1,
         brazilPublicationStatus: "Completa",
       }));
@@ -131,7 +141,6 @@ describe("EditionForm", () => {
   });
 
   it("permite cadastrar uma edição sem metadados ainda não informados", async () => {
-    vi.mocked(api.get).mockResolvedValueOnce({ data: editionOptions });
     vi.mocked(api.post).mockResolvedValueOnce({ data: { edition: { id: 51 } } });
 
     renderEditionForm();
@@ -145,29 +154,31 @@ describe("EditionForm", () => {
     await waitFor(() => expect(api.post).toHaveBeenCalledWith("/admin/works/10/editions", expect.objectContaining({
       coverTypeId: null,
       formatId: null,
-      paperId: null,
+      paperIds: [],
     })));
   });
 
   it("carrega e atualiza uma edicao existente", async () => {
-    vi.mocked(api.get)
-      .mockResolvedValueOnce({ data: editionOptions })
-      .mockResolvedValueOnce({
-        data: {
-          edition: {
+    vi.mocked(api.get).mockImplementation(async (url) => {
+      if (url === "/admin/works/slug/Naruto") return { data: { work: { id: 10, slug: "naruto", title: "Naruto" } } };
+      if (url === "/admin/editions/form-options") return { data: editionOptions };
+      if (url === "/admin/editions/50") return {
+        data: { edition: {
             id: 50,
             workId: 10,
+            work: { id: 10, slug: "naruto", title: "Naruto" },
             chronologicalNumber: 2,
             coverAssetId: null,
             coverUrl: null,
             brazilianPublisher: { id: 30, label: "Panini" },
             coverType: { id: 32, label: "Capa comum" },
             format: { id: 33, label: "Impresso" },
-            paper: { id: 34, label: "Papel" },
+            papers: [{ id: 34, label: "Papel" }],
             brazilPublicationStatus: { id: "Em andamento", label: "Em andamento" },
-          },
-        },
-      });
+        } },
+      };
+      throw new Error(`Requisição inesperada: ${url}`);
+    });
     vi.mocked(api.patch).mockResolvedValueOnce({ data: {} });
 
     renderEditionForm("/admin/gerenciar-mangas/obras/Naruto/edicoes/50/editar");
@@ -186,10 +197,6 @@ describe("EditionForm", () => {
   });
 
   it("resolve a obra diretamente pelo slug quando a rota e recarregada", async () => {
-    vi.mocked(api.get)
-      .mockResolvedValueOnce({ data: { work: { id: 10, slug: "naruto", title: "Naruto" } } })
-      .mockResolvedValueOnce({ data: editionOptions });
-
     render(
       <MemoryRouter initialEntries={["/admin/gerenciar-mangas/obras/naruto/edicoes/nova"]}>
         <Routes>
@@ -204,9 +211,13 @@ describe("EditionForm", () => {
   });
 
   it("informa quando a obra da URL nao existe", async () => {
-    vi.mocked(api.get).mockRejectedValueOnce({
-      isAxiosError: true,
-      response: { data: { error: "Obra não encontrada." } },
+    vi.mocked(api.get).mockImplementation(async (url) => {
+      if (url.includes("/admin/works/slug/")) throw {
+        isAxiosError: true,
+        response: { data: { error: "Obra não encontrada." } },
+      };
+      if (url === "/admin/editions/form-options") return { data: editionOptions };
+      throw new Error(`Requisição inesperada: ${url}`);
     });
 
     render(
@@ -221,7 +232,6 @@ describe("EditionForm", () => {
   });
 
   it("recusa envio com campos obrigatorios vazios", async () => {
-    vi.mocked(api.get).mockResolvedValueOnce({ data: editionOptions });
     renderEditionForm();
 
     await screen.findByRole("heading", { name: /nova edi/i });
@@ -232,7 +242,6 @@ describe("EditionForm", () => {
   });
 
   it("filtra opcoes e informa quando nao encontra resultado", async () => {
-    vi.mocked(api.get).mockResolvedValueOnce({ data: editionOptions });
     renderEditionForm();
 
     await screen.findByRole("heading", { name: /nova edi/i });
@@ -245,7 +254,6 @@ describe("EditionForm", () => {
   });
 
   it("exibe a mensagem da API quando o cadastro falha", async () => {
-    vi.mocked(api.get).mockResolvedValueOnce({ data: editionOptions });
     vi.mocked(api.post).mockRejectedValueOnce({
       isAxiosError: true,
       response: { data: { error: "Edição duplicada." } },

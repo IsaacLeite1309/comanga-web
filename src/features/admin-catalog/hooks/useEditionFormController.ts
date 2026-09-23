@@ -1,5 +1,5 @@
 import { type FormEvent, useEffect, useMemo, useState } from "react";
-import { useLocation, useNavigate, useParams } from "react-router-dom";
+import { useNavigate, useParams } from "react-router-dom";
 import { toast } from "sonner";
 import { getApiError } from "@/lib/apiError";
 import { api } from "@/services/api";
@@ -21,19 +21,13 @@ import {
   type WorkResponse,
 } from "../pages/editionFormModel";
 
-interface LocationState {
-  workId?: number;
-  editionId?: number;
-}
-
 export function useEditionFormController() {
   const { workSlug = "", editionId } = useParams();
-  const state = useLocation().state as LocationState | null;
   const navigate = useNavigate();
   const draftKey = workSlug.toLocaleLowerCase("pt-BR");
-  const routedWorkId = state?.workId ? String(state.workId) : "";
   const isEditMode = Boolean(editionId);
-  const [workId, setWorkId] = useState(routedWorkId);
+  const [workId, setWorkId] = useState("");
+  const [workTitle, setWorkTitle] = useState("");
   const [options, setOptions] = useState<EditionFormOptions | null>(null);
   const [draft, setDraft] = useState(() => (editionId ? emptyEditionDraft : getRememberedEditionDraft(draftKey)));
   const [loading, setLoading] = useState(true);
@@ -54,12 +48,14 @@ export function useEditionFormController() {
       setLoading(true);
       setError("");
       try {
-        const resolvedWorkId = await resolveWorkId(routedWorkId, workSlug);
-        if (!resolvedWorkId) return;
-        const [optionsResponse, editionResponse] = await loadEditionData(editionId);
+        const [workResponse, optionsResponse, editionResponse] = await Promise.all([
+          resolveWork(workSlug),
+          ...loadEditionData(editionId),
+        ]);
         if (!isMounted) return;
         const loadedDraft = editionResponse ? editionToDraft(editionResponse.data.edition) : emptyEditionDraft;
-        setWorkId(resolvedWorkId);
+        setWorkId(String(workResponse.data.work.id));
+        setWorkTitle(editionResponse?.data.edition.work.title || workResponse.data.work.title);
         setOptions(optionsResponse.data.options);
         if (editionResponse) setDraft(loadedDraft);
         setBaselineSignature(JSON.stringify(loadedDraft));
@@ -73,9 +69,9 @@ export function useEditionFormController() {
     return () => {
       isMounted = false;
     };
-  }, [editionId, routedWorkId, workSlug]);
+  }, [editionId, workSlug]);
 
-  function updateDraft(field: keyof EditionDraft, value: string) {
+  function updateDraft<K extends keyof EditionDraft>(field: K, value: EditionDraft[K]) {
     setDraft((current) => ({ ...current, [field]: value }));
   }
 
@@ -118,20 +114,17 @@ export function useEditionFormController() {
     updateDraft,
     workId,
     workPath,
+    workTitle,
   };
 }
 
-async function resolveWorkId(routedWorkId: string, workSlug: string) {
-  if (routedWorkId || !workSlug) return routedWorkId;
-  const response = await api.get<WorkResponse>(`/admin/works/slug/${encodeURIComponent(workSlug)}`);
-  return String(response.data.work.id);
+async function resolveWork(workSlug: string) {
+  return api.get<WorkResponse>(`/admin/works/slug/${encodeURIComponent(workSlug)}`);
 }
 
-async function loadEditionData(editionId?: string) {
-  const [optionsResponse, editionResponse] = await Promise.all([
-    api.get<EditionFormOptionsResponse>("/admin/editions/form-options"),
-    editionId ? api.get<EditionResponse>(`/admin/editions/${editionId}`) : Promise.resolve(null),
-  ]);
+function loadEditionData(editionId?: string) {
+  const optionsResponse = api.get<EditionFormOptionsResponse>("/admin/editions/form-options");
+  const editionResponse = editionId ? api.get<EditionResponse>(`/admin/editions/${editionId}`) : Promise.resolve(null);
   return [optionsResponse, editionResponse] as const;
 }
 
