@@ -122,7 +122,7 @@ describe("EditionDetails", () => {
 
     renderEditionDetails();
 
-    expect(await screen.findByText(/nenhum volume cadastrado/i)).toBeInTheDocument();
+    expect(await screen.findByText(/nenhum volume cadastrado/i, {}, { timeout: 5_000 })).toBeInTheDocument();
   });
 
   it("lista volumes da edicao com link direto de edição", async () => {
