@@ -41,7 +41,7 @@ describe("PostCreateActions", () => {
     renderPage({
       title: "Obra cadastrada com sucesso!",
       actions: [
-        { label: "Gerenciar esta Obra", to: "/obras/1" },
+        { label: "Editar esta Obra", to: "/obras/1/editar" },
         { label: "Cadastrar nova Obra", to: "/obras/nova" },
         { label: "Cadastrar Edicao", to: "/edicoes/nova" },
       ],
@@ -49,6 +49,7 @@ describe("PostCreateActions", () => {
 
     expect(screen.getByRole("heading", { name: "Obra cadastrada com sucesso!" })).toBeInTheDocument();
     expect(screen.queryByText(/escolha o proximo passo/i)).not.toBeInTheDocument();
+    expect(screen.getByRole("link", { name: /editar esta obra/i })).toHaveAttribute("href", "/obras/1/editar");
     expect(screen.getAllByRole("link")).toHaveLength(3);
   });
 });

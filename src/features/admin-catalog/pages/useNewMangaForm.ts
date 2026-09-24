@@ -15,7 +15,7 @@ import type { NavigateFunction } from "react-router-dom";
 import { toast } from "sonner";
 import { api } from "@/services/api";
 import { getApiError } from "@/lib/apiError";
-import { workAdminPath } from "../domain/catalogPaths";
+import { newEditionAdminPath, workEditAdminPath } from "../domain/catalogPaths";
 import { sortAuthorsByCredit } from "../domain/workOptions";
 import {
   emptyNewMangaDraft,
@@ -392,14 +392,14 @@ function createSubmissionHandler(settings: SubmissionSettings) {
     resetNewMangaDraftMemory();
     settings.setBaselineSignature(signature);
     const createdWork = response.data.work;
-    const workPath = workAdminPath(createdWork.slug);
+    const workEditPath = workEditAdminPath(createdWork.slug);
     navigate("/admin/pos-cadastro", { state: {
       title: "Obra cadastrada com sucesso!",
       description: "Escolha o próximo passo para continuar o cadastro do catálogo.",
       actions: [
-        { label: "Gerenciar esta Obra", to: workPath, state: { workId: createdWork.id } },
+        { label: "Editar esta Obra", to: workEditPath, state: { workId: createdWork.id } },
         { label: "Cadastrar nova Obra", to: "/admin/novo-manga" },
-        { label: "Cadastrar Edição para esta Obra", to: `${workPath}/edicoes/nova`, state: { workId: createdWork.id } },
+        { label: "Cadastrar Edição para esta Obra", to: newEditionAdminPath(createdWork.slug), state: { workId: createdWork.id } },
       ],
     } });
   }
