@@ -1,6 +1,7 @@
 import { fireEvent, render, screen, waitFor } from "@testing-library/react";
 import { beforeEach, describe, expect, it, vi } from "vitest";
 import NewManga from "./NewManga";
+import PostCreateActions from "./PostCreateActions";
 import { MemoryRouter, Route, Routes, useLocation } from "react-router-dom";
 import { resetNewMangaDraftMemory } from "./newMangaMemory";
 import { api } from "@/services/api";
@@ -121,7 +122,17 @@ function mockOptionRequests() {
   });
 }
 
-function renderNewManga() {
+function renderNewManga(withPostCreateActions = false) {
+  if (withPostCreateActions) {
+    return render(
+      <MemoryRouter initialEntries={["/"]}>
+        <Routes>
+          <Route path="/" element={<NewManga />} />
+          <Route path="/admin/pos-cadastro" element={<PostCreateActions />} />
+        </Routes>
+      </MemoryRouter>
+    );
+  }
   return render(
     <MemoryRouter>
       <NewManga />
@@ -240,7 +251,7 @@ describe("NewManga", () => {
       },
     });
 
-    renderNewManga();
+    renderNewManga(true);
 
     expect(await screen.findByRole("heading", { name: /novo mang/i })).toBeInTheDocument();
 
@@ -278,6 +289,14 @@ describe("NewManga", () => {
       synopsis: "Um ninja busca reconhecimento na própria vila.",
     }));
     expect(toast.success).toHaveBeenCalledWith("Obra cadastrada com sucesso.");
+    expect(await screen.findByRole("link", { name: "Editar esta Obra" })).toHaveAttribute(
+      "href",
+      "/admin/gerenciar-mangas/obras/naruto/editar",
+    );
+    expect(screen.getByRole("link", { name: "Cadastrar Edição para esta Obra" })).toHaveAttribute(
+      "href",
+      "/admin/gerenciar-mangas/obras/naruto/edicoes/nova",
+    );
   }, 30000);
 
   it("preserva a ordem manual de editoras originais e revistas no payload", async () => {

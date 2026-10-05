@@ -2,6 +2,7 @@ import { fireEvent, render, screen, waitFor } from "@testing-library/react";
 import { MemoryRouter, Route, Routes } from "react-router-dom";
 import { beforeEach, describe, expect, it, vi } from "vitest";
 import EditionForm from "./EditionForm";
+import PostCreateActions from "./PostCreateActions";
 import { api } from "@/services/api";
 import { toast } from "sonner";
 import { resetEditionDraftMemoryForTests } from "./editionDraftMemory";
@@ -38,7 +39,7 @@ function renderEditionForm(path = "/admin/gerenciar-mangas/obras/Naruto/edicoes/
         <Route path="/admin/gerenciar-mangas/obras/:workSlug/edicoes/:editionId/editar" element={<EditionForm />} />
         <Route path="/admin/gerenciar-mangas/obras/:workSlug/edicoes/:editionId/volumes" element={<div>Detalhes da Edição</div>} />
         <Route path="/admin/gerenciar-mangas/obras/:workSlug/edicoes" element={<div>Hub da Obra</div>} />
-        <Route path="/admin/pos-cadastro" element={<div>Edição cadastrada com sucesso</div>} />
+        <Route path="/admin/pos-cadastro" element={<PostCreateActions />} />
       </Routes>
     </MemoryRouter>
   );
@@ -108,7 +109,7 @@ describe("EditionForm", () => {
 
   it("cadastra uma nova edição vinculada à Obra atual", async () => {
     vi.mocked(api.post).mockResolvedValueOnce({
-      data: { edition: { id: 50 } },
+      data: { edition: { id: 50, chronologicalNumber: 1 } },
     });
 
     renderEditionForm();
@@ -137,7 +138,10 @@ describe("EditionForm", () => {
     // A API recusa coverAssetId na Edição: o cliente nunca pode enviá-lo.
     expect(vi.mocked(api.post).mock.calls[0][1]).not.toHaveProperty("coverAssetId");
     expect(toast.success).toHaveBeenCalledWith("Edição cadastrada com sucesso.");
-    expect(screen.getByText("Edição cadastrada com sucesso")).toBeInTheDocument();
+    expect(await screen.findByRole("link", { name: "Editar esta Edição" })).toHaveAttribute(
+      "href",
+      "/admin/gerenciar-mangas/obras/Naruto/edicoes/1/editar",
+    );
   });
 
   it("permite cadastrar uma edição sem metadados ainda não informados", async () => {

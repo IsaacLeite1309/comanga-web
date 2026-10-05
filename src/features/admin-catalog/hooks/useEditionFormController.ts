@@ -3,7 +3,7 @@ import { useNavigate, useParams } from "react-router-dom";
 import { toast } from "sonner";
 import { getApiError } from "@/lib/apiError";
 import { api } from "@/services/api";
-import { editionAdminPath, newEditionAdminPath, newVolumeAdminPath, workAdminPath } from "../domain/catalogPaths";
+import { editionAdminPath, editionEditAdminPath, newEditionAdminPath, newVolumeAdminPath, workAdminPath } from "../domain/catalogPaths";
 import { getEditionByNumber } from "../domain/contextualAdminCatalog";
 import {
   emptyEditionDraft,
@@ -171,8 +171,8 @@ function buildPostCreateState(args: SaveEditionArgs, edition: { id: number; chro
     description: "Escolha o próximo passo para continuar organizando esta Obra.",
     actions: [
       {
-        label: "Gerenciar esta Edição",
-        to: editionAdminPath(args.workSlug, editionNumber),
+        label: "Editar esta Edição",
+        to: editionEditAdminPath(args.workSlug, editionNumber),
         state: { workId: Number(args.workId), editionId },
       },
       {
