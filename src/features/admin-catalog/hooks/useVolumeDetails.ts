@@ -16,7 +16,7 @@ export function useVolumeDetails(workSlug: string, editionNumber: string, volume
       setError("");
 
       try {
-        const volume = await getVolumeByNumber(workSlug, editionNumber, volumeNumber || "");
+        const volume = await getVolumeByNumber(workSlug, editionNumber, volumeNumber ?? "");
         if (isMounted) setVolume(volume);
       } catch (loadError) {
         if (isMounted) setError(getApiError(loadError, "Erro ao carregar dados do Volume."));
