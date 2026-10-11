@@ -241,6 +241,32 @@ describe("VolumeForm", () => {
     expect(toast.success).toHaveBeenCalledWith("Volume atualizado com sucesso.");
   });
 
+  it("carrega Volume 0 para edição pelo endereço contextual", async () => {
+    vi.mocked(api.get).mockImplementation(async (url: string) => {
+      if (url === "/admin/works/slug/Naruto/editions/20/volumes/0") return {
+        data: { volume: {
+          id: 30, editionId: 20, number: 0, singleVolume: false,
+          coverAssetId: "7f28c7f0-c94f-46e8-b61c-6ea716f8f28e",
+          coverUrl: "https://cdn.comanga.test/volume-0.jpg",
+          releaseDatePrecision: "Ano", releaseYear: 2020,
+        } },
+      };
+      if (url === "/admin/works/slug/Naruto/editions/20") return {
+        data: { edition: { id: 20, chronologicalNumber: 20 } },
+      };
+      if (url === "/admin/editions/20/volumes") return {
+        data: { volumes: [{ id: 30 }], pagination: { total: 1 } },
+      };
+      return { data: { work: { id: 10, slug: "naruto", title: "Naruto" } } };
+    });
+
+    renderVolumeForm("/admin/gerenciar-mangas/obras/Naruto/edicoes/20/volumes/0/editar");
+
+    expect(await screen.findByRole("heading", { name: /editar volume/i })).toBeInTheDocument();
+    expect(api.get).toHaveBeenCalledWith("/admin/works/slug/Naruto/editions/20/volumes/0");
+    expect(screen.getByLabelText(/n.*mero do volume/i)).toHaveValue(0);
+  });
+
   it("envia publicacao com precisao de mes e ano", async () => {
     vi.mocked(api.post).mockResolvedValueOnce({ data: { volume: { id: 31, number: 3 } } });
     renderVolumeForm();
