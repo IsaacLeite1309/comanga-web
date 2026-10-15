@@ -22,6 +22,7 @@ vi.mock("@/features/profile", () => ({ ProfilePage: () => "Meu perfil" }));
 vi.mock("@/features/admin-users", () => ({ AdminUsersPage: () => "Administrar usuários" }));
 vi.mock("@/features/public-catalog", () => ({
   PublicCatalogPage: () => "Catálogo público",
+  PublicCalendarPage: () => "Calendário público",
   PublicAuthorWorksPage: () => "Obras do autor",
   PublicEditionDetailsPage: () => "Edição pública",
   EditionVolumeSelectionPage: () => "Seleção de Volumes",
@@ -35,6 +36,12 @@ beforeEach(() => {
 });
 
 describe("navegação e acesso administrativo", () => {
+  it.each([null, { id: "1", username: "leitor", profiles: ["Usuário Padrão"], active_profile: "Usuário Padrão" }])("permite consultar o calendário com sessão %j", async user => {
+    vi.mocked(api.get).mockResolvedValue({ data: { user } });
+    window.history.replaceState({}, "", "/calendario");
+    render(<App />);
+    expect(await screen.findByText("Calendário público")).toBeInTheDocument();
+  });
   it("navega da entrada para o catálogo público", async () => {
     window.history.replaceState({}, "", "/entrar");
     render(<App />);

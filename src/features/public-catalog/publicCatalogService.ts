@@ -1,6 +1,8 @@
 import { api } from "@/services/api";
 import type {
   PublicCatalogOptions,
+  PublicCalendarQuery,
+  PublicCalendarResponse,
   PublicAuthorWorksQuery,
   PublicAuthorWorksResponse,
   PublicEditionsQuery,
@@ -16,6 +18,13 @@ function compactParams(params: Record<string, unknown>) {
   return Object.fromEntries(
     Object.entries(params).filter(([, value]) => value !== undefined && value !== ""),
   );
+}
+
+export async function listPublicCalendar(query: PublicCalendarQuery) {
+  const response = await api.get<PublicCalendarResponse>("/public/calendar", {
+    params: compactParams({ ...query }),
+  });
+  return response.data;
 }
 
 export async function listPublicWorks(query: PublicWorksQuery) {

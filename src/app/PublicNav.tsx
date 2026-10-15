@@ -1,6 +1,7 @@
 ﻿import {
   BookOpen,
   CalendarCheck,
+  CalendarDays,
   LibraryBig,
   Heart,
   PlusCircle,
@@ -26,6 +27,7 @@ interface NavItem {
 const collectorNavItems: NavItem[] = [
   { label: "Coleção", icon: LibraryBig, href: "/colecao" },
   { label: "Pesquisar", icon: Search, href: "/pesquisa" },
+  { label: "Calendário", icon: CalendarDays, href: "/calendario" },
   { label: "Checklists", icon: CalendarCheck, href: "/checklist" },
   { label: "Lista de Desejos", icon: Heart, href: "/desejos" },
 ];
@@ -39,7 +41,7 @@ const adminNavItems: NavItem[] = [
 
 function NavButton({ item, showLabel }: { item: NavItem; showLabel?: boolean }) {
   const className = cn(
-    "flex flex-col md:flex-row items-center justify-center md:justify-start gap-1 md:gap-3 px-3 py-2 md:px-4 md:py-3 rounded-3xl transition-colors w-full font-bold",
+    "flex flex-col md:flex-row items-center justify-center md:justify-start gap-1 md:gap-3 px-2 py-2 md:px-4 md:py-3 rounded-3xl transition-colors w-full font-bold",
     item.active
       ? "bg-primary text-primary-foreground hover:opacity-90"
       : item.danger
@@ -55,7 +57,7 @@ function NavButton({ item, showLabel }: { item: NavItem; showLabel?: boolean }) 
   );
 
   if (item.href) {
-    return <Link to={item.href} className={className}>{content}</Link>;
+    return <Link to={item.href} aria-label={item.label} aria-current={item.active ? "page" : undefined} className={className}>{content}</Link>;
   }
 
   return (
