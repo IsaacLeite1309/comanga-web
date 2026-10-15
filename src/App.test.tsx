@@ -42,6 +42,13 @@ describe("navegação e acesso administrativo", () => {
     render(<App />);
     expect(await screen.findByText("Calendário público")).toBeInTheDocument();
   });
+  it.each(["/colecao", "/desejos", "/obras/monster/edicao/1/selecionar/estante", "/colecao/monster/edicao/1/selecionar/desejos", "/colecao/monster/edicao/1"])("protege acervo pessoal de visitantes: %s", async (path) => {
+    window.history.replaceState({}, "", path);
+    render(<App />);
+    expect(await screen.findByText("Entrar na conta")).toBeInTheDocument();
+    expect(api.get).toHaveBeenCalledTimes(1);
+    expect(api.get).toHaveBeenCalledWith("/auth/me");
+  });
   it("navega da entrada para o catálogo público", async () => {
     window.history.replaceState({}, "", "/entrar");
     render(<App />);

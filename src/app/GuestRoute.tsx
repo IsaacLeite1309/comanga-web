@@ -1,8 +1,9 @@
 import { Loader2 } from "lucide-react";
-import { Navigate } from "react-router-dom";
-import { useAuth } from "@/features/auth";
+import { Navigate, useLocation } from "react-router-dom";
+import { authReturnPath, useAuth } from "@/features/auth";
 
 export function GuestRoute({ children }: { children: React.ReactNode }) {
+  const location = useLocation();
   const { isAuthenticated, loading, user } = useAuth();
 
   if (loading) {
@@ -14,7 +15,7 @@ export function GuestRoute({ children }: { children: React.ReactNode }) {
   }
 
   if (isAuthenticated) {
-    return <Navigate to={user?.username ? `/perfil/${encodeURIComponent(user.username)}` : "/perfil"} replace />;
+    return <Navigate to={authReturnPath(location.state, user?.username ? `/perfil/${encodeURIComponent(user.username)}` : "/perfil")} replace />;
   }
 
   return <>{children}</>;
