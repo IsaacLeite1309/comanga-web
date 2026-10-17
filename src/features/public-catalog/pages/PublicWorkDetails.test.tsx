@@ -1,4 +1,4 @@
-import { fireEvent, render, screen, waitFor } from "@testing-library/react";
+import { fireEvent, render, screen, waitFor, within } from "@testing-library/react";
 import { MemoryRouter, Route, Routes } from "react-router-dom";
 import { beforeEach, describe, expect, it, vi } from "vitest";
 import { AxiosError, AxiosHeaders } from "axios";
@@ -168,6 +168,39 @@ describe("PublicWorkDetails", () => {
       "href",
       "/obras/monster/edicao/1",
     );
+  });
+
+  it("mostra a Edição mais recente primeiro e no máximo cinco Volumes por Edição", async () => {
+    const firstEdition = work.editions[0];
+    vi.mocked(getPublicWorkDetails).mockResolvedValue({
+      ...work,
+      editions: [
+        {
+          ...firstEdition,
+          volumesCount: 6,
+          volumes: Array.from({ length: 6 }, (_, index) => ({
+            ...firstEdition.volumes[0],
+            id: 30 + index,
+            number: index + 1,
+          })),
+        },
+        { ...firstEdition, id: 21, chronologicalNumber: 2, volumesCount: 0, volumes: [] },
+      ],
+    });
+
+    renderPage();
+
+    expect(await screen.findByRole("heading", { name: /2ª edição/ })).toBeInTheDocument();
+    expect(screen.getAllByRole("heading", { name: /ª edição/ }).map((heading) => heading.textContent)).toEqual([
+      "2ª edição·Panini",
+      "1ª edição·Panini",
+    ]);
+    const preview = within(screen.getByRole("region", { name: "Prévia de Volumes da 1ª edição" }));
+    expect(preview.getAllByRole("link", { name: /Ver detalhes do Volume/ })).toHaveLength(5);
+    expect(preview.getByRole("link", { name: "Ver detalhes do Volume 5" })).toHaveAttribute(
+      "href", "/obras/monster/edicao/1/volume/5",
+    );
+    expect(preview.queryByRole("link", { name: "Ver detalhes do Volume 6" })).not.toBeInTheDocument();
   });
 
   it("exibe estado vazio quando a Obra não possui Edições públicas", async () => {

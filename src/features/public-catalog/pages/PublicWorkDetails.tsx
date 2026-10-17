@@ -91,7 +91,7 @@ function EditionCard({ edition, workSlug, workTitle }: { edition: PublicEditionD
       {edition.volumes.length > 0 ? (
         <section className="mt-5" aria-label={`Prévia de Volumes da ${label}`}>
           <div className="grid grid-cols-2 gap-3 sm:grid-cols-3 lg:grid-cols-5">
-            {edition.volumes.map((volume) => (
+            {edition.volumes.slice(0, 5).map((volume) => (
               <VolumePreview
                 key={volume.id}
                 volume={volume}
@@ -214,7 +214,9 @@ function PublicWorkDetails() {
 
               {work.editions.length > 0 ? (
                 <div className="mt-5 divide-y divide-border">
-                  {work.editions.map((edition) => (
+                  {[...work.editions].sort((first, second) => (
+                    second.chronologicalNumber - first.chronologicalNumber || second.id - first.id
+                  )).map((edition) => (
                     <EditionCard key={edition.id} edition={edition} workSlug={work.slug} workTitle={work.title} />
                   ))}
                 </div>
