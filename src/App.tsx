@@ -93,7 +93,7 @@ const App = () => (
               <Route path="/autores/:authorSlug" element={<PublicPage><PublicAuthorWorksPage /></PublicPage>} />
               <Route path="/obras/:slug" element={<PublicPage><PublicWorkDetailsPage /></PublicPage>} />
               <Route path="/obras/:slug/edicao/:editionNumber" element={<PublicPage><PublicEditionDetailsPage /></PublicPage>} />
-              <Route path="/obras/:slug/edicao/:editionNumber/selecionar/:mode" element={<PersonalRoute><EditionVolumeSelectionPage /></PersonalRoute>} />
+              <Route path="/obras/:slug/edicao/:editionNumber/selecionar/:mode" element={<PublicPage><PersonalRoute><EditionVolumeSelectionPage /></PersonalRoute></PublicPage>} />
               <Route path="/obras/:slug/edicao/:editionNumber/volume/:volumeNumber" element={<PublicPage><PublicVolumeDetailsPage /></PublicPage>} />
               <Route path="/colecao" element={<PersonalRoute><CollectionPage /></PersonalRoute>} />
               <Route path="/colecao/:slug/edicao/:editionNumber" element={<PersonalRoute><PublicEditionDetailsPage /></PersonalRoute>} />
