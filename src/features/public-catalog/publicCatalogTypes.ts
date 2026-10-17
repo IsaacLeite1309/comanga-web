@@ -231,3 +231,28 @@ export interface PublicEditionsQuery {
   page: number;
   limit: number;
 }
+
+export interface PublicCalendarQuery {
+  year?: number;
+  month?: number;
+  brazilianPublisherId?: number;
+  term?: string;
+  page: number;
+  limit: number;
+}
+
+export interface PublicCalendarVolume extends PublicVolumePreview {
+  edition: {
+    id: number;
+    chronologicalNumber: number;
+    brazilianPublisher: PublicOption;
+    work: Pick<PublicWorkSummary, "id" | "slug" | "title" | "originalTitle">;
+  };
+}
+
+export interface PublicCalendarResponse {
+  year: number;
+  month: number;
+  volumes: PublicCalendarVolume[];
+  pagination: PublicPagination;
+}

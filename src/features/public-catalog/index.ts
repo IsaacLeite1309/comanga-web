@@ -1,4 +1,5 @@
 export { default as PublicCatalogPage } from "./pages/Pesquisa";
+export { default as PublicCalendarPage } from "./pages/PublicCalendar";
 export { default as PublicAuthorWorksPage } from "./pages/PublicAuthorWorks";
 export { default as PublicEditionDetailsPage } from "./pages/PublicEditionDetails";
 export { default as PublicWorkDetailsPage } from "./pages/PublicWorkDetails";

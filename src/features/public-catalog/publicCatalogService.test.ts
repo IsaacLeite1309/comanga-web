@@ -8,6 +8,7 @@ import {
   getPublicWorkDetails,
   listPublicEditions,
   listPublicWorks,
+  listPublicCalendar,
 } from "@/features/public-catalog/publicCatalogService";
 
 vi.mock("@/services/api", () => ({
@@ -17,6 +18,15 @@ vi.mock("@/services/api", () => ({
 describe("publicCatalogService", () => {
   beforeEach(() => {
     vi.clearAllMocks();
+  });
+
+  it("consulta o calendário com filtros combinados e mantém o padrão de mês no servidor", async () => {
+    const data = { year: 2026, month: 10, volumes: [], pagination: {} };
+    vi.mocked(api.get).mockResolvedValue({ data });
+    await expect(listPublicCalendar({ page: 1, limit: 24 })).resolves.toEqual(data);
+    expect(api.get).toHaveBeenLastCalledWith("/public/calendar", { params: { page: 1, limit: 24 } });
+    await listPublicCalendar({ year: 2027, month: 1, brazilianPublisherId: 2, term: "Urasawa", page: 2, limit: 24 });
+    expect(api.get).toHaveBeenLastCalledWith("/public/calendar", { params: { year: 2027, month: 1, brazilianPublisherId: 2, term: "Urasawa", page: 2, limit: 24 } });
   });
 
   it("serializa os filtros combináveis da vitrine de Obras", async () => {

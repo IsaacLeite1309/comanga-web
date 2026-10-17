@@ -38,9 +38,17 @@ describe("PublicNav", () => {
     expect(container).toHaveTextContent("CoMangá");
     expect(container.querySelector("a button")).not.toBeInTheDocument();
     expect(screen.getAllByText("Pesquisar").length).toBeGreaterThan(0);
+    expect(screen.getAllByRole("link", { name: "Calendário" })[0]).toHaveAttribute("href", "/calendario");
     expect(screen.getAllByText("Checklists").length).toBeGreaterThan(0);
     expect(screen.getAllByText("Lista de Desejos").length).toBeGreaterThan(0);
     expect(screen.getAllByText("Entrar").length).toBeGreaterThan(0);
+  });
+
+  it("destaca o calendário público em todos os tamanhos de navegação", () => {
+    renderPublicNav("/calendario");
+    screen.getAllByRole("link", { name: "Calendário" }).forEach(link => {
+      expect(link).toHaveAttribute("aria-current", "page");
+    });
   });
 
   it("renderiza menu administrativo para administrador autenticado", () => {
