@@ -1,3 +1,5 @@
+import { PersonalCatalogSummary, PersonalVolumeStatus } from "../PersonalCatalogStatus";
+import { PersonalCatalogSession } from "../PersonalCatalogSession";
 import { useEffect, useState, type ReactNode } from "react";
 import { AlertCircle, ArrowLeft, ChevronRight } from "lucide-react";
 import { Link, useParams } from "react-router-dom";
@@ -63,6 +65,7 @@ function VolumePreview({ volume, workSlug, workTitle, editionNumber }: {
         />
         <h4 className="mt-2 truncate text-sm font-bold text-foreground group-hover:text-primary">{label}</h4>
       </Link>
+      <PersonalVolumeStatus personal={volume.personal} />
     </article>
   );
 }
@@ -88,6 +91,7 @@ function EditionCard({ edition, workSlug, workTitle }: { edition: PublicEditionD
           {formatPublicationStatus(edition.brazilPublicationStatus)} com {volumesCount(edition.volumesCount)}
         </span>
       </Link>
+      <PersonalCatalogSummary personal={edition.personal} />
       {edition.volumes.length > 0 ? (
         <section className="mt-5" aria-label={`Prévia de Volumes da ${label}`}>
           <div className="grid grid-cols-2 gap-3 sm:grid-cols-3 lg:grid-cols-5">
@@ -109,7 +113,7 @@ function EditionCard({ edition, workSlug, workTitle }: { edition: PublicEditionD
   );
 }
 
-function PublicWorkDetails() {
+function PublicWorkDetailsContent() {
   const { slug = "" } = useParams();
   const [work, setWork] = useState<PublicWorkDetailsData | null>(null);
   const [loading, setLoading] = useState(true);
@@ -199,6 +203,7 @@ function PublicWorkDetails() {
           <div className="contents md:col-start-2 md:row-span-2 md:block">
             <div className="order-2 min-w-0">
               <h1 className="text-3xl font-bold text-foreground sm:text-4xl">{work.title}</h1>
+              <PersonalCatalogSummary personal={work.personal} />
 
               {work.synopsis ? (
                 <section className="mt-6" aria-labelledby="synopsis-title">
@@ -268,6 +273,10 @@ function PublicWorkDetails() {
       </div>
     </div>
   );
+}
+
+function PublicWorkDetails() {
+  return <PersonalCatalogSession><PublicWorkDetailsContent /></PersonalCatalogSession>;
 }
 
 export default PublicWorkDetails;

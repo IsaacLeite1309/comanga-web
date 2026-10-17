@@ -1,3 +1,5 @@
+import { PersonalCatalogSummary, PersonalVolumeStatus } from "../PersonalCatalogStatus";
+import { PersonalCatalogSession } from "../PersonalCatalogSession";
 import { useEffect, useState } from "react";
 import { AlertCircle, ArrowLeft, ChevronRight, Plus } from "lucide-react";
 import { Link, useLocation, useParams, useSearchParams } from "react-router-dom";
@@ -70,6 +72,7 @@ function VolumeCard({ volume, workSlug, workTitle, editionNumber }: {
         <h3 className="mt-2 truncate text-sm font-bold text-foreground group-hover:text-primary sm:text-base">{label}</h3>
       </Link>
       <p className="text-xs font-medium text-muted-foreground">{formatPublicReleaseDate(volume)}</p>
+      <PersonalVolumeStatus personal={volume.personal} />
     </article>
   );
 }
@@ -156,6 +159,7 @@ function EditionContent({ data, editionPath, isCollectionContext, onPageChange }
 
             <div className="order-2 min-w-0 md:col-start-1 md:row-start-1">
               <h1 className="break-words text-3xl font-bold text-foreground sm:text-4xl">{editionLabel}</h1>
+              <PersonalCatalogSummary personal={edition.personal} />
               <div className="mt-3">
                 <p className="text-sm font-bold uppercase tracking-wide text-muted-foreground">Obra</p>
                 <Link
@@ -173,14 +177,14 @@ function EditionContent({ data, editionPath, isCollectionContext, onPageChange }
                 className="relative inline-flex min-h-[3.25rem] items-center justify-center rounded-full border border-sidebar-foreground/30 bg-sidebar px-4 py-3 text-center text-base font-bold text-white transition-colors hover:bg-sidebar-accent"
               >
                 <Plus className="absolute left-5 h-5 w-5" strokeWidth={3} aria-hidden="true" />
-                Coleção
+                Coleção{edition.personal ? ` (${edition.personal.ownedCount})` : ""}
               </Link>
               <Link
                 to={`${editionPath}/selecionar/desejos`}
                 className="relative inline-flex min-h-[3.25rem] items-center justify-center rounded-full border border-sidebar-foreground/30 bg-sidebar px-4 py-3 text-center text-base font-bold text-white transition-colors hover:bg-sidebar-accent"
               >
                 <Plus className="absolute left-5 h-5 w-5" strokeWidth={3} aria-hidden="true" />
-                Lista de Desejos
+                Lista de Desejos{edition.personal ? ` (${edition.personal.wishedCount})` : ""}
               </Link>
             </div>
           </div>
@@ -270,7 +274,7 @@ function useEditionDetails(editionNumber: number, workSlug: string, page: number
   return { data, loading, error };
 }
 
-function PublicEditionDetails() {
+function PublicEditionDetailsContent() {
   const { editionNumber = "", slug } = useParams();
   const location = useLocation();
   const [searchParams, setSearchParams] = useSearchParams();
@@ -295,6 +299,10 @@ function PublicEditionDetails() {
       onPageChange={changePage}
     />
   );
+}
+
+function PublicEditionDetails() {
+  return <PersonalCatalogSession><PublicEditionDetailsContent /></PersonalCatalogSession>;
 }
 
 export default PublicEditionDetails;

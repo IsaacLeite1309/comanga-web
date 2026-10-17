@@ -1,3 +1,4 @@
+vi.mock("@/features/auth", () => ({ useAuth: () => ({ user: null, loading: false }) }));
 import { fireEvent, render, screen, waitFor, within } from "@testing-library/react";
 import { AxiosError, AxiosHeaders } from "axios";
 import { MemoryRouter, Route, Routes, useLocation } from "react-router-dom";
@@ -57,6 +58,18 @@ const response = {
   ],
   pagination: { page: 1, limit: 24, total: 25, totalPages: 2 },
 };
+
+it("reflete totais pessoais nos controles e desejo nos Volumes", async () => {
+  vi.mocked(getPublicEditionDetails).mockResolvedValue({
+    ...response,
+    edition: { ...response.edition, personal: { ownedCount: 0, readCount: 0, wishedCount: 1 } },
+    volumes: response.volumes.map(volume => ({ ...volume, personal: { owned: false, read: null, wished: volume.id === 30 } })),
+  });
+  renderPage();
+  expect(await screen.findByRole("link", { name: "Lista de Desejos (1)" })).toBeInTheDocument();
+  expect(screen.getByRole("link", { name: "Coleção (0)" })).toBeInTheDocument();
+  expect(screen.getByText("Na Lista de Desejos")).toBeInTheDocument();
+});
 
 function LocationProbe() {
   const location = useLocation();

@@ -1,3 +1,4 @@
+vi.mock("@/features/auth", () => ({ useAuth: () => ({ user: null, loading: false }) }));
 import { fireEvent, render, screen, waitFor } from "@testing-library/react";
 import { AxiosError, AxiosHeaders } from "axios";
 import { MemoryRouter, Route, Routes } from "react-router-dom";
