@@ -20,7 +20,7 @@ const domains = {
     "admin-users": {"path": "src/features/admin-users", "dependencies": ["auth"]},
     "admin-catalog": {"path": "src/features/admin-catalog", "dependencies": ["admin-media"]},
     "admin-media": {"path": "src/features/admin-media", "dependencies": []},
-    "public-catalog": {"path": "src/features/public-catalog", "dependencies": ["personal-library"]},
+    "public-catalog": {"path": "src/features/public-catalog", "dependencies": ["personal-library", "auth"]},
     "collection": {"path": "src/features/collection", "dependencies": ["personal-library", "public-catalog"]},
     "wishlist": {"path": "src/features/wishlist", "dependencies": ["personal-library", "public-catalog"]},
     "personal-library": {"path": "src/features/personal-library", "dependencies": []}

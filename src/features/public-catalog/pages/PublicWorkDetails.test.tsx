@@ -5,6 +5,8 @@ import { AxiosError, AxiosHeaders } from "axios";
 import PublicWorkDetails from "./PublicWorkDetails";
 import { getPublicWorkDetails } from "@/features/public-catalog/publicCatalogService";
 
+vi.mock("@/features/auth", () => ({ useAuth: () => ({ user: null, loading: false }) }));
+
 vi.mock("@/features/public-catalog/publicCatalogService", () => ({
   getPublicWorkDetails: vi.fn(),
 }));
@@ -53,6 +55,21 @@ const work = {
     },
   ],
 };
+
+it("mostra resumo pessoal e leitura nos Volumes da Obra", async () => {
+  vi.mocked(getPublicWorkDetails).mockResolvedValue({
+    ...work,
+    personal: { ownedCount: 1, readCount: 1, wishedCount: 0 },
+    editions: work.editions.map(edition => ({
+      ...edition,
+      personal: { ownedCount: 1, readCount: 1, wishedCount: 0 },
+      volumes: edition.volumes.map(volume => ({ ...volume, personal: { owned: true, read: true, wished: false } })),
+    })),
+  });
+  renderPage();
+  expect(await screen.findByText("Na coleção · Lido")).toBeInTheDocument();
+  expect(screen.getAllByText("Sua coleção: 1 · Lidos: 1 · Desejados: 0")).toHaveLength(2);
+});
 
 function renderPage(slug = "monster") {
   return render(

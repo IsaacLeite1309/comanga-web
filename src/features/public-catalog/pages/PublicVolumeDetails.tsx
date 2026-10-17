@@ -1,3 +1,5 @@
+import { PersonalVolumeActions } from "../PersonalVolumeActions";
+import { PersonalCatalogSession } from "../PersonalCatalogSession";
 import { useEffect, useState } from "react";
 import {
   AlertCircle,
@@ -7,7 +9,6 @@ import {
   BookOpen,
   Calendar,
   ChevronRight,
-  Plus,
   ShoppingCart,
 } from "lucide-react";
 import { Link, useParams } from "react-router-dom";
@@ -210,23 +211,11 @@ function VolumeCover({ volume, volumeLabel }: Omit<VolumeSectionProps, "editionL
   );
 }
 
-function PurchaseActions({ affiliateLink }: { affiliateLink?: string | null }) {
+function PurchaseActions({ volume, onRefresh }: { volume: PublicVolume; onRefresh: () => void }) {
+  const affiliateLink = volume.affiliateLink;
   return (
     <div className="grid grid-cols-2 gap-3">
-      <button
-        type="button"
-        className="relative inline-flex min-h-[3.25rem] items-center justify-center rounded-full border border-sidebar-foreground/30 bg-sidebar px-4 py-3 text-base font-bold text-white transition-colors hover:bg-sidebar-accent"
-      >
-        <Plus className="absolute left-5 h-5 w-5" strokeWidth={3} aria-hidden="true" />
-        Coleção
-      </button>
-      <button
-        type="button"
-        className="relative inline-flex min-h-[3.25rem] items-center justify-center rounded-full border border-sidebar-foreground/30 bg-sidebar px-4 py-3 text-base font-bold text-white transition-colors hover:bg-sidebar-accent"
-      >
-        <Plus className="absolute left-5 h-5 w-5" strokeWidth={3} aria-hidden="true" />
-        Lista de Desejos
-      </button>
+      <PersonalVolumeActions volume={volume} onRefresh={onRefresh} />
       {affiliateLink ? (
         <a
           href={affiliateLink}
@@ -254,7 +243,7 @@ function PurchaseActions({ affiliateLink }: { affiliateLink?: string | null }) {
   );
 }
 
-function VolumeArticle({ volume, volumeLabel, editionLabel }: VolumeSectionProps) {
+function VolumeArticle({ volume, volumeLabel, editionLabel, onRefresh }: VolumeSectionProps & { onRefresh: () => void }) {
   const volumePageTitle = `${volume.edition.work.title} ${volumeLabel.replace(/^Volume\b/, "volume")}`;
   const editionPath = publicEditionPath(volume.edition.work.slug, volume.edition.chronologicalNumber);
   return (
@@ -284,7 +273,7 @@ function VolumeArticle({ volume, volumeLabel, editionLabel }: VolumeSectionProps
           </div>
         </div>
         <div className="mt-6 w-full border-t border-border pt-6">
-          <PurchaseActions affiliateLink={volume.affiliateLink} />
+          <PurchaseActions volume={volume} onRefresh={onRefresh} />
         </div>
         <div className="mt-6 border-b border-border" aria-hidden="true" />
       </div>
@@ -344,7 +333,7 @@ function VolumeArticle({ volume, volumeLabel, editionLabel }: VolumeSectionProps
   );
 }
 
-function PublicVolumeDetails() {
+function PublicVolumeDetailsContent() {
   const { slug = "", editionNumber = "", volumeNumber = "" } = useParams();
   const [retry, setRetry] = useState(0);
   const { volume, loading, error } = useVolumeDetails(Number(volumeNumber), slug, Number(editionNumber), retry);
@@ -360,10 +349,14 @@ function PublicVolumeDetails() {
       </div>
       <div className="-mx-4 grid min-h-[calc(100dvh-7.5rem)] w-[calc(100%+2rem)] sm:-mx-6 sm:w-[calc(100%+3rem)] xl:-mx-10 xl:w-[calc(100%+5rem)] lg:items-start lg:grid-cols-[minmax(22rem,0.85fr)_minmax(24rem,1.15fr)]">
         <VolumeCover volume={volume} volumeLabel={volumeLabel} />
-        <VolumeArticle volume={volume} volumeLabel={volumeLabel} editionLabel={editionLabel} />
+        <VolumeArticle volume={volume} volumeLabel={volumeLabel} editionLabel={editionLabel} onRefresh={() => setRetry(value => value + 1)} />
       </div>
     </div>
   );
+}
+
+function PublicVolumeDetails() {
+  return <PersonalCatalogSession><PublicVolumeDetailsContent /></PersonalCatalogSession>;
 }
 
 export default PublicVolumeDetails;

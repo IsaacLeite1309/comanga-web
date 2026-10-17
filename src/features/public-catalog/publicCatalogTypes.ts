@@ -3,6 +3,9 @@ export type PublicCatalogTab = "works" | "editions";
 export type WorkSort = "title" | "originalTitle" | "createdAt";
 export type EditionSort = "title" | "chronologicalNumber" | "createdAt";
 
+export interface PublicPersonalVolumeState { owned: boolean; read: boolean | null; wished: boolean }
+export interface PublicPersonalSummary { ownedCount: number; readCount: number; wishedCount: number }
+
 export interface PublicOption {
   id: number;
   label: string;
@@ -46,6 +49,7 @@ export interface PublicAuthorDetails extends PublicOption {
 }
 
 export interface PublicVolumePreview {
+  personal?: PublicPersonalVolumeState;
   id: number;
   number: number;
   singleVolume: boolean;
@@ -61,6 +65,7 @@ export interface PublicEditionVolumeSummary extends PublicVolumePreview {
 }
 
 export interface PublicEditionDetails {
+  personal?: PublicPersonalSummary;
   id: number;
   chronologicalNumber: number;
   coverUrl?: string | null;
@@ -74,6 +79,7 @@ export interface PublicEditionDetails {
 }
 
 export interface PublicEditionPageDetails {
+  personal?: PublicPersonalSummary;
   id: number;
   chronologicalNumber: number;
   coverUrl?: string | null;
@@ -95,6 +101,7 @@ export interface PublicEditionPageDetails {
 }
 
 export interface PublicWorkDetails {
+  personal?: PublicPersonalSummary;
   id: number;
   slug: string;
   title: string;
