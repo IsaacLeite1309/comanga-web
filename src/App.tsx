@@ -17,6 +17,7 @@ import {
 import { WishlistPage } from "@/features/wishlist";
 import { PublicNav } from "@/app/PublicNav";
 import { ProtectedRoute } from "@/app/ProtectedRoute";
+import { PersonalRoute } from "@/app/PersonalRoute";
 import { GuestRoute } from "@/app/GuestRoute";
 import { PublicProfileRoute } from "@/app/PublicProfileRoute";
 
@@ -92,13 +93,13 @@ const App = () => (
               <Route path="/autores/:authorSlug" element={<PublicPage><PublicAuthorWorksPage /></PublicPage>} />
               <Route path="/obras/:slug" element={<PublicPage><PublicWorkDetailsPage /></PublicPage>} />
               <Route path="/obras/:slug/edicao/:editionNumber" element={<PublicPage><PublicEditionDetailsPage /></PublicPage>} />
-              <Route path="/obras/:slug/edicao/:editionNumber/selecionar/:mode" element={<PublicPage><EditionVolumeSelectionPage /></PublicPage>} />
+              <Route path="/obras/:slug/edicao/:editionNumber/selecionar/:mode" element={<PublicPage><PersonalRoute><EditionVolumeSelectionPage /></PersonalRoute></PublicPage>} />
               <Route path="/obras/:slug/edicao/:editionNumber/volume/:volumeNumber" element={<PublicPage><PublicVolumeDetailsPage /></PublicPage>} />
-              <Route path="/colecao" element={<CollectionPage />} />
-              <Route path="/colecao/:slug/edicao/:editionNumber" element={<PublicEditionDetailsPage />} />
-              <Route path="/colecao/:slug/edicao/:editionNumber/selecionar/:mode" element={<EditionVolumeSelectionPage />} />
+              <Route path="/colecao" element={<PersonalRoute><CollectionPage /></PersonalRoute>} />
+              <Route path="/colecao/:slug/edicao/:editionNumber" element={<PersonalRoute><PublicEditionDetailsPage /></PersonalRoute>} />
+              <Route path="/colecao/:slug/edicao/:editionNumber/selecionar/:mode" element={<PersonalRoute><EditionVolumeSelectionPage /></PersonalRoute>} />
               <Route path="/checklist" element={<ChecklistPage />} />
-              <Route path="/desejos" element={<WishlistPage />} />
+              <Route path="/desejos" element={<PersonalRoute><WishlistPage /></PersonalRoute>} />
               <Route
                 path="/admin/novo-manga"
                 element={adminPage(<NewMangaPage />)}

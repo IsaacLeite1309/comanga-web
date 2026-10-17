@@ -8,6 +8,7 @@ import { useAuth } from "./useAuth";
 import { BrandLogo } from "@/components/BrandLogo";
 
 import { validatePassword } from "./passwordValidation";
+import { authReturnPath } from "./authReturnPath";
 
 /* ──────────────────────────── Tipos ──────────────────────────── */
 
@@ -408,7 +409,7 @@ export function AuthCard() {
 
   function handleTabChange(newTab: string) {
     setTab(newTab);
-    navigate(newTab === "register" ? "/cadastrar" : "/entrar");
+    navigate(newTab === "register" ? "/cadastrar" : "/entrar", { state: location.state });
     setLoginData({ email: "", password: "" });
     setLoginErrors({ email: "", password: "" });
     setRegisterData({ birthDate: "", username: "", email: "", password: "", confirmPassword: "" });
@@ -449,7 +450,7 @@ export function AuthCard() {
       const response = await api.post("/auth/login", loginData);
       login(response.data.user);
       toast.success("Login realizado com sucesso!");
-      navigate(`/perfil/${response.data.user.username}`);
+      navigate(authReturnPath(location.state, `/perfil/${encodeURIComponent(response.data.user.username)}`), { replace: true });
     } catch (error: unknown) {
       if (isAxiosError(error) && error.response) {
         const status = error.response.status;

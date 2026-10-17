@@ -5,3 +5,8 @@ export { default as PublicEditionDetailsPage } from "./pages/PublicEditionDetail
 export { default as PublicWorkDetailsPage } from "./pages/PublicWorkDetails";
 export { default as EditionVolumeSelectionPage } from "./pages/EditionVolumeSelection";
 export { default as PublicVolumeDetailsPage } from "./pages/PublicVolumeDetails";
+
+export { CatalogCover } from "./CatalogCover";
+export { CatalogPagination } from "./CatalogPagination";
+export { publicVolumeLabel } from "./publicCatalogFormatters";
+export { publicWorkPath, publicEditionPath, publicVolumePath } from "./publicCatalogPaths";

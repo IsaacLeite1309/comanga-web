@@ -7,3 +7,4 @@ export { useAuth } from "./useAuth";
 export { ADMIN_PROFILE, DEFAULT_PROFILE } from "./authContextState";
 export type { AuthUser } from "./authContextState";
 export { validatePassword } from "./passwordValidation";
+export { authReturnPath } from "./authReturnPath";

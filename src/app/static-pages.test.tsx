@@ -7,6 +7,10 @@ import { AuthPage } from "@/features/auth";
 import { PublicCatalogPage } from "@/features/public-catalog";
 import NotFound from "./NotFound";
 
+vi.mock("@/features/personal-library", () => ({
+  useLibraryPage: () => ({ data: null, loading: false, error: "", message: "" }),
+  listCollection: vi.fn(), listWishlist: vi.fn(),
+}));
 vi.mock("@/features/auth/AuthCard", () => ({
   AuthCard: () => <div>Cartão de autenticação</div>,
 }));
