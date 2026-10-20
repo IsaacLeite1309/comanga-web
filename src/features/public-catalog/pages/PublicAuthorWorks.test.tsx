@@ -21,6 +21,7 @@ const response = {
       type: { id: 2, label: "Mangá" },
       country: "Japão",
       authors: [{ id: 5, label: "Naoki Urasawa" }],
+      authorRoles: ["História e Arte"],
     },
     {
       id: 9,
@@ -31,6 +32,7 @@ const response = {
       type: { id: 2, label: "Mangá" },
       country: "Japão",
       authors: [{ id: 5, label: "Naoki Urasawa" }],
+      authorRoles: ["Arte"],
     },
   ],
   pagination: { page: 1, limit: 24, total: 25, totalPages: 2 },
@@ -41,11 +43,11 @@ function LocationProbe() {
   return <output data-testid="location-search">{location.search}</output>;
 }
 
-function renderPage(entry = "/autores/naoki-urasawa?page=1") {
+function renderPage(entry: string | { pathname: string; state: unknown } = "/autor/naoki-urasawa?page=1") {
   return render(
     <MemoryRouter initialEntries={[entry]}>
       <Routes>
-        <Route path="/autores/:authorSlug" element={<><PublicAuthorWorks /><LocationProbe /></>} />
+        <Route path="/autor/:authorSlug" element={<><PublicAuthorWorks /><LocationProbe /></>} />
       </Routes>
     </MemoryRouter>,
   );
@@ -57,27 +59,30 @@ describe("PublicAuthorWorks", () => {
     vi.mocked(getPublicAuthorWorks).mockResolvedValue(response);
   });
 
-  it("exibe o Autor e reutiliza a grade pública de Obras", async () => {
+  it("exibe o Autor, a quantidade de obras publicadas no Brasil e seus papéis", async () => {
     renderPage();
 
     expect(screen.getByText("Carregando Obras do Autor...")).toBeInTheDocument();
-    expect(await screen.findByRole("heading", { name: "Mangás de Naoki Urasawa", level: 1 })).toBeInTheDocument();
+    expect(await screen.findByRole("heading", { name: "Naoki Urasawa", level: 1 })).toBeInTheDocument();
     expect(getPublicAuthorWorks).toHaveBeenCalledWith("naoki-urasawa", {
       page: 1,
       limit: 24,
       sortBy: "title",
       order: "ASC",
     });
-    expect(screen.getByText("25 obras públicas")).toBeInTheDocument();
-    expect(screen.getByRole("link", { name: "Ver detalhes de Monster" })).toHaveAttribute("href", "/obras/monster");
-    expect(screen.getByRole("link", { name: "Ver detalhes de Pluto" })).toHaveAttribute("href", "/obras/pluto");
+    expect(screen.getByText("25 obras publicadas no Brasil")).toBeInTheDocument();
+    expect(screen.getByText("História e Arte")).toHaveClass("mt-1");
+    expect(screen.getByText("Arte")).toBeInTheDocument();
+    expect(screen.queryByText("Mangá · Japão")).not.toBeInTheDocument();
+    expect(screen.getByRole("link", { name: "Ver detalhes de Monster" })).toHaveAttribute("href", "/obra/monster");
+    expect(screen.getByRole("link", { name: "Ver detalhes de Pluto" })).toHaveAttribute("href", "/obra/pluto");
     expect(screen.getByAltText("Capa de Monster")).toHaveAttribute("src", response.works[0].coverUrl);
     expect(screen.getByText("Sem capa")).toBeInTheDocument();
   });
 
   it("pagina as Obras e preserva a página na URL", async () => {
     renderPage();
-    await screen.findByRole("heading", { name: "Mangás de Naoki Urasawa" });
+    await screen.findByRole("heading", { name: "Naoki Urasawa" });
 
     fireEvent.click(screen.getByRole("button", { name: "Próxima" }));
 
@@ -90,6 +95,16 @@ describe("PublicAuthorWorks", () => {
     expect(new URLSearchParams(screen.getByTestId("location-search").textContent || "").get("page")).toBe("2");
   });
 
+  it("mostra Coleção > Obra > Autor quando a navegação começou na coleção", async () => {
+    renderPage({ pathname: "/autor/naoki-urasawa", state: { catalogOrigin: "collection", fromWork: { slug: "monster", title: "Monster" } } });
+    await screen.findByRole("heading", { name: "Naoki Urasawa" });
+
+    const path = screen.getByRole("navigation", { name: "Caminho de navegação" });
+    expect(path).toHaveTextContent("ColeçãoMonsterNaoki Urasawa");
+    expect(screen.getByRole("link", { name: "Coleção" })).toHaveAttribute("href", "/colecao");
+    expect(screen.getByRole("link", { name: "Voltar" })).toHaveAttribute("href", "/obra/monster");
+  });
+
   it("exibe estado vazio com retorno ao catálogo", async () => {
     vi.mocked(getPublicAuthorWorks).mockResolvedValue({
       ...response,
@@ -98,8 +113,8 @@ describe("PublicAuthorWorks", () => {
     });
     renderPage();
 
-    expect(await screen.findByText("Nenhuma Obra pública disponível para este Autor.")).toBeInTheDocument();
-    expect(screen.getByRole("link", { name: "Voltar ao catálogo" })).toHaveAttribute("href", "/pesquisa?tab=works&sortBy=title&order=ASC&page=1");
+    expect(await screen.findByText("Nenhuma obra pública disponível para este autor.")).toBeInTheDocument();
+    expect(screen.getByRole("link", { name: "Voltar" })).toHaveAttribute("href", "/pesquisa?tab=works&sortBy=title&order=ASC&page=1");
   });
 
   it("exibe erro seguro, permite tentar novamente e rejeita ID inválido localmente", async () => {
@@ -118,11 +133,11 @@ describe("PublicAuthorWorks", () => {
     expect(await screen.findByText("Autor não encontrado.")).toBeInTheDocument();
     fireEvent.click(screen.getByRole("button", { name: "Tentar novamente" }));
     await waitFor(() => expect(getPublicAuthorWorks).toHaveBeenCalledTimes(2));
-    expect(await screen.findByRole("heading", { name: "Mangás de Naoki Urasawa" })).toBeInTheDocument();
+    expect(await screen.findByRole("heading", { name: "Naoki Urasawa" })).toBeInTheDocument();
 
     unmount();
     vi.clearAllMocks();
-    renderPage("/autores/autor invalido");
+    renderPage("/autor/autor invalido");
     expect(await screen.findByText("Autor não encontrado.")).toBeInTheDocument();
     expect(getPublicAuthorWorks).not.toHaveBeenCalled();
   });

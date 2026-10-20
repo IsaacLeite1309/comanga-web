@@ -1,5 +1,5 @@
 import { fireEvent, render, screen, waitFor } from "@testing-library/react";
-import { MemoryRouter } from "react-router-dom";
+import { MemoryRouter, Route, Routes } from "react-router-dom";
 import { beforeEach, describe, expect, it, vi } from "vitest";
 import { AuthCard } from "./AuthCard";
 import { api } from "@/services/api";
@@ -73,6 +73,22 @@ describe("AuthCard login", () => {
 
     expect(loginMock).toHaveBeenCalledWith(user);
     expect(toast.success).toHaveBeenCalledWith("Login realizado com sucesso!");
+  });
+
+  it.each([
+    [{ from: { pathname: "/colecao", search: "?page=2", hash: "#obra" } }, "Coleção retornada"],
+    [{ from: { pathname: "//externo.test" } }, "Perfil seguro"],
+    [undefined, "Perfil seguro"],
+  ])("retorna ao contexto seguro após entrar: %j", async (state, expected) => {
+    vi.mocked(api.post).mockResolvedValueOnce({ data: { user: { id: "1", username: "leitor" } } });
+    render(<MemoryRouter initialEntries={[{ pathname: "/entrar", state }]}><Routes>
+      <Route path="/entrar" element={<AuthCard />} />
+      <Route path="/colecao" element={<div>Coleção retornada</div>} />
+      <Route path="/perfil/leitor" element={<div>Perfil seguro</div>} />
+    </Routes></MemoryRouter>);
+    fillLoginForm("leitor@teste.com", "SenhaForte123!");
+    fireEvent.click(screen.getByRole("button", { name: "ENTRAR" }));
+    expect(await screen.findByText(expected)).toBeInTheDocument();
   });
 
   it("exibe erro exato para credenciais invalidas", async () => {

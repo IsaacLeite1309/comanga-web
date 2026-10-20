@@ -54,8 +54,8 @@ export function UsernameForm({ currentUsername, onSubmit }: UsernameFormProps) {
             setUsername(event.target.value);
             setError("");
           }}
-          className={`h-12 w-full rounded-xl border bg-input px-4 text-sm text-foreground placeholder:text-muted-foreground outline-none transition-colors focus:ring-2 disabled:opacity-50 ${
-            error ? "border-red-500 focus:ring-red-500" : "border-border focus:ring-primary"
+          className={`h-12 w-full rounded-xl border bg-input px-4 text-sm text-foreground placeholder:text-muted-foreground outline-none transition-colors disabled:opacity-50 ${
+            error ? "border-red-500 focus:border-red-500" : "border-border hover:border-primary focus:border-primary"
           }`}
         />
       </div>

@@ -4,6 +4,7 @@ import {
   filterWorkTypesByCountry,
   getDefaultCountryAndType,
   isHentaiGenre,
+  isGenreWithoutDemography,
 } from "./newMangaLogic";
 import type { OptionValue, WorkFormOptions } from "./newMangaTypes";
 
@@ -73,5 +74,19 @@ describe("identidade estável do gênero adulto", () => {
   it("recorre ao rótulo apenas quando a API não envia o código", () => {
     expect(isHentaiGenre({ id: 13, label: "Hentai" })).toBe(true);
     expect(isHentaiGenre({ id: 14, label: "Romance" })).toBe(false);
+  });
+});
+
+describe("gêneros sem demografia", () => {
+  it("reconhece BL e GL pelo código, sem depender do rótulo", () => {
+    expect(isGenreWithoutDemography({ id: 1, label: "Outro nome", code: "boys-love" })).toBe(true);
+    expect(isGenreWithoutDemography({ id: 2, label: "Outro nome", code: "girls-love" })).toBe(true);
+    expect(isGenreWithoutDemography({ id: 3, label: "Boys’ Love", code: "romance" })).toBe(false);
+  });
+
+  it("recorre ao rótulo quando o código está ausente", () => {
+    expect(isGenreWithoutDemography({ id: 4, label: "Boys’ Love" })).toBe(true);
+    expect(isGenreWithoutDemography({ id: 5, label: "Girls' Love" })).toBe(true);
+    expect(isGenreWithoutDemography({ id: 6, label: "Romance" })).toBe(false);
   });
 });

@@ -34,6 +34,7 @@ vi.mock("@/features/admin-catalog", () => ({
 }));
 vi.mock("@/features/public-catalog", () => ({
   PublicCatalogPage: () => "Catálogo público",
+    PublicChecklistPage: () => "Checklist público",
   PublicAuthorWorksPage: () => "Obras do autor",
   PublicEditionDetailsPage: () => "Edição pública",
   EditionVolumeSelectionPage: () => "Seleção de Volumes",

@@ -1,3 +1,4 @@
+vi.mock("@/features/auth", () => ({ useAuth: () => ({ user: null, loading: false }) }));
 import { fireEvent, render, screen, waitFor } from "@testing-library/react";
 import { AxiosError, AxiosHeaders } from "axios";
 import { MemoryRouter, Route, Routes } from "react-router-dom";
@@ -40,11 +41,11 @@ const volume = {
   },
 };
 
-function renderPage(entry = "/obras/monster/edicao/2/volume/1") {
+function renderPage(entry: string | { pathname: string; state: unknown } = "/obra/monster/edicao/2/volume/1") {
   return render(
     <MemoryRouter initialEntries={[entry]}>
       <Routes>
-        <Route path="/obras/:slug/edicao/:editionNumber/volume/:volumeNumber" element={<PublicVolumeDetails />} />
+        <Route path="/obra/:slug/edicao/:editionNumber/volume/:volumeNumber" element={<PublicVolumeDetails />} />
       </Routes>
     </MemoryRouter>,
   );
@@ -59,16 +60,16 @@ describe("PublicVolumeDetails", () => {
   it("exibe capa, publicação, dados físicos, comerciais e sinopse", async () => {
     renderPage();
 
-    expect(screen.getByText("Carregando Volume...")).toBeInTheDocument();
+    expect(screen.getByText("Carregando volume...")).toBeInTheDocument();
     expect(await screen.findByRole("heading", { name: "Monster volume 1", level: 1 })).toBeInTheDocument();
     expect(getPublicVolumeDetails).toHaveBeenCalledWith("monster", 2, 1);
     expect(screen.getByText("2ª edição · Panini")).toBeInTheDocument();
     expect(screen.getByText("20/08/2026")).toBeInTheDocument();
-    expect(screen.getByText("416 páginas")).toBeInTheDocument();
+    expect(screen.getByText("416 páginas")).toHaveClass("font-normal");
     expect(screen.getByText("R$ 79,90")).toBeInTheDocument();
     expect(screen.getByText("1234567890")).toBeInTheDocument();
     expect(screen.getByText("9781234567890")).toBeInTheDocument();
-    expect(screen.getByText("Uma sinopse pública.")).toBeInTheDocument();
+    expect(screen.getByText("Uma sinopse pública.")).toHaveClass("font-normal");
 
     const cover = screen.getByAltText("Capa do Volume 1 de Monster");
     expect(cover).toHaveAttribute("src", volume.coverUrl);
@@ -84,24 +85,35 @@ describe("PublicVolumeDetails", () => {
     renderPage();
     await screen.findByRole("heading", { name: "Monster volume 1" });
 
-    expect(screen.getByRole("link", { name: "Voltar para 2ª edição" })).toHaveAttribute("href", "/obras/monster/edicao/2");
+    expect(screen.getByRole("link", { name: "Voltar para 2ª edição" })).toHaveAttribute("href", "/obra/monster/edicao/2");
     expect(screen.getByRole("link", { name: "Pesquisar" })).toHaveAttribute("href", "/pesquisa?tab=works&sortBy=title&order=ASC&page=1");
-    expect(screen.getByRole("link", { name: "Monster" })).toHaveAttribute("href", "/obras/monster");
-    expect(screen.getByRole("link", { name: "Ver 2ª edição" })).toHaveAttribute("href", "/obras/monster/edicao/2");
-    expect(screen.getByRole("link", { name: "Ver detalhes da Obra Monster" })).toHaveAttribute("href", "/obras/monster");
+    expect(screen.getByRole("link", { name: "Monster" })).toHaveAttribute("href", "/obra/monster");
+    expect(screen.getByRole("link", { name: "Ver 2ª edição" })).toHaveAttribute("href", "/obra/monster/edicao/2");
+    expect(screen.getByRole("link", { name: "Ver detalhes da obra Monster" })).toHaveAttribute("href", "/obra/monster");
+  });
+
+  it("mostra Lançamentos como origem quando o Volume foi aberto por lá", async () => {
+    renderPage({ pathname: "/obra/monster/edicao/2/volume/1", state: { catalogOrigin: "checklist" } });
+    await screen.findByRole("heading", { name: "Monster volume 1" });
+
+    const path = screen.getByRole("navigation", { name: "Caminho de navegação" });
+    expect(path).toHaveTextContent("LançamentosMonster2ª ediçãoVolume 1");
+    expect(screen.getByRole("link", { name: "Lançamentos" })).toHaveAttribute("href", "/lancamentos");
   });
 
   it("navega para os Volumes público anterior e seguinte da mesma Edição", async () => {
     renderPage();
     await screen.findByRole("heading", { name: "Monster volume 1" });
 
+    expect(screen.getByRole("navigation", { name: "Navegação entre volumes" })).toHaveClass("max-w-sm", "sm:max-w-md", "lg:max-w-[23rem]");
+    expect(screen.getByRole("link", { name: "Volume 0" })).toHaveClass("min-h-12", "text-base");
     expect(screen.getByRole("link", { name: "Volume 0" })).toHaveAttribute(
       "href",
-      "/obras/monster/edicao/2/volume/0",
+      "/obra/monster/edicao/2/volume/0",
     );
     expect(screen.getByRole("link", { name: "Volume 2" })).toHaveAttribute(
       "href",
-      "/obras/monster/edicao/2/volume/2",
+      "/obra/monster/edicao/2/volume/2",
     );
   });
 
@@ -135,10 +147,10 @@ describe("PublicVolumeDetails", () => {
     expect(screen.queryByText("ISBN-13")).not.toBeInTheDocument();
     expect(screen.queryByText("Sinopse")).not.toBeInTheDocument();
     expect(screen.queryByText("Miolo")).not.toBeInTheDocument();
-    expect(screen.queryByRole("navigation", { name: "Navegação entre Volumes" })).not.toBeInTheDocument();
+    expect(screen.queryByRole("navigation", { name: "Navegação entre volumes" })).not.toBeInTheDocument();
     expect(screen.queryByRole("link", { name: "Comprar em loja parceira" })).not.toBeInTheDocument();
-    expect(screen.getByRole("button", { name: "Coleção" })).toBeInTheDocument();
-    expect(screen.getByRole("button", { name: "Lista de Desejos" })).toBeInTheDocument();
+    expect(screen.getByRole("button", { name: "Adicionar à coleção" })).toBeInTheDocument();
+    expect(screen.getByRole("button", { name: "Adicionar à lista de desejos" })).toBeInTheDocument();
     expect(screen.getByRole("button", { name: "Comprar na Amazon" })).toBeDisabled();
   });
 
@@ -178,7 +190,7 @@ describe("PublicVolumeDetails", () => {
 
     unmount();
     vi.clearAllMocks();
-    renderPage("/obras/monster/edicao/2/volume/invalido");
+    renderPage("/obra/monster/edicao/2/volume/invalido");
     expect(await screen.findByText("Volume não encontrado.")).toBeInTheDocument();
     expect(getPublicVolumeDetails).not.toHaveBeenCalled();
   });

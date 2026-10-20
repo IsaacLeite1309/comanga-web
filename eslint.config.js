@@ -20,9 +20,10 @@ const domains = {
     "admin-users": {"path": "src/features/admin-users", "dependencies": ["auth"]},
     "admin-catalog": {"path": "src/features/admin-catalog", "dependencies": ["admin-media"]},
     "admin-media": {"path": "src/features/admin-media", "dependencies": []},
-    "public-catalog": {"path": "src/features/public-catalog", "dependencies": []},
-    "collection": {"path": "src/features/collection", "dependencies": []},
-    "wishlist": {"path": "src/features/wishlist", "dependencies": []}
+    "public-catalog": {"path": "src/features/public-catalog", "dependencies": ["personal-library", "auth"]},
+    "collection": {"path": "src/features/collection", "dependencies": ["personal-library", "public-catalog"]},
+    "wishlist": {"path": "src/features/wishlist", "dependencies": ["personal-library", "public-catalog"]},
+    "personal-library": {"path": "src/features/personal-library", "dependencies": []}
 };
 const composition = ["src/app/**/*", "src/App.tsx", "src/main.tsx"];
 const shared = ["src/components/**/*", "src/hooks/**/*", "src/lib/**/*", "src/services/**/*", "src/types/**/*", "src/vite-env.d.ts", "src/test/**/*", "src/index.css"];

@@ -1,13 +1,15 @@
-import { useState, useEffect, useRef, type FormEvent, type ChangeEvent, type RefObject } from "react";
+import { useState, useEffect, type FormEvent, type ChangeEvent } from "react";
 import { Link, useLocation, useNavigate } from "react-router-dom";
 import { Tabs, TabsList, TabsTrigger, TabsContent } from "@/components/ui/tabs";
-import { Calendar, Eye, EyeOff, Loader2 } from "lucide-react";
+import { Eye, EyeOff, Loader2, X } from "lucide-react";
 import { toast } from "sonner";
 import { api } from "@/services/api";
 import { useAuth } from "./useAuth";
 import { BrandLogo } from "@/components/BrandLogo";
 
 import { validatePassword } from "./passwordValidation";
+import { authReturnPath } from "./authReturnPath";
+import { BirthDateField } from "./BirthDateField";
 
 /* ──────────────────────────── Tipos ──────────────────────────── */
 
@@ -114,10 +116,10 @@ function PasswordInput({ placeholder, name, value, onChange, error }: PasswordIn
           placeholder={placeholder}
           aria-label={placeholder}
           aria-invalid={Boolean(error)}
-          className={`w-full h-12 px-4 pr-12 rounded-xl bg-input border text-foreground placeholder:text-muted-foreground focus:outline-none focus:ring-2 text-sm transition-colors ${
+          className={`w-full h-12 px-4 pr-12 rounded-xl bg-sidebar border text-foreground placeholder:text-muted-foreground focus:outline-none text-sm transition-colors ${
             error
-              ? "border-red-500 focus:ring-red-500"
-              : "border-border focus:ring-primary"
+              ? "border-red-500 focus:border-red-500"
+              : "border-sidebar-foreground/30 hover:border-primary focus:border-primary"
           }`}
         />
         <button
@@ -156,10 +158,10 @@ function TextInput({ type = "text", placeholder, name, value, onChange, error }:
         placeholder={placeholder}
         aria-label={placeholder}
         aria-invalid={Boolean(error)}
-        className={`w-full h-12 px-4 rounded-xl bg-input border text-foreground placeholder:text-muted-foreground focus:outline-none focus:ring-2 text-sm transition-colors ${
+        className={`w-full h-12 px-4 rounded-xl bg-sidebar border text-foreground placeholder:text-muted-foreground focus:outline-none text-sm transition-colors ${
           error
-            ? "border-red-500 focus:ring-red-500"
-            : "border-border focus:ring-primary"
+            ? "border-red-500 focus:border-red-500"
+            : "border-sidebar-foreground/30 hover:border-primary focus:border-primary"
         }`}
       />
       {error && <span role="alert" className="block text-xs text-red-500 mt-1 ml-1">{error}</span>}
@@ -223,8 +225,7 @@ interface RegisterFormProps {
   data: RegisterData;
   errors: RegisterErrors;
   loading: boolean;
-  birthDateInputRef: RefObject<HTMLInputElement | null>;
-  onOpenBirthDatePicker: () => void;
+  onBirthDateChange: (value: string) => void;
   onChange: (event: ChangeEvent<HTMLInputElement>) => void;
   onSubmit: (event: FormEvent) => void;
 }
@@ -233,8 +234,7 @@ function RegisterForm({
   data,
   errors,
   loading,
-  birthDateInputRef,
-  onOpenBirthDatePicker,
+  onBirthDateChange,
   onChange,
   onSubmit,
 }: RegisterFormProps) {
@@ -259,39 +259,7 @@ function RegisterForm({
           onChange={onChange}
           error={errors.email}
         />
-        <div>
-          <div className="relative">
-            <input
-              type="date"
-              name="birthDate"
-              required
-              ref={birthDateInputRef}
-              aria-label="Data de nascimento"
-              max={new Date().toISOString().slice(0, 10)}
-              value={data.birthDate}
-              onChange={onChange}
-              onClick={onOpenBirthDatePicker}
-              aria-invalid={Boolean(errors.birthDate)}
-              className={`h-12 w-full rounded-xl border bg-input px-4 pr-12 text-sm focus:outline-none focus:ring-2 transition-colors [color-scheme:dark] [&::-webkit-calendar-picker-indicator]:opacity-0 ${
-                data.birthDate ? "text-foreground" : "text-transparent"
-              } ${errors.birthDate ? "border-red-500 focus:ring-red-500" : "border-border focus:ring-primary"}`}
-            />
-            {!data.birthDate && (
-              <span className="pointer-events-none absolute left-4 top-1/2 -translate-y-1/2 text-sm text-muted-foreground">
-                Data de nascimento
-              </span>
-            )}
-            <button
-              type="button"
-              onClick={onOpenBirthDatePicker}
-              aria-label="Selecionar data de nascimento"
-              className="absolute right-3 top-1/2 -translate-y-1/2 p-1 text-muted-foreground hover:text-foreground transition-colors"
-            >
-              <Calendar className="h-5 w-5" />
-            </button>
-          </div>
-          {errors.birthDate && <span role="alert" className="block text-xs text-red-500 mt-1 ml-1">{errors.birthDate}</span>}
-        </div>
+        <BirthDateField value={data.birthDate} error={errors.birthDate} onChange={onBirthDateChange} />
         <PasswordInput
           name="password"
           placeholder="Senha"
@@ -340,21 +308,38 @@ function AuthHeader() {
 }
 
 function AuthTabList() {
+  const triggerClassName = "h-full flex-1 rounded-full px-5 text-sm font-semibold text-foreground transition-all hover:bg-sidebar-accent data-[state=active]:bg-primary data-[state=active]:text-primary-foreground data-[state=active]:shadow-none data-[state=active]:hover:bg-primary";
+
   return (
-    <TabsList className="w-full h-12 rounded-full bg-muted p-1">
+    <TabsList className="h-12 w-full rounded-full border border-sidebar-foreground/30 bg-sidebar p-1 text-foreground">
       <TabsTrigger
         value="login"
-        className="flex-1 rounded-full h-full text-sm font-semibold data-[state=active]:bg-primary data-[state=active]:text-primary-foreground data-[state=active]:shadow-none transition-all"
+        className={triggerClassName}
       >
         Entrar
       </TabsTrigger>
       <TabsTrigger
         value="register"
-        className="flex-1 rounded-full h-full text-sm font-semibold data-[state=active]:bg-primary data-[state=active]:text-primary-foreground data-[state=active]:shadow-none transition-all"
+        className={triggerClassName}
       >
         Cadastrar
       </TabsTrigger>
     </TabsList>
+  );
+}
+
+const REGISTRATION_SUCCESS_MESSAGE = "Cadastro realizado com sucesso! Ative sua conta clicando no link de ativação que te enviamos no e-mail.";
+
+function RegistrationSuccessDialog({ message, onClose }: { message: string; onClose: () => void }) {
+  return (
+    <div className="fixed inset-0 z-[70] flex items-center justify-center bg-background/80 px-4 backdrop-blur-sm">
+      <div role="dialog" aria-modal="true" aria-label="Aviso de cadastro" aria-describedby="registration-success-message" className="relative w-full max-w-md rounded-2xl border border-primary/30 bg-card p-6 pt-10 text-center shadow-2xl">
+        <button type="button" aria-label="Fechar aviso de cadastro" autoFocus onClick={onClose} onKeyDown={(event) => { if (event.key === "Tab") event.preventDefault(); }} className="absolute right-3 top-3 rounded-lg p-2 text-muted-foreground transition-colors hover:bg-sidebar-accent hover:text-foreground focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary">
+          <X className="h-5 w-5" aria-hidden="true" />
+        </button>
+        <p id="registration-success-message" className="text-base leading-relaxed text-white">{message}</p>
+      </div>
+    </div>
   );
 }
 
@@ -364,7 +349,7 @@ export function AuthCard() {
   const { login } = useAuth();
   const location = useLocation();
   const navigate = useNavigate();
-  const birthDateInputRef = useRef<HTMLInputElement>(null);
+  const registrationNotice = location.pathname === "/entrar" && typeof location.state?.registrationNotice === "string" ? location.state.registrationNotice : "";
   const [tab, setTab] = useState(location.pathname === "/cadastrar" ? "register" : "login");
 
   useEffect(() => {
@@ -372,17 +357,6 @@ export function AuthCard() {
     else if (location.pathname === "/entrar" && tab !== "login") setTab("login");
   }, [location.pathname, tab]);
   const [loading, setLoading] = useState(false);
-
-  const openBirthDatePicker = () => {
-    const input = birthDateInputRef.current;
-    if (!input) return;
-
-    try {
-      (input as HTMLInputElement & { showPicker?: () => void }).showPicker?.();
-    } catch {
-      input.focus();
-    }
-  };
 
   // Login state
   const [loginData, setLoginData] = useState<LoginData>({ email: "", password: "" });
@@ -408,11 +382,17 @@ export function AuthCard() {
 
   function handleTabChange(newTab: string) {
     setTab(newTab);
-    navigate(newTab === "register" ? "/cadastrar" : "/entrar");
+    navigate(newTab === "register" ? "/cadastrar" : "/entrar", { state: location.state });
     setLoginData({ email: "", password: "" });
     setLoginErrors({ email: "", password: "" });
     setRegisterData({ birthDate: "", username: "", email: "", password: "", confirmPassword: "" });
     setRegisterErrors({ birthDate: "", username: "", email: "", password: "", confirmPassword: "" });
+  }
+
+  function closeRegistrationNotice() {
+    const nextState = location.state && typeof location.state === "object" ? { ...location.state } : {};
+    delete nextState.registrationNotice;
+    navigate("/entrar", { replace: true, state: nextState });
   }
 
   /* ── Handlers de mudança ── */
@@ -449,7 +429,7 @@ export function AuthCard() {
       const response = await api.post("/auth/login", loginData);
       login(response.data.user);
       toast.success("Login realizado com sucesso!");
-      navigate(`/perfil/${response.data.user.username}`);
+      navigate(authReturnPath(location.state, `/perfil/${encodeURIComponent(response.data.user.username)}`), { replace: true });
     } catch (error: unknown) {
       if (isAxiosError(error) && error.response) {
         const status = error.response.status;
@@ -481,12 +461,14 @@ export function AuthCard() {
     setLoading(true);
     try {
       const response = await api.post("/auth/register", registerData);
-      toast.success(response.data.message || "Cadastro realizado! Verifique seu e-mail.");
+      const apiMessage = response.data.message;
+      const message = typeof apiMessage === "string" && apiMessage.includes("não foi possível enviar") ? apiMessage : REGISTRATION_SUCCESS_MESSAGE;
 
       // Limpar formulário e ir para login
       setRegisterData({ birthDate: "", username: "", email: "", password: "", confirmPassword: "" });
       setRegisterErrors({ birthDate: "", username: "", email: "", password: "", confirmPassword: "" });
       setTab("login");
+      navigate("/entrar", { replace: true, state: { ...location.state, registrationNotice: message } });
     } catch (error: unknown) {
       if (isAxiosError(error) && error.response) {
         const errorMsg = error.response.data?.error || "Erro no cadastro.";
@@ -525,13 +507,16 @@ export function AuthCard() {
             data={registerData}
             errors={registerErrors}
             loading={loading}
-            birthDateInputRef={birthDateInputRef}
-            onOpenBirthDatePicker={openBirthDatePicker}
+            onBirthDateChange={(value) => {
+              setRegisterData((prev) => ({ ...prev, birthDate: value }));
+              if (registerErrors.birthDate) setRegisterErrors((prev) => ({ ...prev, birthDate: "" }));
+            }}
             onChange={handleRegisterChange}
             onSubmit={handleRegister}
           />
         </Tabs>
       </div>
+      {registrationNotice && <RegistrationSuccessDialog message={registrationNotice} onClose={closeRegistrationNotice} />}
     </div>
   );
 }

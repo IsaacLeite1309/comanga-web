@@ -143,8 +143,8 @@ export function CoverImportField({
               setError("");
             }}
             placeholder="https://origem.exemplo/capa.jpg"
-            className={`h-12 w-full rounded-xl border bg-input px-3 text-base text-foreground outline-none transition-colors focus:ring-2 ${
-              invalid ? "border-red-500 focus:ring-red-500/30" : "border-border focus:border-primary focus:ring-primary/40"
+            className={`h-12 w-full rounded-xl border bg-input px-3 text-base text-foreground outline-none transition-colors ${
+              invalid ? "border-red-500 focus:border-red-500" : "border-border hover:border-primary focus:border-primary"
             }`}
           />
           <div className="flex flex-wrap gap-2">

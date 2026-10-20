@@ -41,10 +41,10 @@ export function InputField({
         onChange={(event) => onChange(event.target.value)}
         disabled={disabled}
         placeholder={disabled ? "Incompatível" : placeholder}
-        className={`mt-2 h-12 w-full rounded-xl border bg-input px-3 text-base font-semibold text-foreground outline-none transition-colors placeholder:text-muted-foreground focus:ring-2 disabled:cursor-not-allowed disabled:opacity-60 ${
+        className={`mt-2 h-12 w-full rounded-xl border bg-input px-3 text-base font-semibold text-foreground outline-none transition-colors placeholder:text-muted-foreground disabled:cursor-not-allowed disabled:opacity-60 ${
           invalid
-            ? "border-red-500 focus:border-red-500 focus:ring-red-500/30"
-            : "border-border focus:border-primary focus:ring-primary/40"
+            ? "border-red-500 focus:border-red-500"
+            : "border-border hover:border-primary focus:border-primary"
         }`}
       />
       {invalid && errorMessage ? (

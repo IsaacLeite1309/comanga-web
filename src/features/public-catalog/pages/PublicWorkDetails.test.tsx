@@ -1,9 +1,11 @@
-import { fireEvent, render, screen, waitFor } from "@testing-library/react";
-import { MemoryRouter, Route, Routes } from "react-router-dom";
+import { fireEvent, render, screen, waitFor, within } from "@testing-library/react";
+import { MemoryRouter, Route, Routes, useLocation } from "react-router-dom";
 import { beforeEach, describe, expect, it, vi } from "vitest";
 import { AxiosError, AxiosHeaders } from "axios";
 import PublicWorkDetails from "./PublicWorkDetails";
 import { getPublicWorkDetails } from "@/features/public-catalog/publicCatalogService";
+
+vi.mock("@/features/auth", () => ({ useAuth: () => ({ user: null, loading: false }) }));
 
 vi.mock("@/features/public-catalog/publicCatalogService", () => ({
   getPublicWorkDetails: vi.fn(),
@@ -54,20 +56,79 @@ const work = {
   ],
 };
 
+it("não exibe contadores pessoais nem etiquetas de leitura na Obra", async () => {
+  vi.mocked(getPublicWorkDetails).mockResolvedValue({
+    ...work,
+    personal: { ownedCount: 1, readCount: 1, wishedCount: 0 },
+    editions: work.editions.map(edition => ({
+      ...edition,
+      personal: { ownedCount: 1, readCount: 1, wishedCount: 0 },
+      volumes: edition.volumes.map(volume => ({ ...volume, personal: { owned: true, read: true, wished: false } })),
+    })),
+  });
+  renderPage();
+  expect(await screen.findByRole("heading", { name: "Monster" })).toBeInTheDocument();
+  expect(screen.queryByText("Na coleção · Lido")).not.toBeInTheDocument();
+  expect(screen.queryByText(/Sua coleção:|Lidos:|Desejados:/)).not.toBeInTheDocument();
+  const preview = screen.getByRole("link", { name: "Ver detalhes do Volume 1 (na coleção)" });
+  const ownedBadge = within(preview).getByTitle("Na coleção");
+  const readBadge = within(preview).getByTitle("Lido");
+  expect(ownedBadge.parentElement).toBe(readBadge.parentElement);
+  expect(ownedBadge.parentElement).toHaveClass("flex", "gap-1", "-left-1");
+  expect(ownedBadge).toHaveClass("h-6", "w-6");
+  expect(readBadge).toHaveClass("h-6", "w-6");
+  expect(readBadge.querySelector("svg")).toHaveClass("lucide-eye");
+});
+
+it("marca a capa desejada na prévia da Obra", async () => {
+  vi.mocked(getPublicWorkDetails).mockResolvedValue({
+    ...work,
+    editions: work.editions.map(edition => ({
+      ...edition,
+      volumes: edition.volumes.map(volume => ({ ...volume, personal: { owned: false, read: null, wished: true } })),
+    })),
+  });
+  renderPage();
+  const preview = await screen.findByRole("link", { name: "Ver detalhes do Volume 1 (na lista de desejos)" });
+  expect(within(preview).getByTitle("Na lista de desejos")).toHaveClass("-left-1", "h-6", "w-6");
+  expect(screen.queryByTitle("Na coleção")).not.toBeInTheDocument();
+});
+
 function renderPage(slug = "monster") {
   return render(
-    <MemoryRouter initialEntries={[`/obras/${slug}`]}>
+    <MemoryRouter initialEntries={[`/obra/${slug}`]}>
       <Routes>
-        <Route path="/obras/:slug" element={<PublicWorkDetails />} />
+        <Route path="/obra/:slug" element={<PublicWorkDetails />} />
       </Routes>
     </MemoryRouter>,
   );
+}
+
+function AuthorContextProbe() {
+  const { state } = useLocation();
+  return <output data-testid="author-context">{JSON.stringify(state)}</output>;
 }
 
 describe("PublicWorkDetails", () => {
   beforeEach(() => {
     vi.clearAllMocks();
     vi.mocked(getPublicWorkDetails).mockResolvedValue(work);
+  });
+
+  it("leva a origem da coleção e a Obra ao abrir o Autor", async () => {
+    render(
+      <MemoryRouter initialEntries={[{ pathname: "/obra/monster", state: { catalogOrigin: "collection" } }]}>
+        <Routes>
+          <Route path="/obra/:slug" element={<PublicWorkDetails />} />
+          <Route path="/autor/:authorSlug" element={<AuthorContextProbe />} />
+        </Routes>
+      </MemoryRouter>,
+    );
+    await screen.findByRole("heading", { name: "Monster", level: 1 });
+    expect(screen.getByRole("navigation", { name: "Caminho de navegação" })).toHaveTextContent("ColeçãoMonster");
+    fireEvent.click(screen.getByRole("link", { name: "Ver Obras de Naoki Urasawa" }));
+    expect(screen.getByTestId("author-context")).toHaveTextContent('"catalogOrigin":"collection"');
+    expect(screen.getByTestId("author-context")).toHaveTextContent('"fromWork":{"slug":"monster","title":"Monster"}');
   });
 
   it("exibe os metadados públicos completos da Obra e a capa 2:3", async () => {
@@ -86,7 +147,7 @@ describe("PublicWorkDetails", () => {
     expect(screen.getByText("Mangá").tagName).toBe("DD");
     expect(screen.getByText("Japão").tagName).toBe("DD");
     expect(screen.getByText("Naoki Urasawa")).toBeInTheDocument();
-    expect(screen.getByRole("link", { name: "Ver Obras de Naoki Urasawa" })).toHaveAttribute("href", "/autores/naoki-urasawa");
+    expect(screen.getByRole("link", { name: "Ver Obras de Naoki Urasawa" })).toHaveAttribute("href", "/autor/naoki-urasawa");
     expect(screen.getByText("Roteiro · Arte")).toBeInTheDocument();
     expect(screen.getByText("Suspense")).toBeInTheDocument();
     expect(screen.getByText("Seinen")).toBeInTheDocument();
@@ -98,13 +159,16 @@ describe("PublicWorkDetails", () => {
     expect(screen.getByText("Big Comic Original")).toBeInTheDocument();
     expect(screen.getByText("1994–2001")).toBeInTheDocument();
     expect(screen.getByRole("heading", { name: "Sinopse" })).toBeInTheDocument();
-    expect(screen.getByText("A sinopse canônica da Obra.")).toBeInTheDocument();
+    expect(screen.getByText("A sinopse canônica da Obra.")).toHaveClass("font-normal");
     expect(getPublicWorkDetails).toHaveBeenCalledTimes(1);
     expect(screen.queryByText("Lançamento")).not.toBeInTheDocument();
 
     const cover = screen.getByAltText("Capa de Monster");
     expect(cover).toHaveAttribute("src", work.coverUrl);
     expect(cover.parentElement).toHaveClass("aspect-[2/3]");
+    const workInfo = screen.getByRole("complementary", { name: "Informações da obra" });
+    expect(cover.parentElement?.parentElement).toBe(workInfo.parentElement);
+    expect(workInfo).toHaveClass("mt-7");
   });
 
   it.each([
@@ -160,21 +224,54 @@ describe("PublicWorkDetails", () => {
     expect(screen.getByText("Volume 1")).toBeInTheDocument();
     expect(screen.getByRole("link", { name: "Ver detalhes do Volume 1" })).toHaveAttribute(
       "href",
-      "/obras/monster/edicao/1/volume/1",
+      "/obra/monster/edicao/1/volume/1",
     );
     expect(screen.queryByText("15/05/2024")).not.toBeInTheDocument();
     expect(screen.queryByAltText("Capa da 1ª edição de Monster")).not.toBeInTheDocument();
     expect(screen.getByRole("link", { name: /1ª edição\s*Panini Em publicação com 9 volumes/ })).toHaveAttribute(
       "href",
-      "/obras/monster/edicao/1",
+      "/obra/monster/edicao/1",
     );
+  });
+
+  it("mostra a Edição mais recente primeiro e no máximo cinco Volumes por Edição", async () => {
+    const firstEdition = work.editions[0];
+    vi.mocked(getPublicWorkDetails).mockResolvedValue({
+      ...work,
+      editions: [
+        {
+          ...firstEdition,
+          volumesCount: 6,
+          volumes: Array.from({ length: 6 }, (_, index) => ({
+            ...firstEdition.volumes[0],
+            id: 30 + index,
+            number: index + 1,
+          })),
+        },
+        { ...firstEdition, id: 21, chronologicalNumber: 2, volumesCount: 0, volumes: [] },
+      ],
+    });
+
+    renderPage();
+
+    expect(await screen.findByRole("heading", { name: /2ª edição/ })).toBeInTheDocument();
+    expect(screen.getAllByRole("heading", { name: /ª edição/ }).map((heading) => heading.textContent)).toEqual([
+      "2ª edição·Panini",
+      "1ª edição·Panini",
+    ]);
+    const preview = within(screen.getByRole("region", { name: "Prévia de volumes da 1ª edição" }));
+    expect(preview.getAllByRole("link", { name: /Ver detalhes do Volume/ })).toHaveLength(5);
+    expect(preview.getByRole("link", { name: "Ver detalhes do Volume 5" })).toHaveAttribute(
+      "href", "/obra/monster/edicao/1/volume/5",
+    );
+    expect(preview.queryByRole("link", { name: "Ver detalhes do Volume 6" })).not.toBeInTheDocument();
   });
 
   it("exibe estado vazio quando a Obra não possui Edições públicas", async () => {
     vi.mocked(getPublicWorkDetails).mockResolvedValue({ ...work, editions: [] });
     renderPage();
 
-    expect(await screen.findByText("Nenhuma Edição pública cadastrada para esta Obra.")).toBeInTheDocument();
+    expect(await screen.findByText("Nenhuma edição pública cadastrada para esta obra.")).toBeInTheDocument();
   });
 
   it("exibe erro genérico sem revelar se a Obra é privada ou adulta e permite tentar novamente", async () => {

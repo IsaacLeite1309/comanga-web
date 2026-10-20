@@ -18,6 +18,8 @@ const Toaster = ({ ...props }: ToasterProps) => {
             "!border-l-4 !pr-12 [&[data-type=error]]:!bg-[#fff1f2] [&[data-type=error]]:!text-[#b42318] [&[data-type=error]]:!border-[#fecdd3] [&[data-type=error]]:!border-l-[#ef4444] [&[data-type=error]_[data-title]]:!text-[#b42318] [&_[data-icon]]:!text-red-600 [&_[data-close-button]]:!text-red-600",
           success:
             "!border-l-4 !pr-12 [&[data-type=success]]:!bg-[#effcf3] [&[data-type=success]]:!text-[#237a45] [&[data-type=success]]:!border-[#bbf7d0] [&[data-type=success]]:!border-l-[#22c55e] [&[data-type=success]_[data-title]]:!text-[#237a45] [&_[data-icon]]:!text-green-600 [&_[data-close-button]]:!text-green-600",
+          warning:
+            "!border-l-4 !pr-14 [&[data-type=warning]]:!bg-[#fffbeb] [&[data-type=warning]]:!text-[#92400e] [&[data-type=warning]]:!border-[#fde68a] [&[data-type=warning]]:!border-l-[#f59e0b] [&[data-type=warning]_[data-title]]:!text-[#92400e] [&_[data-icon]]:!text-[#d97706] [&_[data-close-button]]:!text-[#92400e]",
           description: "group-[.toast]:text-muted-foreground",
           closeButton:
             "!left-auto !right-3 !top-1/2 !h-9 !w-9 !-translate-y-1/2 !translate-x-0 !border-0 !bg-transparent !text-slate-500 hover:!bg-transparent hover:!text-slate-800 [&>svg]:!h-4 [&>svg]:!w-4 [&>svg]:!stroke-2",

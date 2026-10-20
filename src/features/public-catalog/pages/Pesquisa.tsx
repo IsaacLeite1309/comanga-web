@@ -1,4 +1,4 @@
-import { AlertCircle, ArrowDownAZ, ArrowUpAZ, Search, SlidersHorizontal, X } from "lucide-react";
+import { AlertCircle, ArrowDownAZ, ArrowUpAZ, Search, SlidersHorizontal } from "lucide-react";
 import { Link } from "react-router-dom";
 import { MultiSelect } from "@/components/forms/MultiSelect";
 import { SearchableSelect, type SelectOption } from "@/components/forms/SearchableSelect";
@@ -46,7 +46,7 @@ function EditionCard({ edition }: { edition: PublicEditionSummary }) {
   return (
     <article className="min-w-0">
       <Link
-        to={`/obras/${encodeURIComponent(edition.work.slug)}/edicao/${edition.chronologicalNumber}`}
+        to={`/obra/${encodeURIComponent(edition.work.slug)}/edicao/${edition.chronologicalNumber}`}
         aria-label={`Ver detalhes da ${editionLabel} de ${edition.work.title}`}
         className="group block rounded-lg outline-none focus-visible:ring-2 focus-visible:ring-primary"
       >
@@ -57,10 +57,10 @@ function EditionCard({ edition }: { edition: PublicEditionSummary }) {
           emptyLabel="Capa indisponível"
           className="transition-transform group-hover:-translate-y-1"
         />
-        <h2 className="mt-2 truncate text-sm font-bold text-foreground group-hover:text-primary sm:text-base" title={edition.work.title}>
+        <h2 className="mt-2 truncate text-sm font-normal text-foreground group-hover:text-primary sm:text-base" title={edition.work.title}>
           {edition.work.title}
         </h2>
-        <p className="mt-0.5 truncate text-xs text-muted-foreground" title={metadata}>{metadata}</p>
+        <p className="mt-1 truncate text-xs text-muted-foreground" title={metadata}>{metadata}</p>
       </Link>
     </article>
   );
@@ -88,12 +88,12 @@ function FilterField({ label, value, options, onChange, disabled, searchable = f
         onChange={onChange}
         disabled={disabled}
         searchable={searchable}
-        searchPlaceholder=""
         placeholder="Todos"
         allowEmptyOption={false}
         clearable
         textSize="sm"
         tone="panel"
+        focusStyle="border"
       />
     </div>
   );
@@ -109,7 +109,7 @@ function TabSelector({ catalog }: { catalog: PesquisaCatalog }) {
           role="tab"
           aria-selected={catalog.tab === tab}
           onClick={() => catalog.changeTab(tab)}
-          className={`inline-flex h-full flex-1 items-center justify-center rounded-full px-5 text-sm font-semibold transition-all sm:flex-none ${catalog.tab === tab ? "bg-primary text-primary-foreground" : "text-foreground hover:bg-sidebar-accent"}`}
+          className={`inline-flex h-full flex-1 items-center justify-center rounded-full px-5 text-sm font-semibold transition-all disabled:cursor-not-allowed disabled:opacity-60 sm:flex-none ${catalog.tab === tab ? "bg-primary text-primary-foreground" : "text-foreground hover:bg-sidebar-accent"}`}
         >
           {tab === "works" ? "Obras" : "Edições"}
         </button>
@@ -120,21 +120,19 @@ function TabSelector({ catalog }: { catalog: PesquisaCatalog }) {
 
 function SearchInput({ catalog }: { catalog: PesquisaCatalog }) {
   return (
-    <label className="relative block min-w-0 flex-1">
-      <Search className="pointer-events-none absolute left-4 top-1/2 h-5 w-5 -translate-y-1/2 text-foreground" aria-hidden="true" />
-      <input
-        type="search"
-        aria-label="Pesquisar no catálogo"
-        value={catalog.searchTerm}
-        onChange={(event) => catalog.setSearchTerm(event.target.value)}
-        placeholder="Pesquise por título ou autor"
-        className="catalog-search-input h-12 w-full appearance-none rounded-xl border border-sidebar-foreground/35 bg-sidebar pl-12 pr-12 text-sm font-semibold text-foreground outline-none transition-colors placeholder:text-muted-foreground focus:border-primary focus:ring-2 focus:ring-primary/30"
-      />
-      {catalog.searchTerm ? (
-        <button type="button" aria-label="Limpar pesquisa" onClick={() => catalog.setSearchTerm("")} className="absolute right-3 top-1/2 inline-flex h-8 w-8 -translate-y-1/2 items-center justify-center rounded-md text-foreground focus:outline-none focus:ring-2 focus:ring-primary/40">
-          <X className="h-4 w-4" aria-hidden="true" />
-        </button>
-      ) : null}
+    <label className="block min-w-0 flex-1 text-xs font-bold uppercase tracking-wide">
+      Pesquisar
+      <span className="relative mt-2 block">
+        <Search className="pointer-events-none absolute left-4 top-1/2 h-5 w-5 -translate-y-1/2 text-foreground" aria-hidden="true" />
+        <input
+          type="search"
+          aria-label="Pesquisar no catálogo"
+          value={catalog.searchTerm}
+          onChange={(event) => catalog.setSearchTerm(event.target.value)}
+          placeholder="Título, título original ou autor"
+          className="catalog-search-input block h-12 w-full appearance-none rounded-lg border border-sidebar-foreground/35 bg-sidebar pl-12 pr-3 text-sm font-semibold text-foreground outline-none transition-colors placeholder:text-muted-foreground hover:border-primary focus:border-primary disabled:cursor-not-allowed disabled:opacity-60"
+        />
+      </span>
     </label>
   );
 }
@@ -150,12 +148,12 @@ function PrimaryFilter({ label, value, options, onChange, disabled, searchable =
         onChange={onChange}
         disabled={disabled}
         searchable={searchable}
-        searchPlaceholder=""
         placeholder="Todos"
         allowEmptyOption={false}
         clearable
         tone="sidebar"
         textSize="sm"
+        focusStyle="border"
         className="mt-2 w-full"
       />
     </div>
@@ -216,7 +214,7 @@ function PrimaryFilters({ catalog }: { catalog: PesquisaCatalog }) {
         aria-label={count > 0 ? `Filtros avançados (${count} ativos)` : "Filtros avançados"}
         aria-expanded={catalog.showFilters}
         onClick={() => catalog.setShowFilters((visible) => !visible)}
-        className={`col-span-2 inline-flex h-12 w-full shrink-0 items-center justify-center rounded-xl border bg-sidebar text-foreground transition-colors hover:border-primary sm:col-auto sm:w-12 sm:justify-self-end ${catalog.showFilters ? "border-primary" : "border-sidebar-foreground/35"}`}
+        className={`col-span-2 inline-flex h-12 w-full shrink-0 items-center justify-center rounded-lg border bg-sidebar text-foreground transition-colors hover:border-primary focus:border-primary focus:outline-none disabled:cursor-not-allowed disabled:opacity-60 sm:col-auto sm:w-12 sm:justify-self-end ${catalog.showFilters ? "border-primary" : "border-sidebar-foreground/35"}`}
       >
         <SlidersHorizontal className="h-4 w-4" aria-hidden="true" />
       </button>
@@ -257,10 +255,10 @@ function WorkAdvancedFilters({ catalog }: { catalog: PesquisaCatalog }) {
         onToggle={(value) => catalog.toggleCsvParam("demographics", catalog.demographics, String(value))}
         disabled={catalog.optionsLoading}
         placeholder="Todos"
-        searchPlaceholder=""
         onClear={() => catalog.updateParam("demographics", undefined)}
         textSize="sm"
         tone="panel"
+        focusStyle="border"
       />
       <FilterField
         label="Início da publicação original"
@@ -284,10 +282,10 @@ function WorkAdvancedFilters({ catalog }: { catalog: PesquisaCatalog }) {
         disabled={catalog.optionsLoading}
         searchable
         placeholder="Todos"
-        searchPlaceholder=""
         onClear={() => catalog.updateParam("genreIds", undefined)}
         textSize="sm"
         tone="panel"
+        focusStyle="border"
       />
     </div>
   );
@@ -384,7 +382,7 @@ function ResultsSummary({ catalog }: { catalog: PesquisaCatalog }) {
             type="button"
             onClick={catalog.toggleTitleSort}
             aria-label={catalog.order === "ASC" ? "Ordenar por título de Z a A" : "Ordenar por título de A a Z"}
-            className="inline-flex shrink-0 items-center gap-1.5 text-xs font-bold text-muted-foreground transition-colors hover:text-primary focus:outline-none focus:ring-2 focus:ring-primary/40"
+            className="inline-flex shrink-0 items-center gap-1.5 text-xs font-bold text-muted-foreground transition-colors hover:text-primary focus:outline-none focus:ring-2 focus:ring-primary"
           >
             Título
             <SortIcon className="h-3.5 w-3.5" aria-hidden="true" />
@@ -439,7 +437,7 @@ function CatalogResults({ catalog }: { catalog: PesquisaCatalog }) {
   return (
     <div className="rounded-2xl border border-sidebar-foreground/30 bg-sidebar">
       <EmptyState
-        message={catalog.tab === "works" ? "Nenhuma Obra encontrada." : "Nenhuma Edição encontrada."}
+        message={catalog.tab === "works" ? "Nenhuma obra encontrada." : "Nenhuma edição encontrada."}
       />
       <div className="flex justify-center px-4 pb-10">
         <button
@@ -457,15 +455,19 @@ function CatalogResults({ catalog }: { catalog: PesquisaCatalog }) {
 const Pesquisa = () => {
   const catalog = usePesquisaCatalog();
   return (
-    <div className="min-w-0 flex-1 px-4 pb-7 pt-6 sm:px-6 sm:pb-9 sm:pt-7 xl:px-10 xl:pt-3">
+    <div className="min-w-0 flex-1 px-4 pb-7 pt-7 sm:px-6 sm:pb-9 xl:px-10">
       <div className="mx-auto w-full max-w-[100rem]">
         <div className="relative z-30">
           <div className="flex flex-col gap-3 xl:flex-row xl:items-end">
             <TabSelector catalog={catalog} />
-            <SearchInput catalog={catalog} />
-            <PrimaryFilters catalog={catalog} />
+            <fieldset disabled={catalog.loading} className="flex min-w-0 flex-1 flex-col gap-3 border-0 p-0 xl:flex-row xl:items-end">
+              <SearchInput catalog={catalog} />
+              <PrimaryFilters catalog={catalog} />
+            </fieldset>
           </div>
-          <AdvancedFilters catalog={catalog} />
+          <fieldset disabled={catalog.loading} className="min-w-0 border-0 p-0">
+            <AdvancedFilters catalog={catalog} />
+          </fieldset>
         </div>
         <ResultsSummary catalog={catalog} />
         <div className="mt-6">
