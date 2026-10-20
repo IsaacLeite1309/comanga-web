@@ -8,11 +8,17 @@ export function subscribePersonalLibraryUpdates(callback: () => void) {
   return () => window.removeEventListener(UPDATED, callback);
 }
 function updated() { window.dispatchEvent(new Event(UPDATED)); }
-export async function listCollection(page = 1) {
-  return (await api.get<CollectionResponse>(`${ROOT}/collection`, { params: { page, limit: 12 } })).data;
+export interface CollectionFilters {
+  term?: string;
+  status?: "complete" | "incomplete";
+  brazilianPublisherId?: number;
 }
-export async function listWishlist(page = 1) {
-  return (await api.get<WishlistResponse>(`${ROOT}/wishlist`, { params: { page, limit: 24 } })).data;
+export async function listCollection(page = 1, filters: CollectionFilters = {}) {
+  return (await api.get<CollectionResponse>(`${ROOT}/collection`, { params: { page, limit: 12, ...filters } })).data;
+}
+export interface WishlistFilters { term?: string; brazilianPublisherId?: number }
+export async function listWishlist(page = 1, filters: WishlistFilters = {}) {
+  return (await api.get<WishlistResponse>(`${ROOT}/wishlist`, { params: { page, limit: 24, ...filters } })).data;
 }
 export async function getCollectionEdition(editionId: number, query = { page: 1, limit: 50 }) {
   return (await api.get<CollectionEditionResponse>(`${ROOT}/collection/editions/${editionId}`, { params: query })).data;

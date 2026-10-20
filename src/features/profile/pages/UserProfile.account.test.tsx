@@ -175,7 +175,7 @@ describe("UserProfile — nome de usuário", () => {
     expect(toast.success).toHaveBeenCalledWith("Nome de usuário atualizado com sucesso!");
     expect(updateUserMock).toHaveBeenCalledWith(expect.objectContaining({ username: "novo_nome" }));
     expect(await screen.findByText("novo_nome")).toBeInTheDocument();
-    expect(screen.getByText("Meu Perfil")).toBeInTheDocument();
+    expect(screen.getByText("Meu perfil")).toBeInTheDocument();
   });
 
   it("exibe o conflito de nome devolvido pela API", async () => {
@@ -291,7 +291,7 @@ describe("UserProfile — senha", () => {
       expect(screen.getByLabelText("Senha atual")).toHaveValue("");
     });
     expect(screen.getByLabelText("Nova senha")).toHaveValue("");
-    expect(screen.getByText("Meu Perfil")).toBeInTheDocument();
+    expect(screen.getByText("Meu perfil")).toBeInTheDocument();
   });
 
   it("exibe o erro da API quando a senha atual está incorreta", async () => {

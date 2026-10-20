@@ -1,6 +1,7 @@
 import { useCallback, useEffect, useRef, useState } from "react";
 import type { PersonalPagination } from "./personalLibraryTypes";
 import { getApiError } from "@/lib/apiError";
+import { toast } from "sonner";
 
 export function useLibraryPage<T extends { pagination: PersonalPagination }>(loader: (page: number) => Promise<T>) {
   const [page, setPage] = useState(1);
@@ -8,7 +9,6 @@ export function useLibraryPage<T extends { pagination: PersonalPagination }>(loa
   const [loading, setLoading] = useState(true);
   const [busy, setBusy] = useState(false);
   const [error, setError] = useState("");
-  const [message, setMessage] = useState("");
   const request = useRef(0);
   const alive = useRef(true);
   useEffect(() => { alive.current = true; return () => { alive.current = false; }; }, []);
@@ -29,13 +29,20 @@ export function useLibraryPage<T extends { pagination: PersonalPagination }>(loa
   }, [loader, page]);
   useEffect(() => { void reload(); }, [reload]);
   async function mutate(operation: () => Promise<unknown>, success: string) {
-    setBusy(true); setMessage("");
+    setBusy(true);
     let result = success;
+    let succeeded = true;
     try { await operation(); }
-    catch (failure) { result = getApiError(failure, "Não foi possível salvar a alteração. Confira o estado atualizado abaixo."); }
+    catch (failure) {
+      succeeded = false;
+      result = getApiError(failure, "Não foi possível salvar a alteração. Confira o estado atualizado abaixo.");
+    }
     if (!alive.current) return;
     await reload();
-    if (alive.current) { setMessage(result); setBusy(false); }
+    if (alive.current) {
+      if (succeeded) toast.success(result); else toast.error(result);
+      setBusy(false);
+    }
   }
-  return { page, setPage, data, loading, busy, error, message, reload, mutate };
+  return { page, setPage, data, loading, busy, error, reload, mutate };
 }

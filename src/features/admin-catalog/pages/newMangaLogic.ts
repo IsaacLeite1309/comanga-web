@@ -58,6 +58,13 @@ export function isHentaiGenre(genre: OptionValue) {
   return normalizeSearchText(genre.label) === HENTAI_GENRE_CODE;
 }
 
+const GENRES_WITHOUT_DEMOGRAPHY = new Set(["boys-love", "girls-love"]);
+
+export function isGenreWithoutDemography(genre: OptionValue) {
+  if (genre.code) return GENRES_WITHOUT_DEMOGRAPHY.has(genre.code);
+  return GENRES_WITHOUT_DEMOGRAPHY.has(normalizeSearchText(genre.label).replace(/[’']/g, "").replace(/\s+/g, "-"));
+}
+
 export function getDefaultWorkTypeLabels(countryName = "") {
   const country = normalizeSearchText(countryName);
   if (country.includes("coreia")) return ["manhwa"];

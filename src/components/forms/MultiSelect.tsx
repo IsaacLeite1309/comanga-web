@@ -31,6 +31,7 @@ interface MultiSelectProps {
   maxVisibleItems?: number;
   tone?: SelectTone;
   textSize?: "sm" | "base";
+  focusStyle?: "ring" | "border";
 }
 
 function resolveMultiSelectProps({
@@ -55,6 +56,7 @@ function resolveMultiSelectProps({
   maxVisibleItems = 6,
   tone = "default",
   textSize = "base",
+  focusStyle = "ring",
 }: MultiSelectProps) {
   return {
     label,
@@ -78,10 +80,12 @@ function resolveMultiSelectProps({
     maxVisibleItems,
     tone,
     textSize,
+    focusStyle,
   };
 }
 
 interface ControlProps extends SelectFieldStyles {
+  focusStyle: "ring" | "border";
   closeDropdown: () => void;
   disabled: boolean;
   handleToggleDropdown: () => void;
@@ -134,13 +138,13 @@ function SelectedChips({ brightTone, selectedOptions }: {
 
 function SearchControl(props: ControlProps) {
   const {
-    brightTone, closeDropdown, controlTextSize, fieldSurface, invalid, isOpen, label,
+    brightTone, closeDropdown, controlTextSize, fieldSurface, focusStyle, invalid, isOpen, label,
     onClear, searchInputRef, searchPlaceholder, searchTerm, secondaryText,
     selectedOptions, setSearchTerm,
   } = props;
   const border = invalid
-    ? "border-red-500 focus-within:border-red-500 focus-within:ring-red-500/30"
-    : "border-primary focus-within:border-primary focus-within:ring-primary/40";
+    ? "border-red-500 focus-within:border-red-500"
+    : "border-primary focus-within:border-primary";
 
   function handleKeyDown(event: React.KeyboardEvent<HTMLInputElement>) {
     if (event.key !== "Enter" && event.key !== "Escape") return;
@@ -149,7 +153,7 @@ function SearchControl(props: ControlProps) {
   }
 
   return (
-    <div className={`mt-2 flex min-h-12 w-full items-center justify-between gap-3 rounded-xl border px-3 py-2 font-semibold text-foreground outline-none transition-colors focus-within:ring-2 ${controlTextSize} ${fieldSurface} ${border}`}>
+    <div className={`mt-2 flex min-h-12 w-full items-center justify-between gap-3 border px-3 py-2 font-semibold text-foreground outline-none transition-colors ${focusStyle === "ring" ? "rounded-xl" : "rounded-lg"} ${controlTextSize} ${fieldSurface} ${border}`}>
       <input
         ref={searchInputRef}
         data-comanga-dropdown-search="true"
@@ -159,7 +163,7 @@ function SearchControl(props: ControlProps) {
         onChange={(event) => setSearchTerm(event.target.value)}
         onKeyDown={handleKeyDown}
         placeholder={searchPlaceholder}
-        className={`min-w-0 flex-1 bg-transparent font-semibold text-foreground outline-none ${controlTextSize} ${brightTone ? "placeholder:text-foreground" : "placeholder:text-muted-foreground"}`}
+        className={`min-w-0 flex-1 bg-transparent font-semibold text-foreground outline-none ${controlTextSize} ${brightTone && focusStyle === "ring" ? "placeholder:text-foreground" : "placeholder:text-muted-foreground"}`}
       />
       {selectedOptions.length > 0 && onClear ? (
         <button
@@ -186,15 +190,15 @@ function SearchControl(props: ControlProps) {
 
 function ClearableControl(props: ControlProps) {
   const {
-    brightTone, controlTextSize, fieldSurface, handleToggleDropdown, invalid,
+    brightTone, controlTextSize, fieldSurface, focusStyle, handleToggleDropdown, invalid,
     isOpen, label, onClear, secondaryText, selectedOptions,
   } = props;
   const border = invalid
-    ? "border-red-500 focus-within:border-red-500 focus-within:ring-red-500/30"
-    : `${brightTone ? "border-sidebar-foreground/35" : "border-border"} focus-within:border-primary focus-within:ring-primary/40`;
+    ? "border-red-500 focus-within:border-red-500"
+    : `${brightTone ? "border-sidebar-foreground/35" : "border-border"} hover:border-primary focus-within:border-primary`;
 
   return (
-    <div className={`mt-2 flex min-h-12 w-full items-center rounded-xl border font-semibold text-foreground outline-none transition-colors focus-within:ring-2 ${controlTextSize} ${fieldSurface} ${border}`}>
+    <div className={`mt-2 flex min-h-12 w-full items-center border font-semibold text-foreground outline-none transition-colors ${focusStyle === "ring" ? "rounded-xl" : "rounded-lg"} ${controlTextSize} ${fieldSurface} ${border}`}>
       <button
         type="button"
         onClick={handleToggleDropdown}
@@ -218,12 +222,12 @@ function ClearableControl(props: ControlProps) {
 
 function DefaultControl(props: ControlProps) {
   const {
-    brightTone, controlTextSize, disabled, fieldSurface, handleToggleDropdown, invalid,
+    brightTone, controlTextSize, disabled, fieldSurface, focusStyle, handleToggleDropdown, invalid,
     isOpen, label, searchable, secondaryText, selectedOptions, summary,
   } = props;
   const border = invalid
-    ? "border-red-500 focus:border-red-500 focus:ring-red-500/30"
-    : `${brightTone ? "border-sidebar-foreground/35" : "border-border"} focus:border-primary focus:ring-primary/40`;
+    ? "border-red-500 focus:border-red-500"
+    : `${brightTone ? "border-sidebar-foreground/35" : "border-border"} hover:border-primary focus:border-primary`;
   const showChips = searchable && selectedOptions.length > 0;
 
   return (
@@ -231,7 +235,7 @@ function DefaultControl(props: ControlProps) {
       type="button"
       disabled={disabled}
       onClick={handleToggleDropdown}
-      className={`mt-2 flex min-h-12 w-full items-center justify-between gap-3 rounded-xl border px-3 py-2 text-left font-semibold text-foreground outline-none transition-colors focus:ring-2 disabled:cursor-not-allowed disabled:opacity-60 ${controlTextSize} ${fieldSurface} ${border}`}
+      className={`mt-2 flex min-h-12 w-full items-center justify-between gap-3 border px-3 py-2 text-left font-semibold text-foreground outline-none transition-colors ${focusStyle === "ring" ? "rounded-xl" : "rounded-lg"} disabled:cursor-not-allowed disabled:opacity-60 ${controlTextSize} ${fieldSurface} ${border}`}
       aria-expanded={isOpen}
       aria-label={`Selecionar ${label}`}
     >
@@ -255,7 +259,7 @@ function MultiSelectControl(props: ControlProps) {
 
 function OptionsMenu({
   closeDropdown, emptyMessage, filteredOptions, maxVisibleItems, menuSurface,
-  isOptionDisabled, onToggle, options, secondaryText, selectedIds,
+  isOptionDisabled, onToggle, options, secondaryText, focusStyle, selectedIds,
 }: {
   closeDropdown: () => void;
   emptyMessage: string;
@@ -266,6 +270,7 @@ function OptionsMenu({
   onToggle: (id: number | string) => boolean | void;
   options: SelectOption[];
   secondaryText: string;
+  focusStyle: "ring" | "border";
   selectedIds: Array<number | string>;
 }) {
   function handleKeyDown(event: React.KeyboardEvent<HTMLButtonElement>) {
@@ -280,10 +285,10 @@ function OptionsMenu({
       style={{ maxHeight: maxVisibleItems * 44 + 2 }}
     >
       {options.length === 0 ? (
-        <div className={`px-3 py-4 text-sm font-semibold ${secondaryText}`}>{emptyMessage}</div>
+        <div className={`px-3 py-4 text-sm font-semibold ${focusStyle === "border" ? "text-muted-foreground" : secondaryText}`}>{emptyMessage}</div>
       ) : null}
       {options.length > 0 && filteredOptions.length === 0 ? (
-        <div className={`px-3 py-4 text-sm font-semibold ${secondaryText}`}>Nenhum resultado encontrado.</div>
+        <div className={`px-3 py-4 text-sm font-semibold ${focusStyle === "border" ? "text-muted-foreground" : secondaryText}`}>Nenhum resultado encontrado.</div>
       ) : null}
       {filteredOptions.map((option) => {
         const optionValue = getOptionValue(option);
@@ -352,7 +357,7 @@ export function MultiSelect(props: MultiSelectProps) {
   const {
     label, options, selectedIds, onToggle, isOptionDisabled, onOpen, emptyMessage, disabled,
     disabledMessage, required, invalid, errorMessage, searchable, placeholder,
-    searchPlaceholder, onClear, reorderable, onMove, maxVisibleItems, tone, textSize,
+    searchPlaceholder, onClear, reorderable, onMove, maxVisibleItems, tone, textSize, focusStyle,
   } = resolveMultiSelectProps(props);
   const { isOpen, closeDropdown, toggleDropdown, rootProps } = useDropdown();
   const [searchTerm, setSearchTerm] = useState("");
@@ -381,6 +386,7 @@ export function MultiSelect(props: MultiSelectProps) {
 
   const controlProps: ControlProps = {
     ...styles,
+    focusStyle,
     closeDropdown,
     disabled,
     handleToggleDropdown,
@@ -401,7 +407,7 @@ export function MultiSelect(props: MultiSelectProps) {
   return (
     <div {...rootProps} className="min-w-0">
       <div className="relative min-w-0">
-        <span className={`text-xs font-bold uppercase tracking-wide ${styles.brightTone ? "text-foreground" : "text-muted-foreground"}`}>
+        <span className={`block truncate text-xs font-bold uppercase tracking-wide ${styles.brightTone ? "text-foreground" : "text-muted-foreground"}`}>
           {label}{required ? <span className="text-red-400"> *</span> : ""}
         </span>
         <MultiSelectControl {...controlProps} />
@@ -416,6 +422,7 @@ export function MultiSelect(props: MultiSelectProps) {
             onToggle={onToggle}
             options={options}
             secondaryText={styles.secondaryText}
+            focusStyle={focusStyle}
             selectedIds={selectedIds}
           />
         ) : null}

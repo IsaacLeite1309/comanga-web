@@ -75,6 +75,50 @@ describe("SearchableSelect", () => {
     expect(screen.queryByPlaceholderText("Digite para buscar...")).not.toBeInTheDocument();
   });
 
+  it("mantém a borda fina no hover e ao abrir filtros", () => {
+    render(
+      <SearchableSelect
+        ariaLabel="Editora brasileira"
+        value="jp"
+        options={options}
+        onChange={vi.fn()}
+        searchable
+        clearable
+        focusStyle="border"
+      />,
+    );
+
+    const selectedControl = screen.getByRole("button", { name: "Editora brasileira" }).parentElement;
+    expect(selectedControl).toHaveClass("hover:border-primary", "rounded-lg");
+    expect(selectedControl).toHaveClass("focus-within:border-primary");
+    expect(selectedControl).not.toHaveClass("focus-within:ring-2");
+    fireEvent.click(screen.getByRole("button", { name: "Editora brasileira" }));
+    const openControl = screen.getByRole("textbox", { name: "Editora brasileira" }).parentElement;
+    expect(openControl).toHaveClass("border-primary", "rounded-lg");
+    expect(openControl).not.toHaveClass("border-sidebar-foreground/35");
+    expect(openControl).not.toHaveClass("ring-2");
+  });
+
+  it("usa o tom do placeholder da pesquisa no texto de busca e lista vazia", () => {
+    render(
+      <SearchableSelect
+        ariaLabel="Editora brasileira"
+        value=""
+        options={options}
+        onChange={vi.fn()}
+        searchable
+        tone="sidebar"
+        focusStyle="border"
+      />,
+    );
+
+    fireEvent.click(screen.getByRole("button", { name: "Editora brasileira" }));
+    const input = screen.getByPlaceholderText("Digite para buscar...");
+    expect(input).toHaveClass("placeholder:text-muted-foreground");
+    fireEvent.change(input, { target: { value: "inexistente" } });
+    expect(screen.getByText("Nenhum resultado encontrado.")).toHaveClass("text-muted-foreground");
+  });
+
   it("fecha ao pressionar Escape e ao clicar fora", () => {
     render(
       <div>

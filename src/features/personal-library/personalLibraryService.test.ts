@@ -14,6 +14,16 @@ describe("cliente do acervo pessoal", () => {
     expect(api.get).toHaveBeenNthCalledWith(2, "/users/me/wishlist", { params: { page: 3, limit: 24 } });
     expect(api.get).toHaveBeenLastCalledWith("/users/me/collection/editions/2", { params: { page: 2, limit: 50 } });
   });
+  it("envia os filtros da coleção junto da paginação", async () => {
+    vi.mocked(api.get).mockResolvedValueOnce({ data: { works: [] } });
+    await listCollection(2, { term: "Monster", status: "incomplete", brazilianPublisherId: 4 });
+    expect(api.get).toHaveBeenCalledWith("/users/me/collection", { params: { page: 2, limit: 12, term: "Monster", status: "incomplete", brazilianPublisherId: 4 } });
+  });
+  it("envia os filtros dos desejos junto da paginação", async () => {
+    vi.mocked(api.get).mockResolvedValueOnce({ data: { volumes: [] } });
+    await listWishlist(2, { term: "Monster", brazilianPublisherId: 4 });
+    expect(api.get).toHaveBeenCalledWith("/users/me/wishlist", { params: { page: 2, limit: 24, term: "Monster", brazilianPublisherId: 4 } });
+  });
   it("usa os verbos do contrato e emite invalidação apenas após confirmação", async () => {
     const callback = vi.fn(); const unsubscribe = subscribePersonalLibraryUpdates(callback);
     vi.mocked(api.put).mockResolvedValue({ data: { volumeId: 7, owned: true, read: false, wished: false } });

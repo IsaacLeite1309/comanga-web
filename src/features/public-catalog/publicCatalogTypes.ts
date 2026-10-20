@@ -169,7 +169,7 @@ export interface PublicEditionDetailsResponse {
 
 export interface PublicAuthorWorksResponse {
   author: PublicOption;
-  works: PublicWorkSummary[];
+  works: (PublicWorkSummary & { authorRoles: string[] })[];
   pagination: PublicPagination;
 }
 
@@ -244,6 +244,7 @@ export interface PublicCalendarQuery {
   month?: number;
   brazilianPublisherId?: number;
   term?: string;
+    order?: "ASC" | "DESC";
   page: number;
   limit: number;
 }

@@ -9,6 +9,47 @@ const options = [
 ];
 
 describe("MultiSelect", () => {
+  it("alinha o rótulo aos demais filtros da mesma linha", () => {
+    render(<MultiSelect label="Demografia" options={options} selectedIds={[]} onToggle={vi.fn()} />);
+    expect(screen.getByText("Demografia")).toHaveClass("block", "text-xs");
+  });
+
+  it("mantém a borda fina no hover e no foco", () => {
+    const { rerender } = render(
+      <MultiSelect label="Gêneros" options={options} selectedIds={[]} onToggle={vi.fn()} focusStyle="border" />,
+    );
+
+    expect(screen.getByRole("button", { name: "Selecionar Gêneros" })).toHaveClass("rounded-lg", "hover:border-primary");
+    expect(screen.getByRole("button", { name: "Selecionar Gêneros" })).toHaveClass("focus:border-primary");
+    expect(screen.getByRole("button", { name: "Selecionar Gêneros" })).not.toHaveClass("focus:ring-2");
+
+    rerender(<MultiSelect label="Gêneros" options={options} selectedIds={[]} onToggle={vi.fn()} />);
+    expect(screen.getByRole("button", { name: "Selecionar Gêneros" })).toHaveClass("rounded-xl", "focus:border-primary");
+    expect(screen.getByRole("button", { name: "Selecionar Gêneros" })).not.toHaveClass("focus:ring-2");
+  });
+
+  it("usa o tom do placeholder da pesquisa no texto de busca e lista vazia", () => {
+    render(
+      <MultiSelect
+        label="Gêneros"
+        options={options}
+        selectedIds={[]}
+        onToggle={vi.fn()}
+        searchable
+        tone="panel"
+        focusStyle="border"
+      />,
+    );
+
+    fireEvent.click(screen.getByRole("button", { name: "Selecionar Gêneros" }));
+    const input = screen.getByPlaceholderText("Digite para buscar...");
+    expect(input.parentElement).toHaveClass("border-primary");
+    expect(input.parentElement).not.toHaveClass("border-sidebar-foreground/35");
+    expect(input).toHaveClass("placeholder:text-muted-foreground");
+    fireEvent.change(input, { target: { value: "inexistente" } });
+    expect(screen.getByText("Nenhum resultado encontrado.")).toHaveClass("text-muted-foreground");
+  });
+
   it("diminui o destaque do placeholder quando não há seleção", () => {
     render(
       <MultiSelect

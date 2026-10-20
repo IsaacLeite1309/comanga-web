@@ -20,12 +20,15 @@ function readCalendarQuery(params: URLSearchParams): { query: PublicCalendarQuer
   try {
     const term = params.get("term")?.trim();
     if (term && term.length > 255) throw new Error("A pesquisa deve ter no máximo 255 caracteres.");
+    const order = params.get("order") ?? "ASC";
+    if (order !== "ASC" && order !== "DESC") throw new Error("Ordenação inválida.");
     return {
       query: {
         year: queryInteger(params, "year", 1900, 2200),
         month: queryInteger(params, "month", 1, 12),
         brazilianPublisherId: queryInteger(params, "brazilianPublisherId", 1, 2147483647),
         term: term || undefined,
+        order,
         page: queryInteger(params, "page", 1, Math.floor(2147483647 / PAGE_SIZE) + 1) ?? 1,
         limit: PAGE_SIZE,
       },
@@ -51,7 +54,7 @@ function useCalendarResults(query: PublicCalendarQuery, validationError: string)
     listPublicCalendar(query)
       .then((result) => { if (active) setData(result); })
       .catch((requestError) => {
-        if (active) setError(getApiError(requestError, "Não foi possível carregar o calendário."));
+        if (active) setError(getApiError(requestError, "Não foi possível carregar os lançamentos."));
       })
       .finally(() => { if (active) setLoading(false); });
     return () => { active = false; };
@@ -82,6 +85,7 @@ export function usePublicCalendar() {
   const [searchParams, setSearchParams] = useSearchParams();
   const serializedParams = searchParams.toString();
   const { query, validationError } = useMemo(() => readCalendarQuery(new URLSearchParams(serializedParams)), [serializedParams]);
+  const [searchTerm, setSearchTerm] = useState(query.term ?? "");
   const results = useCalendarResults(query, validationError);
   const options = useCalendarPublishers();
   const period = query.year && query.month ? { year: query.year, month: query.month } : results.data ? {
@@ -89,6 +93,20 @@ export function usePublicCalendar() {
     month: query.month ?? results.data.month,
   } : null;
   const periodValue = period ? `${period.year}-${String(period.month).padStart(2, "0")}` : "";
+
+  useEffect(() => { setSearchTerm(query.term ?? ""); }, [query.term]);
+  useEffect(() => {
+    const timeoutId = window.setTimeout(() => {
+      const nextTerm = searchTerm.trim();
+      if (nextTerm === (query.term ?? "")) return;
+      const next = new URLSearchParams(searchParams);
+      if (nextTerm) next.set("term", nextTerm);
+      else next.delete("term");
+      next.delete("page");
+      setSearchParams(next);
+    }, 300);
+    return () => window.clearTimeout(timeoutId);
+  }, [query.term, searchParams, searchTerm, setSearchParams]);
 
   function updateFilters(values: Record<string, string | undefined>) {
     const next = new URLSearchParams(searchParams);
@@ -118,13 +136,13 @@ export function usePublicCalendar() {
     setSearchParams(next);
   }
 
-  function clearFilters() {
-    updateFilters({ term: undefined, brazilianPublisherId: undefined });
+  function toggleTitleSort() {
+    updateFilters({ order: query.order === "DESC" ? undefined : "DESC" });
   }
 
   return {
-    ...results, ...options, query, validationError, period, periodValue,
-    updateFilters, changeMonth, moveMonth, changePage, clearFilters,
+    ...results, ...options, query, validationError, period, periodValue, searchTerm, setSearchTerm,
+    updateFilters, changeMonth, moveMonth, changePage, toggleTitleSort,
     currentMonth: () => updateFilters({ year: undefined, month: undefined }),
     resetCalendar: () => setSearchParams({}),
   };

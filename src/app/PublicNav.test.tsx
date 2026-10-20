@@ -38,15 +38,15 @@ describe("PublicNav", () => {
     expect(container).toHaveTextContent("CoMangá");
     expect(container.querySelector("a button")).not.toBeInTheDocument();
     expect(screen.getAllByText("Pesquisar").length).toBeGreaterThan(0);
-    expect(screen.getAllByRole("link", { name: "Calendário" })[0]).toHaveAttribute("href", "/calendario");
-    expect(screen.getAllByText("Checklists").length).toBeGreaterThan(0);
-    expect(screen.getAllByText("Lista de Desejos").length).toBeGreaterThan(0);
+    expect(screen.getAllByRole("link", { name: "Lançamentos" })[0]).toHaveAttribute("href", "/lancamentos");
+    expect(screen.queryByRole("link", { name: "Calendário" })).not.toBeInTheDocument();
+    expect(screen.getAllByText("Lista de desejos").length).toBeGreaterThan(0);
     expect(screen.getAllByText("Entrar").length).toBeGreaterThan(0);
   });
 
-  it("destaca o calendário público em todos os tamanhos de navegação", () => {
-    renderPublicNav("/calendario");
-    screen.getAllByRole("link", { name: "Calendário" }).forEach(link => {
+  it("destaca o checklist em todos os tamanhos de navegação", () => {
+    renderPublicNav("/lancamentos");
+    screen.getAllByRole("link", { name: "Lançamentos" }).forEach(link => {
       expect(link).toHaveAttribute("aria-current", "page");
     });
   });
@@ -79,7 +79,7 @@ describe("PublicNav", () => {
 
     renderPublicNav("/perfil/isaac");
 
-    expect(screen.getAllByText("Meu Perfil").length).toBeGreaterThan(0);
+    expect(screen.getAllByText("Meu perfil").length).toBeGreaterThan(0);
     expect(screen.getAllByRole("link", { name: /meu perfil/i })[0]).toHaveAttribute(
       "href",
       "/perfil/isaac"

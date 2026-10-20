@@ -68,7 +68,7 @@ function FilterDropdown<T extends string>({
       <button
         type="button"
         onClick={toggleDropdown}
-        className="flex h-12 w-full items-center justify-between gap-3 rounded-xl border border-border bg-input px-3 text-left text-base font-semibold text-foreground outline-none transition-colors focus:border-primary focus:ring-2 focus:ring-primary/40"
+        className="flex h-12 w-full items-center justify-between gap-3 rounded-xl border border-border bg-input px-3 text-left text-base font-semibold text-foreground outline-none transition-colors hover:border-primary focus:border-primary"
         aria-expanded={isOpen}
         aria-label={label}
       >
@@ -201,7 +201,7 @@ function RoleDropdown({ label, value, disabled, onChange }: RoleDropdownProps) {
         type="button"
         disabled={disabled}
         onClick={toggleMenu}
-        className="flex h-10 w-40 items-center justify-between gap-3 rounded-lg border border-border bg-input px-3 text-left text-sm font-semibold text-foreground outline-none transition-colors focus:border-primary focus:ring-2 focus:ring-primary/40 disabled:cursor-not-allowed disabled:opacity-50"
+        className="flex h-10 w-40 items-center justify-between gap-3 rounded-lg border border-border bg-input px-3 text-left text-sm font-semibold text-foreground outline-none transition-colors hover:border-primary focus:border-primary disabled:cursor-not-allowed disabled:opacity-50"
         aria-expanded={isOpen}
         aria-label={label}
       >
@@ -262,7 +262,7 @@ function UserFilters(props: UserFiltersProps) {
           value={props.searchTerm}
           onChange={(event) => props.onSearchChange(event.target.value)}
           placeholder="Buscar por usuário ou e-mail"
-          className="h-12 w-full rounded-xl border border-border bg-input pl-11 pr-4 text-base text-foreground outline-none transition-colors focus:border-primary focus:ring-2 focus:ring-primary/40"
+          className="h-12 w-full rounded-xl border border-border bg-input pl-11 pr-4 text-base text-foreground outline-none transition-colors hover:border-primary focus:border-primary"
         />
       </label>
       <FilterDropdown

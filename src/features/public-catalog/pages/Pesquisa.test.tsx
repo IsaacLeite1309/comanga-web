@@ -104,6 +104,31 @@ describe("Pesquisa", () => {
     vi.mocked(listPublicEditions).mockResolvedValue(editionsResponse);
   });
 
+  it("usa destaque por borda nos campos de pesquisa e filtros das duas abas", async () => {
+    renderCatalog();
+    await screen.findByRole("heading", { name: "Monster" });
+
+    const search = screen.getByRole("searchbox", { name: "Pesquisar no catálogo" });
+    expect(search).toHaveClass("rounded-lg", "hover:border-primary", "focus:border-primary");
+    expect(search).not.toHaveClass("focus:ring-2");
+    expect(screen.getByLabelText("Tipo de Obra")).toHaveClass("rounded-lg", "hover:border-primary");
+
+    fireEvent.click(screen.getByRole("button", { name: /filtros avançados/i }));
+    expect(screen.getByLabelText("País de Origem")).toHaveClass("rounded-lg", "hover:border-primary");
+    expect(screen.getByRole("button", { name: "Selecionar Demografia" })).toHaveClass("rounded-lg", "hover:border-primary");
+
+    fireEvent.click(screen.getByLabelText("Editora original"));
+    const filterSearch = screen.getByPlaceholderText("Digite para buscar...");
+    expect(filterSearch).toHaveClass("placeholder:text-muted-foreground");
+    fireEvent.change(filterSearch, { target: { value: "inexistente" } });
+    expect(screen.getByText("Nenhum resultado encontrado.")).toHaveClass("text-muted-foreground");
+    fireEvent.keyDown(filterSearch, { key: "Escape" });
+
+    fireEvent.click(screen.getByRole("tab", { name: "Edições" }));
+    expect(screen.getByLabelText("Editora brasileira")).toHaveClass("rounded-lg", "hover:border-primary");
+    expect(screen.getByLabelText("Número da edição")).toHaveClass("rounded-lg", "hover:border-primary");
+  });
+
   it("registra aba, ordenação e página padrão na URL", async () => {
     renderCatalog();
     await screen.findByRole("heading", { name: "Monster" }, { timeout: 5000 });
@@ -124,7 +149,7 @@ describe("Pesquisa", () => {
     expect(screen.queryByText("Explore o catálogo completo de obras e edições")).not.toBeInTheDocument();
     expect(await screen.findByRole("heading", { name: "Monster" })).toBeInTheDocument();
     expect(screen.queryByText("Naoki Urasawa")).not.toBeInTheDocument();
-    expect(screen.getByText("Mangá · Japão")).toBeInTheDocument();
+    expect(screen.getByText("Mangá · Japão")).toHaveClass("mt-1");
     expect(screen.getByText("1 obra encontrada")).toBeInTheDocument();
 
     const cover = screen.getByAltText("Capa de Monster");
@@ -133,7 +158,7 @@ describe("Pesquisa", () => {
     expect(cover.parentElement).toHaveClass("aspect-[2/3]");
     expect(screen.getByRole("link", { name: "Ver detalhes de Monster" })).toHaveAttribute(
       "href",
-      "/obras/monster",
+      "/obra/monster",
     );
     expect(listPublicWorks).toHaveBeenCalledWith(expect.objectContaining({
       term: "monster",
@@ -238,13 +263,16 @@ describe("Pesquisa", () => {
     expect(listPublicWorks).toHaveBeenLastCalledWith(expect.objectContaining({ term: "Urasawa" }));
   });
 
-  it("oferece um botão branco para limpar a busca", async () => {
+  it("usa o visual da barra de Lançamentos e permite limpar a busca apagando o texto", async () => {
     renderCatalog("/pesquisa?term=Monster");
     await screen.findByRole("heading", { name: "Monster" });
 
-    const clearButton = screen.getByRole("button", { name: "Limpar pesquisa" });
-    expect(clearButton).toHaveClass("text-foreground");
-    fireEvent.click(clearButton);
+    const search = screen.getByRole("searchbox", { name: "Pesquisar no catálogo" });
+    expect(search).toHaveAttribute("placeholder", "Título, título original ou autor");
+    expect(search).toHaveClass("pl-12", "pr-3");
+    expect(search.parentElement?.parentElement).toHaveTextContent("Pesquisar");
+    expect(screen.queryByRole("button", { name: "Limpar pesquisa" })).not.toBeInTheDocument();
+    fireEvent.change(search, { target: { value: "" } });
 
     await waitFor(() => expect(currentParams().has("term")).toBe(false));
   });
@@ -436,11 +464,11 @@ describe("Pesquisa", () => {
   it("mostra metadados editoriais e substitui capa inválida pelo fallback", async () => {
     renderCatalog("/pesquisa?tab=editions&term=monster&sortBy=title&order=ASC&page=1");
 
-    expect(await screen.findByText("2ª edição · Panini")).toBeInTheDocument();
+    expect(await screen.findByText("2ª edição · Panini")).toHaveClass("mt-1");
     expect(screen.queryByText("3 Volumes")).not.toBeInTheDocument();
     expect(screen.queryByText("13,7 × 20 cm · Brochura")).not.toBeInTheDocument();
     expect(screen.getByText("1 edição encontrada")).toBeInTheDocument();
-    expect(screen.getByRole("link", { name: "Ver detalhes da 2ª edição de Monster" })).toHaveAttribute("href", "/obras/monster/edicao/2");
+    expect(screen.getByRole("link", { name: "Ver detalhes da 2ª edição de Monster" })).toHaveAttribute("href", "/obra/monster/edicao/2");
 
     fireEvent.error(screen.getByAltText("Capa da 2ª edição de Monster"));
     // A capa da Edição vem do Volume 1: quando falta, o estado vazio é explícito.
@@ -531,6 +559,9 @@ describe("Pesquisa", () => {
 
     renderCatalog();
     expect(screen.getByText("Carregando Obras...")).toBeInTheDocument();
+    expect(screen.getByRole("searchbox", { name: "Pesquisar no catálogo" })).toBeDisabled();
+    expect(screen.getByRole("tab", { name: "Edições" })).toBeEnabled();
+    expect(screen.getByRole("button", { name: "Filtros avançados" })).toBeDisabled();
     expect(screen.getByTestId("results-divider")).toBeInTheDocument();
     expect(screen.queryByText("1 obra encontrada")).not.toBeInTheDocument();
     expect(screen.queryByText("Título")).not.toBeInTheDocument();
@@ -541,6 +572,17 @@ describe("Pesquisa", () => {
     vi.mocked(listPublicWorks).mockResolvedValueOnce(worksResponse);
     fireEvent.click(screen.getByRole("button", { name: "Tentar novamente" }));
     expect(await screen.findByRole("heading", { name: "Monster" })).toBeInTheDocument();
+    expect(screen.getByRole("searchbox", { name: "Pesquisar no catálogo" })).toBeEnabled();
+  });
+
+  it("permite trocar Obras por Edições enquanto o resultado anterior carrega", async () => {
+    vi.mocked(listPublicWorks).mockImplementationOnce(() => new Promise<Awaited<ReturnType<typeof listPublicWorks>>>(() => undefined));
+    renderCatalog();
+    expect(screen.getByRole("searchbox", { name: "Pesquisar no catálogo" })).toBeDisabled();
+    fireEvent.click(screen.getByRole("tab", { name: "Edições" }));
+    await waitFor(() => expect(listPublicEditions).toHaveBeenCalled());
+    expect(await screen.findByRole("heading", { name: "Monster" })).toBeInTheDocument();
+    expect(screen.getByRole("searchbox", { name: "Pesquisar no catálogo" })).toBeEnabled();
   });
 
   it("oferece limpar filtros no estado vazio", async () => {
@@ -550,7 +592,7 @@ describe("Pesquisa", () => {
     });
     renderCatalog("/pesquisa?tab=works&term=inexistente&typeId=1&page=1");
 
-    expect(await screen.findByText("Nenhuma Obra encontrada.")).toBeInTheDocument();
+    expect(await screen.findByText("Nenhuma obra encontrada.")).toBeInTheDocument();
     fireEvent.click(screen.getByRole("button", { name: "Limpar filtros" }));
 
     await waitFor(() => {

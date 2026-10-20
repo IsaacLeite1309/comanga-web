@@ -1,9 +1,9 @@
 export function publicWorkPath(workSlug: string) {
-  return `/obras/${encodeURIComponent(workSlug)}`;
+  return `/obra/${encodeURIComponent(workSlug)}`;
 }
 
 export function publicAuthorPath(authorSlug: string) {
-  return `/autores/${encodeURIComponent(authorSlug)}`;
+  return `/autor/${encodeURIComponent(authorSlug)}`;
 }
 
 export function publicEditionPath(workSlug: string, editionNumber: number | string) {
