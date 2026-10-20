@@ -1,9 +1,38 @@
 import { useCallback, useEffect, useRef, useState } from "react";
 import { getPublicEditionDetails } from "../publicCatalogService";
-import { getCompleteCollectionEdition, syncCollectionEdition, syncWishlist, type CollectionEditionResponse } from "@/features/personal-library";
+import { getCompleteCollectionEdition, syncCollectionEdition, syncWishlist, updateVolumeReading, type CollectionEditionResponse } from "@/features/personal-library";
 import { getApiError } from "@/lib/apiError";
 
-export function useEditionSelection(slug: string, editionNumber: number, mode: string) {
+export type SelectionMode = "colecao" | "desejos" | "lidos";
+
+function selectedVolumeIds(result: CollectionEditionResponse, mode: SelectionMode) {
+  return new Set(result.volumes.filter((volume) => {
+    if (mode === "colecao") return volume.owned;
+    if (mode === "desejos") return volume.wished;
+    return volume.owned && volume.read;
+  }).map(({ id }) => id));
+}
+
+async function syncReading(delta: { addVolumeIds: number[]; removeVolumeIds: number[] }, active: () => boolean) {
+  const changes = [
+    ...delta.removeVolumeIds.map((id) => ({ id, read: false })),
+    ...delta.addVolumeIds.map((id) => ({ id, read: true })),
+  ];
+  let failure: unknown;
+  for (let index = 0; index < changes.length && active(); index += 4) {
+    const results = await Promise.allSettled(changes.slice(index, index + 4).map(({ id, read }) => updateVolumeReading(id, read)));
+    failure ??= results.find((result) => result.status === "rejected")?.reason;
+  }
+  return failure;
+}
+
+async function syncSelection(mode: SelectionMode, editionId: number, delta: { addVolumeIds: number[]; removeVolumeIds: number[] }, active: () => boolean) {
+  if (mode === "colecao") return syncCollectionEdition(editionId, delta).then(() => undefined);
+  if (mode === "desejos") return (await syncWishlist(delta, active))[0];
+  return syncReading(delta, active);
+}
+
+export function useEditionSelection(slug: string, editionNumber: number, mode: SelectionMode) {
   const [data, setData] = useState<CollectionEditionResponse | null>(null);
   const [initialIds, setInitialIds] = useState(new Set<number>());
   const [selectedIds, setSelectedIds] = useState(new Set<number>());
@@ -14,7 +43,7 @@ export function useEditionSelection(slug: string, editionNumber: number, mode: s
   const [retry, setRetry] = useState(0);
   const version = useRef(0);
   const accept = useCallback((result: CollectionEditionResponse) => {
-    const ids = new Set(result.volumes.filter((volume) => mode === "estante" ? volume.owned : volume.wished).map(({ id }) => id));
+    const ids = selectedVolumeIds(result, mode);
     setData(result); setInitialIds(ids); setSelectedIds(new Set(ids));
   }, [mode]);
   useEffect(() => {
@@ -22,14 +51,14 @@ export function useEditionSelection(slug: string, editionNumber: number, mode: s
     const active = () => version.current === current;
     setLoading(true); setError(""); setData(null); setMessage("");
     async function load() {
-      if (!slug || !Number.isInteger(editionNumber) || editionNumber <= 0 || !["estante", "desejos"].includes(mode)) throw new Error("invalid");
+      if (!slug || !Number.isInteger(editionNumber) || editionNumber <= 0) throw new Error("invalid");
       const result = await getPublicEditionDetails(slug, editionNumber, { page: 1, limit: 1 });
       if (result.edition.work.slug !== slug || result.edition.chronologicalNumber !== editionNumber) throw new Error("invalid");
       if (!active()) return;
       const personal = await getCompleteCollectionEdition(result.edition.id);
       if (active()) accept(personal);
     }
-    load().catch((failure) => { if (active()) setError(getApiError(failure, "Não foi possível carregar a seleção de Volumes.")); })
+    load().catch((failure) => { if (active()) setError(getApiError(failure, "Não foi possível carregar a seleção de volumes.")); })
       .finally(() => { if (active()) setLoading(false); });
     return () => { version.current = current + 1; };
   }, [slug, editionNumber, mode, retry, accept]);
@@ -39,7 +68,7 @@ export function useEditionSelection(slug: string, editionNumber: number, mode: s
       addVolumeIds: [...selectedIds].filter((id) => !initialIds.has(id)),
       removeVolumeIds: [...initialIds].filter((id) => !selectedIds.has(id)),
     };
-    if (mode === "estante" && delta.addVolumeIds.length + delta.removeVolumeIds.length > 100) {
+    if (mode === "colecao" && delta.addVolumeIds.length + delta.removeVolumeIds.length > 100) {
       setMessage("Altere até 100 Volumes por vez para salvar a coleção em uma única operação."); return false;
     }
     const current = version.current;
@@ -47,8 +76,7 @@ export function useEditionSelection(slug: string, editionNumber: number, mode: s
     setSaving(true); setMessage("");
     let failure: unknown;
     try {
-      if (mode === "estante") await syncCollectionEdition(data.edition.id, delta);
-      else failure = (await syncWishlist(delta, active))[0];
+      failure = await syncSelection(mode, data.edition.id, delta, active);
     } catch (requestError) { failure = requestError; }
     if (!active()) return false;
     try {

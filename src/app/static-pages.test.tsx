@@ -1,11 +1,12 @@
 import { render, screen } from "@testing-library/react";
 import { MemoryRouter } from "react-router-dom";
 import { beforeEach, describe, expect, it, vi } from "vitest";
-import { ChecklistPage, CollectionPage } from "@/features/collection";
+import { CollectionPage } from "@/features/collection";
 import { WishlistPage } from "@/features/wishlist";
 import { AuthPage } from "@/features/auth";
 import { PublicCatalogPage } from "@/features/public-catalog";
 import NotFound from "./NotFound";
+
 
 vi.mock("@/features/personal-library", () => ({
   useLibraryPage: () => ({ data: null, loading: false, error: "", message: "" }),
@@ -36,22 +37,16 @@ describe("paginas estaticas", () => {
     vi.restoreAllMocks();
   });
 
-  it("renderiza a pagina de checklist", () => {
-    render(<ChecklistPage />);
-
-    expect(screen.getByRole("heading", { name: "Seus Checklists" })).toBeInTheDocument();
-  });
-
   it("renderiza a pagina de colecao", () => {
-    render(<CollectionPage />);
+    render(<CollectionPage isAuthenticated />);
 
-    expect(screen.getByRole("heading", { name: "Sua Coleção" })).toBeInTheDocument();
+    expect(screen.getByRole("heading", { name: "Sua coleção" })).toBeInTheDocument();
   });
 
   it("renderiza a pagina de desejos", () => {
-    render(<WishlistPage />);
+    render(<WishlistPage isAuthenticated />);
 
-    expect(screen.getByRole("heading", { name: "Lista de Desejos" })).toBeInTheDocument();
+    expect(screen.getByRole("heading", { name: "Lista de desejos" })).toBeInTheDocument();
   });
 
   it("renderiza a pagina de pesquisa", () => {

@@ -1,5 +1,5 @@
-import { fireEvent, render, screen, waitFor } from "@testing-library/react";
-import { MemoryRouter } from "react-router-dom";
+import { fireEvent, render, screen, waitFor, within } from "@testing-library/react";
+import { MemoryRouter, Route, Routes } from "react-router-dom";
 import { beforeEach, describe, expect, it, vi } from "vitest";
 import { AuthCard } from "./AuthCard";
 import { api } from "@/services/api";
@@ -69,10 +69,55 @@ describe("AuthCard cadastro", () => {
     vi.clearAllMocks();
   });
 
+  it.each([
+    ["Conta criada com sucesso! Enviamos o e-mail de ativação.", "Cadastro realizado com sucesso! Ative sua conta clicando no link de ativação que te enviamos no e-mail."],
+    ["Conta criada, mas não foi possível enviar o e-mail de ativação. Use a opção de reenvio.", "Conta criada, mas não foi possível enviar o e-mail de ativação. Use a opção de reenvio."],
+  ])("mostra o aviso do cadastro em /entrar até fechar pelo X: %s", async (apiMessage, expectedMessage) => {
+    vi.mocked(api.post).mockResolvedValueOnce({ data: { message: apiMessage } });
+    render(
+      <MemoryRouter initialEntries={["/cadastrar"]}>
+        <Routes>
+          <Route path="/cadastrar" element={<AuthCard />} />
+          <Route path="/entrar" element={<><span data-testid="login-route" /><AuthCard /></>} />
+        </Routes>
+      </MemoryRouter>,
+    );
+    fillRegisterForm({ username: "novo_user", email: "novo@usuario.com", password: "SenhaForte123!", confirmPassword: "SenhaForte123!" });
+    fireEvent.click(screen.getByRole("button", { name: "CADASTRAR" }));
+
+    const dialog = await screen.findByRole("dialog", { name: "Aviso de cadastro" });
+    expect(screen.getByTestId("login-route")).toBeInTheDocument();
+    expect(dialog).toHaveTextContent(expectedMessage);
+    expect(within(dialog).queryByRole("heading")).not.toBeInTheDocument();
+    expect(toast.success).not.toHaveBeenCalled();
+    const close = within(dialog).getByRole("button", { name: "Fechar aviso de cadastro" });
+    expect(close).toHaveFocus();
+    fireEvent.keyDown(close, { key: "Escape" });
+    fireEvent.mouseDown(dialog.parentElement as HTMLElement);
+    expect(dialog).toBeInTheDocument();
+    fireEvent.click(close);
+    expect(screen.queryByRole("dialog", { name: "Aviso de cadastro" })).not.toBeInTheDocument();
+    expect(screen.getByTestId("login-route")).toBeInTheDocument();
+  });
+
   it("retira o painel da aba da ordem de tabulacao", () => {
     renderRegister();
 
     expect(screen.getByRole("tabpanel")).toHaveAttribute("tabindex", "-1");
+  });
+
+  it("seleciona ano, mês e dia no calendário próprio", () => {
+    renderRegister();
+    fireEvent.click(screen.getByRole("button", { name: "Selecionar data de nascimento" }));
+    const picker = screen.getByRole("dialog", { name: "Selecionar data de nascimento" });
+    const yearList = within(picker).getByRole("listbox", { name: "Ano de nascimento" });
+    expect(within(yearList).getByRole("option", { name: "1900" })).toBeInTheDocument();
+    expect(within(picker).queryByRole("spinbutton")).not.toBeInTheDocument();
+    fireEvent.click(within(yearList).getByRole("option", { name: "2000" }));
+    fireEvent.click(within(picker).getByRole("button", { name: "Fevereiro" }));
+    fireEvent.click(within(picker).getByRole("button", { name: "29" }));
+    expect(screen.getByRole("textbox", { name: "Data de nascimento" })).toHaveValue("29/02/2000");
+    expect(screen.queryByRole("dialog", { name: "Selecionar data de nascimento" })).not.toBeInTheDocument();
   });
 
   it("recusa senha multibyte longa antes de enviar cadastro", async () => {

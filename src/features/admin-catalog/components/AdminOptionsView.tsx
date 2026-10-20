@@ -129,10 +129,10 @@ function NewOptionForm({ model }: { model: AdminOptionsPageModel }) {
           placeholder={model.currentCategory
             ? `Adicionar em ${model.currentCategory.name}`
             : "Selecione uma categoria"}
-          className={`mt-2 h-12 w-full rounded-xl border bg-input px-3 text-base text-foreground outline-none transition-colors focus:ring-2 focus:ring-primary/40 ${
+          className={`mt-2 h-12 w-full rounded-xl border bg-input px-3 text-base text-foreground outline-none transition-colors ${
             model.newValueError
               ? "border-red-500 focus:border-red-500"
-              : "border-border focus:border-primary"
+              : "border-border hover:border-primary focus:border-primary"
           }`}
         />
         {model.newValueError && (
@@ -205,7 +205,7 @@ function OptionsToolbar({ model }: { model: AdminOptionsPageModel }) {
           onChange={(event) => model.changeSearchTerm(event.target.value)}
           disabled={!model.selectedCategory}
           placeholder="Pesquisar valores desta categoria"
-          className="h-11 w-full rounded-xl border border-border bg-input pl-11 pr-4 text-base text-foreground outline-none transition-colors focus:border-primary focus:ring-2 focus:ring-primary/40"
+          className="h-11 w-full rounded-xl border border-border bg-input pl-11 pr-4 text-base text-foreground outline-none transition-colors hover:border-primary focus:border-primary"
         />
       </label>
     </div>
@@ -261,7 +261,7 @@ function OptionEditor({ model, value }: { model: AdminOptionsPageModel; value: D
         value={model.editingValue}
         onChange={(event) => model.setEditingValue(event.target.value)}
         onKeyDown={handleKeyDown}
-        className="h-10 w-full rounded-lg border border-border bg-input px-3 text-base text-foreground outline-none transition-colors focus:border-primary focus:ring-2 focus:ring-primary/40"
+        className="h-10 w-full rounded-lg border border-border bg-input px-3 text-base text-foreground outline-none transition-colors hover:border-primary focus:border-primary"
         aria-label={`Editar ${value.label}`}
       />
       {model.countryDependent && model.countryOptions.length > 0 && (

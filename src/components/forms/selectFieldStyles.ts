@@ -14,10 +14,10 @@ export function getSelectFieldStyles(
 ): SelectFieldStyles {
   const sidebarTone = tone === "sidebar";
   const brightTone = sidebarTone || tone === "panel";
-  let fieldSurface = "border-border bg-input";
+  let fieldSurface = "bg-input";
 
-  if (sidebarTone) fieldSurface = "border-sidebar-foreground/35 bg-sidebar";
-  if (tone === "panel") fieldSurface = "border-sidebar-foreground/35 bg-background";
+  if (sidebarTone) fieldSurface = "bg-sidebar";
+  if (tone === "panel") fieldSurface = "bg-background";
 
   return {
     brightTone,

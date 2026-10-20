@@ -2,12 +2,12 @@ import { lazy, Suspense } from "react";
 import { BrowserRouter, Route, Routes, Navigate } from "react-router-dom";
 import { Toaster as Sonner } from "@/components/ui/sonner";
 import NotFound from "./app/NotFound.tsx";
-import { ActivatePage, AuthPage, AuthProvider, ResendActivationPage, PasswordRecoveryPage } from "@/features/auth";
-import { ChecklistPage, CollectionPage } from "@/features/collection";
+import { ActivatePage, AuthPage, AuthProvider, ResendActivationPage, PasswordRecoveryPage, useAuth } from "@/features/auth";
+import { CollectionPage } from "@/features/collection";
 import { ProfilePage } from "@/features/profile";
 import {
   PublicCatalogPage,
-  PublicCalendarPage,
+  PublicChecklistPage,
   PublicAuthorWorksPage,
   PublicEditionDetailsPage,
   EditionVolumeSelectionPage,
@@ -50,6 +50,17 @@ function PublicPage({ children }: { children: React.ReactNode }) {
   return <PublicProfileRoute>{children}</PublicProfileRoute>;
 }
 
+function LibraryPage({ kind }: { kind: "collection" | "wishlist" }) {
+  const { isAuthenticated } = useAuth();
+  return (
+    <PublicPage>
+      {kind === "collection"
+        ? <CollectionPage isAuthenticated={isAuthenticated} />
+        : <WishlistPage isAuthenticated={isAuthenticated} />}
+    </PublicPage>
+  );
+}
+
 function adminPage(page: React.ReactNode) {
   return <AdminRoute>{page}</AdminRoute>;
 }
@@ -65,7 +76,7 @@ const App = () => (
             <Routes>
               <Route path="/recuperar-senha" element={<GuestPage><PasswordRecoveryPage /></GuestPage>} />
               <Route path="/redefinir-senha/:token?" element={<GuestPage><PasswordRecoveryPage reset /></GuestPage>} />
-              <Route path="/" element={<Navigate to="/entrar" replace />} />
+              <Route path="/" element={<Navigate to="/colecao" replace />} />
               <Route path="/entrar" element={<GuestPage><AuthPage /></GuestPage>} />
               <Route path="/cadastrar" element={<GuestPage><AuthPage /></GuestPage>} />
               <Route path="/activate/:token" element={<ActivatePage />} />
@@ -89,17 +100,20 @@ const App = () => (
               />
               
               <Route path="/pesquisa" element={<PublicPage><PublicCatalogPage /></PublicPage>} />
-              <Route path="/calendario" element={<PublicPage><PublicCalendarPage /></PublicPage>} />
-              <Route path="/autores/:authorSlug" element={<PublicPage><PublicAuthorWorksPage /></PublicPage>} />
-              <Route path="/obras/:slug" element={<PublicPage><PublicWorkDetailsPage /></PublicPage>} />
-              <Route path="/obras/:slug/edicao/:editionNumber" element={<PublicPage><PublicEditionDetailsPage /></PublicPage>} />
-              <Route path="/obras/:slug/edicao/:editionNumber/selecionar/:mode" element={<PublicPage><PersonalRoute><EditionVolumeSelectionPage /></PersonalRoute></PublicPage>} />
-              <Route path="/obras/:slug/edicao/:editionNumber/volume/:volumeNumber" element={<PublicPage><PublicVolumeDetailsPage /></PublicPage>} />
-              <Route path="/colecao" element={<PersonalRoute><CollectionPage /></PersonalRoute>} />
+              <Route path="/lancamentos" element={<PublicPage><PublicChecklistPage /></PublicPage>} />
+              <Route path="/autor/:authorSlug" element={<PublicPage><PublicAuthorWorksPage /></PublicPage>} />
+              <Route path="/obra/:slug" element={<PublicPage><PublicWorkDetailsPage /></PublicPage>} />
+              <Route path="/obra/:slug/edicao/:editionNumber" element={<PublicPage><PublicEditionDetailsPage /></PublicPage>} />
+              <Route path="/obra/:slug/edicao/:editionNumber/selecionar/colecao" element={<PublicPage><PersonalRoute><EditionVolumeSelectionPage mode="colecao" /></PersonalRoute></PublicPage>} />
+              <Route path="/obra/:slug/edicao/:editionNumber/selecionar/desejos" element={<PublicPage><PersonalRoute><EditionVolumeSelectionPage mode="desejos" /></PersonalRoute></PublicPage>} />
+              <Route path="/obra/:slug/edicao/:editionNumber/selecionar/lidos" element={<PublicPage><PersonalRoute><EditionVolumeSelectionPage mode="lidos" /></PersonalRoute></PublicPage>} />
+              <Route path="/obra/:slug/edicao/:editionNumber/volume/:volumeNumber" element={<PublicPage><PublicVolumeDetailsPage /></PublicPage>} />
+              <Route path="/colecao" element={<LibraryPage kind="collection" />} />
               <Route path="/colecao/:slug/edicao/:editionNumber" element={<PersonalRoute><PublicEditionDetailsPage /></PersonalRoute>} />
-              <Route path="/colecao/:slug/edicao/:editionNumber/selecionar/:mode" element={<PersonalRoute><EditionVolumeSelectionPage /></PersonalRoute>} />
-              <Route path="/checklist" element={<ChecklistPage />} />
-              <Route path="/desejos" element={<PersonalRoute><WishlistPage /></PersonalRoute>} />
+              <Route path="/colecao/:slug/edicao/:editionNumber/selecionar/colecao" element={<PersonalRoute><EditionVolumeSelectionPage mode="colecao" /></PersonalRoute>} />
+              <Route path="/colecao/:slug/edicao/:editionNumber/selecionar/desejos" element={<PersonalRoute><EditionVolumeSelectionPage mode="desejos" /></PersonalRoute>} />
+              <Route path="/colecao/:slug/edicao/:editionNumber/selecionar/lidos" element={<PersonalRoute><EditionVolumeSelectionPage mode="lidos" /></PersonalRoute>} />
+              <Route path="/desejos" element={<LibraryPage kind="wishlist" />} />
               <Route
                 path="/admin/novo-manga"
                 element={adminPage(<NewMangaPage />)}

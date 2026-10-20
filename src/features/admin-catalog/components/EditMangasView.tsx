@@ -26,7 +26,7 @@ function FilterDropdown({ label, value, options, onChange }: {
       <button
         type="button"
         onClick={toggleDropdown}
-        className="flex min-h-12 w-full items-center justify-between gap-3 rounded-xl border border-border bg-input px-3 py-2 text-left text-base font-semibold text-foreground outline-none transition-colors focus:border-primary focus:ring-2 focus:ring-primary/40"
+        className="flex min-h-12 w-full items-center justify-between gap-3 rounded-xl border border-border bg-input px-3 py-2 text-left text-base font-semibold text-foreground outline-none transition-colors hover:border-primary focus:border-primary"
         aria-expanded={isOpen}
         aria-label={label}
       >
@@ -101,7 +101,7 @@ function WorkFilters({ model }: { model: EditMangasPageModel }) {
           value={model.searchTerm}
           onChange={(event) => model.setSearchTerm(event.target.value)}
           placeholder="Buscar por título ou autor"
-          className="h-12 w-full rounded-xl border border-border bg-input pl-10 pr-3 text-base font-semibold text-foreground outline-none transition-colors placeholder:text-muted-foreground focus:border-primary focus:ring-2 focus:ring-primary/40"
+          className="h-12 w-full rounded-xl border border-border bg-input pl-10 pr-3 text-base font-semibold text-foreground outline-none transition-colors placeholder:text-muted-foreground hover:border-primary focus:border-primary"
         />
       </label>
       <FilterDropdown

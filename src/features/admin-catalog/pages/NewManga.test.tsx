@@ -56,6 +56,7 @@ vi.mock("sonner", () => ({
 const optionLists: Record<string, Array<{
   id: number;
   label: string;
+  code?: string;
   depends_on?: Array<{ id: number; label: string; category: { slug: string; name: string } }>;
 }>> = {
   autores: [
@@ -63,7 +64,12 @@ const optionLists: Record<string, Array<{
     { id: 2, label: "Akira Toriyama", depends_on: [{ id: 5, label: "Japao", category: { slug: "paises-origem", name: "Paises" } }] },
     { id: 3, label: "SIU", depends_on: [{ id: 11, label: "Coreia do Sul", category: { slug: "paises-origem", name: "Paises" } }] },
   ],
-  generos: [{ id: 7, label: "Acao" }, { id: 16, label: "Hentai" }],
+  generos: [
+    { id: 7, label: "Acao" },
+    { id: 16, label: "Hentai" },
+    { id: 17, label: "Boys’ Love", code: "boys-love" },
+    { id: 18, label: "Girls’ Love", code: "girls-love" },
+  ],
   "tipos-obra": [
     { id: 9, label: "Manga", depends_on: [{ id: 5, label: "Japao", category: { slug: "paises-origem", name: "Paises" } }] },
     { id: 20, label: "Artbook", depends_on: [{ id: 5, label: "Japao", category: { slug: "paises-origem", name: "Paises" } }] },
@@ -534,6 +540,25 @@ describe("NewManga", () => {
     expect(screen.getByLabelText(/selecionar demografias/i)).toBeDisabled();
     expect(screen.getByLabelText(/selecionar demografias/i)).toHaveTextContent("Incompatível");
     expect(screen.getByLabelText(/selecionar pré-publicação/i)).not.toBeDisabled();
+  });
+
+  it.each(["Boys’ Love", "Girls’ Love"])("limpa a demografia ao selecionar %s e a libera ao remover", async (genre) => {
+    renderNewManga();
+    expect(await screen.findByRole("heading", { name: /novo mang/i })).toBeInTheDocument();
+    await goToPublicationStep();
+    await fillPublicationFields();
+
+    fireEvent.click(screen.getByLabelText(/selecionar g.*neros/i));
+    fireEvent.click(screen.getByRole("button", { name: genre }));
+
+    await waitFor(() => expect(screen.getByLabelText(/selecionar demografias/i)).toBeDisabled());
+    expect(screen.getByLabelText(/selecionar demografias/i)).toHaveTextContent("Incompatível");
+
+    fireEvent.click(screen.getByLabelText(/selecionar g.*neros/i));
+    fireEvent.click(screen.getByRole("button", { name: genre }));
+
+    await waitFor(() => expect(screen.getByLabelText(/selecionar demografias/i)).not.toBeDisabled());
+    expect(screen.getByLabelText(/selecionar demografias/i)).not.toHaveTextContent("Shonen");
   });
 
   it("liga e desabilita lancamento direto para artbook e databook", async () => {

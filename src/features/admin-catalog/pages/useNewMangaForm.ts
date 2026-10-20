@@ -39,6 +39,7 @@ import {
   getInvalidPublicationFields,
   hasDuplicateAuthors,
   isHentaiGenre,
+  isGenreWithoutDemography,
   moveValue,
   normalizeSearchText,
   toggleValue,
@@ -187,8 +188,11 @@ function getDerivedState(draft: NewMangaDraft, options: WorkFormOptions, allOpti
   const hasHentaiGenre = options.genres.some(
     (genre) => draft.genreIds.includes(Number(genre.id)) && isHentaiGenre(genre)
   );
+  const hasGenreWithoutDemography = allOptions.genres.some(
+    (genre) => draft.genreIds.includes(Number(genre.id)) && isGenreWithoutDemography(genre)
+  );
   return {
-    demographyDisabled: effectiveDirectRelease || Boolean(draft.typeId && !isManga),
+    demographyDisabled: effectiveDirectRelease || Boolean(draft.typeId && !isManga) || hasGenreWithoutDemography,
     directReleaseBlockedByWorkType,
     effectiveDirectRelease,
     hasHentaiGenre,

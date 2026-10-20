@@ -334,7 +334,7 @@ const UserProfile = () => {
   return (
     <div className="flex-1 flex min-w-0 flex-col items-center justify-center px-3 py-6 sm:px-4 sm:py-8">
       <div className="w-full max-w-lg min-w-0 p-5 sm:p-8 bg-card rounded-2xl border border-border shadow-2xl">
-        <h2 className="text-2xl font-bold text-foreground mb-6 text-center">Meu Perfil</h2>
+        <h2 className="text-2xl font-bold text-foreground mb-6 text-center">Meu perfil</h2>
         {loading ? (
           <div className="flex flex-col items-center justify-center py-12">
             <Loader2 className="h-10 w-10 text-primary animate-spin mb-4" />

@@ -91,10 +91,10 @@ const ResendActivation = () => {
               onChange={handleChange}
               placeholder="E-mail"
               disabled={loading}
-              className={`w-full h-12 px-4 rounded-xl bg-input border text-foreground placeholder:text-muted-foreground focus:outline-none focus:ring-2 text-sm transition-colors disabled:opacity-50 ${
+              className={`w-full h-12 px-4 rounded-xl bg-sidebar border text-foreground placeholder:text-muted-foreground focus:outline-none text-sm transition-colors disabled:opacity-50 ${
                 error
-                  ? "border-red-500 focus:ring-red-500"
-                  : "border-border focus:ring-primary"
+                  ? "border-red-500 focus:border-red-500"
+                  : "border-sidebar-foreground/30 hover:border-primary focus:border-primary"
               }`}
             />
             {error && (

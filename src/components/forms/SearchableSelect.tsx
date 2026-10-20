@@ -36,6 +36,7 @@ interface SearchableSelectProps {
   deselectable?: boolean;
   tone?: SelectTone;
   textSize?: "sm" | "base";
+  focusStyle?: "ring" | "border";
 }
 
 function resolveSearchableSelectProps({
@@ -60,6 +61,7 @@ function resolveSearchableSelectProps({
   deselectable = true,
   tone = "default",
   textSize = "base",
+  focusStyle,
 }: SearchableSelectProps) {
   return {
     ariaLabel,
@@ -83,6 +85,7 @@ function resolveSearchableSelectProps({
     deselectable,
     tone,
     textSize,
+    focusStyle,
   };
 }
 
@@ -92,6 +95,7 @@ interface ControlProps extends SelectFieldStyles {
   clearable: boolean;
   closeDropdown: () => void;
   disabled: boolean;
+  focusStyle: "ring" | "border";
   handleToggle: () => void;
   invalid: boolean;
   isOpen: boolean;
@@ -113,10 +117,10 @@ function getOptionValue(option: SelectOption) {
 function SearchControl(props: ControlProps) {
   const {
     accessibleLabel, brightTone, clearable, closeDropdown, controlTextSize,
-    fieldSurface, invalid, onChange, searchInputRef, searchPlaceholder, searchTerm,
+    fieldSurface, focusStyle, invalid, onChange, searchInputRef, searchPlaceholder, searchTerm,
     secondaryText, selectedOption, setSearchTerm,
   } = props;
-  const border = invalid ? "border-red-500 ring-red-500/30" : "border-primary ring-primary/40";
+  const border = invalid ? "border-red-500" : "border-primary";
 
   function handleKeyDown(event: React.KeyboardEvent<HTMLInputElement>) {
     if (event.key !== "Enter" && event.key !== "Escape") return;
@@ -125,7 +129,7 @@ function SearchControl(props: ControlProps) {
   }
 
   return (
-    <div className={`flex h-12 w-full items-center gap-3 rounded-xl border px-3 font-semibold outline-none ring-2 ${controlTextSize} ${fieldSurface} ${border}`}>
+    <div className={`flex h-12 w-full items-center gap-3 border px-3 font-semibold outline-none ${focusStyle === "ring" ? "rounded-xl" : "rounded-lg"} ${controlTextSize} ${fieldSurface} ${border}`}>
       <input
         ref={searchInputRef}
         data-comanga-dropdown-search="true"
@@ -134,7 +138,7 @@ function SearchControl(props: ControlProps) {
         onChange={(event) => setSearchTerm(event.target.value)}
         onKeyDown={handleKeyDown}
         placeholder={searchPlaceholder}
-        className={`min-w-0 flex-1 bg-transparent font-semibold text-foreground outline-none ${controlTextSize} ${brightTone ? "placeholder:text-foreground" : "placeholder:text-muted-foreground"}`}
+        className={`min-w-0 flex-1 bg-transparent font-semibold text-foreground outline-none ${controlTextSize} ${brightTone && focusStyle === "ring" ? "placeholder:text-foreground" : "placeholder:text-muted-foreground"}`}
       />
       {clearable && selectedOption ? (
         <button
@@ -162,14 +166,14 @@ function SearchControl(props: ControlProps) {
 function ClearableControl(props: ControlProps) {
   const {
     accessibleLabel, ariaLabelledBy, brightTone, controlTextSize, fieldSurface,
-    handleToggle, invalid, isOpen, onChange, secondaryText, selectedOption,
+    focusStyle, handleToggle, invalid, isOpen, onChange, secondaryText, selectedOption,
   } = props;
   const border = invalid
-    ? "border-red-500 focus-within:border-red-500 focus-within:ring-red-500/30"
-    : `${brightTone ? "border-sidebar-foreground/35" : "border-border"} focus-within:border-primary focus-within:ring-primary/40`;
+    ? "border-red-500 focus-within:border-red-500"
+    : `${brightTone ? "border-sidebar-foreground/35" : "border-border"} hover:border-primary focus-within:border-primary`;
 
   return (
-    <div className={`flex h-12 w-full items-center rounded-xl border font-semibold text-foreground outline-none transition-colors focus-within:ring-2 ${controlTextSize} ${fieldSurface} ${border}`}>
+    <div className={`flex h-12 w-full items-center border font-semibold text-foreground outline-none transition-colors ${focusStyle === "ring" ? "rounded-xl" : "rounded-lg"} ${controlTextSize} ${fieldSurface} ${border}`}>
       <button
         type="button"
         aria-label={accessibleLabel}
@@ -195,12 +199,12 @@ function ClearableControl(props: ControlProps) {
 function DefaultControl(props: ControlProps) {
   const {
     accessibleLabel, ariaLabelledBy, brightTone, controlTextSize, disabled,
-    fieldSurface, handleToggle, invalid, isOpen, placeholder, secondaryText,
+    fieldSurface, focusStyle, handleToggle, invalid, isOpen, placeholder, secondaryText,
     selectedOption, showIndicator,
   } = props;
   const border = invalid
-    ? "border-red-500 focus:border-red-500 focus:ring-red-500/30"
-    : `${brightTone ? "border-sidebar-foreground/35" : "border-border"} focus:border-primary focus:ring-primary/40`;
+    ? "border-red-500 focus:border-red-500"
+    : `${brightTone ? "border-sidebar-foreground/35" : "border-border"} hover:border-primary focus:border-primary`;
 
   return (
     <button
@@ -210,7 +214,7 @@ function DefaultControl(props: ControlProps) {
       aria-expanded={isOpen}
       disabled={disabled}
       onClick={handleToggle}
-      className={`flex h-12 w-full items-center justify-between gap-3 rounded-xl border px-3 text-left font-semibold text-foreground outline-none transition-colors focus:ring-2 disabled:cursor-not-allowed disabled:opacity-60 ${controlTextSize} ${fieldSurface} ${border}`}
+      className={`flex h-12 w-full items-center justify-between gap-3 border px-3 text-left font-semibold text-foreground outline-none transition-colors ${focusStyle === "ring" ? "rounded-xl" : "rounded-lg"} disabled:cursor-not-allowed disabled:opacity-60 ${controlTextSize} ${fieldSurface} ${border}`}
     >
       <span className={`truncate ${selectedOption ? "" : "text-muted-foreground"}`}>
         {selectedOption?.label || placeholder}
@@ -247,7 +251,7 @@ function EmptyOption({ placeholder, selectOption, selected }: {
 
 function OptionsMenu({
   allowEmptyOption, emptyMessage, filteredOptions, maxVisibleItems, menuSurface,
-  placeholder, searchable, secondaryText, selectOption, value,
+  placeholder, searchable, secondaryText, focusStyle, selectOption, value,
 }: {
   allowEmptyOption: boolean;
   emptyMessage: string;
@@ -257,6 +261,7 @@ function OptionsMenu({
   placeholder: string;
   searchable: boolean;
   secondaryText: string;
+  focusStyle: "ring" | "border";
   selectOption: (value: string) => void;
   value: string;
 }) {
@@ -273,7 +278,7 @@ function OptionsMenu({
         />
       ) : null}
       {filteredOptions.length === 0 ? (
-        <div className={`px-3 py-4 text-sm font-semibold ${secondaryText}`}>{emptyMessage}</div>
+        <div className={`px-3 py-4 text-sm font-semibold ${focusStyle === "border" ? "text-muted-foreground" : secondaryText}`}>{emptyMessage}</div>
       ) : null}
       {filteredOptions.map((option) => {
         const optionValue = getOptionValue(option);
@@ -299,7 +304,7 @@ export function SearchableSelect(props: SearchableSelectProps) {
   const {
     ariaLabel, ariaLabelledBy, label, value, options, onChange, onOpen, disabled,
     placeholder, emptyMessage, maxVisibleItems, invalid, searchable, searchPlaceholder,
-    className, showIndicator, allowEmptyOption, clearable, deselectable, tone, textSize,
+    className, showIndicator, allowEmptyOption, clearable, deselectable, tone, textSize, focusStyle,
   } = resolveSearchableSelectProps(props);
   const { isOpen, closeDropdown, toggleDropdown, rootProps } = useDropdown();
   const [searchTerm, setSearchTerm] = useState("");
@@ -333,6 +338,7 @@ export function SearchableSelect(props: SearchableSelectProps) {
     clearable,
     closeDropdown,
     disabled,
+    focusStyle: focusStyle ?? "ring",
     handleToggle,
     invalid,
     isOpen,
@@ -360,6 +366,7 @@ export function SearchableSelect(props: SearchableSelectProps) {
           placeholder={placeholder}
           searchable={searchable}
           secondaryText={styles.secondaryText}
+          focusStyle={focusStyle ?? "ring"}
           selectOption={selectOption}
           value={value}
         />

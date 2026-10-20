@@ -1,7 +1,6 @@
 ﻿import {
   BookOpen,
   CalendarCheck,
-  CalendarDays,
   LibraryBig,
   Heart,
   PlusCircle,
@@ -27,9 +26,8 @@ interface NavItem {
 const collectorNavItems: NavItem[] = [
   { label: "Coleção", icon: LibraryBig, href: "/colecao" },
   { label: "Pesquisar", icon: Search, href: "/pesquisa" },
-  { label: "Calendário", icon: CalendarDays, href: "/calendario" },
-  { label: "Checklists", icon: CalendarCheck, href: "/checklist" },
-  { label: "Lista de Desejos", icon: Heart, href: "/desejos" },
+  { label: "Lançamentos", icon: CalendarCheck, href: "/lancamentos" },
+  { label: "Lista de desejos", icon: Heart, href: "/desejos" },
 ];
 
 const adminNavItems: NavItem[] = [
@@ -52,7 +50,7 @@ function NavButton({ item, showLabel }: { item: NavItem; showLabel?: boolean }) 
   const content = (
     <>
       <item.icon className="h-6 w-6 shrink-0" />
-      {showLabel && <span className="min-w-0 whitespace-nowrap text-sm">{item.label}</span>}
+      {showLabel && <span className="min-w-0 whitespace-nowrap text-base">{item.label}</span>}
     </>
   );
 
@@ -85,7 +83,7 @@ export function PublicNav() {
     ? null
     : isAuthenticated
     ? {
-        label: "Meu Perfil",
+        label: "Meu perfil",
         icon: User,
         active: location.pathname.startsWith("/perfil"),
         href: `/perfil/${user?.username || ""}`,
@@ -106,7 +104,7 @@ export function PublicNav() {
         {userActionItem && <NavButton item={userActionItem} />}
       </nav>
 
-      <nav className="hidden md:flex lg:hidden fixed left-0 top-0 h-screen w-20 bg-sidebar border-r border-border flex-col justify-between py-6 z-50">
+      <nav className="hidden md:flex lg:hidden fixed left-0 top-0 h-screen w-20 bg-sidebar border-r border-sidebar-foreground/30 flex-col justify-between py-6 z-50">
         <div className="flex flex-col items-center gap-2">
           <div className="mb-6">
             <BrandLogo className="h-8 w-8 [&>span]:text-lg" />
@@ -120,7 +118,7 @@ export function PublicNav() {
         </div>
       </nav>
 
-      <nav className="hidden lg:flex fixed left-0 top-0 h-screen w-64 bg-sidebar border-r border-border flex-col justify-between py-6 px-4 z-50">
+      <nav className="hidden lg:flex fixed left-0 top-0 h-screen w-64 bg-sidebar border-r border-sidebar-foreground/30 flex-col justify-between py-6 px-4 z-50">
         <div className="flex flex-col gap-1">
           <div className="flex items-center gap-3 mb-8 px-3">
             <BrandLogo />

@@ -12,7 +12,7 @@ export default function PasswordRecovery({ reset = false }: { reset?: boolean })
   return <PasswordRecoveryForm key={`${reset}:${token || ""}`} reset={reset} token={token} />;
 }
 
-const FIELD_CLASS = "h-12 w-full rounded-xl border border-border bg-input px-4 text-sm text-foreground placeholder:text-muted-foreground focus:outline-none focus:ring-2 focus:ring-primary";
+const FIELD_CLASS = "h-12 w-full rounded-xl border border-sidebar-foreground/30 bg-sidebar px-4 text-sm text-foreground placeholder:text-muted-foreground focus:outline-none";
 const MINIMUM_REQUEST_FEEDBACK_MS = 500;
 const EMAIL_PATTERN = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
 
@@ -42,7 +42,7 @@ function PasswordField({ label, value, visible, error, onChange, onToggle }: Pas
           value={value}
           onChange={(event) => onChange(event.target.value)}
           placeholder={label}
-          className={`${FIELD_CLASS} pr-12 ${error ? "border-red-500 focus:ring-red-500" : ""}`}
+          className={`${FIELD_CLASS} pr-12 ${error ? "border-red-500 focus:border-red-500" : "hover:border-primary focus:border-primary"}`}
         />
         <button
           type="button"
@@ -86,7 +86,7 @@ function RecoveryFields(props: RecoveryFieldsProps) {
           value={props.email}
           onChange={(event) => props.setEmail(event.target.value)}
           placeholder="E-mail"
-          className={`${FIELD_CLASS} ${props.errors.email ? "border-red-500 focus:ring-red-500" : ""}`}
+          className={`${FIELD_CLASS} ${props.errors.email ? "border-red-500 focus:border-red-500" : "hover:border-primary focus:border-primary"}`}
         />
         {props.errors.email && <span role="alert" className="ml-1 mt-1 block text-xs text-red-500">{props.errors.email}</span>}
       </div>
