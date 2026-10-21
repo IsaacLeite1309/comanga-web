@@ -1,30 +1,35 @@
 import { PersonalCatalogSession } from "../PersonalCatalogSession";
-import { useEffect, useState } from "react";
-import { AlertCircle, ArrowLeft, Check, ChevronRight, Eye, EyeClosed, Heart, LibraryBig, type LucideIcon } from "lucide-react";
-import { Link, useLocation, useParams, useSearchParams } from "react-router-dom";
+import { CatalogRefreshNotice } from "../CatalogRefreshNotice";
+import { useQuery, useQueryClient } from "@tanstack/react-query";
+import { useEffect } from "react";
+import { ArrowLeft, BookOpen, ChevronRight, Heart, LibraryBig, type LucideIcon } from "lucide-react";
+import { Link, useLocation, useParams } from "react-router-dom";
 import { toast } from "sonner";
 import { useAuth } from "@/features/auth";
 import { LoadingState } from "@/components/shared/AsyncState";
+import { BackLink } from "@/components/shared/BackLink";
 import { CatalogCover } from "@/features/public-catalog/CatalogCover";
 import { OwnedVolumeBadge } from "@/features/public-catalog/OwnedVolumeBadge";
 import { WishedVolumeBadge } from "@/features/public-catalog/WishedVolumeBadge";
 import { ReadVolumeBadge } from "@/features/public-catalog/ReadVolumeBadge";
-import { CatalogPagination } from "@/features/public-catalog/CatalogPagination";
 import { formatPublicationStatus, formatPublicReleaseDate, publicVolumeLabel } from "@/features/public-catalog/publicCatalogFormatters";
 import { getPublicEditionDetails } from "@/features/public-catalog/publicCatalogService";
+import { prefetchEditionVolumes } from "@/features/public-catalog/prefetchCatalogDetails";
 import type {
   PublicEditionDetailsResponse,
   PublicEditionVolumeSummary,
 } from "@/features/public-catalog/publicCatalogTypes";
 import { getApiError } from "@/lib/apiError";
+import { PUBLIC_CATALOG_QUERY_ROOT } from "@/lib/queryClient";
+import { usePublicCatalogScope } from "@/features/public-catalog/usePublicCatalogScope";
 import { publicVolumePath, publicWorkPath } from "@/features/public-catalog/publicCatalogPaths";
-import { catalogNavigationState, catalogRoot, type CatalogNavigationState } from "@/features/public-catalog/publicCatalogNavigation";
+import { catalogNavigationState, catalogRoot, directReturnPath, type CatalogNavigationState } from "@/features/public-catalog/publicCatalogNavigation";
+import { useCatalogErrorToast } from "@/features/public-catalog/useCatalogErrorToast";
 
-const PAGE_SIZE = 24;
 const libraryActionClass = "inline-flex h-10 shrink-0 items-center justify-center gap-2 whitespace-nowrap rounded-full border px-3 text-center text-sm font-bold transition-colors";
 
 function actionIconFill(active: boolean, icon: LucideIcon) {
-  return active && icon === Heart ? "currentColor" : "none";
+  return active && (icon === Heart || icon === BookOpen || icon === LibraryBig) ? "currentColor" : "none";
 }
 
 function EditionLibraryAction({ to, label, guestMessage, authenticated, selectedCount, totalCount, selectedLabel, activeIcon, inactiveIcon }: {
@@ -51,11 +56,6 @@ function EditionLibraryAction({ to, label, guestMessage, authenticated, selected
   return authenticated
     ? <Link to={to} className={className}>{content}</Link>
     : <button type="button" className={className} onClick={() => toast.warning(guestMessage)}>{content}</button>;
-}
-
-function positiveInteger(value: string | null, fallback = 1) {
-  const parsed = Number(value);
-  return Number.isInteger(parsed) && parsed > 0 ? parsed : fallback;
 }
 
 function volumesCount(total: number) {
@@ -121,26 +121,6 @@ function VolumeCard({ volume, workSlug, workTitle, editionNumber, navigationStat
   );
 }
 
-function EditionUnavailable({ error, onRetry }: { error: string; onRetry: () => void }) {
-  return (
-    <div className="flex min-h-[calc(100dvh-5rem)] items-center justify-center px-4 py-12">
-      <section className="w-full max-w-lg rounded-2xl border border-red-500/20 bg-red-500/5 px-6 py-10 text-center">
-        <AlertCircle className="mx-auto h-9 w-9 text-red-400" aria-hidden="true" />
-        <h1 className="mt-4 text-xl font-bold text-foreground">Edição indisponível</h1>
-        <p className="mt-2 text-sm text-red-300">{error || "Edição não encontrada."}</p>
-        <div className="mt-6 flex flex-wrap justify-center gap-3">
-          <button type="button" onClick={onRetry} className="rounded-lg bg-primary px-4 py-2 text-sm font-bold text-primary-foreground">
-            Tentar novamente
-          </button>
-          <Link to="/pesquisa?tab=editions&sortBy=title&order=ASC&page=1" className="rounded-lg border border-border bg-input px-4 py-2 text-sm font-bold text-foreground">
-            Voltar às Edições
-          </Link>
-        </div>
-      </section>
-    </div>
-  );
-}
-
 function EditionLibraryActions({ edition, editionPath, authenticated }: {
   edition: PublicEditionDetailsResponse["edition"];
   editionPath: string;
@@ -160,7 +140,7 @@ function EditionLibraryActions({ edition, editionPath, authenticated }: {
           selectedCount={ownedCount}
           totalCount={edition.volumesCount}
           selectedLabel="adquiridos"
-          activeIcon={Check}
+          activeIcon={LibraryBig}
           inactiveIcon={LibraryBig}
         />
         {authenticated && ownedCount > 0 && (
@@ -172,8 +152,8 @@ function EditionLibraryActions({ edition, editionPath, authenticated }: {
             selectedCount={edition.personal?.readCount}
             totalCount={ownedCount}
             selectedLabel="lidos"
-            activeIcon={Eye}
-            inactiveIcon={EyeClosed}
+            activeIcon={BookOpen}
+            inactiveIcon={BookOpen}
           />
         )}
         <EditionLibraryAction
@@ -196,29 +176,34 @@ interface EditionContentProps {
   editionPath: string;
   isCollectionContext: boolean;
   navigationState: CatalogNavigationState;
-  onPageChange: (page: number) => void;
+  refreshError: string;
+  onRetry: () => void;
 }
 
-function EditionContent({ data, editionPath, isCollectionContext, navigationState, onPageChange }: EditionContentProps) {
+function EditionContent({ data, editionPath, isCollectionContext, navigationState, refreshError, onRetry }: EditionContentProps) {
   const { user } = useAuth();
-  const { edition, volumes, pagination } = data;
+  const location = useLocation();
+  const { edition, volumes } = data;
   const editionLabel = `${edition.chronologicalNumber}ª edição`;
   const workPath = publicWorkPath(edition.work.slug);
   const { path: rootPath, label: rootLabel } = catalogRoot(navigationState.catalogOrigin);
-  const backPath = isCollectionContext ? "/colecao" : workPath;
+  const returnTo = directReturnPath(location.state, navigationState.catalogOrigin === "collection" ? ["/colecao"] : navigationState.catalogOrigin === "search" ? ["/pesquisa"] : []);
+  const backPath = returnTo ?? (isCollectionContext ? "/colecao" : workPath);
 
   return (
-    <div className="min-w-0 flex-1 px-4 pb-7 pt-[4.5rem] sm:px-6 sm:pb-9 xl:px-10">
+    <div className="page-gutter min-w-0 flex-1 pb-7 pt-[4.5rem] sm:pb-9">
+      <CatalogRefreshNotice message={refreshError} onRetry={onRetry} />
       <div className="mx-auto w-full max-w-7xl">
-        <div className="fixed inset-x-0 top-0 z-50 flex h-16 min-w-0 items-center gap-3 border-b border-border bg-background px-4 md:left-20 sm:px-6 lg:left-64 xl:px-10">
-          <Link
+        <div className="page-gutter fixed inset-x-0 top-0 z-50 flex h-16 min-w-0 items-center gap-3 border-b border-border bg-background md:left-20 lg:left-56">
+          <BackLink
             to={backPath}
+            preferHistory={Boolean(returnTo)}
             state={navigationState}
             className="inline-flex shrink-0 items-center gap-2 rounded-lg px-2 py-1 text-base font-bold leading-none text-foreground transition-colors hover:bg-sidebar-accent/30 hover:text-foreground"
           >
             <ArrowLeft className="h-5 w-5 text-primary" aria-hidden="true" />
             Voltar
-          </Link>
+          </BackLink>
 
           <nav className="flex min-w-0 items-center gap-1 text-base font-semibold leading-none" aria-label="Caminho de navegação">
             <Link
@@ -292,21 +277,18 @@ function EditionContent({ data, editionPath, isCollectionContext, navigationStat
 
             <section className="order-4 min-w-0 border-t border-border pt-7 md:mt-5" aria-labelledby="volumes-title">
               {volumes.length > 0 ? (
-                <>
-                  <div className="grid grid-cols-2 gap-x-3 gap-y-7 sm:grid-cols-3 sm:gap-x-4 lg:grid-cols-5" aria-label="Volumes da edição">
-                    {volumes.map((volume) => (
-                      <VolumeCard
-                        key={volume.id}
-                        volume={volume}
-                        workSlug={edition.work.slug}
-                        workTitle={edition.work.title}
-                        editionNumber={edition.chronologicalNumber}
-                        navigationState={navigationState}
-                      />
-                    ))}
-                  </div>
-                  <CatalogPagination pagination={pagination} onPageChange={onPageChange} ariaLabel="Paginação dos volumes" />
-                </>
+                <div className="grid grid-cols-2 gap-x-3 gap-y-7 sm:grid-cols-3 sm:gap-x-4 lg:grid-cols-5" aria-label="Volumes da edição">
+                  {volumes.map((volume) => (
+                    <VolumeCard
+                      key={volume.id}
+                      volume={volume}
+                      workSlug={edition.work.slug}
+                      workTitle={edition.work.title}
+                      editionNumber={edition.chronologicalNumber}
+                      navigationState={navigationState}
+                    />
+                  ))}
+                </div>
               ) : (
                 <div className="border-t border-border py-12 text-center">
                   <p className="text-sm font-semibold text-muted-foreground">Nenhum volume público cadastrado nesta edição.</p>
@@ -321,68 +303,56 @@ function EditionContent({ data, editionPath, isCollectionContext, navigationStat
   );
 }
 
-function useEditionDetails(editionNumber: number, workSlug: string, page: number, retry: number) {
-  const [data, setData] = useState<PublicEditionDetailsResponse | null>(null);
-  const [loading, setLoading] = useState(true);
-  const [error, setError] = useState("");
-
+function useEditionDetails(editionNumber: number, workSlug: string) {
+  const scope = usePublicCatalogScope();
+  const queryClient = useQueryClient();
+  const valid = Boolean(workSlug) && Number.isInteger(editionNumber) && editionNumber > 0;
+  const result = useQuery({
+    queryKey: [...PUBLIC_CATALOG_QUERY_ROOT, scope, "edition", workSlug, editionNumber],
+    queryFn: async () => {
+      const response = await getPublicEditionDetails(workSlug, editionNumber, { all: true });
+      if (response.edition.work.slug !== workSlug || response.edition.chronologicalNumber !== editionNumber) {
+        throw new Error("Edição não encontrada.");
+      }
+      return response;
+    },
+    enabled: valid,
+  });
+  const data: PublicEditionDetailsResponse | null = result.data ?? null;
   useEffect(() => {
-    let active = true;
-    if (!workSlug || !Number.isInteger(editionNumber) || editionNumber <= 0) {
-      setData(null);
-      setError("Edição não encontrada.");
-      setLoading(false);
-      return () => { active = false; };
-    }
-    setLoading(true);
-    setError("");
-    getPublicEditionDetails(workSlug, editionNumber, { page, limit: PAGE_SIZE })
-      .then((result) => {
-        if (!active) return;
-        if (result.edition.work.slug !== workSlug || result.edition.chronologicalNumber !== editionNumber) {
-          setData(null);
-          setError("Edição não encontrada.");
-          return;
-        }
-        setData(result);
-      })
-      .catch((requestError) => {
-        if (!active) return;
-        setData(null);
-        setError(getApiError(requestError, "Não foi possível carregar esta edição."));
-      })
-      .finally(() => { if (active) setLoading(false); });
-    return () => { active = false; };
-  }, [editionNumber, page, retry, workSlug]);
-
-  return { data, loading, error };
+    if (data) void prefetchEditionVolumes(queryClient, scope, data);
+  }, [data, queryClient, scope]);
+  return {
+    data,
+    loading: valid && result.isPending,
+    error: !valid ? "Edição não encontrada." : result.isError && !data
+      ? getApiError(result.error, "Não foi possível carregar esta edição.") : "",
+    refreshError: result.isError && data ? "Não foi possível atualizar esta edição." : "",
+    retry: () => { void result.refetch(); },
+  };
 }
 
 function PublicEditionDetailsContent() {
   const { editionNumber = "", slug } = useParams();
   const location = useLocation();
-  const [searchParams, setSearchParams] = useSearchParams();
-  const [retry, setRetry] = useState(0);
-  const page = positiveInteger(searchParams.get("page"));
-  const { data, loading, error } = useEditionDetails(Number(editionNumber), slug || "", page, retry);
+  const { data, loading, error, refreshError, retry } = useEditionDetails(Number(editionNumber), slug || "");
+  useCatalogErrorToast(error, retry, "edition-details");
   const isCollectionContext = location.pathname.startsWith("/colecao/");
   const navigationState = isCollectionContext ? { catalogOrigin: "collection" as const } : catalogNavigationState(location.state);
   const editionPath = `${isCollectionContext ? "/colecao" : "/obra"}/${encodeURIComponent(slug || "")}/edicao/${editionNumber}`;
-  const changePage = (nextPage: number) => {
-    const next = new URLSearchParams(searchParams);
-    next.set("page", String(nextPage));
-    setSearchParams(next, { state: navigationState });
-  };
-
   if (loading) return <LoadingState message="Carregando edição..." fullPage />;
-  if (!data) return <EditionUnavailable error={error} onRetry={() => setRetry((value) => value + 1)} />;
+  if (!data) {
+    const returnTo = directReturnPath(location.state, navigationState.catalogOrigin === "collection" ? ["/colecao"] : navigationState.catalogOrigin === "search" ? ["/pesquisa"] : []);
+    return <div className="page-gutter flex min-h-[calc(100dvh-5rem)] items-center justify-center py-12"><BackLink to={returnTo ?? "/pesquisa?tab=editions&sortBy=title&order=ASC&page=1"} preferHistory={Boolean(returnTo)} className="rounded-lg border border-border bg-input px-4 py-2 text-sm font-bold text-foreground">Voltar</BackLink></div>;
+  }
   return (
     <EditionContent
       data={data}
       editionPath={editionPath}
       isCollectionContext={isCollectionContext}
       navigationState={navigationState}
-      onPageChange={changePage}
+      refreshError={refreshError}
+      onRetry={retry}
     />
   );
 }

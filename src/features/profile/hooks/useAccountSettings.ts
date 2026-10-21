@@ -32,7 +32,7 @@ export function useAccountSettings(
   profile: AccountProfile | null,
   setProfile: (profile: AccountProfile) => void
 ) {
-  const { updateUser } = useAuth();
+  const { updateUser, activeProfile } = useAuth();
   const [isSwitchingProfile, setIsSwitchingProfile] = useState(false);
 
   function applyProfileResponse(updated: AccountProfile) {
@@ -47,7 +47,7 @@ export function useAccountSettings(
   }
 
   async function changeActiveProfile(nextProfile: string) {
-    if (!profile || isSwitchingProfile || nextProfile === profile.active_profile) return;
+    if (!profile || isSwitchingProfile || nextProfile === activeProfile) return;
 
     setIsSwitchingProfile(true);
     try {

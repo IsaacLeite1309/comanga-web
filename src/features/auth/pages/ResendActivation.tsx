@@ -55,7 +55,7 @@ const ResendActivation = () => {
   };
 
   return (
-    <div className="flex-1 flex flex-col items-center justify-center px-4 py-8">
+    <div className="page-gutter flex-1 flex flex-col items-center justify-center py-8">
       {/* Brand */}
       <div className="flex items-center gap-3 mb-8">
         <BrandLogo />

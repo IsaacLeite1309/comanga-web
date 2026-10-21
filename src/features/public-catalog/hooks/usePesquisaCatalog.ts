@@ -1,8 +1,16 @@
 import { useEffect, useMemo, useRef, useState } from "react";
+import { useQuery, useQueryClient } from "@tanstack/react-query";
 import { useSearchParams } from "react-router-dom";
 import { getApiError } from "@/lib/apiError";
+import { PUBLIC_CATALOG_QUERY_ROOT } from "@/lib/queryClient";
+import { useMinimumQueryLoading } from "@/hooks/useMinimumQueryLoading";
+import { usePublicCatalogScope } from "@/features/public-catalog/usePublicCatalogScope";
+import { sameQueryExceptOrder } from "@/features/public-catalog/sameQueryExceptOrder";
 import {
   getPublicCatalogOptions,
+  getPublicEditionDetails,
+  getPublicVolumeDetails,
+  getPublicWorkDetails,
   listPublicEditions,
   listPublicWorks,
 } from "@/features/public-catalog/publicCatalogService";
@@ -12,12 +20,16 @@ import type {
   PublicCatalogTab,
   PublicEditionSummary,
   PublicEditionsQuery,
+  PublicEditionsResponse,
   PublicPagination,
   PublicWorksQuery,
+  PublicWorksResponse,
   PublicWorkSummary,
 } from "@/features/public-catalog/publicCatalogTypes";
 
 const PAGE_SIZE = 24;
+const PREFETCH_CONCURRENCY = 3;
+const PREFETCH_VOLUME_LIMIT = 48;
 const EMPTY_OPTIONS: PublicCatalogOptions = {
   workTypes: [],
   countries: [],
@@ -125,6 +137,24 @@ function readCatalogParams(params: URLSearchParams) {
 }
 
 type CatalogParams = ReturnType<typeof readCatalogParams>;
+type PrefetchVolumeRoute = { workSlug: string; editionNumber: number; volumeNumber: number };
+
+async function runWithConcurrency<T, R>(items: T[], concurrency: number, task: (item: T) => Promise<R>) {
+  const results: Array<R | undefined> = Array(items.length);
+  let nextIndex = 0;
+  await Promise.all(Array.from({ length: Math.min(concurrency, items.length) }, async () => {
+    while (true) {
+      const index = nextIndex++;
+      if (index >= items.length) return;
+      try {
+        results[index] = await task(items[index]);
+      } catch {
+        // Falhas no pré-carregamento não interrompem a navegação nem as outras consultas.
+      }
+    }
+  }));
+  return results;
+}
 
 function buildWorkQuery(params: CatalogParams): PublicWorksQuery {
   return {
@@ -167,7 +197,6 @@ function useCatalogLocation(workTypes: PublicCatalogOptions["workTypes"]) {
   const serializedParams = searchParams.toString();
   const params = useMemo(() => readCatalogParams(new URLSearchParams(serializedParams)), [serializedParams]);
   const [searchTerm, setSearchTerm] = useState(params.urlTerm);
-  const preserveResultsRef = useRef(false);
 
   useEffect(() => {
     const canonical = new URLSearchParams(searchParams);
@@ -232,7 +261,6 @@ function useCatalogLocation(workTypes: PublicCatalogOptions["workTypes"]) {
   }
 
   function toggleTitleSort() {
-    preserveResultsRef.current = true;
     const next = new URLSearchParams(searchParams);
     next.set("sortBy", "title");
     next.set("order", params.order === "ASC" ? "DESC" : "ASC");
@@ -262,7 +290,6 @@ function useCatalogLocation(workTypes: PublicCatalogOptions["workTypes"]) {
     searchParams,
     searchTerm,
     setSearchTerm,
-    preserveResultsRef,
     updateParam,
     toggleCsvParam,
     changeTab,
@@ -273,35 +300,17 @@ function useCatalogLocation(workTypes: PublicCatalogOptions["workTypes"]) {
 }
 
 function useCatalogOptions() {
-  const [options, setOptions] = useState<PublicCatalogOptions>(EMPTY_OPTIONS);
-  const [optionsLoading, setOptionsLoading] = useState(true);
-  const [optionsError, setOptionsError] = useState(false);
-  const [retry, setRetry] = useState(0);
-
-  useEffect(() => {
-    let active = true;
-    setOptionsLoading(true);
-    setOptionsError(false);
-    getPublicCatalogOptions()
-      .then((result) => {
-        if (active) setOptions({ ...EMPTY_OPTIONS, ...result });
-      })
-      .catch(() => {
-        if (active) setOptionsError(true);
-      })
-      .finally(() => {
-        if (active) setOptionsLoading(false);
-      });
-    return () => {
-      active = false;
-    };
-  }, [retry]);
+  const scope = usePublicCatalogScope();
+  const result = useQuery({
+    queryKey: [...PUBLIC_CATALOG_QUERY_ROOT, scope, "options"],
+    queryFn: getPublicCatalogOptions,
+  });
 
   return {
-    options,
-    optionsLoading,
-    optionsError,
-    retryOptions: () => setRetry((value) => value + 1),
+    options: result.data ?? EMPTY_OPTIONS,
+    optionsLoading: result.isPending,
+    optionsError: result.isError && !result.data,
+    retryOptions: () => { void result.refetch(); },
   };
 }
 
@@ -318,66 +327,84 @@ export function filterWorkTypesByCountry(
 }
 
 function useCatalogResults(location: ReturnType<typeof useCatalogLocation>) {
-  const [works, setWorks] = useState<PublicWorkSummary[]>([]);
-  const [editions, setEditions] = useState<PublicEditionSummary[]>([]);
-  const [pagination, setPagination] = useState<PublicPagination>(EMPTY_PAGINATION);
-  const [loading, setLoading] = useState(true);
-  const [error, setError] = useState("");
-  const [retry, setRetry] = useState(0);
-  const hasLoadedRef = useRef(false);
-  const workQueryJson = JSON.stringify(buildWorkQuery(location.params));
-  const editionQueryJson = JSON.stringify(buildEditionQuery(location.params));
-  const workQuery = useMemo(
-    () => JSON.parse(workQueryJson) as PublicWorksQuery,
-    [workQueryJson],
-  );
-  const editionQuery = useMemo(
-    () => JSON.parse(editionQueryJson) as PublicEditionsQuery,
-    [editionQueryJson],
-  );
+  const scope = usePublicCatalogScope();
+  const queryClient = useQueryClient();
+  const workQuery = buildWorkQuery(location.params);
+  const editionQuery = buildEditionQuery(location.params);
+
+  const activeQuery = location.tab === "works" ? workQuery : editionQuery;
+  const result = useQuery<PublicWorksResponse | PublicEditionsResponse>({
+    queryKey: [...PUBLIC_CATALOG_QUERY_ROOT, scope, location.tab, activeQuery],
+    queryFn: async () => location.tab === "works" ? listPublicWorks(workQuery) : listPublicEditions(editionQuery),
+    placeholderData: (previousData, previousQuery) => previousQuery?.queryKey[2] === location.tab
+      && sameQueryExceptOrder(previousQuery.queryKey[3], activeQuery) ? previousData : undefined,
+  });
+  const loading = useMinimumQueryLoading(JSON.stringify([location.tab, { ...activeQuery, page: undefined }]), result.isPending);
 
   useEffect(() => {
-    let active = true;
-    const preserveResults = location.preserveResultsRef.current && hasLoadedRef.current;
-    location.preserveResultsRef.current = false;
-    if (!preserveResults) setLoading(true);
-    setError("");
-    const request = location.tab === "works"
-      ? listPublicWorks(workQuery)
-      : listPublicEditions(editionQuery);
-    request
-      .then((response) => {
-        if (!active) return;
-        if ("works" in response) setWorks(response.works);
-        else setEditions(response.editions);
-        setPagination({
-          ...response.pagination,
-          totalPages: Math.max(response.pagination.totalPages, 1),
+    const response = result.data;
+    if (!response || result.isPlaceholderData) return undefined;
+
+    // A busca permanece responsiva; os detalhes das páginas correspondentes e
+    // parte dos volumes relacionados são preenchidos em segundo plano.
+    const tasks = location.tab === "works" && "works" in response
+      ? response.works.map((work) => async (): Promise<PrefetchVolumeRoute[]> => {
+        const details = await queryClient.fetchQuery({
+          queryKey: [...PUBLIC_CATALOG_QUERY_ROOT, scope, "work", work.slug],
+          queryFn: () => getPublicWorkDetails(work.slug),
         });
-        hasLoadedRef.current = true;
+        return details.editions.flatMap((edition) => edition.volumes.map((volume) => ({
+          workSlug: work.slug,
+          editionNumber: edition.chronologicalNumber,
+          volumeNumber: volume.number,
+        })));
       })
-      .catch((requestError) => {
-        if (!active) return;
-        const fallback = location.tab === "works"
-          ? "Não foi possível carregar as Obras."
-          : "Não foi possível carregar as Edições.";
-        setError(getApiError(requestError, fallback));
-      })
-      .finally(() => {
-        if (active) setLoading(false);
-      });
-    return () => {
-      active = false;
-    };
-  }, [editionQuery, location.preserveResultsRef, location.tab, retry, workQuery]);
+      : "editions" in response
+        ? response.editions.map((edition) => async (): Promise<PrefetchVolumeRoute[]> => {
+          const workSlug = edition.work.slug;
+          const editionNumber = edition.chronologicalNumber;
+          const details = await queryClient.fetchQuery({
+            queryKey: [...PUBLIC_CATALOG_QUERY_ROOT, scope, "edition", workSlug, editionNumber],
+            queryFn: async () => {
+              const details = await getPublicEditionDetails(workSlug, editionNumber, { all: true });
+              if (details.edition.work.slug !== workSlug || details.edition.chronologicalNumber !== editionNumber) {
+                throw new Error("Edição não encontrada.");
+              }
+              return details;
+            },
+          });
+          return details.volumes.map((volume) => ({ workSlug, editionNumber, volumeNumber: volume.number }));
+        })
+        : [];
+
+    void (async () => {
+      const volumeGroups = await runWithConcurrency(tasks, PREFETCH_CONCURRENCY, (task) => task());
+      const uniqueVolumes = new Map<string, PrefetchVolumeRoute>();
+      volumeGroups.forEach((group) => group?.forEach((volume) => {
+        uniqueVolumes.set(`${volume.workSlug}/${volume.editionNumber}/${volume.volumeNumber}`, volume);
+      }));
+      // Limita o número de páginas de volume por busca para manter a carga em segundo plano previsível.
+      const volumeRoutes = [...uniqueVolumes.values()].slice(0, PREFETCH_VOLUME_LIMIT);
+      await runWithConcurrency(volumeRoutes, PREFETCH_CONCURRENCY, (volume) => queryClient.prefetchQuery({
+        queryKey: [...PUBLIC_CATALOG_QUERY_ROOT, scope, "volume", volume.workSlug, volume.editionNumber, volume.volumeNumber],
+        queryFn: () => getPublicVolumeDetails(volume.workSlug, volume.editionNumber, volume.volumeNumber),
+      }));
+    })();
+  }, [location.tab, queryClient, result.data, result.isPlaceholderData, scope]);
+
+  const response = result.data;
+  const fallback = location.tab === "works"
+    ? "Não foi possível carregar as Obras."
+    : "Não foi possível carregar as Edições.";
 
   return {
-    works,
-    editions,
-    pagination,
+    works: response && "works" in response ? response.works : [] as PublicWorkSummary[],
+    editions: response && "editions" in response ? response.editions : [] as PublicEditionSummary[],
+    pagination: response ? { ...response.pagination, totalPages: Math.max(response.pagination.totalPages, 1) } : EMPTY_PAGINATION,
     loading,
-    error,
-    retryResults: () => setRetry((value) => value + 1),
+    error: result.isError && !response ? getApiError(result.error, fallback) : "",
+    refreshError: result.isError && response ? "Não foi possível atualizar o catálogo." : "",
+    retryResults: () => { void result.refetch(); },
   };
 }
 

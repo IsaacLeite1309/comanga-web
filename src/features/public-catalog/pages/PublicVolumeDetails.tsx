@@ -1,8 +1,9 @@
 import { PersonalVolumeActions } from "../PersonalVolumeActions";
 import { PersonalCatalogSession } from "../PersonalCatalogSession";
-import { useEffect, useState } from "react";
+import { CatalogRefreshNotice } from "../CatalogRefreshNotice";
+import { useQuery, useQueryClient } from "@tanstack/react-query";
+import { useEffect } from "react";
 import {
-  AlertCircle,
   ArrowLeft,
   ArrowRight,
   Barcode,
@@ -13,16 +14,21 @@ import {
 } from "lucide-react";
 import { Link, useLocation, useParams } from "react-router-dom";
 import { LoadingState } from "@/components/shared/AsyncState";
+import { BackLink } from "@/components/shared/BackLink";
 import { CatalogCover } from "@/features/public-catalog/CatalogCover";
 import {
   formatPublicReleaseDate,
   publicVolumeLabel,
 } from "@/features/public-catalog/publicCatalogFormatters";
 import { getPublicVolumeDetails } from "@/features/public-catalog/publicCatalogService";
+import { prefetchAdjacentVolumes } from "@/features/public-catalog/prefetchCatalogDetails";
 import type { PublicVolumeDetails as PublicVolume } from "@/features/public-catalog/publicCatalogTypes";
 import { getApiError } from "@/lib/apiError";
+import { PUBLIC_CATALOG_QUERY_ROOT } from "@/lib/queryClient";
+import { usePublicCatalogScope } from "@/features/public-catalog/usePublicCatalogScope";
 import { publicEditionPath, publicVolumePath, publicWorkPath } from "@/features/public-catalog/publicCatalogPaths";
-import { catalogNavigationState, catalogRoot } from "@/features/public-catalog/publicCatalogNavigation";
+import { catalogNavigationState, catalogRoot, directReturnPath } from "@/features/public-catalog/publicCatalogNavigation";
+import { useCatalogErrorToast } from "@/features/public-catalog/useCatalogErrorToast";
 
 function formatPrice(price: number, currency: string) {
   const formatted = new Intl.NumberFormat("pt-BR", {
@@ -54,66 +60,34 @@ function DetailRow({
   );
 }
 
-function useVolumeDetails(volumeNumber: number, workSlug: string, editionNumber: number, retry: number) {
-  const [volume, setVolume] = useState<PublicVolume | null>(null);
-  const [loading, setLoading] = useState(true);
-  const [error, setError] = useState("");
-
+function useVolumeDetails(volumeNumber: number, workSlug: string, editionNumber: number) {
+  const scope = usePublicCatalogScope();
+  const queryClient = useQueryClient();
+  const valid = Boolean(workSlug) && Number.isInteger(editionNumber) && editionNumber > 0
+    && Number.isInteger(volumeNumber) && volumeNumber >= 0;
+  const result = useQuery({
+    queryKey: [...PUBLIC_CATALOG_QUERY_ROOT, scope, "volume", workSlug, editionNumber, volumeNumber],
+    queryFn: async () => {
+      const response = await getPublicVolumeDetails(workSlug, editionNumber, volumeNumber);
+      if (response.edition.chronologicalNumber !== editionNumber || response.number !== volumeNumber || response.edition.work.slug !== workSlug) {
+        throw new Error("Volume não encontrado.");
+      }
+      return response;
+    },
+    enabled: valid,
+  });
+  const volume: PublicVolume | null = result.data ?? null;
   useEffect(() => {
-    let active = true;
-
-    if (!workSlug || !Number.isInteger(editionNumber) || editionNumber <= 0 || !Number.isInteger(volumeNumber) || volumeNumber < 0) {
-      setVolume(null);
-      setError("Volume não encontrado.");
-      setLoading(false);
-      return () => { active = false; };
-    }
-
-    setLoading(true);
-    setError("");
-    getPublicVolumeDetails(workSlug, editionNumber, volumeNumber)
-      .then((result) => {
-        if (!active) return;
-        if (result.edition.chronologicalNumber !== editionNumber || result.number !== volumeNumber || result.edition.work.slug !== workSlug) {
-          setVolume(null);
-          setError("Volume não encontrado.");
-          return;
-        }
-        setVolume(result);
-      })
-      .catch((requestError) => {
-        if (!active) return;
-        setVolume(null);
-        setError(getApiError(requestError, "Não foi possível carregar este volume."));
-      })
-      .finally(() => {
-        if (active) setLoading(false);
-      });
-
-    return () => { active = false; };
-  }, [editionNumber, retry, volumeNumber, workSlug]);
-
-  return { volume, loading, error };
-}
-
-function VolumeUnavailable({ error, onRetry }: { error: string; onRetry: () => void }) {
-  return (
-    <div className="flex min-h-[calc(100dvh-5rem)] items-center justify-center px-4 py-12">
-      <section className="w-full max-w-lg rounded-2xl border border-red-500/20 bg-red-500/5 px-6 py-10 text-center">
-        <AlertCircle className="mx-auto h-9 w-9 text-red-400" aria-hidden="true" />
-        <h1 className="mt-4 text-xl font-bold text-foreground">Volume indisponível</h1>
-        <p className="mt-2 text-sm text-red-300">{error || "Volume não encontrado."}</p>
-        <div className="mt-6 flex flex-wrap justify-center gap-3">
-          <button type="button" onClick={onRetry} className="rounded-lg bg-primary px-4 py-2 text-sm font-bold text-primary-foreground">
-            Tentar novamente
-          </button>
-          <Link to="/pesquisa?tab=editions&sortBy=title&order=ASC&page=1" className="rounded-lg border border-border bg-input px-4 py-2 text-sm font-bold text-foreground">
-            Voltar ao catálogo
-          </Link>
-        </div>
-      </section>
-    </div>
-  );
+    if (volume) void prefetchAdjacentVolumes(queryClient, scope, volume);
+  }, [queryClient, scope, volume]);
+  return {
+    volume,
+    loading: valid && result.isPending,
+    error: !valid ? "Volume não encontrado." : result.isError && !volume
+      ? getApiError(result.error, "Não foi possível carregar este volume.") : "",
+    refreshError: result.isError && volume ? "Não foi possível atualizar este volume." : "",
+    retry: () => { void result.refetch(); },
+  };
 }
 
 interface VolumeSectionProps {
@@ -123,20 +97,23 @@ interface VolumeSectionProps {
 }
 
 function VolumeBreadcrumb({ volume, volumeLabel, editionLabel }: VolumeSectionProps) {
-  const navigationState = catalogNavigationState(useLocation().state);
+  const location = useLocation();
+  const navigationState = catalogNavigationState(location.state);
   const root = catalogRoot(navigationState.catalogOrigin);
   const editionPath = publicEditionPath(volume.edition.work.slug, volume.edition.chronologicalNumber);
+  const returnTo = directReturnPath(location.state, navigationState.catalogOrigin === "wishlist" ? ["/desejos"] : navigationState.catalogOrigin === "checklist" ? ["/lancamentos"] : []);
   return (
-    <div className="fixed inset-x-0 top-0 z-50 flex h-16 min-w-0 items-center gap-3 border-b border-border bg-background px-4 md:left-20 sm:px-6 lg:left-64 xl:px-10">
-      <Link
-        aria-label={`Voltar para ${editionLabel}`}
-        to={editionPath}
+    <div className="page-gutter fixed inset-x-0 top-0 z-50 flex h-16 min-w-0 items-center gap-3 border-b border-border bg-background md:left-20 lg:left-56">
+      <BackLink
+        aria-label={`Voltar para ${returnTo ? root.label : editionLabel}`}
+        to={returnTo ?? editionPath}
+        preferHistory={Boolean(returnTo)}
         state={navigationState}
         className="inline-flex shrink-0 items-center gap-2 rounded-lg px-2 py-1 text-base font-bold leading-none text-foreground transition-colors hover:bg-sidebar-accent/30 hover:text-foreground"
       >
         <ArrowLeft className="h-5 w-5 text-primary" aria-hidden="true" />
         Voltar
-      </Link>
+      </BackLink>
       <nav className="flex min-w-0 items-center gap-1 text-base font-semibold leading-none" aria-label="Caminho de navegação">
         <Link
           to={root.path}
@@ -174,7 +151,7 @@ function VolumeCover({ volume, volumeLabel }: Omit<VolumeSectionProps, "editionL
   const navigationState = catalogNavigationState(useLocation().state);
   const hasNavigation = volume.previousVolume || volume.nextVolume;
   return (
-    <section className="relative isolate flex min-h-[34rem] items-center justify-center overflow-hidden border-b border-border p-8 sm:min-h-[42rem] sm:p-12 lg:fixed lg:bottom-0 lg:left-64 lg:top-16 lg:h-[calc(100dvh-4rem)] lg:w-[calc((100vw-16rem)*0.425)] lg:min-h-0 lg:border-b-0 lg:border-r">
+    <section className="relative isolate flex min-h-[34rem] items-center justify-center overflow-hidden border-b border-border p-8 sm:min-h-[42rem] sm:p-12 lg:fixed lg:bottom-0 lg:left-56 lg:top-16 lg:h-[calc(100dvh-4rem)] lg:w-[calc((100vw-14rem)*0.425)] lg:min-h-0 lg:border-b-0 lg:border-r">
       {volume.coverUrl ? (
         <>
           <img src={volume.coverUrl} alt="" aria-hidden="true" className="absolute inset-0 -z-20 h-full w-full scale-110 object-cover opacity-45 blur-2xl" />
@@ -222,6 +199,7 @@ function VolumeCover({ volume, volumeLabel }: Omit<VolumeSectionProps, "editionL
 
 function PurchaseActions({ volume, onRefresh }: { volume: PublicVolume; onRefresh: () => void }) {
   const affiliateLink = volume.affiliateLink;
+  const purchasePlacement = "col-start-2 mt-0";
   return (
     <div className="grid grid-cols-2 gap-3">
       <PersonalVolumeActions volume={volume} onRefresh={onRefresh} />
@@ -230,21 +208,21 @@ function PurchaseActions({ volume, onRefresh }: { volume: PublicVolume; onRefres
           href={affiliateLink}
           target="_blank"
           rel="noreferrer noopener"
-          className="col-span-2 mt-3 inline-flex min-h-[3.25rem] w-full items-center justify-center gap-2 rounded-full border border-[#ff9900]/45 bg-white px-5 py-2.5 text-base font-semibold text-black transition-colors hover:border-[#ff9900] hover:bg-[#fffaf3]"
+          className={`${purchasePlacement} inline-flex min-h-[3.25rem] w-full items-center justify-center gap-2 rounded-full border border-[#ff9900]/45 bg-white px-5 py-2.5 text-base font-semibold text-black transition-colors hover:border-[#ff9900] hover:bg-[#fffaf3]`}
         >
           Comprar na <img src="/amazon-logo.svg" alt="Amazon" className="h-8 w-8 -translate-y-px object-contain" />
         </a>
       ) : (
-        <div className="relative col-span-2 mt-3 overflow-hidden rounded-full">
+        <div className={`relative ${purchasePlacement} overflow-hidden rounded-full`}>
           <button
             type="button"
             disabled
-            className="inline-flex min-h-[3.25rem] w-full items-center justify-center gap-2 border border-[#ff9900]/25 bg-white/45 px-5 py-2.5 text-base font-semibold text-background/70"
+            className="inline-flex min-h-[3.25rem] w-full items-center justify-center gap-2 rounded-full border border-[#ff9900]/25 bg-white/45 px-5 py-2.5 text-base font-semibold text-background/70"
           >
             Comprar na <img src="/amazon-logo.svg" alt="Amazon" className="h-8 w-8 -translate-y-px object-contain opacity-55" />
           </button>
-          <div className="pointer-events-none absolute left-[19%] top-1/2 flex h-8 w-[62%] -translate-y-1/2 rotate-[4deg] items-center justify-center bg-red-500 px-3 text-xs font-bold uppercase tracking-wide text-white shadow-sm shadow-black/30">
-            Indisponível
+          <div className="pointer-events-none absolute left-[21%] top-1/2 flex h-10 w-[58%] -translate-y-1/2 rotate-[4deg] items-center justify-center gap-1 whitespace-nowrap bg-red-500 px-1 text-base font-bold leading-none text-white shadow-sm shadow-black/30">
+            Indisponível na <img src="/amazon-logo.svg" alt="" className="h-6 w-6 shrink-0 object-contain brightness-0 invert" />
           </div>
         </div>
       )}
@@ -347,21 +325,27 @@ function VolumeArticle({ volume, volumeLabel, editionLabel, onRefresh }: VolumeS
 
 function PublicVolumeDetailsContent() {
   const { slug = "", editionNumber = "", volumeNumber = "" } = useParams();
-  const [retry, setRetry] = useState(0);
-  const { volume, loading, error } = useVolumeDetails(Number(volumeNumber), slug, Number(editionNumber), retry);
+  const location = useLocation();
+  const { volume, loading, error, refreshError, retry } = useVolumeDetails(Number(volumeNumber), slug, Number(editionNumber));
+  useCatalogErrorToast(error, retry, "volume-details");
   if (loading) return <LoadingState message="Carregando volume..." fullPage />;
-  if (!volume) return <VolumeUnavailable error={error} onRetry={() => setRetry((value) => value + 1)} />;
+  if (!volume) {
+    const navigationState = catalogNavigationState(location.state);
+    const returnTo = directReturnPath(location.state, navigationState.catalogOrigin === "wishlist" ? ["/desejos"] : navigationState.catalogOrigin === "checklist" ? ["/lancamentos"] : []);
+    return <div className="page-gutter flex min-h-[calc(100dvh-5rem)] items-center justify-center py-12"><BackLink to={returnTo ?? "/pesquisa?tab=editions&sortBy=title&order=ASC&page=1"} preferHistory={Boolean(returnTo)} className="rounded-lg border border-border bg-input px-4 py-2 text-sm font-bold text-foreground">Voltar</BackLink></div>;
+  }
   const volumeLabel = publicVolumeLabel(volume);
   const editionLabel = `${volume.edition.chronologicalNumber}ª edição`;
 
   return (
-    <div className="min-w-0 flex-1 bg-background px-4 pb-7 pt-16 sm:px-6 sm:pb-9 xl:px-10">
+    <div className="page-gutter min-w-0 flex-1 bg-background pb-7 pt-16 sm:pb-9">
+      <CatalogRefreshNotice message={refreshError} onRetry={retry} />
       <div className="mx-auto w-full max-w-7xl">
         <VolumeBreadcrumb volume={volume} volumeLabel={volumeLabel} editionLabel={editionLabel} />
       </div>
       <div className="-mx-4 grid min-h-[calc(100dvh-7.5rem)] w-[calc(100%+2rem)] sm:-mx-6 sm:w-[calc(100%+3rem)] xl:-mx-10 xl:w-[calc(100%+5rem)] lg:items-start lg:grid-cols-[minmax(22rem,0.85fr)_minmax(24rem,1.15fr)]">
         <VolumeCover volume={volume} volumeLabel={volumeLabel} />
-        <VolumeArticle volume={volume} volumeLabel={volumeLabel} editionLabel={editionLabel} onRefresh={() => setRetry(value => value + 1)} />
+        <VolumeArticle volume={volume} volumeLabel={volumeLabel} editionLabel={editionLabel} onRefresh={retry} />
       </div>
     </div>
   );

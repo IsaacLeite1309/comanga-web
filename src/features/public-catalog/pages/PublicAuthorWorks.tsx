@@ -1,14 +1,19 @@
-import { useEffect, useState } from "react";
-import { AlertCircle, ArrowLeft, ChevronRight } from "lucide-react";
+import { useQuery } from "@tanstack/react-query";
+import { ArrowLeft, ChevronRight } from "lucide-react";
 import { Link, useLocation, useParams, useSearchParams } from "react-router-dom";
 import { EmptyState, LoadingState } from "@/components/shared/AsyncState";
+import { BackLink } from "@/components/shared/BackLink";
 import { CatalogPagination } from "@/features/public-catalog/CatalogPagination";
 import { CatalogCover } from "@/features/public-catalog/CatalogCover";
+import { CatalogRefreshNotice } from "@/features/public-catalog/CatalogRefreshNotice";
 import { catalogNavigationState, catalogRoot } from "@/features/public-catalog/publicCatalogNavigation";
 import { publicWorkPath } from "@/features/public-catalog/publicCatalogPaths";
 import { getPublicAuthorWorks } from "@/features/public-catalog/publicCatalogService";
 import type { PublicAuthorWorksResponse } from "@/features/public-catalog/publicCatalogTypes";
 import { getApiError } from "@/lib/apiError";
+import { PUBLIC_CATALOG_QUERY_ROOT } from "@/lib/queryClient";
+import { usePublicCatalogScope } from "@/features/public-catalog/usePublicCatalogScope";
+import { useCatalogErrorToast } from "@/features/public-catalog/useCatalogErrorToast";
 
 const PAGE_SIZE = 24;
 
@@ -29,43 +34,23 @@ function PublicAuthorWorks() {
   const backPath = navigationState.fromWork ? publicWorkPath(navigationState.fromWork.slug) : root.path;
   const [searchParams, setSearchParams] = useSearchParams();
   const page = positiveInteger(searchParams.get("page"));
-  const [data, setData] = useState<PublicAuthorWorksResponse | null>(null);
-  const [loading, setLoading] = useState(true);
-  const [error, setError] = useState("");
-  const [retry, setRetry] = useState(0);
-
-  useEffect(() => {
-    let active = true;
-
-    if (!/^[\p{L}\p{N}]+(?:-[\p{L}\p{N}]+)*$/u.test(authorSlug)) {
-      setData(null);
-      setError("Autor não encontrado.");
-      setLoading(false);
-      return () => { active = false; };
-    }
-
-    setLoading(true);
-    setError("");
-    getPublicAuthorWorks(authorSlug, {
+  const scope = usePublicCatalogScope();
+  const valid = /^[\p{L}\p{N}]+(?:-[\p{L}\p{N}]+)*$/u.test(authorSlug);
+  const result = useQuery({
+    queryKey: [...PUBLIC_CATALOG_QUERY_ROOT, scope, "author", authorSlug, page],
+    queryFn: () => getPublicAuthorWorks(authorSlug, {
       page,
       limit: PAGE_SIZE,
       sortBy: "title",
       order: "ASC",
-    })
-      .then((result) => {
-        if (active) setData(result);
-      })
-      .catch((requestError) => {
-        if (!active) return;
-        setData(null);
-        setError(getApiError(requestError, "Não foi possível carregar as obras deste autor."));
-      })
-      .finally(() => {
-        if (active) setLoading(false);
-      });
-
-    return () => { active = false; };
-  }, [authorSlug, page, retry]);
+    }),
+    enabled: valid,
+  });
+  const data: PublicAuthorWorksResponse | null = result.data ?? null;
+  const loading = valid && result.isPending;
+  const error = !valid ? "Autor não encontrado." : result.isError && !data
+    ? getApiError(result.error, "Não foi possível carregar as obras deste autor.") : "";
+  useCatalogErrorToast(error, () => { void result.refetch(); }, "author-works");
 
   const changePage = (nextPage: number) => {
     const next = new URLSearchParams(searchParams);
@@ -76,28 +61,17 @@ function PublicAuthorWorks() {
   if (loading) return <LoadingState message="Carregando Obras do Autor..." fullPage />;
 
   if (error || !data) {
-    return (
-      <div className="flex min-h-[calc(100dvh-5rem)] items-center justify-center px-4 py-12">
-        <section className="w-full max-w-lg rounded-2xl border border-red-500/20 bg-red-500/5 px-6 py-10 text-center">
-          <AlertCircle className="mx-auto h-9 w-9 text-red-400" aria-hidden="true" />
-          <h1 className="mt-4 text-xl font-bold text-foreground">Autor indisponível</h1>
-          <p className="mt-2 text-sm text-red-300">{error || "Autor não encontrado."}</p>
-          <div className="mt-6 flex flex-wrap justify-center gap-3">
-            <button type="button" onClick={() => setRetry((value) => value + 1)} className="rounded-lg bg-primary px-4 py-2 text-sm font-bold text-primary-foreground">Tentar novamente</button>
-            <Link to={backPath} state={navigationState} className="rounded-lg border border-border bg-input px-4 py-2 text-sm font-bold text-foreground">Voltar</Link>
-          </div>
-        </section>
-      </div>
-    );
+    return <div className="page-gutter flex min-h-[calc(100dvh-5rem)] items-center justify-center py-12"><BackLink to={backPath} state={navigationState} className="rounded-lg border border-border bg-input px-4 py-2 text-sm font-bold text-foreground">Voltar</BackLink></div>;
   }
 
   return (
-    <div className="min-w-0 flex-1 px-4 pb-7 pt-[4.5rem] sm:px-6 sm:pb-9 xl:px-10">
+    <div className="page-gutter min-w-0 flex-1 pb-7 pt-[4.5rem] sm:pb-9">
+      <CatalogRefreshNotice message={result.isError ? "Não foi possível atualizar as obras deste autor." : ""} onRetry={() => { void result.refetch(); }} />
       <div className="mx-auto w-full max-w-7xl">
-        <div className="fixed inset-x-0 top-0 z-50 flex h-16 min-w-0 items-center gap-3 border-b border-border bg-background px-4 md:left-20 sm:px-6 lg:left-64 xl:px-10">
-          <Link to={backPath} state={navigationState} className="inline-flex shrink-0 items-center gap-2 rounded-lg px-2 py-1 text-base font-bold leading-none text-foreground transition-colors hover:bg-sidebar-accent/30">
+        <div className="page-gutter fixed inset-x-0 top-0 z-50 flex h-16 min-w-0 items-center gap-3 border-b border-border bg-background md:left-20 lg:left-56">
+          <BackLink to={backPath} state={navigationState} className="inline-flex shrink-0 items-center gap-2 rounded-lg px-2 py-1 text-base font-bold leading-none text-foreground transition-colors hover:bg-sidebar-accent/30">
             <ArrowLeft className="h-5 w-5 text-primary" aria-hidden="true" />Voltar
-          </Link>
+          </BackLink>
           <nav className="flex min-w-0 items-center gap-1 text-base font-semibold leading-none" aria-label="Caminho de navegação">
             <Link to={root.path} className="shrink-0 rounded-lg px-2 py-1 text-muted-foreground transition-colors hover:bg-sidebar-accent/30 hover:text-foreground">{root.label}</Link>
             <ChevronRight className="h-5 w-5 shrink-0 text-muted-foreground" aria-hidden="true" />

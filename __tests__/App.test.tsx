@@ -1,10 +1,12 @@
-import { fireEvent, render, screen } from "@testing-library/react";
+import { fireEvent, screen } from "@testing-library/react";
+import { render } from "./support/queryRender";
 import { beforeEach, describe, expect, it, vi } from "vitest";
 import App from "@/App";
 import { api } from "@/services/api";
 import { toast } from "sonner";
 
 vi.mock("@/services/api", () => ({ api: { get: vi.fn() } }));
+vi.mock("@/app/CollectorMenuPrefetch", () => ({ CollectorMenuPrefetch: () => null }));
 vi.mock("@/components/ui/sonner", () => ({ Toaster: () => null }));
 vi.mock("sonner", () => ({ toast: { error: vi.fn(), success: vi.fn(), warning: vi.fn() } }));
 vi.mock("@/features/auth", async () => {

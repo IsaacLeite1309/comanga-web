@@ -1,22 +1,26 @@
 import { useRef, useState } from "react";
 import { ChevronRight } from "lucide-react";
-import { Link } from "react-router-dom";
+import { Link, useLocation } from "react-router-dom";
+import { toast } from "sonner";
 import { CatalogCover, publicEditionPath, publicVolumeLabel } from "@/features/public-catalog";
 import { getCompleteCollectionEdition, type CollectedEdition, type PersonalWork } from "@/features/personal-library";
 import { getApiError } from "@/lib/apiError";
 
 export function CollectionEdition({ item, work }: { item: CollectedEdition; work: PersonalWork }) {
+  const location = useLocation();
   const [expanded, setExpanded] = useState<CollectedEdition["volumes"] | null>(null);
   const [loading, setLoading] = useState(false);
-  const [error, setError] = useState("");
   const expansion = useRef(0);
   async function expand() {
     const version = ++expansion.current;
-    setLoading(true); setError("");
+    setLoading(true);
     try {
       const result = await getCompleteCollectionEdition(item.edition.id);
       if (version === expansion.current) setExpanded(result.volumes.filter((volume) => volume.owned).map((volume) => ({ ...volume, read: Boolean(volume.read) })));
-    } catch (failure) { setError(getApiError(failure, "Não foi possível carregar os demais Volumes.")); }
+    } catch (failure) {
+      const message = getApiError(failure, "Não foi possível carregar os demais Volumes.");
+      toast.error(message, { id: `collection-edition-${item.edition.id}-error`, action: { label: "Tentar novamente", onClick: () => { void expand(); } } });
+    }
     finally { setLoading(false); }
   }
   const path = publicEditionPath(work.slug, item.edition.chronologicalNumber);
@@ -27,7 +31,7 @@ export function CollectionEdition({ item, work }: { item: CollectedEdition; work
     <section className="border-b border-border pb-3 pt-6 first:pt-0" aria-label={`${item.edition.chronologicalNumber}ª edição de ${work.title}`}>
       <Link
         to={path}
-        state={{ catalogOrigin: "collection" }}
+        state={{ catalogOrigin: "collection", returnTo: `${location.pathname}${location.search}` }}
         aria-label={`Ver ${item.edition.chronologicalNumber}ª edição de ${work.title}`}
         className="group -ml-3 flex w-[calc(100%+0.75rem)] items-center gap-3 rounded-2xl bg-background px-3 py-3 text-left transition-colors hover:bg-sidebar-accent/30 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary focus-visible:ring-offset-2 focus-visible:ring-offset-background"
       >
@@ -47,7 +51,6 @@ export function CollectionEdition({ item, work }: { item: CollectedEdition; work
         </div>
         <ChevronRight className="h-6 w-6 shrink-0 text-muted-foreground transition-colors group-hover:text-primary" aria-hidden="true" />
       </Link>
-      {error && <p role="alert" className="mt-2 text-red-300">{error}</p>}
       {!expanded && item.volumesPagination.totalPages > 1 && <button type="button" disabled={loading} onClick={() => void expand()} className="mt-2 text-xs font-bold text-primary">{loading ? "Carregando volumes..." : "Mostrar todos os volumes adquiridos"}</button>}
     </section>
   );

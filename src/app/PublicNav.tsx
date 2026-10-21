@@ -10,9 +10,11 @@
   Users,
 } from "lucide-react";
 import { cn } from "@/lib/utils";
+import { useEffect, useState } from "react";
 import { Link, useLocation } from "react-router-dom";
 import { BrandLogo } from "@/components/BrandLogo";
 import { useAuth } from "@/features/auth";
+import { lastCatalogPath, rememberCatalogPath } from "@/lib/catalogNavigationMemory";
 
 interface NavItem {
   label: string;
@@ -68,6 +70,19 @@ function NavButton({ item, showLabel }: { item: NavItem; showLabel?: boolean }) 
 export function PublicNav() {
   const { user, isAuthenticated, loading, activeProfile } = useAuth();
   const location = useLocation();
+  const [catalogPaths, setCatalogPaths] = useState({
+    search: lastCatalogPath("/pesquisa"),
+    calendar: lastCatalogPath("/lancamentos"),
+  });
+
+  useEffect(() => {
+    if (location.pathname !== "/pesquisa" && location.pathname !== "/lancamentos") return;
+    rememberCatalogPath(location.pathname, location.search);
+    const key = location.pathname === "/pesquisa" ? "search" : "calendar";
+    const path = `${location.pathname}${location.search}`;
+    setCatalogPaths((current) => current[key] === path ? current : { ...current, [key]: path });
+  }, [location.pathname, location.search]);
+
   const baseNavItems = loading
     ? []
     : activeProfile === "Administrador"
@@ -76,6 +91,8 @@ export function PublicNav() {
 
   const navItems = baseNavItems.map((item) => ({
     ...item,
+    href: item.href === "/pesquisa" ? catalogPaths.search
+      : item.href === "/lancamentos" ? catalogPaths.calendar : item.href,
     active: item.href ? location.pathname.startsWith(item.href) : false,
   }));
 
@@ -118,7 +135,7 @@ export function PublicNav() {
         </div>
       </nav>
 
-      <nav className="hidden lg:flex fixed left-0 top-0 h-screen w-64 bg-sidebar border-r border-sidebar-foreground/30 flex-col justify-between py-6 px-4 z-50">
+      <nav className="hidden lg:flex fixed left-0 top-0 h-screen w-56 bg-sidebar border-r border-sidebar-foreground/30 flex-col justify-between py-6 px-4 z-50">
         <div className="flex flex-col gap-1">
           <div className="flex items-center gap-3 mb-8 px-3">
             <BrandLogo />

@@ -1,5 +1,5 @@
 import { Navigate, useLocation } from "react-router-dom";
-import { useAuth } from "@/features/auth";
+import { ADMIN_PROFILE, useAuth } from "@/features/auth";
 import { toast } from "sonner";
 import { useEffect, useRef } from "react";
 import { Loader2 } from "lucide-react";
@@ -10,7 +10,7 @@ interface ProtectedRouteProps {
 }
 
 export function ProtectedRoute({ children, requiredRole }: ProtectedRouteProps) {
-  const { isAuthenticated, loading, isSessionEnding, user, activeProfile } = useAuth();
+  const { isAuthenticated, loading, isSessionEnding, user, activeProfile, hasAdminProfile } = useAuth();
   const location = useLocation();
   const sessionToastFired = useRef(false);
   const forbiddenToastFired = useRef(false);
@@ -22,10 +22,14 @@ export function ProtectedRoute({ children, requiredRole }: ProtectedRouteProps) 
     }
 
     if (!loading && isAuthenticated && requiredRole && activeProfile !== requiredRole && !forbiddenToastFired.current) {
-      toast.error("Acesso negado: Você não tem permissão para acessar esta área.");
+      if (requiredRole === ADMIN_PROFILE && hasAdminProfile) {
+        toast.warning("Mude o perfil para administrador para acessar essa página.");
+      } else {
+        toast.error("Acesso negado: Você não tem permissão para acessar esta área.");
+      }
       forbiddenToastFired.current = true;
     }
-  }, [loading, isAuthenticated, isSessionEnding, requiredRole, activeProfile]);
+  }, [loading, isAuthenticated, isSessionEnding, requiredRole, activeProfile, hasAdminProfile]);
 
   if (loading) {
     return (

@@ -12,24 +12,20 @@ export interface CollectionFilters {
   term?: string;
   status?: "complete" | "incomplete";
   brazilianPublisherId?: number;
+  order?: "ASC" | "DESC";
 }
 export async function listCollection(page = 1, filters: CollectionFilters = {}) {
   return (await api.get<CollectionResponse>(`${ROOT}/collection`, { params: { page, limit: 12, ...filters } })).data;
 }
-export interface WishlistFilters { term?: string; brazilianPublisherId?: number }
+export interface WishlistFilters { term?: string; brazilianPublisherId?: number; order?: "ASC" | "DESC" }
 export async function listWishlist(page = 1, filters: WishlistFilters = {}) {
   return (await api.get<WishlistResponse>(`${ROOT}/wishlist`, { params: { page, limit: 24, ...filters } })).data;
 }
-export async function getCollectionEdition(editionId: number, query = { page: 1, limit: 50 }) {
+export async function getCollectionEdition(editionId: number, query: { page: number; limit: number } | { all: true } = { page: 1, limit: 50 }) {
   return (await api.get<CollectionEditionResponse>(`${ROOT}/collection/editions/${editionId}`, { params: query })).data;
 }
 export async function getCompleteCollectionEdition(editionId: number) {
-  const first = await getCollectionEdition(editionId);
-  const volumes = [...first.volumes];
-  for (let page = 2; page <= first.pagination.totalPages; page++) {
-    volumes.push(...(await getCollectionEdition(editionId, { page, limit: 50 })).volumes);
-  }
-  return { ...first, volumes };
+  return getCollectionEdition(editionId, { all: true });
 }
 export async function addCollectionVolume(volumeId: number) {
   const response = await api.put<PersonalVolumeState>(`${ROOT}/collection/volumes/${volumeId}`);

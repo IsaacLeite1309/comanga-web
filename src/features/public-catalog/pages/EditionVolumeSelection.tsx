@@ -1,13 +1,15 @@
 import { useState } from "react";
-import { Check, Eye, Heart } from "lucide-react";
-import { Link, useLocation, useNavigate, useParams } from "react-router-dom";
+import { BackLink } from "@/components/shared/BackLink";
+import { BookOpen, Heart, LibraryBig } from "lucide-react";
+import { useLocation, useNavigate, useParams } from "react-router-dom";
 import { toast } from "sonner";
 import { CatalogCover } from "../CatalogCover";
 import { publicVolumeLabel } from "../publicCatalogFormatters";
-import { LoadingState } from "@/components/shared/AsyncState";
-import { WishlistToCollectionDialog } from "@/features/personal-library";
+import { CollectionChangeDialog } from "@/features/personal-library";
 import type { PersonalVolume } from "@/features/personal-library";
 import { useEditionSelection, type SelectionMode } from "./useEditionSelection";
+import { useCatalogErrorToast } from "@/features/public-catalog/useCatalogErrorToast";
+import { usePageScrollLock } from "@/hooks/usePageScrollLock";
 
 function SelectableVolume({
   volume,
@@ -45,8 +47,8 @@ function SelectableVolume({
           {selected && (mode === "desejos"
             ? <Heart className="h-5 w-5" fill="currentColor" strokeWidth={2.5} />
             : mode === "lidos"
-              ? <Eye className="h-5 w-5" strokeWidth={2.5} />
-              : <Check className="h-6 w-6" strokeWidth={3} />)}
+              ? <BookOpen className="h-5 w-5" fill="currentColor" strokeWidth={2.5} />
+              : <LibraryBig className="h-5 w-5" fill="currentColor" />)}
         </span>
       </span>
       <CatalogCover
@@ -71,7 +73,7 @@ function SelectionFooter({ data, mode, state }: {
   const allSelected = selectable.length > 0 && selectable.every(({ id }) => selectedIds.has(id));
   const noneSelected = selectedIds.size === 0;
   return (
-      <footer className="fixed bottom-16 left-0 right-0 z-20 bg-background/95 px-4 backdrop-blur md:bottom-0 md:left-20 lg:left-64 sm:px-6 xl:px-10">
+      <footer className="page-gutter fixed bottom-16 left-0 right-0 z-20 bg-background/95 backdrop-blur md:bottom-0 md:left-20 lg:left-56">
         <div className="mx-auto flex w-full max-w-7xl items-center justify-between gap-4 border-t border-border py-4">
           <button
             type="button"
@@ -100,9 +102,51 @@ function selectionEmptyMessage(mode: SelectionMode) {
   return "Nenhum volume público cadastrado nesta edição.";
 }
 
-function countWishedVolumesToAdd(mode: SelectionMode, data: ReturnType<typeof useEditionSelection>["data"], selectedIds: Set<number>) {
-  if (mode !== "colecao" || !data) return 0;
-  return data.volumes.filter((volume) => volume.wished && !volume.owned && selectedIds.has(volume.id)).length;
+function collectionWarnings(data: ReturnType<typeof useEditionSelection>["data"], selectedIds: Set<number>, mode: SelectionMode) {
+  if (mode !== "colecao" || !data) return { wishlistVolumes: [], readVolumes: [] };
+  return {
+    wishlistVolumes: data.volumes.filter((volume) => volume.wished && !volume.owned && selectedIds.has(volume.id)),
+    readVolumes: data.volumes.filter((volume) => volume.owned && volume.read && !selectedIds.has(volume.id)),
+  };
+}
+
+function SelectionLoading({ editionPath }: { editionPath: string }) {
+  return (
+    <div className="min-w-0 flex-1 bg-background" role="status" aria-label="Carregando seleção de volumes">
+      <header className="page-gutter sticky top-0 z-20 bg-background/95 backdrop-blur">
+        <div className="mx-auto flex w-full max-w-7xl items-center justify-between gap-4 border-b border-border py-4">
+          <BackLink to={editionPath} className="text-sm font-bold text-primary hover:text-primary/80">Cancelar</BackLink>
+          <p className="min-w-0 truncate text-center text-sm font-semibold text-foreground sm:text-base">Carregando...</p>
+          <button type="button" disabled className="text-sm font-bold text-muted-foreground">OK</button>
+        </div>
+      </header>
+
+      <main className="page-gutter mx-auto w-full max-w-7xl pb-28 pt-6">
+        <div className="grid grid-cols-2 gap-x-3 gap-y-7 sm:grid-cols-3 sm:gap-x-4 lg:grid-cols-4 xl:grid-cols-5 2xl:grid-cols-6" aria-hidden="true">
+          {Array.from({ length: 12 }, (_, index) => (
+            <div
+              key={index}
+              className="catalog-skeleton-card relative min-w-0"
+              style={{ animationDelay: `${index * 110}ms` }}
+            >
+              <span className="absolute -left-3 -top-3 z-10 flex h-16 w-16 items-center justify-center rounded-full bg-background">
+                <span className="h-9 w-9 rounded-full border-2 border-white/30 bg-background" />
+              </span>
+              <div className="catalog-skeleton-shape aspect-[2/3] rounded-lg border border-border" />
+              <div className="catalog-skeleton-shape mt-2 h-4 w-20 max-w-full rounded" />
+            </div>
+          ))}
+        </div>
+      </main>
+
+      <footer className="page-gutter fixed bottom-16 left-0 right-0 z-20 bg-background/95 backdrop-blur md:bottom-0 md:left-20 lg:left-56">
+        <div className="mx-auto flex w-full max-w-7xl items-center justify-between gap-4 border-t border-border py-4">
+          <button type="button" disabled className="text-sm font-bold text-muted-foreground">Desmarcar todos</button>
+          <button type="button" disabled className="text-sm font-bold text-muted-foreground">Selecionar todos</button>
+        </div>
+      </footer>
+    </div>
+  );
 }
 
 function SelectionContent({ slug, editionNumber, mode }: { slug: string; editionNumber: string; mode: SelectionMode }) {
@@ -111,8 +155,11 @@ function SelectionContent({ slug, editionNumber, mode }: { slug: string; edition
   const navigate = useNavigate();
   const state = useEditionSelection(slug, Number(editionNumber), mode);
   const { data, selectedIds, loading, error, saving, hasChanges } = state;
+  usePageScrollLock(loading);
+  useCatalogErrorToast(error, state.reload, "edition-volume-selection");
   const visibleVolumes = data?.volumes.filter((volume) => mode === "colecao" || (mode === "desejos" ? !volume.owned : volume.owned)) ?? [];
-  const wishedToAdd = countWishedVolumesToAdd(mode, data, selectedIds);
+  const { wishlistVolumes, readVolumes } = collectionWarnings(data, selectedIds, mode);
+  const needsConfirmation = wishlistVolumes.length > 0 || readVolumes.length > 0;
   const editionPath = `${location.pathname.startsWith("/colecao/") ? "/colecao" : "/obra"}/${encodeURIComponent(slug)}/edicao/${editionNumber}`;
   const toggleVolume = (volumeId: number) => state.setSelectedIds((current) => {
     const next = new Set(current);
@@ -124,32 +171,24 @@ function SelectionContent({ slug, editionNumber, mode }: { slug: string; edition
     toast.success(mode === "colecao" ? "Coleção atualizada." : mode === "desejos" ? "Lista de desejos atualizada." : "Volumes lidos atualizados.");
     navigate(editionPath);
   });
-  if (loading) return <LoadingState message="Carregando volumes..." fullPage />;
+  if (loading) return <SelectionLoading editionPath={editionPath} />;
 
   if (error || !data) {
-    return (
-      <div className="flex min-h-[calc(100dvh-5rem)] items-center justify-center px-4 py-12">
-        <div className="text-center">
-          <p role="alert" className="font-semibold text-red-300">{error || "Edição não encontrada."}</p>
-          <button type="button" onClick={state.reload} className="mt-4 block text-sm font-bold text-primary">Tentar novamente</button>
-          <Link to={editionPath} className="mt-4 inline-flex text-sm font-bold text-primary">Voltar à Edição</Link>
-        </div>
-      </div>
-    );
+    return <div className="page-gutter flex min-h-[calc(100dvh-5rem)] items-center justify-center py-12"><BackLink to={editionPath} className="inline-flex text-sm font-bold text-primary">Voltar à Edição</BackLink></div>;
   }
 
   return (
     <div className="min-w-0 flex-1 bg-background">
-      <header className="sticky top-0 z-20 bg-background/95 px-4 backdrop-blur sm:px-6 xl:px-10">
+      <header className="page-gutter sticky top-0 z-20 bg-background/95 backdrop-blur">
         <div className="mx-auto flex w-full max-w-7xl items-center justify-between gap-4 border-b border-border py-4">
-          <Link to={editionPath} className="text-sm font-bold text-primary hover:text-primary/80">Cancelar</Link>
+          <BackLink to={editionPath} className="text-sm font-bold text-primary hover:text-primary/80">Cancelar</BackLink>
           <p className="min-w-0 truncate text-center text-sm font-semibold text-foreground sm:text-base">
             {selectedIds.size} de {visibleVolumes.length} selecionados
           </p>
           <button
             type="button"
             disabled={!hasChanges || saving}
-            onClick={() => { if (wishedToAdd > 0) setConfirmingCollection(true); else saveSelection(); }}
+            onClick={() => { if (needsConfirmation) setConfirmingCollection(true); else saveSelection(); }}
             className="text-sm font-bold text-primary hover:text-primary/80 disabled:cursor-not-allowed disabled:text-muted-foreground disabled:hover:text-muted-foreground"
           >
             {saving ? "Salvando..." : "OK"}
@@ -157,7 +196,7 @@ function SelectionContent({ slug, editionNumber, mode }: { slug: string; edition
         </div>
       </header>
 
-      <main className="mx-auto w-full max-w-7xl px-4 pb-28 pt-6 sm:px-6 xl:px-10">
+      <main className="page-gutter mx-auto w-full max-w-7xl pb-28 pt-6">
         {state.message && <p role="status" className="mb-6 text-sm font-semibold text-primary">{state.message}</p>}
         {visibleVolumes.length > 0 ? (
           <div className="grid grid-cols-2 gap-x-3 gap-y-7 sm:grid-cols-3 sm:gap-x-4 lg:grid-cols-4 xl:grid-cols-5 2xl:grid-cols-6">
@@ -179,10 +218,15 @@ function SelectionContent({ slug, editionNumber, mode }: { slug: string; edition
       </main>
 
       <SelectionFooter data={data} mode={mode} state={state} />
-      {confirmingCollection && <WishlistToCollectionDialog count={wishedToAdd} onCancel={() => setConfirmingCollection(false)} onConfirm={() => {
-        setConfirmingCollection(false);
-        saveSelection();
-      }} />}
+      {confirmingCollection && <CollectionChangeDialog
+        wishlistVolumes={wishlistVolumes.map(publicVolumeLabel)}
+        readVolumes={readVolumes.map(publicVolumeLabel)}
+        confirmLabel="Salvar"
+        onCancel={() => setConfirmingCollection(false)}
+        onConfirm={() => {
+          setConfirmingCollection(false);
+          saveSelection();
+        }} />}
     </div>
   );
 }

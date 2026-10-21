@@ -1,4 +1,5 @@
 export type CatalogOrigin = "search" | "collection" | "checklist" | "wishlist";
+import { lastCatalogPath } from "@/lib/catalogNavigationMemory";
 
 export interface CatalogNavigationState {
   catalogOrigin: CatalogOrigin;
@@ -15,11 +16,18 @@ export function catalogNavigationState(value: unknown): CatalogNavigationState {
   return { catalogOrigin, ...(fromWork ? { fromWork } : {}) };
 }
 
+export function directReturnPath(value: unknown, allowedPaths: string[]) {
+  if (!value || typeof value !== "object") return null;
+  const path = (value as { returnTo?: unknown }).returnTo;
+  if (typeof path !== "string" || !path.startsWith("/") || path.startsWith("//")) return null;
+  return allowedPaths.includes(path.split(/[?#]/, 1)[0]) ? path : null;
+}
+
 export function catalogRoot(origin: CatalogOrigin) {
   switch (origin) {
     case "collection": return { path: "/colecao", label: "Coleção" };
-    case "checklist": return { path: "/lancamentos", label: "Lançamentos" };
+    case "checklist": return { path: lastCatalogPath("/lancamentos"), label: "Lançamentos" };
     case "wishlist": return { path: "/desejos", label: "Lista de desejos" };
-    default: return { path: "/pesquisa?tab=works&sortBy=title&order=ASC&page=1", label: "Pesquisar" };
+    default: return { path: lastCatalogPath("/pesquisa"), label: "Pesquisar" };
   }
 }

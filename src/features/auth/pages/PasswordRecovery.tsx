@@ -209,7 +209,7 @@ function PasswordRecoveryForm({ reset, token }: { reset: boolean; token?: string
     } finally { setLoading(false); }
   }
 
-  return <main className="flex min-h-screen w-full flex-col items-center justify-center bg-background px-4 py-8">
+  return <main className="page-gutter flex min-h-screen w-full flex-col items-center justify-center bg-background py-8">
     <div className="mb-8 flex items-center gap-3">
       <BrandLogo />
       <h1 className="text-3xl font-bold tracking-wide text-primary-foreground">

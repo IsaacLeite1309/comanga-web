@@ -18,8 +18,9 @@ export interface CollectedEdition {
 }
 export interface CollectionResponse {
   works: { work: PersonalWork; editions: CollectedEdition[] }[];
+  totals: { editions: number; volumes: number };
   pagination: PersonalPagination;
 }
 export interface WishlistVolume extends PersonalVolume { affiliateLink: string | null; work: PersonalWork; edition: PersonalEdition }
-export interface WishlistResponse { volumes: WishlistVolume[]; pagination: PersonalPagination }
+export interface WishlistResponse { volumes: WishlistVolume[]; totals: { volumes: number }; pagination: PersonalPagination }
 export interface CollectionDelta { addVolumeIds: number[]; removeVolumeIds: number[] }

@@ -489,7 +489,7 @@ export function AuthCard() {
   }
 
   return (
-    <div className="flex-1 flex flex-col items-center justify-center px-4 py-8">
+    <div className="page-gutter flex-1 flex flex-col items-center justify-center py-8">
       <AuthHeader />
 
       <div className="w-full max-w-md p-8 bg-background rounded-2xl border border-border">

@@ -26,7 +26,7 @@ const NewManga = ({ mode = "create", workId, returnPath = "/admin/gerenciar-mang
 
   if (controller.loadingOptions) {
     return (
-      <div className="flex flex-1 items-center justify-center px-4 py-10 text-muted-foreground">
+      <div className="page-gutter flex flex-1 items-center justify-center py-10 text-muted-foreground">
         <Loader2 className="mr-2 h-5 w-5 animate-spin text-primary" />
         {isEditMode ? "Carregando dados da Obra..." : "Carregando formulário..."}
       </div>
@@ -34,7 +34,7 @@ const NewManga = ({ mode = "create", workId, returnPath = "/admin/gerenciar-mang
   }
 
   return (
-    <div className="flex-1 min-w-0 px-3 py-6 sm:px-4 sm:py-8">
+    <div className="page-gutter flex-1 min-w-0 py-6 sm:py-8">
       <UnsavedChangesPrompt
         when={controller.hasUnsavedChanges}
         continueLabel={isEditMode ? "Continuar editando" : "Continuar cadastrando"}

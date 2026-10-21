@@ -1,4 +1,4 @@
-import { render, screen } from "@testing-library/react";
+import { fireEvent, render, screen } from "@testing-library/react";
 import { MemoryRouter } from "react-router-dom";
 import { beforeEach, describe, expect, it, vi } from "vitest";
 import { PublicNav } from "@/app/PublicNav";
@@ -49,6 +49,15 @@ describe("PublicNav", () => {
     screen.getAllByRole("link", { name: "Lançamentos" }).forEach(link => {
       expect(link).toHaveAttribute("aria-current", "page");
     });
+  });
+
+  it("preserva os filtros de pesquisa e lançamentos ao alternar pelo menu", () => {
+    renderPublicNav("/pesquisa?tab=editions&term=Monster");
+    fireEvent.click(screen.getAllByRole("link", { name: "Lançamentos" })[0]);
+    fireEvent.click(screen.getAllByRole("link", { name: "Pesquisar" })[0]);
+    expect(screen.getAllByRole("link", { name: "Pesquisar" })[0]).toHaveAttribute("href", "/pesquisa?tab=editions&term=Monster");
+    fireEvent.click(screen.getAllByRole("link", { name: "Lançamentos" })[0]);
+    expect(screen.getAllByRole("link", { name: "Lançamentos" })[0]).toHaveAttribute("href", "/lancamentos");
   });
 
   it("renderiza menu administrativo para administrador autenticado", () => {

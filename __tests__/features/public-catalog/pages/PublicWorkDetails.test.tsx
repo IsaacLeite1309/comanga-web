@@ -1,11 +1,14 @@
-import { fireEvent, render, screen, waitFor, within } from "@testing-library/react";
+import { fireEvent, screen, waitFor, within } from "@testing-library/react";
+import { render } from "../../../support/queryRender";
 import { MemoryRouter, Route, Routes, useLocation } from "react-router-dom";
 import { beforeEach, describe, expect, it, vi } from "vitest";
 import { AxiosError, AxiosHeaders } from "axios";
+import { toast } from "sonner";
 import PublicWorkDetails from "@/features/public-catalog/pages/PublicWorkDetails";
 import { getPublicWorkDetails } from "@/features/public-catalog/publicCatalogService";
 
 vi.mock("@/features/auth", () => ({ useAuth: () => ({ user: null, loading: false }) }));
+vi.mock("sonner", () => ({ toast: { error: vi.fn() } }));
 
 vi.mock("@/features/public-catalog/publicCatalogService", () => ({
   getPublicWorkDetails: vi.fn(),
@@ -77,7 +80,7 @@ it("não exibe contadores pessoais nem etiquetas de leitura na Obra", async () =
   expect(ownedBadge.parentElement).toHaveClass("flex", "gap-1", "-left-1");
   expect(ownedBadge).toHaveClass("h-6", "w-6");
   expect(readBadge).toHaveClass("h-6", "w-6");
-  expect(readBadge.querySelector("svg")).toHaveClass("lucide-eye");
+  expect(readBadge.querySelector("svg")).toHaveClass("lucide-book-open");
 });
 
 it("marca a capa desejada na prévia da Obra", async () => {
@@ -287,8 +290,9 @@ describe("PublicWorkDetails", () => {
       .mockResolvedValueOnce(work);
     renderPage("obra-restrita");
 
-    expect(await screen.findByText("Obra não encontrada.")).toBeInTheDocument();
-    fireEvent.click(screen.getByRole("button", { name: "Tentar novamente" }));
+    await waitFor(() => expect(toast.error).toHaveBeenCalledWith("Obra não encontrada.", expect.any(Object)));
+    const retry = vi.mocked(toast.error).mock.calls[0][1] as unknown as { action: { onClick: () => void } };
+    retry.action.onClick();
 
     await waitFor(() => expect(getPublicWorkDetails).toHaveBeenCalledTimes(2));
     expect(await screen.findByRole("heading", { name: "Monster", level: 1 })).toBeInTheDocument();

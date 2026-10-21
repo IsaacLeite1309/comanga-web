@@ -1,9 +1,14 @@
-import { fireEvent, render, screen, waitFor } from "@testing-library/react";
+import { fireEvent, screen, waitFor } from "@testing-library/react";
+import { render } from "../../../support/queryRender";
 import { AxiosError, AxiosHeaders } from "axios";
 import { MemoryRouter, Route, Routes, useLocation } from "react-router-dom";
 import { beforeEach, describe, expect, it, vi } from "vitest";
+import { toast } from "sonner";
 import PublicAuthorWorks from "@/features/public-catalog/pages/PublicAuthorWorks";
 import { getPublicAuthorWorks } from "@/features/public-catalog/publicCatalogService";
+
+vi.mock("@/features/auth", () => ({ useAuth: () => ({ user: null, loading: false }) }));
+vi.mock("sonner", () => ({ toast: { error: vi.fn() } }));
 
 vi.mock("@/features/public-catalog/publicCatalogService", () => ({
   getPublicAuthorWorks: vi.fn(),
@@ -130,15 +135,16 @@ describe("PublicAuthorWorks", () => {
       .mockResolvedValueOnce(response);
     const { unmount } = renderPage();
 
-    expect(await screen.findByText("Autor não encontrado.")).toBeInTheDocument();
-    fireEvent.click(screen.getByRole("button", { name: "Tentar novamente" }));
+    await waitFor(() => expect(toast.error).toHaveBeenCalledWith("Autor não encontrado.", expect.any(Object)));
+    const retry = vi.mocked(toast.error).mock.lastCall?.[1] as unknown as { action: { onClick: () => void } };
+    retry.action.onClick();
     await waitFor(() => expect(getPublicAuthorWorks).toHaveBeenCalledTimes(2));
     expect(await screen.findByRole("heading", { name: "Naoki Urasawa" })).toBeInTheDocument();
 
     unmount();
     vi.clearAllMocks();
     renderPage("/autor/autor invalido");
-    expect(await screen.findByText("Autor não encontrado.")).toBeInTheDocument();
+    await waitFor(() => expect(toast.error).toHaveBeenCalledWith("Autor não encontrado.", expect.any(Object)));
     expect(getPublicAuthorWorks).not.toHaveBeenCalled();
   });
 });

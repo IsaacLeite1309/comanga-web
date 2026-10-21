@@ -1,4 +1,5 @@
-import { render, screen } from "@testing-library/react";
+import { screen } from "@testing-library/react";
+import { render } from "../support/queryRender";
 import { MemoryRouter } from "react-router-dom";
 import { beforeEach, describe, expect, it, vi } from "vitest";
 import { CollectionPage } from "@/features/collection";
@@ -11,9 +12,13 @@ import NotFound from "@/app/NotFound";
 vi.mock("@/features/personal-library", () => ({
   useLibraryPage: () => ({ data: null, loading: false, error: "", message: "" }),
   listCollection: vi.fn(), listWishlist: vi.fn(),
+  GuestLibraryNotice: () => <div>Faça login para gerenciar seu acervo.</div>,
 }));
 vi.mock("@/features/auth/AuthCard", () => ({
   AuthCard: () => <div>Cartão de autenticação</div>,
+}));
+vi.mock("@/features/auth/useAuth", () => ({
+  useAuth: () => ({ user: null, isAuthenticated: false, loading: false }),
 }));
 
 vi.mock("@/features/public-catalog/publicCatalogService", () => ({
@@ -38,13 +43,13 @@ describe("paginas estaticas", () => {
   });
 
   it("renderiza a pagina de colecao", () => {
-    render(<CollectionPage isAuthenticated />);
+    render(<MemoryRouter><CollectionPage isAuthenticated={false} /></MemoryRouter>);
 
     expect(screen.getByRole("heading", { name: "Sua coleção" })).toBeInTheDocument();
   });
 
   it("renderiza a pagina de desejos", () => {
-    render(<WishlistPage isAuthenticated />);
+    render(<MemoryRouter><WishlistPage isAuthenticated={false} /></MemoryRouter>);
 
     expect(screen.getByRole("heading", { name: "Lista de desejos" })).toBeInTheDocument();
   });
@@ -56,7 +61,7 @@ describe("paginas estaticas", () => {
       </MemoryRouter>,
     );
 
-    expect(screen.getByRole("searchbox", { name: "Pesquisar no catálogo" })).toBeInTheDocument();
+    expect(screen.getByRole("searchbox", { name: "Pesquisar obras" })).toBeInTheDocument();
   });
 
   it("renderiza a pagina inicial com o card de autenticacao", () => {

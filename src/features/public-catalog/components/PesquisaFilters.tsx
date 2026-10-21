@@ -71,6 +71,7 @@ function TabSelector({ catalog }: { catalog: PesquisaCatalog }) {
           type="button"
           role="tab"
           aria-selected={catalog.tab === tab}
+          disabled={catalog.loading}
           onClick={() => catalog.changeTab(tab)}
           className={`inline-flex h-full flex-1 items-center justify-center rounded-full px-5 text-sm font-semibold transition-all disabled:cursor-not-allowed disabled:opacity-60 sm:flex-none ${catalog.tab === tab ? "bg-primary text-primary-foreground" : "text-foreground hover:bg-sidebar-accent"}`}
         >
@@ -84,14 +85,15 @@ function TabSelector({ catalog }: { catalog: PesquisaCatalog }) {
 function SearchInput({ catalog }: { catalog: PesquisaCatalog }) {
   return (
     <label className="block min-w-0 flex-1 text-xs font-bold uppercase tracking-wide">
-      Pesquisar
+      {catalog.tab === "works" ? "Pesquisar obras" : "Pesquisar edições"}
       <span className="relative mt-2 block">
         <Search className="pointer-events-none absolute left-4 top-1/2 h-5 w-5 -translate-y-1/2 text-foreground" aria-hidden="true" />
         <input
           type="search"
-          aria-label="Pesquisar no catálogo"
+          aria-label={catalog.tab === "works" ? "Pesquisar obras" : "Pesquisar edições"}
           value={catalog.searchTerm}
           onChange={(event) => catalog.setSearchTerm(event.target.value)}
+          disabled={catalog.loading}
           placeholder="Título, título original ou autor"
           className="catalog-search-input block h-12 w-full appearance-none rounded-lg border border-sidebar-foreground/35 bg-sidebar pl-12 pr-3 text-sm font-semibold text-foreground outline-none transition-colors placeholder:text-muted-foreground hover:border-primary focus:border-primary disabled:cursor-not-allowed disabled:opacity-60"
         />
@@ -131,14 +133,14 @@ function WorkPrimaryFilters({ catalog }: { catalog: PesquisaCatalog }) {
         value={catalog.typeId ? String(catalog.typeId) : ""}
         options={catalog.workTypeOptions}
         onChange={(value) => catalog.updateParam("typeId", value)}
-        disabled={catalog.optionsLoading}
+        disabled={catalog.loading || catalog.optionsLoading}
       />
       <PrimaryFilter
         label="Status Original"
         value={catalog.originalPublicationStatus}
         options={statusOptions(catalog.options.originalPublicationStatuses)}
         onChange={(value) => catalog.updateParam("originalPublicationStatus", value)}
-        disabled={catalog.optionsLoading}
+        disabled={catalog.loading || catalog.optionsLoading}
       />
     </>
   );
@@ -152,7 +154,7 @@ function EditionPrimaryFilters({ catalog }: { catalog: PesquisaCatalog }) {
         value={catalog.brazilianPublisherId ? String(catalog.brazilianPublisherId) : ""}
         options={catalog.options.brazilianPublishers}
         onChange={(value) => catalog.updateParam("brazilianPublisherId", value)}
-        disabled={catalog.optionsLoading}
+        disabled={catalog.loading || catalog.optionsLoading}
         searchable
       />
       <PrimaryFilter
@@ -160,7 +162,7 @@ function EditionPrimaryFilters({ catalog }: { catalog: PesquisaCatalog }) {
         value={catalog.brazilPublicationStatus}
         options={statusOptions(catalog.options.brazilPublicationStatuses)}
         onChange={(value) => catalog.updateParam("brazilPublicationStatus", value)}
-        disabled={catalog.optionsLoading}
+        disabled={catalog.loading || catalog.optionsLoading}
       />
     </>
   );
@@ -177,6 +179,7 @@ function PrimaryFilters({ catalog }: { catalog: PesquisaCatalog }) {
         aria-label={count > 0 ? `Filtros avançados (${count} ativos)` : "Filtros avançados"}
         aria-expanded={catalog.showFilters}
         onClick={() => catalog.setShowFilters((visible) => !visible)}
+        disabled={catalog.loading}
         className={`col-span-2 inline-flex h-12 w-full shrink-0 items-center justify-center rounded-lg border bg-sidebar text-foreground transition-colors hover:border-primary focus:border-primary focus:outline-none disabled:cursor-not-allowed disabled:opacity-60 sm:col-auto sm:w-12 sm:justify-self-end ${catalog.showFilters ? "border-primary" : "border-sidebar-foreground/35"}`}
       >
         <SlidersHorizontal className="h-4 w-4" aria-hidden="true" />
@@ -193,14 +196,14 @@ function WorkAdvancedFilters({ catalog }: { catalog: PesquisaCatalog }) {
         value={catalog.country}
         options={stringOptions(catalog.options.countries)}
         onChange={(value) => catalog.updateParam("country", value)}
-        disabled={catalog.optionsLoading}
+        disabled={catalog.loading || catalog.optionsLoading}
       />
       <FilterField
         label="Editora original"
         value={catalog.originalPublisherId ? String(catalog.originalPublisherId) : ""}
         options={catalog.options.originalPublishers}
         onChange={(value) => catalog.updateParam("originalPublisherId", value)}
-        disabled={catalog.optionsLoading}
+        disabled={catalog.loading || catalog.optionsLoading}
         searchable
       />
       <FilterField
@@ -208,7 +211,7 @@ function WorkAdvancedFilters({ catalog }: { catalog: PesquisaCatalog }) {
         value={catalog.serializationMagazineId ? String(catalog.serializationMagazineId) : ""}
         options={catalog.options.serializationMagazines}
         onChange={(value) => catalog.updateParam("serializationMagazineId", value)}
-        disabled={catalog.optionsLoading}
+        disabled={catalog.loading || catalog.optionsLoading}
         searchable
       />
       <MultiSelect
@@ -216,7 +219,7 @@ function WorkAdvancedFilters({ catalog }: { catalog: PesquisaCatalog }) {
         options={stringOptions(catalog.options.demographics)}
         selectedIds={catalog.demographics}
         onToggle={(value) => catalog.toggleCsvParam("demographics", catalog.demographics, String(value))}
-        disabled={catalog.optionsLoading}
+        disabled={catalog.loading || catalog.optionsLoading}
         placeholder="Todos"
         onClear={() => catalog.updateParam("demographics", undefined)}
         textSize="sm"
@@ -228,6 +231,7 @@ function WorkAdvancedFilters({ catalog }: { catalog: PesquisaCatalog }) {
         value={catalog.originalPublicationStartYear ? String(catalog.originalPublicationStartYear) : ""}
         options={PUBLICATION_YEAR_OPTIONS}
         onChange={(value) => catalog.updateParam("originalPublicationStartYear", value)}
+        disabled={catalog.loading}
         searchable
       />
       <FilterField
@@ -235,6 +239,7 @@ function WorkAdvancedFilters({ catalog }: { catalog: PesquisaCatalog }) {
         value={catalog.originalPublicationEndYear ? String(catalog.originalPublicationEndYear) : ""}
         options={PUBLICATION_YEAR_OPTIONS}
         onChange={(value) => catalog.updateParam("originalPublicationEndYear", value)}
+        disabled={catalog.loading}
         searchable
       />
       <MultiSelect
@@ -242,7 +247,7 @@ function WorkAdvancedFilters({ catalog }: { catalog: PesquisaCatalog }) {
         options={catalog.options.genres}
         selectedIds={catalog.genreIds}
         onToggle={(value) => catalog.toggleCsvParam("genreIds", catalog.genreIds, Number(value))}
-        disabled={catalog.optionsLoading}
+        disabled={catalog.loading || catalog.optionsLoading}
         searchable
         placeholder="Todos"
         onClear={() => catalog.updateParam("genreIds", undefined)}
@@ -262,26 +267,28 @@ function EditionAdvancedFilters({ catalog }: { catalog: PesquisaCatalog }) {
         value={catalog.chronologicalNumber ? String(catalog.chronologicalNumber) : ""}
         options={EDITION_NUMBER_OPTIONS}
         onChange={(value) => catalog.updateParam("chronologicalNumber", value)}
+        disabled={catalog.loading}
       />
       <FilterField
         label="Acabamento"
         value={catalog.coverTypeId ? String(catalog.coverTypeId) : ""}
         options={catalog.options.coverTypes}
         onChange={(value) => catalog.updateParam("coverTypeId", value)}
-        disabled={catalog.optionsLoading}
+        disabled={catalog.loading || catalog.optionsLoading}
       />
       <FilterField
         label="Formato"
         value={catalog.formatId ? String(catalog.formatId) : ""}
         options={catalog.options.formats}
         onChange={(value) => catalog.updateParam("formatId", value)}
-        disabled={catalog.optionsLoading}
+        disabled={catalog.loading || catalog.optionsLoading}
       />
       <FilterField
         label="Início da publicação no Brasil"
         value={catalog.brazilPublicationStartYear ? String(catalog.brazilPublicationStartYear) : ""}
         options={PUBLICATION_YEAR_OPTIONS}
         onChange={(value) => catalog.updateParam("brazilPublicationStartYear", value)}
+        disabled={catalog.loading}
         searchable
       />
       <FilterField
@@ -289,6 +296,7 @@ function EditionAdvancedFilters({ catalog }: { catalog: PesquisaCatalog }) {
         value={catalog.brazilPublicationEndYear ? String(catalog.brazilPublicationEndYear) : ""}
         options={PUBLICATION_YEAR_OPTIONS}
         onChange={(value) => catalog.updateParam("brazilPublicationEndYear", value)}
+        disabled={catalog.loading}
         searchable
       />
     </div>
@@ -305,21 +313,13 @@ function AdvancedFilters({ catalog }: { catalog: PesquisaCatalog }) {
     >
       {catalog.tab === "works" ? <WorkAdvancedFilters catalog={catalog} /> : <EditionAdvancedFilters catalog={catalog} />}
       <div className="mt-4 flex flex-col items-start justify-between gap-3 border-t border-sidebar-foreground/30 pt-4 sm:flex-row sm:items-center">
-        {catalog.optionsError ? (
-          <p className="text-sm font-semibold text-red-400">Não foi possível carregar as opções de filtro.</p>
-        ) : (
-          <p className="text-xs text-sidebar-foreground">Os filtros selecionados são combinados entre si.</p>
-        )}
+        <p className="text-xs text-sidebar-foreground">Os filtros selecionados são combinados entre si.</p>
         <div className="flex gap-2">
-          {catalog.optionsError ? (
-            <button type="button" onClick={catalog.retryOptions} className="rounded-lg border border-sidebar-foreground/35 px-3 py-2 text-sm font-bold text-foreground hover:border-primary hover:text-primary">
-              Recarregar opções
-            </button>
-          ) : null}
           <button
             type="button"
             aria-label="Limpar todos os filtros"
             onClick={catalog.clearFilters}
+            disabled={catalog.loading}
             className="rounded-lg border border-sidebar-foreground/35 bg-background px-3 py-2 text-sm font-bold text-foreground hover:border-primary hover:text-primary"
           >
             Limpar filtros

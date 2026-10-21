@@ -1,11 +1,15 @@
-import { act, fireEvent, render, screen, waitFor, within } from "@testing-library/react";
+import { act, fireEvent, screen, waitFor, within } from "@testing-library/react";
+import { render } from "../../../support/queryRender";
 import { MemoryRouter, useLocation, useNavigate } from "react-router-dom";
 import { beforeEach, describe, expect, it, vi } from "vitest";
 import PublicCalendar from "@/features/public-catalog/pages/PublicCalendar";
 import { getPublicCatalogOptions, listPublicCalendar } from "@/features/public-catalog/publicCatalogService";
 import type { PublicCalendarResponse } from "@/features/public-catalog/publicCatalogTypes";
+import { toast } from "sonner";
 
 vi.mock("@/features/public-catalog/publicCatalogService", () => ({ getPublicCatalogOptions: vi.fn(), listPublicCalendar: vi.fn() }));
+vi.mock("@/features/auth", () => ({ useAuth: () => ({ user: null, loading: false }) }));
+vi.mock("sonner", () => ({ toast: { error: vi.fn() } }));
 
 const response: PublicCalendarResponse = {
   year: 2026,
@@ -31,6 +35,10 @@ function currentParams() {
   return new URLSearchParams(screen.getByTestId("search").textContent || "");
 }
 
+async function waitForCalendarReady() {
+  await waitFor(() => expect(screen.getByRole("searchbox", { name: "Pesquisar nos lançamentos" })).toBeEnabled());
+}
+
 describe("PublicCalendar", () => {
   beforeEach(() => {
     vi.clearAllMocks();
@@ -40,7 +48,7 @@ describe("PublicCalendar", () => {
 
   it("usa o período do servidor e reúne todos os volumes do mês sem agrupar por dia", async () => {
     renderCalendar();
-    expect(screen.getByText("Carregando lançamentos...")).toHaveAttribute("role", "status");
+    expect(screen.getByRole("status", { name: "Carregando lançamentos..." })).toBeInTheDocument();
     expect(screen.getByRole("searchbox", { name: "Pesquisar nos lançamentos" })).toBeDisabled();
     expect(screen.getByRole("button", { name: "Mês atual" })).toBeDisabled();
     expect(screen.getByRole("button", { name: "Mês e ano" })).toBeDisabled();
@@ -50,7 +58,7 @@ describe("PublicCalendar", () => {
     expect(listPublicCalendar).toHaveBeenCalledWith({ page: 1, limit: 24, order: "ASC" });
     expect(screen.getByRole("button", { name: "Mês e ano" })).toHaveTextContent("dezembro de 2026");
     expect(screen.getByRole("link", { name: "Ver volume 2 de Monster" })).toHaveAttribute("href", "/obra/monster/edicao/1/volume/2");
-    expect(within(results).getByText("Volume 2 · 1ª edição")).toBeInTheDocument();
+    expect(within(results).getByText("Volume 2 da 1ª edição")).toBeInTheDocument();
     expect(within(results).getByAltText("Capa de Monster — Volume 2").parentElement).toHaveClass("group-hover:-translate-y-1");
     expect(within(results).queryByText("Panini")).not.toBeInTheDocument();
     expect(within(results).queryByText("09/12/2026")).not.toBeInTheDocument();
@@ -71,6 +79,7 @@ describe("PublicCalendar", () => {
     await screen.findByText("25 volumes encontrados");
     fireEvent.click(screen.getByRole("button", { name: "Próximo mês" }));
     await waitFor(() => expect(listPublicCalendar).toHaveBeenLastCalledWith(expect.objectContaining({ year: 2027, month: 1, term: "Urasawa", brazilianPublisherId: 3, page: 1 })));
+    await waitForCalendarReady();
     fireEvent.click(screen.getByRole("button", { name: "Mês e ano" }));
     fireEvent.change(screen.getByRole("textbox", { name: "Ano" }), { target: { value: "2025" } });
     fireEvent.click(screen.getByRole("button", { name: "Selecionar fevereiro de 2025" }));
@@ -78,14 +87,17 @@ describe("PublicCalendar", () => {
     await screen.findByText("25 volumes encontrados");
     fireEvent.click(screen.getByRole("button", { name: "Próxima" }));
     await waitFor(() => expect(listPublicCalendar).toHaveBeenLastCalledWith(expect.objectContaining({ year: 2025, month: 2, page: 2, term: "Urasawa", brazilianPublisherId: 3 })));
+    await waitForCalendarReady();
     fireEvent.click(screen.getByRole("button", { name: "Mês anterior" }));
     await waitFor(() => expect(currentParams().get("month")).toBe("1"));
+    await waitForCalendarReady();
     fireEvent.click(screen.getByRole("button", { name: "Mês atual" }));
     await waitFor(() => expect(listPublicCalendar).toHaveBeenLastCalledWith(expect.objectContaining({ year: undefined, month: undefined, term: "Urasawa", brazilianPublisherId: 3 })));
   });
 
   it("oferece um seletor de mês no tema do site e valida o ano antes de consultar", async () => {
     renderCalendar("/lancamentos?year=2026&month=12");
+    await screen.findByText("25 volumes encontrados");
     fireEvent.click(screen.getByRole("button", { name: "Mês e ano" }));
     const picker = screen.getByRole("dialog", { name: "Selecionar mês e ano" });
     expect(picker).toHaveClass("bg-sidebar");
@@ -112,6 +124,7 @@ describe("PublicCalendar", () => {
     await screen.findByText("25 volumes encontrados");
     fireEvent.change(screen.getByRole("searchbox"), { target: { value: "  Naoki Urasawa  " } });
     await waitFor(() => expect(currentParams().get("term")).toBe("Naoki Urasawa"));
+    await waitForCalendarReady();
     fireEvent.click(screen.getByLabelText("Editora brasileira"));
     fireEvent.click(screen.getByRole("button", { name: "Panini" }));
     await waitFor(() => expect(listPublicCalendar).toHaveBeenLastCalledWith(expect.objectContaining({ term: "Naoki Urasawa", brazilianPublisherId: 3, page: 1 })));
@@ -126,6 +139,7 @@ describe("PublicCalendar", () => {
     fireEvent.click(screen.getByRole("button", { name: "Ordenar por título de Z a A" }));
     await waitFor(() => expect(listPublicCalendar).toHaveBeenLastCalledWith(expect.objectContaining({ year: 2026, month: 12, term: "Monster", order: "DESC", page: 1 })));
     expect(currentParams().get("order")).toBe("DESC");
+    await waitForCalendarReady();
     fireEvent.click(screen.getByRole("button", { name: "Ordenar por título de A a Z" }));
     await waitFor(() => expect(listPublicCalendar).toHaveBeenLastCalledWith(expect.objectContaining({ order: "ASC", page: 1 })));
     expect(currentParams().has("order")).toBe(false);
@@ -135,19 +149,22 @@ describe("PublicCalendar", () => {
     vi.mocked(listPublicCalendar).mockRejectedValueOnce(new Error("offline")).mockResolvedValue({ ...response, volumes: [], pagination: { ...response.pagination, total: 0, totalPages: 0 } });
     vi.mocked(getPublicCatalogOptions).mockRejectedValueOnce(new Error("offline"));
     renderCalendar();
-    expect(await screen.findByText("Não foi possível carregar os lançamentos.")).toBeInTheDocument();
-    fireEvent.click(screen.getByRole("button", { name: "Tentar novamente" }));
+    await waitFor(() => expect(toast.error).toHaveBeenCalledWith("Não foi possível carregar os lançamentos.", expect.any(Object)));
+    const resultsRetry = vi.mocked(toast.error).mock.calls.find(([, options]) => options?.id === "catalog-error-calendar-results")?.[1] as unknown as { action: { onClick: () => void } };
+    resultsRetry.action.onClick();
     expect(await screen.findByText("Nenhum volume encontrado neste mês com os filtros selecionados.")).toBeInTheDocument();
     expect(screen.getByLabelText("Editora brasileira")).toBeDisabled();
-    fireEvent.click(screen.getByRole("button", { name: "Tentar carregar editoras" }));
+    const optionsRetry = vi.mocked(toast.error).mock.calls.find(([, options]) => options?.id === "catalog-error-calendar-publishers")?.[1] as unknown as { action: { onClick: () => void } };
+    optionsRetry.action.onClick();
     await waitFor(() => expect(screen.getByLabelText("Editora brasileira")).not.toBeDisabled());
   });
 
   it.each(["month=13", "year=1899", "page=-1", "brazilianPublisherId=x", "month=", "order=INVALID", `term=${"a".repeat(256)}`])("trata parâmetro inválido %s sem solicitar checklist", async query => {
     renderCalendar(`/lancamentos?${query}`);
-    expect(await screen.findByRole("button", { name: "Voltar ao mês atual" })).toBeInTheDocument();
+    await waitFor(() => expect(toast.error).toHaveBeenCalledWith(expect.any(String), expect.objectContaining({ id: "catalog-error-calendar-results" })));
     expect(listPublicCalendar).not.toHaveBeenCalled();
-    fireEvent.click(screen.getByRole("button", { name: "Voltar ao mês atual" }));
+    const retry = vi.mocked(toast.error).mock.calls.find(([, options]) => options?.id === "catalog-error-calendar-results")?.[1] as unknown as { action: { onClick: () => void } };
+    retry.action.onClick();
     expect(await screen.findByText("25 volumes encontrados")).toBeInTheDocument();
   });
 
@@ -161,8 +178,10 @@ describe("PublicCalendar", () => {
   it.each([0, 1])("recupera URL antiga com página além do total de %i Volumes", async total => {
     vi.mocked(listPublicCalendar).mockResolvedValueOnce({ ...response, volumes: [], pagination: { ...response.pagination, page: 3, total, totalPages: total } });
     renderCalendar("/lancamentos?year=2026&month=12&brazilianPublisherId=3&term=Monster&page=3");
-    fireEvent.click(await screen.findByRole("button", { name: "Voltar à primeira página" }));
-    await waitFor(() => expect(listPublicCalendar).toHaveBeenLastCalledWith(expect.objectContaining({ page: 1, year: 2026, month: 12, term: "Monster", brazilianPublisherId: 3 })));
+    fireEvent.click(await screen.findByRole("button", { name: total === 0 ? "Limpar filtros" : "Voltar à primeira página" }));
+    await waitFor(() => expect(listPublicCalendar).toHaveBeenLastCalledWith(expect.objectContaining(total === 0
+      ? { page: 1 }
+      : { page: 1, year: 2026, month: 12, term: "Monster", brazilianPublisherId: 3 })));
     expect(await screen.findByText("25 volumes encontrados")).toBeInTheDocument();
   });
 
@@ -170,12 +189,14 @@ describe("PublicCalendar", () => {
     let resolvePrevious!: (data: PublicCalendarResponse) => void;
     vi.mocked(listPublicCalendar).mockImplementationOnce(() => new Promise(resolve => { resolvePrevious = resolve; }));
     renderCalendar("/lancamentos?year=2026&month=12");
+    expect(screen.getByRole("button", { name: "Mês e ano" })).toBeDisabled();
+    await act(async () => resolvePrevious(response));
+    await waitForCalendarReady();
     fireEvent.click(screen.getByRole("button", { name: "Mês e ano" }));
     fireEvent.change(screen.getByRole("textbox", { name: "Ano" }), { target: { value: "2027" } });
     fireEvent.click(screen.getByRole("button", { name: "Selecionar fevereiro de 2027" }));
     await screen.findByText("25 volumes encontrados");
     expect(screen.getByRole("button", { name: "Mês e ano" })).toHaveTextContent("fevereiro de 2027");
-    await act(async () => resolvePrevious({ ...response, volumes: [], year: 2000, month: 1 }));
     expect(screen.getByRole("button", { name: "Mês e ano" })).toHaveTextContent("fevereiro de 2027");
     expect(screen.getByText("25 volumes encontrados")).toBeInTheDocument();
   });

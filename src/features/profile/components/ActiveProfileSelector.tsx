@@ -1,4 +1,4 @@
-import { ShieldCheck, Loader2 } from "lucide-react";
+import { ShieldCheck } from "lucide-react";
 import { SearchableSelect } from "@/components/forms/SearchableSelect";
 
 interface ActiveProfileSelectorProps {
@@ -13,7 +13,7 @@ export function ActiveProfileSelector({ profiles, activeProfile, updating, onCha
   if (profiles.length < 2) return null;
 
   return (
-    <div className="flex min-w-0 items-center gap-3 p-4 rounded-xl bg-muted/30 border border-border sm:gap-4">
+    <div className="flex min-w-0 items-center gap-3 rounded-xl border border-border bg-background p-4 sm:gap-4">
       <div className="h-10 w-10 rounded-full bg-primary flex items-center justify-center shrink-0">
         <ShieldCheck className="h-5 w-5 text-white" />
       </div>
@@ -29,10 +29,10 @@ export function ActiveProfileSelector({ profiles, activeProfile, updating, onCha
           options={profiles.map((profile) => ({ value: profile, label: profile }))}
           allowEmptyOption={false}
           deselectable={false}
+          tone="sidebar"
           className="mt-2"
         />
       </div>
-      {updating && <Loader2 aria-hidden="true" className="h-5 w-5 animate-spin text-primary" />}
     </div>
   );
 }

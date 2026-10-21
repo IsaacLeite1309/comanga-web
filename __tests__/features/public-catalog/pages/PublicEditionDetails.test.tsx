@@ -1,6 +1,7 @@
 const auth = vi.hoisted(() => ({ user: null as { id: string } | null }));
 vi.mock("@/features/auth", () => ({ useAuth: () => ({ user: auth.user, loading: false }) }));
-import { fireEvent, render, screen, waitFor, within } from "@testing-library/react";
+import { fireEvent, screen, waitFor, within } from "@testing-library/react";
+import { render } from "../../../support/queryRender";
 import { AxiosError, AxiosHeaders } from "axios";
 import { MemoryRouter, Route, Routes, useLocation } from "react-router-dom";
 import { beforeEach, describe, expect, it, vi } from "vitest";
@@ -11,7 +12,7 @@ import { getPublicEditionDetails } from "@/features/public-catalog/publicCatalog
 vi.mock("@/features/public-catalog/publicCatalogService", () => ({
   getPublicEditionDetails: vi.fn(),
 }));
-vi.mock("sonner", () => ({ toast: { warning: vi.fn() } }));
+vi.mock("sonner", () => ({ toast: { warning: vi.fn(), error: vi.fn() } }));
 
 const response = {
   edition: {
@@ -141,7 +142,7 @@ describe("PublicEditionDetails", () => {
     expect(screen.getByText("Carregando edição...")).toBeInTheDocument();
     const editionHeading = await screen.findByRole("heading", { name: "2ª edição", level: 1 });
     expect(editionHeading).toBeInTheDocument();
-    expect(getPublicEditionDetails).toHaveBeenCalledWith("monster", 2, { page: 1, limit: 24 });
+    expect(getPublicEditionDetails).toHaveBeenCalledWith("monster", 2, { all: true });
     expect(screen.getByText("Obra")).toBeInTheDocument();
     const editionInfo = screen.getByRole("complementary", { name: "Informações da edição" });
     expect(within(editionInfo).getByRole("heading", { name: "Obra" })).toBeInTheDocument();
@@ -205,18 +206,18 @@ describe("PublicEditionDetails", () => {
     const collectionAction = await screen.findByRole("link", { name: "3/25 adquiridos" });
     expect(collectionAction).toHaveAttribute("href", "/obra/monster/edicao/2/selecionar/colecao");
     expect(collectionAction).toHaveClass("h-10", "shrink-0", "bg-primary", "text-primary-foreground");
-    expect(collectionAction.querySelector("svg")).toHaveClass("lucide-check");
+    expect(collectionAction.querySelector("svg")).toHaveClass("lucide-library-big");
     expect(screen.getByRole("link", { name: "0/22 desejados" })).toHaveClass("h-10", "shrink-0", "bg-sidebar");
     const readAction = screen.getByRole("link", { name: "1/3 lidos" });
     expect(readAction).toHaveAttribute("href", "/obra/monster/edicao/2/selecionar/lidos");
     expect(readAction).toHaveClass("bg-primary", "text-primary-foreground");
-    expect(readAction.querySelector("svg")).toHaveClass("lucide-eye");
+    expect(readAction.querySelector("svg")).toHaveClass("lucide-book-open");
     expect(collectionAction.compareDocumentPosition(readAction) & Node.DOCUMENT_POSITION_FOLLOWING).toBeTruthy();
     expect(readAction.compareDocumentPosition(screen.getByRole("link", { name: "0/22 desejados" })) & Node.DOCUMENT_POSITION_FOLLOWING).toBeTruthy();
-    expect(getPublicEditionDetails).toHaveBeenCalledWith("monster", 2, { page: 2, limit: 24 });
+    expect(getPublicEditionDetails).toHaveBeenCalledWith("monster", 2, { all: true });
   });
 
-  it("mostra 0/y volumes lidos em cinza com olho fechado quando há coleção sem leitura", async () => {
+  it("mostra 0/y volumes lidos em cinza com livro aberto quando há coleção sem leitura", async () => {
     auth.user = { id: "account-a" };
     vi.mocked(getPublicEditionDetails).mockResolvedValue({
       ...response,
@@ -225,7 +226,7 @@ describe("PublicEditionDetails", () => {
     renderPage();
     const readAction = await screen.findByRole("link", { name: "0/2 lidos" });
     expect(readAction).toHaveClass("bg-sidebar", "text-white");
-    expect(readAction.querySelector("svg")).toHaveClass("lucide-eye-closed");
+    expect(readAction.querySelector("svg")).toHaveClass("lucide-book-open");
   });
 
   it("lista os Volumes em ordem recebida com data, fallback e acesso ao detalhe", async () => {
@@ -244,17 +245,12 @@ describe("PublicEditionDetails", () => {
     expect(screen.getByRole("link", { name: "Ver detalhes do Volume 2" })).toHaveAttribute("href", "/obra/monster/edicao/2/volume/2");
   });
 
-  it("pagina os Volumes e preserva a página na URL", async () => {
+  it("exibe a lista completa sem controles de paginação", async () => {
     renderPage();
     await screen.findByRole("heading", { name: "Em publicação com 25 volumes" });
 
-    fireEvent.click(screen.getByRole("button", { name: "Próxima" }));
-
-    await waitFor(() => expect(getPublicEditionDetails).toHaveBeenLastCalledWith("monster", 2, {
-      page: 2,
-      limit: 24,
-    }));
-    expect(new URLSearchParams(screen.getByTestId("location-search").textContent || "").get("page")).toBe("2");
+    expect(getPublicEditionDetails).toHaveBeenLastCalledWith("monster", 2, { all: true });
+    expect(screen.queryByRole("button", { name: "Próxima" })).not.toBeInTheDocument();
   });
 
   it("exibe estado vazio quando não existem Volumes públicos", async () => {
@@ -292,8 +288,9 @@ describe("PublicEditionDetails", () => {
       .mockResolvedValueOnce(response);
     renderPage();
 
-    expect(await screen.findByText("Edição não encontrada.")).toBeInTheDocument();
-    fireEvent.click(screen.getByRole("button", { name: "Tentar novamente" }));
+    await waitFor(() => expect(toast.error).toHaveBeenCalledWith("Edição não encontrada.", expect.any(Object)));
+    const retry = vi.mocked(toast.error).mock.calls[0][1] as unknown as { action: { onClick: () => void } };
+    retry.action.onClick();
 
     await waitFor(() => expect(getPublicEditionDetails).toHaveBeenCalledTimes(2));
     expect(await screen.findByRole("heading", { name: "2ª edição" })).toBeInTheDocument();

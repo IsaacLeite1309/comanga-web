@@ -1,33 +1,35 @@
 import { useCallback, useEffect, useRef, useState } from "react";
+import { useQuery, useQueryClient } from "@tanstack/react-query";
 import type { PersonalPagination } from "./personalLibraryTypes";
 import { getApiError } from "@/lib/apiError";
 import { toast } from "sonner";
+import { useMinimumQueryLoading } from "@/hooks/useMinimumQueryLoading";
 
-export function useLibraryPage<T extends { pagination: PersonalPagination }>(loader: (page: number) => Promise<T>) {
+export function useLibraryPage<T extends { pagination: PersonalPagination }>(
+  loader: (page: number) => Promise<T>,
+  queryKeyPrefix: readonly unknown[],
+) {
   const [page, setPage] = useState(1);
-  const [data, setData] = useState<T | null>(null);
-  const [loading, setLoading] = useState(true);
   const [busy, setBusy] = useState(false);
-  const [error, setError] = useState("");
-  const request = useRef(0);
   const alive = useRef(true);
+  const queryClient = useQueryClient();
+  const query = useQuery({
+    queryKey: [...queryKeyPrefix, page],
+    queryFn: () => loader(page),
+  });
+  const data = query.data ?? null;
+  const loading = useMinimumQueryLoading(JSON.stringify(queryKeyPrefix), query.isPending && !data);
+  const error = query.isError && !data ? getApiError(query.error, "Não foi possível carregar seu acervo.") : "";
+  const { refetch } = query;
+  const reload = useCallback(async () => { await refetch(); }, [refetch]);
   useEffect(() => { alive.current = true; return () => { alive.current = false; }; }, []);
-  const reload = useCallback(async () => {
-    const version = ++request.current;
-    setLoading(true); setData(null); setError("");
-    try {
-      const result = await loader(page);
-      if (alive.current && version === request.current) {
-        if (page > Math.max(1, result.pagination.totalPages)) setPage(Math.max(1, result.pagination.totalPages));
-        else setData(result);
-      }
-    } catch (failure) {
-      if (alive.current && version === request.current) setError(getApiError(failure, "Não foi possível carregar seu acervo."));
-    } finally {
-      if (alive.current && version === request.current) setLoading(false);
-    }
-  }, [loader, page]);
-  useEffect(() => { void reload(); }, [reload]);
+  useEffect(() => {
+    if (data && page > Math.max(1, data.pagination.totalPages)) setPage(Math.max(1, data.pagination.totalPages));
+  }, [data, page]);
+  useEffect(() => {
+    if (!error) return;
+    toast.error(error, { id: "personal-library-load-error", action: { label: "Tentar novamente", onClick: () => { void reload(); } } });
+  }, [error, reload]);
   async function mutate(operation: () => Promise<unknown>, success: string) {
     setBusy(true);
     let result = success;
@@ -37,8 +39,7 @@ export function useLibraryPage<T extends { pagination: PersonalPagination }>(loa
       succeeded = false;
       result = getApiError(failure, "Não foi possível salvar a alteração. Confira o estado atualizado abaixo.");
     }
-    if (!alive.current) return;
-    await reload();
+    await queryClient.invalidateQueries({ queryKey: queryKeyPrefix });
     if (alive.current) {
       if (succeeded) toast.success(result); else toast.error(result);
       setBusy(false);
