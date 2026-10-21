@@ -60,7 +60,7 @@ export async function getPublicWorkDetails(slug: string) {
 export async function getPublicEditionDetails(
   workSlug: string,
   editionNumber: number,
-  query: { page: number; limit: number },
+  query: { page: number; limit: number } | { all: true },
 ) {
   const response = await api.get<PublicEditionDetailsResponse>(`/public/works/${encodeURIComponent(workSlug)}/editions/${editionNumber}`, {
     params: query,

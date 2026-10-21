@@ -4,15 +4,14 @@ import { addCollectionVolume, addWishlistVolume, getCompleteCollectionEdition, l
 vi.mock("@/services/api", () => ({ api: { get: vi.fn(), put: vi.fn(), patch: vi.fn(), delete: vi.fn() } }));
 describe("cliente do acervo pessoal", () => {
   beforeEach(() => { vi.clearAllMocks(); });
-  it("pagina listas e percorre todas as páginas de uma Edição", async () => {
+  it("pagina listas e carrega todos os volumes de uma Edição em uma chamada", async () => {
     vi.mocked(api.get).mockResolvedValueOnce({ data: { works: [] } }).mockResolvedValueOnce({ data: { volumes: [] } })
-      .mockResolvedValueOnce({ data: { edition: { id: 2 }, volumes: [{ id: 1 }], pagination: { totalPages: 2 } } })
-      .mockResolvedValueOnce({ data: { volumes: [{ id: 2 }] } });
+      .mockResolvedValueOnce({ data: { edition: { id: 2 }, volumes: [{ id: 1 }, { id: 2 }], pagination: { totalPages: 1 } } });
     await listCollection(2); await listWishlist(3);
     expect((await getCompleteCollectionEdition(2)).volumes).toEqual([{ id: 1 }, { id: 2 }]);
     expect(api.get).toHaveBeenNthCalledWith(1, "/users/me/collection", { params: { page: 2, limit: 12 } });
     expect(api.get).toHaveBeenNthCalledWith(2, "/users/me/wishlist", { params: { page: 3, limit: 24 } });
-    expect(api.get).toHaveBeenLastCalledWith("/users/me/collection/editions/2", { params: { page: 2, limit: 50 } });
+    expect(api.get).toHaveBeenLastCalledWith("/users/me/collection/editions/2", { params: { all: true } });
   });
   it("envia os filtros da coleção junto da paginação", async () => {
     vi.mocked(api.get).mockResolvedValueOnce({ data: { works: [] } });

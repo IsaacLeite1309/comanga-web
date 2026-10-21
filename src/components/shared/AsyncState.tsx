@@ -24,3 +24,20 @@ export function LoadingState({ message, fullPage = false }: LoadingStateProps) {
 export function EmptyState({ message }: { message: string }) {
   return <div className="px-4 py-12 text-center text-sm font-semibold text-muted-foreground">{message}</div>;
 }
+
+export function FilteredEmptyState({ message, onClear }: { message: string; onClear: () => void }) {
+  return (
+    <>
+      <EmptyState message={message} />
+      <div className="flex justify-center px-4 pb-10">
+        <button
+          type="button"
+          onClick={onClear}
+          className="inline-flex h-10 items-center justify-center rounded-lg bg-primary px-4 text-sm font-bold text-primary-foreground transition-colors hover:bg-primary/90 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary focus-visible:ring-offset-2 focus-visible:ring-offset-background"
+        >
+          Limpar filtros
+        </button>
+      </div>
+    </>
+  );
+}

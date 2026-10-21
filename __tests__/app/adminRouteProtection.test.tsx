@@ -1,11 +1,13 @@
 import { readFileSync } from "node:fs";
 import { resolve } from "node:path";
-import { render, screen, within } from "@testing-library/react";
+import { screen, within } from "@testing-library/react";
+import { render } from "../support/queryRender";
 import { beforeEach, describe, expect, it, vi } from "vitest";
 import App from "@/App";
 import { api } from "@/services/api";
 
 vi.mock("@/services/api", () => ({ api: { get: vi.fn() } }));
+vi.mock("@/app/CollectorMenuPrefetch", () => ({ CollectorMenuPrefetch: () => null }));
 vi.mock("@/components/ui/sonner", () => ({ Toaster: () => null }));
 vi.mock("@/features/auth", async () => {
   const actual = await vi.importActual<typeof import("@/features/auth")>("@/features/auth");

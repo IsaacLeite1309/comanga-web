@@ -56,7 +56,7 @@ const EditWorkForm = () => {
 
   if (loading) {
     return (
-      <div className="flex flex-1 items-center justify-center px-4 py-10 text-muted-foreground">
+      <div className="page-gutter flex flex-1 items-center justify-center py-10 text-muted-foreground">
         <Loader2 className="mr-2 h-5 w-5 animate-spin text-primary" />
         Carregando dados da Obra...
       </div>
@@ -65,7 +65,7 @@ const EditWorkForm = () => {
 
   if (error || !resolvedWorkId) {
     return (
-      <div className="flex flex-1 items-center justify-center px-4 py-10 text-sm font-semibold text-red-300">
+      <div className="page-gutter flex flex-1 items-center justify-center py-10 text-sm font-semibold text-red-300">
         {error || "Obra não encontrada."}
       </div>
     );

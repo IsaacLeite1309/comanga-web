@@ -1,4 +1,5 @@
-import { act, fireEvent, render, screen, waitFor } from "@testing-library/react";
+import { act, fireEvent, screen, waitFor } from "@testing-library/react";
+import { render } from "../../../support/queryRender";
 import { AxiosError, AxiosHeaders } from "axios";
 import { MemoryRouter, Route, Routes, useLocation } from "react-router-dom";
 import { beforeEach, describe, expect, it, vi } from "vitest";
@@ -66,7 +67,7 @@ describe("estado pessoal nos detalhes públicos", () => {
     expect((await screen.findByRole("button", { name: "Adicionar à coleção" })).querySelector("svg")).toHaveClass("lucide-library-big");
     expect(screen.getByRole("button", { name: "Adicionar à lista de desejos" }).querySelector("svg")).toHaveClass("lucide-heart");
     fireEvent.click(await screen.findByRole("button", { name: "Adicionar à lista de desejos" }));
-    expect(screen.getByRole("button", { name: "Adicionar à lista de desejos" })).toBeDisabled();
+    expect(screen.getByRole("button", { name: "Adicionando à lista de desejos…" })).toBeDisabled();
     expect(screen.queryByRole("button", { name: "Na lista de desejos" })).not.toBeInTheDocument();
     await act(async () => {
       persisted = { owned: false, read: null, wished: true };
@@ -78,7 +79,7 @@ describe("estado pessoal nos detalhes públicos", () => {
     expect(screen.getByRole("button", { name: "Na lista de desejos" }).querySelector("svg")).toHaveAttribute("fill", "currentColor");
     expect(toast.success).toHaveBeenCalledWith("Volume adicionado à lista de desejos.");
     fireEvent.click(screen.getByRole("button", { name: "Adicionar à coleção" }));
-    expect(screen.getByRole("dialog", { name: "Adicionar à coleção?" })).toHaveTextContent("ele será removido da lista de desejos");
+    expect(screen.getByRole("dialog", { name: "Confirmar alterações na coleção?" })).toHaveTextContent("ele será removido da lista");
     expect(mocks.put).toHaveBeenCalledTimes(1);
     fireEvent.click(screen.getByRole("button", { name: "Cancelar" }));
     expect(screen.queryByRole("dialog")).not.toBeInTheDocument();
@@ -87,13 +88,13 @@ describe("estado pessoal nos detalhes públicos", () => {
     fireEvent.click(screen.getByRole("button", { name: "Adicionar" }));
     expect(await screen.findByRole("button", { name: "Na coleção", pressed: true })).toBeInTheDocument();
     expect(screen.getByRole("button", { name: "Na coleção" })).toHaveClass("bg-primary", "text-primary-foreground");
-    expect(screen.getByRole("button", { name: "Na coleção" }).querySelector("svg")).toHaveClass("lucide-check");
+    expect(screen.getByRole("button", { name: "Na coleção" }).querySelector("svg")).toHaveClass("lucide-library-big");
     await waitFor(() => expect(toast.success).toHaveBeenCalledWith("Volume adicionado à coleção."));
-    expect(screen.queryByRole("button", { name: "Adicionar à lista de desejos" })).not.toBeInTheDocument();
+    expect(screen.getByRole("button", { name: "Adicionar à lista de desejos" })).toHaveAttribute("aria-disabled", "true");
     const readingButton = screen.getByRole("button", { name: "Marcar como lido" });
-    expect(readingButton.querySelector("svg")).toHaveClass("lucide-eye-closed");
+    expect(readingButton.querySelector("svg")).toHaveClass("lucide-book-open");
     expect(readingButton).not.toHaveClass("col-span-2");
-    expect(readingButton.previousElementSibling).toBe(screen.getByRole("button", { name: "Na coleção" }));
+    expect(readingButton.previousElementSibling).toBe(screen.getByRole("button", { name: "Adicionar à lista de desejos" }));
     mocks.patch.mockImplementation(async () => {
       persisted = { owned: true, read: true, wished: false };
       return { data: { ...persisted, volumeId: 30 } };
@@ -101,11 +102,13 @@ describe("estado pessoal nos detalhes públicos", () => {
     fireEvent.click(screen.getByRole("button", { name: "Marcar como lido" }));
     expect(await screen.findByRole("button", { name: "Lido", pressed: true })).toBeInTheDocument();
     expect(screen.getByRole("button", { name: "Lido" })).toHaveClass("bg-primary", "text-primary-foreground");
-    expect(screen.getByRole("button", { name: "Lido" }).querySelector("svg")).toHaveClass("lucide-eye");
+    expect(screen.getByRole("button", { name: "Lido" }).querySelector("svg")).toHaveClass("lucide-book-open");
     await waitFor(() => expect(toast.success).toHaveBeenCalledWith("Volume marcado como lido."));
     expect(mocks.patch).toHaveBeenCalledWith("/users/me/collection/volumes/30", { read: true });
     mocks.delete.mockImplementation(async () => { persisted = { ...EMPTY }; });
     fireEvent.click(screen.getByRole("button", { name: "Na coleção" }));
+    expect(screen.getByRole("dialog", { name: "Confirmar alterações na coleção?" })).toHaveTextContent("estado de leitura");
+    fireEvent.click(screen.getByRole("button", { name: "Remover" }));
     expect(await screen.findByRole("button", { name: "Adicionar à coleção", pressed: false })).toBeInTheDocument();
     expect(screen.queryByRole("button", { name: "Lido" })).not.toBeInTheDocument();
     expect(screen.getByRole("button", { name: "Adicionar à lista de desejos" })).toBeInTheDocument();
@@ -125,6 +128,10 @@ describe("estado pessoal nos detalhes públicos", () => {
   it("ao receber 401 limpa a sessão e avisa sem redirecionar", async () => {
     const config = { headers: new AxiosHeaders() };
     mocks.put.mockRejectedValue(new AxiosError("expired", "ERR_BAD_RESPONSE", config, undefined, { data: {}, status: 401, statusText: "Unauthorized", headers: new AxiosHeaders(), config }));
+    mocks.get.mockImplementation(async (path: string) => {
+      if (path === "/auth/me") throw new AxiosError("expired", "ERR_BAD_RESPONSE", config, undefined, { data: {}, status: 401, statusText: "Unauthorized", headers: new AxiosHeaders(), config });
+      return { data: { volume: volume(EMPTY) } };
+    });
     render(<Page />);
     fireEvent.click(await screen.findByRole("button", { name: "Adicionar à coleção" }));
     await waitFor(() => expect(toast.warning).toHaveBeenCalledWith("Faça login para poder adicionar este volume à sua coleção."));

@@ -1,9 +1,58 @@
 import { useCallback, useEffect, useRef, useState } from "react";
+import { useQueryClient, type QueryClient } from "@tanstack/react-query";
 import { getPublicEditionDetails } from "../publicCatalogService";
+import type { PublicEditionDetailsResponse } from "../publicCatalogTypes";
+import { updatePersonalVolumeCache } from "../updatePersonalVolumeCache";
+import { usePublicCatalogScope } from "../usePublicCatalogScope";
 import { getCompleteCollectionEdition, syncCollectionEdition, syncWishlist, updateVolumeReading, type CollectionEditionResponse } from "@/features/personal-library";
 import { getApiError } from "@/lib/apiError";
+import { PUBLIC_CATALOG_QUERY_ROOT, PUBLIC_CATALOG_STALE_TIME_MS } from "@/lib/queryClient";
 
 export type SelectionMode = "colecao" | "desejos" | "lidos";
+
+function asCollectionEdition(response: PublicEditionDetailsResponse): CollectionEditionResponse {
+  const { edition, volumes, pagination } = response;
+  return {
+    edition: {
+      id: edition.id,
+      chronologicalNumber: edition.chronologicalNumber,
+      brazilPublicationStatus: edition.brazilPublicationStatus,
+      brazilianPublisher: edition.brazilianPublisher,
+      work: {
+        id: edition.work.id,
+        slug: edition.work.slug,
+        title: edition.work.title,
+      },
+    },
+    volumes: volumes.map((volume) => ({
+      id: volume.id,
+      number: volume.number,
+      singleVolume: volume.singleVolume,
+      coverUrl: volume.coverUrl,
+      owned: volume.personal!.owned,
+      read: volume.personal!.read,
+      wished: volume.personal!.wished,
+    })),
+    progress: {
+      owned: edition.personal!.ownedCount,
+      read: edition.personal!.readCount,
+      wished: edition.personal!.wishedCount,
+      total: edition.volumesCount,
+    },
+    pagination,
+  };
+}
+
+function cachedEditionSelection(queryClient: QueryClient, scope: readonly [string, boolean, string], slug: string, editionNumber: number) {
+  if (scope[0] === "guest") return null;
+  const queryKey = [...PUBLIC_CATALOG_QUERY_ROOT, scope, "edition", slug, editionNumber];
+  const state = queryClient.getQueryState<PublicEditionDetailsResponse>(queryKey);
+  const response = state?.data;
+  if (!response || state.isInvalidated || Date.now() - state.dataUpdatedAt >= PUBLIC_CATALOG_STALE_TIME_MS) return null;
+  if (response.edition.work.slug !== slug || response.edition.chronologicalNumber !== editionNumber) return null;
+  if (!response.edition.personal || response.pagination.total !== response.volumes.length || response.volumes.some((volume) => !volume.personal)) return null;
+  return asCollectionEdition(response);
+}
 
 function selectedVolumeIds(result: CollectionEditionResponse, mode: SelectionMode) {
   return new Set(result.volumes.filter((volume) => {
@@ -32,11 +81,30 @@ async function syncSelection(mode: SelectionMode, editionId: number, delta: { ad
   return syncReading(delta, active);
 }
 
+function updateSelectionCache(queryClient: QueryClient, scope: readonly [string, boolean, string], before: CollectionEditionResponse, after: CollectionEditionResponse) {
+  const previousVolumes = new Map(before.volumes.map((volume) => [volume.id, volume]));
+  for (const volume of after.volumes) {
+    const previous = previousVolumes.get(volume.id);
+    if (!previous || previous.owned === volume.owned && previous.read === volume.read && previous.wished === volume.wished) continue;
+    updatePersonalVolumeCache(queryClient, scope, {
+      workSlug: after.edition.work.slug,
+      editionId: after.edition.id,
+      editionNumber: after.edition.chronologicalNumber,
+      volumeId: volume.id,
+      volumeNumber: volume.number,
+      previous: { owned: previous.owned, read: previous.read, wished: previous.wished },
+      next: { owned: volume.owned, read: volume.read, wished: volume.wished },
+    });
+  }
+}
+
 export function useEditionSelection(slug: string, editionNumber: number, mode: SelectionMode) {
-  const [data, setData] = useState<CollectionEditionResponse | null>(null);
-  const [initialIds, setInitialIds] = useState(new Set<number>());
-  const [selectedIds, setSelectedIds] = useState(new Set<number>());
-  const [loading, setLoading] = useState(true);
+  const queryClient = useQueryClient();
+  const scope = usePublicCatalogScope();
+  const [data, setData] = useState<CollectionEditionResponse | null>(() => cachedEditionSelection(queryClient, scope, slug, editionNumber));
+  const [initialIds, setInitialIds] = useState(() => data ? selectedVolumeIds(data, mode) : new Set<number>());
+  const [selectedIds, setSelectedIds] = useState(() => data ? selectedVolumeIds(data, mode) : new Set<number>());
+  const [loading, setLoading] = useState(!data);
   const [saving, setSaving] = useState(false);
   const [error, setError] = useState("");
   const [message, setMessage] = useState("");
@@ -49,6 +117,11 @@ export function useEditionSelection(slug: string, editionNumber: number, mode: S
   useEffect(() => {
     const current = ++version.current;
     const active = () => version.current === current;
+    const cached = retry === 0 ? cachedEditionSelection(queryClient, scope, slug, editionNumber) : null;
+    if (cached) {
+      accept(cached); setLoading(false); setError(""); setMessage("");
+      return () => { version.current = current + 1; };
+    }
     setLoading(true); setError(""); setData(null); setMessage("");
     async function load() {
       if (!slug || !Number.isInteger(editionNumber) || editionNumber <= 0) throw new Error("invalid");
@@ -61,7 +134,7 @@ export function useEditionSelection(slug: string, editionNumber: number, mode: S
     load().catch((failure) => { if (active()) setError(getApiError(failure, "Não foi possível carregar a seleção de volumes.")); })
       .finally(() => { if (active()) setLoading(false); });
     return () => { version.current = current + 1; };
-  }, [slug, editionNumber, mode, retry, accept]);
+  }, [slug, editionNumber, mode, retry, accept, queryClient, scope]);
   async function save() {
     if (!data || saving) return false;
     const delta = {
@@ -82,6 +155,7 @@ export function useEditionSelection(slug: string, editionNumber: number, mode: S
     try {
       const result = await getCompleteCollectionEdition(data.edition.id);
       if (!active()) return false;
+      updateSelectionCache(queryClient, scope, data, result);
       accept(result);
       setMessage(failure ? getApiError(failure, "Algumas alterações não foram salvas. Confira a seleção atualizada e tente novamente.") : "Seleção salva com sucesso.");
     } catch (refreshError) {

@@ -1,5 +1,6 @@
 import { act, render, screen } from "@testing-library/react";
 import { MemoryRouter, Route, Routes } from "react-router-dom";
+import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
 import { beforeEach, expect, it, vi } from "vitest";
 import { PersonalRoute } from "@/app/PersonalRoute";
 import { useLibraryPage, type PersonalPagination } from "@/features/personal-library";
@@ -7,12 +8,13 @@ const auth = vi.hoisted(() => ({ user: { id: "a" } as { id: string } | null, isA
 vi.mock("@/features/auth", () => ({ useAuth: () => auth }));
 vi.mock("sonner", () => ({ toast: { error: vi.fn() } }));
 const loader = vi.fn<() => Promise<{ secret: string; pagination: PersonalPagination }>>();
+const testQueryClient = new QueryClient({ defaultOptions: { queries: { retry: false } } });
 function Content() {
-  const { data, loading } = useLibraryPage(loader);
+  const { data, loading } = useLibraryPage(loader, ["personal-library", auth.user?.id, "test"]);
   return <div>{loading ? "Carregando conta" : data?.secret}</div>;
 }
-function App() { return <MemoryRouter><Routes><Route path="/" element={<PersonalRoute><Content /></PersonalRoute>} /><Route path="/entrar" element={<div>Login</div>} /></Routes></MemoryRouter>; }
-beforeEach(() => { vi.clearAllMocks(); auth.user = { id: "a" }; auth.isAuthenticated = true; });
+function App() { return <QueryClientProvider client={testQueryClient}><MemoryRouter><Routes><Route path="/" element={<PersonalRoute><Content /></PersonalRoute>} /><Route path="/entrar" element={<div>Login</div>} /></Routes></MemoryRouter></QueryClientProvider>; }
+beforeEach(() => { vi.clearAllMocks(); testQueryClient.clear(); auth.user = { id: "a" }; auth.isAuthenticated = true; });
 it("remove dados imediatamente na troca de conta e descarta resposta pendente anterior", async () => {
   let resolveOld!: (value: { secret: string; pagination: PersonalPagination }) => void;
   const pagination = { page: 1, limit: 12, total: 1, totalPages: 1 };

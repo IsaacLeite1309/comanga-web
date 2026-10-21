@@ -1,4 +1,5 @@
-import { fireEvent, render, screen, waitFor } from "@testing-library/react";
+import { fireEvent, screen, waitFor } from "@testing-library/react";
+import { render } from "../../../support/queryRender";
 import { MemoryRouter, Route, Routes } from "react-router-dom";
 import { beforeEach, describe, expect, it, vi } from "vitest";
 import { toast } from "sonner";
@@ -9,12 +10,15 @@ import { getPublicEditionDetails } from "@/features/public-catalog/publicCatalog
 vi.mock("@/features/public-catalog/publicCatalogService", () => ({
   getPublicEditionDetails: vi.fn(),
 }));
+vi.mock("@/features/auth", () => ({
+  useAuth: () => ({ user: { id: "test-user", active_profile: "Usuário Padrão" } }),
+}));
 
 vi.mock("@/features/personal-library", async (original) => ({
   ...(await original<typeof import("@/features/personal-library")>()),
   getCompleteCollectionEdition: vi.fn(), syncCollectionEdition: vi.fn(), syncWishlist: vi.fn(), updateVolumeReading: vi.fn(),
 }));
-vi.mock("sonner", () => ({ toast: { warning: vi.fn(), success: vi.fn() } }));
+vi.mock("sonner", () => ({ toast: { warning: vi.fn(), success: vi.fn(), error: vi.fn() } }));
 
 const response = {
   edition: {
@@ -80,7 +84,7 @@ function personal(owned: number[] = [], wished: number[] = [], read: number[] = 
 }
 describe("EditionVolumeSelection", () => {
   beforeEach(() => {
-    vi.clearAllMocks();
+    vi.resetAllMocks();
     vi.mocked(getPublicEditionDetails).mockResolvedValue(response);
     vi.mocked(getCompleteCollectionEdition).mockResolvedValue(personal());
     vi.mocked(syncCollectionEdition).mockResolvedValue({ editionId: 20, addedVolumeIds: [30], removedVolumeIds: [] });
@@ -103,15 +107,16 @@ describe("EditionVolumeSelection", () => {
   it("confirma a remoção de desejos antes de adicionar volumes à coleção", async () => {
     vi.mocked(getCompleteCollectionEdition).mockResolvedValueOnce(personal([], [30, 31])).mockResolvedValueOnce(personal([30, 31]));
     renderPage();
-    fireEvent.click(await screen.findByRole("button", { name: "Selecionar todos" }));
+    await screen.findByText("0 de 2 selecionados");
+    fireEvent.click(screen.getByRole("button", { name: "Selecionar todos" }));
     fireEvent.click(screen.getByRole("button", { name: "OK" }));
-    expect(screen.getByRole("dialog", { name: "Adicionar à coleção?" })).toHaveTextContent("2 volumes selecionados estão na sua lista de desejos");
+    expect(screen.getByRole("dialog", { name: "Confirmar alterações na coleção?" })).toHaveTextContent("Os volumes 1 e 2 estão na sua lista de desejos.");
     expect(syncCollectionEdition).not.toHaveBeenCalled();
     fireEvent.click(screen.getByRole("button", { name: "Cancelar" }));
     expect(screen.queryByRole("dialog")).not.toBeInTheDocument();
     expect(syncCollectionEdition).not.toHaveBeenCalled();
     fireEvent.click(screen.getByRole("button", { name: "OK" }));
-    fireEvent.click(screen.getByRole("button", { name: "Adicionar" }));
+    fireEvent.click(screen.getByRole("button", { name: "Salvar" }));
     expect(await screen.findByText("Edição")).toBeInTheDocument();
     expect(syncCollectionEdition).toHaveBeenCalledWith(20, { addVolumeIds: [30, 31], removeVolumeIds: [] });
   });
@@ -141,7 +146,7 @@ describe("EditionVolumeSelection", () => {
     expect(screen.getByRole("button", { name: "Selecionar Volume 1" })).toBeInTheDocument();
     expect(screen.queryByRole("button", { name: "Selecionar Volume 2" })).not.toBeInTheDocument();
     fireEvent.click(screen.getByRole("button", { name: "Selecionar Volume 1" }));
-    expect(screen.getByRole("button", { name: "Desmarcar Volume 1" }).querySelector("svg")).toHaveClass("lucide-eye");
+    expect(screen.getByRole("button", { name: "Desmarcar Volume 1" }).querySelector("svg")).toHaveClass("lucide-book-open");
     fireEvent.click(screen.getByRole("button", { name: "OK" }));
     expect(await screen.findByText("Edição")).toBeInTheDocument();
     expect(updateVolumeReading).toHaveBeenCalledWith(30, true);
@@ -170,9 +175,10 @@ describe("EditionVolumeSelection", () => {
     renderPage(); await screen.findByText("0 de 2 selecionados");
     fireEvent.click(screen.getByRole("button", { name: "Selecionar Volume 1" }));
     fireEvent.click(screen.getByRole("button", { name: "OK" }));
-    expect(await screen.findByRole("alert")).toHaveTextContent("Não foi possível confirmar a seleção salva");
+    await waitFor(() => expect(toast.error).toHaveBeenCalledWith("Não foi possível confirmar a seleção salva. Recarregue antes de continuar.", expect.any(Object)));
     expect(screen.queryByRole("button", { name: "OK" })).not.toBeInTheDocument();
-    fireEvent.click(screen.getByRole("button", { name: "Tentar novamente" }));
+    const retry = vi.mocked(toast.error).mock.lastCall?.[1] as unknown as { action: { onClick: () => void } };
+    retry.action.onClick();
     expect(await screen.findByText("0 de 2 selecionados")).toBeInTheDocument();
   });
   it("reconsulta seleção também após falha da sincronização atômica", async () => {
@@ -194,7 +200,7 @@ describe("EditionVolumeSelection", () => {
   });
   it("trata carregamento inválido, vazio e falha inicial", async () => {
     const view = renderPage("colecao", "0");
-    expect(await screen.findByRole("alert")).toBeInTheDocument();
+    await waitFor(() => expect(toast.error).toHaveBeenCalled());
     view.unmount();
     vi.mocked(getCompleteCollectionEdition).mockResolvedValueOnce({ ...personal(), volumes: [] });
     renderPage();

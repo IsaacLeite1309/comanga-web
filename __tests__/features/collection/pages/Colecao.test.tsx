@@ -1,15 +1,22 @@
 import { fireEvent, render, screen, waitFor, within } from "@testing-library/react";
 import { MemoryRouter } from "react-router-dom";
+import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
+import { toast } from "sonner";
 import { beforeEach, describe, expect, it, vi } from "vitest";
 import Colecao from "@/features/collection/pages/Colecao";
 import { getPublicCatalogOptions } from "@/features/public-catalog/publicCatalogService";
 import { getCompleteCollectionEdition, listCollection, type CollectionResponse } from "@/features/personal-library";
 vi.mock("@/features/public-catalog/publicCatalogService", () => ({ getPublicCatalogOptions: vi.fn() }));
 vi.mock("@/features/personal-library", async (original) => ({ ...(await original<typeof import("@/features/personal-library")>()), listCollection: vi.fn(), getCompleteCollectionEdition: vi.fn() }));
+vi.mock("@/features/auth", () => ({ useAuth: () => ({ user: { id: "test-user", conteudo_adulto: false, active_profile: "Usuário Padrão" } }) }));
+vi.mock("sonner", () => ({ toast: { error: vi.fn() } }));
 function response(read = false, total = 1): CollectionResponse {
-  return { works: [{ work: { id: 8, slug: "monster", title: "Monster" }, editions: [{ edition: { id: 20, chronologicalNumber: 1, brazilPublicationStatus: "Completa", brazilianPublisher: { id: 1, label: "Panini" } }, progress: { owned: total, total: 60, read: read ? 1 : 0, wished: 3 }, volumes: [{ id: 30, number: 1, singleVolume: false, read }], volumesPagination: { page: 1, limit: 50, total, totalPages: Math.ceil(total / 50) } }] }], pagination: { page: 1, limit: 12, total: 1, totalPages: 1 } };
+  return { works: [{ work: { id: 8, slug: "monster", title: "Monster" }, editions: [{ edition: { id: 20, chronologicalNumber: 1, brazilPublicationStatus: "Completa", brazilianPublisher: { id: 1, label: "Panini" } }, progress: { owned: total, total: 60, read: read ? 1 : 0, wished: 3 }, volumes: [{ id: 30, number: 1, singleVolume: false, read }], volumesPagination: { page: 1, limit: 50, total, totalPages: Math.ceil(total / 50) } }] }], totals: { editions: 1, volumes: total }, pagination: { page: 1, limit: 12, total: 1, totalPages: 1 } };
 }
-function mount() { return render(<MemoryRouter><Colecao isAuthenticated /></MemoryRouter>); }
+function mount() {
+  const queryClient = new QueryClient({ defaultOptions: { queries: { retry: false } } });
+  return render(<QueryClientProvider client={queryClient}><MemoryRouter><Colecao isAuthenticated /></MemoryRouter></QueryClientProvider>);
+}
 describe("Estante conectada à API", () => {
   beforeEach(() => { vi.clearAllMocks(); vi.mocked(listCollection).mockResolvedValue(response()); vi.mocked(getPublicCatalogOptions).mockResolvedValue({ brazilianPublishers: [{ id: 1, label: "Panini" }] } as Awaited<ReturnType<typeof getPublicCatalogOptions>>); });
   it("mostra o cartão compacto com título e edição, sem editora nem ações individuais", async () => {
@@ -86,9 +93,11 @@ describe("Estante conectada à API", () => {
     expect(getCompleteCollectionEdition).toHaveBeenCalledWith(20);
   });
   it("trata falha inicial, retry e coleção vazia", async () => {
-    vi.mocked(listCollection).mockRejectedValueOnce(new Error("offline")).mockResolvedValueOnce({ works: [], pagination: { page: 1, limit: 12, total: 0, totalPages: 0 } });
-    mount(); expect(await screen.findByRole("alert")).toHaveTextContent("Não foi possível carregar seu acervo.");
-    fireEvent.click(screen.getByRole("button", { name: "Tentar novamente" }));
+    vi.mocked(listCollection).mockRejectedValueOnce(new Error("offline")).mockResolvedValueOnce({ works: [], totals: { editions: 0, volumes: 0 }, pagination: { page: 1, limit: 12, total: 0, totalPages: 0 } });
+    mount();
+    await waitFor(() => expect(toast.error).toHaveBeenCalledWith("Não foi possível carregar seu acervo.", expect.any(Object)));
+    const retry = vi.mocked(toast.error).mock.calls[0][1] as unknown as { action: { onClick: () => void } };
+    retry.action.onClick();
     expect(await screen.findByText("Você ainda não adicionou nenhum volume à sua coleção!")).toBeInTheDocument();
     expect(screen.getByRole("link", { name: "Explorar catálogo" })).toHaveAttribute("href", "/pesquisa");
     expect(screen.getByRole("searchbox", { name: "Pesquisar na coleção" })).toBeDisabled();
@@ -96,7 +105,7 @@ describe("Estante conectada à API", () => {
     expect(screen.getByRole("button", { name: "Editora brasileira" })).toBeDisabled();
   });
   it("mantém os filtros quando a coleção só não tem resultados para a seleção", async () => {
-    vi.mocked(listCollection).mockResolvedValueOnce(response()).mockResolvedValue({ works: [], pagination: { page: 1, limit: 12, total: 0, totalPages: 0 } });
+    vi.mocked(listCollection).mockResolvedValueOnce(response()).mockResolvedValue({ works: [], totals: { editions: 0, volumes: 0 }, pagination: { page: 1, limit: 12, total: 0, totalPages: 0 } });
     mount();
     await screen.findByRole("heading", { name: "Monster · 1ª edição · Coleção incompleta" });
     fireEvent.click(screen.getByRole("button", { name: "Status da coleção" }));
@@ -109,9 +118,11 @@ describe("Estante conectada à API", () => {
     await screen.findByRole("heading", { name: "Monster · 1ª edição · Coleção incompleta" });
     fireEvent.change(screen.getByRole("searchbox", { name: "Pesquisar na coleção" }), { target: { value: "Naoki" } });
     await waitFor(() => expect(listCollection).toHaveBeenCalledWith(1, { term: "Naoki" }));
+    await waitFor(() => expect(screen.getByRole("button", { name: "Status da coleção" })).toBeEnabled());
     fireEvent.click(screen.getByRole("button", { name: "Status da coleção" }));
     fireEvent.click(screen.getByRole("button", { name: "Completa" }));
     await waitFor(() => expect(listCollection).toHaveBeenCalledWith(1, { term: "Naoki", status: "complete" }));
+    await waitFor(() => expect(screen.getByRole("button", { name: "Editora brasileira" })).toBeEnabled());
     fireEvent.click(screen.getByRole("button", { name: "Editora brasileira" }));
     fireEvent.click(screen.getByRole("button", { name: "Panini" }));
     await waitFor(() => expect(listCollection).toHaveBeenCalledWith(1, { term: "Naoki", status: "complete", brazilianPublisherId: 1 }));

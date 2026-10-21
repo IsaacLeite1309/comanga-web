@@ -9,16 +9,19 @@ let authState = {
   loading: false,
   isSessionEnding: false,
   activeProfile: "Usuário Padrão",
+  hasAdminProfile: false,
   user: null as null | { username: string },
 };
 
 vi.mock("@/features/auth", () => ({
+  ADMIN_PROFILE: "Administrador",
   useAuth: () => authState,
 }));
 
 vi.mock("sonner", () => ({
   toast: {
     error: vi.fn(),
+    warning: vi.fn(),
   },
 }));
 
@@ -49,6 +52,7 @@ describe("ProtectedRoute", () => {
       loading: false,
       isSessionEnding: false,
       activeProfile: "Usuário Padrão",
+      hasAdminProfile: false,
       user: null,
     };
   });
@@ -71,6 +75,7 @@ describe("ProtectedRoute", () => {
       loading: false,
       isSessionEnding: false,
       activeProfile: "Usuário Padrão",
+      hasAdminProfile: false,
       user: { username: "admin" },
     };
 
@@ -86,6 +91,7 @@ describe("ProtectedRoute", () => {
       loading: false,
       isSessionEnding: false,
       activeProfile: "Usuário Padrão",
+      hasAdminProfile: false,
       user: { username: "isaac" },
     };
 
@@ -96,6 +102,26 @@ describe("ProtectedRoute", () => {
     await waitFor(() => {
       expect(toast.error).toHaveBeenCalledWith("Acesso negado: Você não tem permissão para acessar esta área.");
     });
+    expect(toast.warning).not.toHaveBeenCalled();
+  });
+
+  it("orienta a trocar de perfil quando o administrador está no perfil padrão", async () => {
+    authState = {
+      isAuthenticated: true,
+      loading: false,
+      isSessionEnding: false,
+      activeProfile: "Usuário Padrão",
+      hasAdminProfile: true,
+      user: { username: "isaac" },
+    };
+
+    renderProtectedRoute("Administrador");
+
+    expect(await screen.findByText("Meu perfil")).toBeInTheDocument();
+    await waitFor(() => {
+      expect(toast.warning).toHaveBeenCalledWith("Mude o perfil para administrador para acessar essa página.");
+    });
+    expect(toast.error).not.toHaveBeenCalled();
   });
 
   it("renderiza rota administrativa quando usuario e administrador", () => {
@@ -104,6 +130,7 @@ describe("ProtectedRoute", () => {
       loading: false,
       isSessionEnding: false,
       activeProfile: "Administrador",
+      hasAdminProfile: true,
       user: { username: "admin" },
     };
 

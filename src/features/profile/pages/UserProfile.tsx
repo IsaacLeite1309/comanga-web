@@ -30,7 +30,7 @@ interface ProfileDetailsProps {
 function ProfileDetails({ profile, showAdultContent, isUpdating, onToggleAdultContent }: ProfileDetailsProps) {
   return (
     <>
-      <div className="flex min-w-0 items-center gap-3 p-4 rounded-xl bg-muted/30 border border-border sm:gap-4">
+      <div className="flex min-w-0 items-center gap-3 rounded-xl border border-border bg-background p-4 sm:gap-4">
         <div className="h-10 w-10 rounded-full bg-primary flex items-center justify-center shrink-0">
           <User className="h-5 w-5 text-white" />
         </div>
@@ -40,7 +40,7 @@ function ProfileDetails({ profile, showAdultContent, isUpdating, onToggleAdultCo
         </div>
       </div>
 
-      <div className="flex min-w-0 items-center gap-3 p-4 rounded-xl bg-muted/30 border border-border sm:gap-4">
+      <div className="flex min-w-0 items-center gap-3 rounded-xl border border-border bg-background p-4 sm:gap-4">
         <div className="h-10 w-10 rounded-full bg-primary flex items-center justify-center shrink-0">
           <Mail className="h-5 w-5 text-white" />
         </div>
@@ -50,7 +50,7 @@ function ProfileDetails({ profile, showAdultContent, isUpdating, onToggleAdultCo
         </div>
       </div>
 
-      {showAdultContent && <div className="flex min-w-0 items-center gap-3 p-4 rounded-xl bg-muted/30 border border-border sm:gap-4">
+      {showAdultContent && <div className="flex min-w-0 items-center gap-3 rounded-xl border border-border bg-background p-4 sm:gap-4">
         <div className="h-10 w-10 rounded-full bg-primary flex items-center justify-center shrink-0">
           <ShieldAlert className="h-5 w-5 text-white" />
         </div>
@@ -95,7 +95,7 @@ interface AdvancedSettingsProps {
 
 function AdvancedSettings({ isOpen, onToggle, onDelete, children }: AdvancedSettingsProps) {
   return (
-    <div className="rounded-xl border border-border bg-muted/20">
+    <div className="rounded-xl border border-border bg-background">
       <button
         type="button"
         onClick={onToggle}
@@ -195,7 +195,7 @@ function DeleteAccountModal(props: DeleteAccountModalProps) {
                 value={props.password}
                 onChange={(event) => props.onPasswordChange(event.target.value)}
                 disabled={props.deleting}
-                className="w-full rounded-lg border border-border bg-background px-3 py-2 pr-12 text-base text-foreground outline-none transition-colors focus:border-red-500 disabled:opacity-50"
+                className="w-full rounded-lg border border-border bg-sidebar px-3 py-2 pr-12 text-base text-foreground outline-none transition-colors focus:border-red-500 disabled:opacity-50"
                 placeholder="Digite sua senha atual"
               />
               <button
@@ -235,7 +235,7 @@ function DeleteAccountModal(props: DeleteAccountModalProps) {
 }
 
 const UserProfile = () => {
-  const { logout, clearSession } = useAuth();
+  const { logout, clearSession, activeProfile } = useAuth();
   const [profile, setProfile] = useState<UserProfileData | null>(null);
   const [loading, setLoading] = useState(true);
   const [isUpdating, setIsUpdating] = useState(false);
@@ -332,8 +332,8 @@ const UserProfile = () => {
   }, [logout]);
 
   return (
-    <div className="flex-1 flex min-w-0 flex-col items-center justify-center px-3 py-6 sm:px-4 sm:py-8">
-      <div className="w-full max-w-lg min-w-0 p-5 sm:p-8 bg-card rounded-2xl border border-border shadow-2xl">
+    <div className="page-gutter flex-1 flex min-w-0 flex-col items-center justify-center py-6 sm:py-8">
+      <div className="w-full max-w-md min-w-0 p-5 sm:p-8 bg-background rounded-2xl border border-border">
         <h2 className="text-2xl font-bold text-foreground mb-6 text-center">Meu perfil</h2>
         {loading ? (
           <div className="flex flex-col items-center justify-center py-12">
@@ -344,13 +344,13 @@ const UserProfile = () => {
           <div className="space-y-6">
             <ProfileDetails
               profile={profile}
-              showAdultContent={profile.active_profile !== "Administrador" && profile.can_enable_adult_content}
+              showAdultContent={activeProfile !== "Administrador" && profile.can_enable_adult_content}
               isUpdating={isUpdating}
               onToggleAdultContent={toggleAdultContent}
             />
             <ActiveProfileSelector
               profiles={profile.profiles || []}
-              activeProfile={profile.active_profile || ""}
+              activeProfile={activeProfile}
               updating={isSwitchingProfile}
               onChange={changeActiveProfile}
             />

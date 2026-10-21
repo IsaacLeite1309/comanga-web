@@ -1,6 +1,7 @@
 import { useMemo } from "react";
-import { Link, useLocation, useParams } from "react-router-dom";
+import { useLocation, useParams } from "react-router-dom";
 import { ArrowLeft } from "lucide-react";
+import { BackLink } from "@/components/shared/BackLink";
 import { DetailError, DetailLoading } from "../components/AdminCatalogDetailShared";
 import { VolumeSummary } from "../components/VolumeDetailsView";
 import { editionAdminPath } from "../domain/catalogPaths";
@@ -26,9 +27,9 @@ const VolumeDetails = () => {
   }
 
   return (
-    <div className="flex-1 min-w-0 px-3 py-6 sm:px-4 sm:py-8">
+    <div className="page-gutter flex-1 min-w-0 py-6 sm:py-8">
       <div className="mx-auto w-full max-w-6xl space-y-6">
-        <Link
+        <BackLink
           to={editionPath}
           state={{
             workId: state?.workId,
@@ -38,7 +39,7 @@ const VolumeDetails = () => {
         >
           <ArrowLeft className="h-4 w-4" />
           Voltar
-        </Link>
+        </BackLink>
         <VolumeSummary
           volume={details.volume}
           workSlug={workSlug}

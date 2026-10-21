@@ -387,7 +387,7 @@ function DeleteWorkDialog({ model }: { model: EditMangasPageModel }) {
 
 export function EditMangasView({ model }: { model: EditMangasPageModel }) {
   return (
-    <div className="flex-1 min-w-0 px-3 py-6 sm:px-4 sm:py-8">
+    <div className="page-gutter flex-1 min-w-0 py-6 sm:py-8">
       <div className="mx-auto w-full max-w-6xl space-y-6">
         <div className="flex flex-wrap items-start justify-between gap-4">
           <div>

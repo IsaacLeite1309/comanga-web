@@ -9,7 +9,7 @@ const EditionForm = () => {
 
   if (controller.loading) {
     return (
-      <div className="flex flex-1 items-center justify-center px-4 py-10 text-muted-foreground">
+      <div className="page-gutter flex flex-1 items-center justify-center py-10 text-muted-foreground">
         <Loader2 className="mr-2 h-5 w-5 animate-spin text-primary" />
         Carregando formulário da Edição...
       </div>
@@ -18,14 +18,14 @@ const EditionForm = () => {
 
   if (controller.error || !controller.options || !controller.workId) {
     return (
-      <div className="flex flex-1 items-center justify-center px-4 py-10 text-sm font-semibold text-red-300">
+      <div className="page-gutter flex flex-1 items-center justify-center py-10 text-sm font-semibold text-red-300">
         {controller.error || "Não foi possível carregar o formulário da Edição."}
       </div>
     );
   }
 
   return (
-    <div className="flex-1 min-w-0 px-3 py-6 sm:px-4 sm:py-8">
+    <div className="page-gutter flex-1 min-w-0 py-6 sm:py-8">
       <UnsavedChangesPrompt when={controller.hasUnsavedChanges} continueLabel={controller.isEditMode ? "Continuar editando" : "Continuar cadastrando"} />
       <form onSubmit={controller.handleSubmit} className="mx-auto w-full max-w-6xl space-y-6">
         <div>

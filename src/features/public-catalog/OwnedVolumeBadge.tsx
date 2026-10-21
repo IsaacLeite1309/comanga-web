@@ -1,4 +1,4 @@
-import { Check } from "lucide-react";
+import { LibraryBig } from "lucide-react";
 
 export function OwnedVolumeBadge({ compact = false }: { compact?: boolean }) {
   return (
@@ -7,7 +7,7 @@ export function OwnedVolumeBadge({ compact = false }: { compact?: boolean }) {
       title="Na coleção"
       className={`pointer-events-none z-10 flex items-center justify-center rounded-full bg-primary text-primary-foreground shadow-md ring-background ${compact ? "relative h-6 w-6 ring-1" : "absolute left-0 top-0 h-8 w-8 -translate-x-1/4 -translate-y-1/4 ring-2"}`}
     >
-      <Check className={compact ? "h-4 w-4" : "h-5 w-5"} strokeWidth={3} />
+      <LibraryBig className={compact ? "h-4 w-4" : "h-5 w-5"} fill="currentColor" />
     </span>
   );
 }

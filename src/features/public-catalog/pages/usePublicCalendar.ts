@@ -1,8 +1,13 @@
 import { useEffect, useMemo, useState } from "react";
+import { useQuery } from "@tanstack/react-query";
 import { useSearchParams } from "react-router-dom";
 import { getPublicCatalogOptions, listPublicCalendar } from "@/features/public-catalog/publicCatalogService";
-import type { PublicCalendarQuery, PublicCalendarResponse, PublicOption } from "@/features/public-catalog/publicCatalogTypes";
+import type { PublicCalendarQuery, PublicOption } from "@/features/public-catalog/publicCatalogTypes";
 import { getApiError } from "@/lib/apiError";
+import { PUBLIC_CATALOG_QUERY_ROOT } from "@/lib/queryClient";
+import { useMinimumQueryLoading } from "@/hooks/useMinimumQueryLoading";
+import { usePublicCatalogScope } from "@/features/public-catalog/usePublicCatalogScope";
+import { sameQueryExceptOrder } from "@/features/public-catalog/sameQueryExceptOrder";
 
 const PAGE_SIZE = 24;
 
@@ -40,45 +45,38 @@ function readCalendarQuery(params: URLSearchParams): { query: PublicCalendarQuer
 }
 
 function useCalendarResults(query: PublicCalendarQuery, validationError: string) {
-  const [data, setData] = useState<PublicCalendarResponse | null>(null);
-  const [loading, setLoading] = useState(true);
-  const [error, setError] = useState("");
-  const [retry, setRetry] = useState(0);
-
-  useEffect(() => {
-    let active = true;
-    if (validationError) setData(null);
-    setError(validationError);
-    setLoading(!validationError);
-    if (validationError) return;
-    listPublicCalendar(query)
-      .then((result) => { if (active) setData(result); })
-      .catch((requestError) => {
-        if (active) setError(getApiError(requestError, "Não foi possível carregar os lançamentos."));
-      })
-      .finally(() => { if (active) setLoading(false); });
-    return () => { active = false; };
-  }, [query, retry, validationError]);
-
-  return { data, loading, error, retryResults: () => setRetry(value => value + 1) };
+  const scope = usePublicCatalogScope();
+  const result = useQuery({
+    queryKey: [...PUBLIC_CATALOG_QUERY_ROOT, scope, "calendar", query, validationError],
+    queryFn: () => listPublicCalendar(query),
+    enabled: !validationError,
+    placeholderData: (previousData, previousQuery) => !validationError
+      && previousQuery?.queryKey[2] === "calendar"
+      && sameQueryExceptOrder(previousQuery.queryKey[3], query) ? previousData : undefined,
+  });
+  const loading = useMinimumQueryLoading(JSON.stringify([{ ...query, page: undefined }, validationError]), !validationError && result.isPending);
+  return {
+    data: validationError ? null : result.data ?? null,
+    loading,
+    error: validationError || (result.isError && !result.data
+      ? getApiError(result.error, "Não foi possível carregar os lançamentos.") : ""),
+    refreshError: result.isError && result.data ? "Não foi possível atualizar os lançamentos." : "",
+    retryResults: () => { void result.refetch(); },
+  };
 }
 
 function useCalendarPublishers() {
-  const [publishers, setPublishers] = useState<PublicOption[]>([]);
-  const [optionsLoading, setOptionsLoading] = useState(true);
-  const [optionsError, setOptionsError] = useState(false);
-  const [retry, setRetry] = useState(0);
-  useEffect(() => {
-    let active = true;
-    setOptionsLoading(true);
-    setOptionsError(false);
-    getPublicCatalogOptions()
-      .then((options) => { if (active) setPublishers(options.brazilianPublishers); })
-      .catch(() => { if (active) setOptionsError(true); })
-      .finally(() => { if (active) setOptionsLoading(false); });
-    return () => { active = false; };
-  }, [retry]);
-  return { publishers, optionsLoading, optionsError, retryOptions: () => setRetry(value => value + 1) };
+  const scope = usePublicCatalogScope();
+  const result = useQuery({
+    queryKey: [...PUBLIC_CATALOG_QUERY_ROOT, scope, "options"],
+    queryFn: getPublicCatalogOptions,
+  });
+  return {
+    publishers: result.data?.brazilianPublishers ?? [] as PublicOption[],
+    optionsLoading: result.isPending,
+    optionsError: result.isError && !result.data,
+    retryOptions: () => { void result.refetch(); },
+  };
 }
 
 export function usePublicCalendar() {

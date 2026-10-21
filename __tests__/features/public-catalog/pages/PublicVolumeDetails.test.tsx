@@ -1,6 +1,9 @@
 vi.mock("@/features/auth", () => ({ useAuth: () => ({ user: null, loading: false }) }));
-import { fireEvent, render, screen, waitFor } from "@testing-library/react";
+vi.mock("sonner", () => ({ toast: { error: vi.fn() } }));
+import { fireEvent, screen, waitFor } from "@testing-library/react";
+import { render } from "../../../support/queryRender";
 import { AxiosError, AxiosHeaders } from "axios";
+import { toast } from "sonner";
 import { MemoryRouter, Route, Routes } from "react-router-dom";
 import { beforeEach, describe, expect, it, vi } from "vitest";
 import PublicVolumeDetails from "@/features/public-catalog/pages/PublicVolumeDetails";
@@ -117,6 +120,23 @@ describe("PublicVolumeDetails", () => {
     );
   });
 
+  it("reabre um volume visitado sem consultar a API novamente", async () => {
+    vi.mocked(getPublicVolumeDetails).mockImplementation(async (_slug, _edition, number) => ({
+      ...volume,
+      number,
+      previousVolume: number === 2 ? { id: 30, number: 1, singleVolume: false } : volume.previousVolume,
+      nextVolume: number === 2 ? null : volume.nextVolume,
+    }));
+    renderPage();
+    await screen.findByRole("heading", { name: "Monster volume 1" });
+    fireEvent.click(screen.getByRole("link", { name: "Volume 2" }));
+    await screen.findByRole("heading", { name: "Monster volume 2" });
+    await waitFor(() => expect(getPublicVolumeDetails).toHaveBeenCalledTimes(3));
+    fireEvent.click(screen.getByRole("link", { name: "Volume 1" }));
+    expect(await screen.findByRole("heading", { name: "Monster volume 1" })).toBeInTheDocument();
+    expect(getPublicVolumeDetails).toHaveBeenCalledTimes(3);
+  });
+
   it("não inventa valores nem ações ainda inaplicáveis quando campos opcionais estão ausentes", async () => {
     vi.mocked(getPublicVolumeDetails).mockResolvedValue({
       ...volume,
@@ -183,15 +203,16 @@ describe("PublicVolumeDetails", () => {
       .mockResolvedValueOnce(volume);
     const { unmount } = renderPage();
 
-    expect(await screen.findByText("Volume não encontrado.")).toBeInTheDocument();
-    fireEvent.click(screen.getByRole("button", { name: "Tentar novamente" }));
+    await waitFor(() => expect(toast.error).toHaveBeenCalledWith("Volume não encontrado.", expect.any(Object)));
+    const retry = vi.mocked(toast.error).mock.calls[0][1] as unknown as { action: { onClick: () => void } };
+    retry.action.onClick();
     await waitFor(() => expect(getPublicVolumeDetails).toHaveBeenCalledTimes(2));
     expect(await screen.findByRole("heading", { name: "Monster volume 1" })).toBeInTheDocument();
 
     unmount();
     vi.clearAllMocks();
     renderPage("/obra/monster/edicao/2/volume/invalido");
-    expect(await screen.findByText("Volume não encontrado.")).toBeInTheDocument();
+    await waitFor(() => expect(toast.error).toHaveBeenCalledWith("Volume não encontrado.", expect.any(Object)));
     expect(getPublicVolumeDetails).not.toHaveBeenCalled();
   });
 });

@@ -1,11 +1,13 @@
-import { AlertCircle, ArrowDownAZ, ArrowUpAZ } from 'lucide-react';
-import { Link } from 'react-router-dom';
-import { EmptyState, LoadingState } from '@/components/shared/AsyncState';
+import { ArrowDownAZ, ArrowUpAZ } from 'lucide-react';
+import { Link, useLocation } from 'react-router-dom';
+import { FilteredEmptyState } from '@/components/shared/AsyncState';
 import { CatalogCover } from '@/features/public-catalog/CatalogCover';
+import { CatalogResultsLoading } from '@/features/public-catalog/CatalogResultsLoading';
 import { CatalogPagination } from '@/features/public-catalog/CatalogPagination';
 import { PublicWorkCard } from '@/features/public-catalog/PublicWorkCard';
 import type { PublicCatalogTab, PublicEditionSummary } from '@/features/public-catalog/publicCatalogTypes';
 import { type PesquisaCatalog } from '../hooks/usePesquisaCatalog';
+import { CatalogRefreshNotice } from '@/features/public-catalog/CatalogRefreshNotice';
 
 export { ResultsSummary, CatalogResults };
 
@@ -15,12 +17,14 @@ function resultCount(tab: PublicCatalogTab, total: number) {
 }
 
 function EditionCard({ edition }: { edition: PublicEditionSummary }) {
+  const location = useLocation();
   const editionLabel = `${edition.chronologicalNumber}ª edição`;
   const metadata = `${editionLabel} · ${edition.brazilianPublisher.label}`;
   return (
     <article className="min-w-0">
       <Link
         to={`/obra/${encodeURIComponent(edition.work.slug)}/edicao/${edition.chronologicalNumber}`}
+        state={{ catalogOrigin: "search", returnTo: `${location.pathname}${location.search}` }}
         aria-label={`Ver detalhes da ${editionLabel} de ${edition.work.title}`}
         className="group block rounded-lg outline-none focus-visible:ring-2 focus-visible:ring-primary"
       >
@@ -44,7 +48,7 @@ function ResultsSummary({ catalog }: { catalog: PesquisaCatalog }) {
   if (catalog.error) return null;
   const SortIcon = catalog.order === "ASC" ? ArrowDownAZ : ArrowUpAZ;
   return (
-    <div className="mt-7 flex min-h-5 items-center gap-3 text-sm text-primary">
+    <div className="catalog-menu-search-divider-space flex min-h-5 items-center gap-3 text-sm text-primary">
       {catalog.loading ? (
         <span data-testid="results-divider" className="h-px flex-1 bg-border" aria-hidden="true" />
       ) : (
@@ -88,39 +92,22 @@ function ResultCards({ catalog }: { catalog: PesquisaCatalog }) {
 
 function CatalogResults({ catalog }: { catalog: PesquisaCatalog }) {
   if (catalog.loading) {
-    return <LoadingState message={catalog.tab === "works" ? "Carregando Obras..." : "Carregando Edições..."} />;
+    return <CatalogResultsLoading label={catalog.tab === "works" ? "Carregando Obras..." : "Carregando Edições..."} />;
   }
   if (catalog.error) {
-    return (
-      <div className="flex flex-col items-center rounded-2xl border border-red-500/30 bg-sidebar px-4 py-12 text-center">
-        <AlertCircle className="h-8 w-8 text-red-400" aria-hidden="true" />
-        <p className="mt-3 font-semibold text-red-300">{catalog.error}</p>
-        <button
-          type="button"
-          onClick={catalog.retryResults}
-          className="mt-5 rounded-lg bg-primary px-4 py-2 text-sm font-bold text-primary-foreground"
-        >
-          Tentar novamente
-        </button>
-      </div>
-    );
+    return null;
   }
   const hasResults = catalog.tab === "works" ? catalog.works.length > 0 : catalog.editions.length > 0;
-  if (hasResults) return <ResultCards catalog={catalog} />;
+  if (hasResults) return <><CatalogRefreshNotice message={catalog.refreshError} onRetry={catalog.retryResults} /><ResultCards catalog={catalog} /></>;
   return (
-    <div className="rounded-2xl border border-sidebar-foreground/30 bg-sidebar">
-      <EmptyState
-        message={catalog.tab === "works" ? "Nenhuma obra encontrada." : "Nenhuma edição encontrada."}
+    <>
+      <CatalogRefreshNotice message={catalog.refreshError} onRetry={catalog.retryResults} />
+      <FilteredEmptyState
+        message={catalog.tab === "works"
+          ? "Nenhuma obra encontrada com os filtros selecionados."
+          : "Nenhuma edição encontrada com os filtros selecionados."}
+        onClear={catalog.clearFilters}
       />
-      <div className="flex justify-center px-4 pb-10">
-        <button
-          type="button"
-          onClick={catalog.clearFilters}
-          className="rounded-lg bg-primary px-4 py-2 text-sm font-bold text-primary-foreground"
-        >
-          Limpar filtros
-        </button>
-      </div>
-    </div>
+    </>
   );
 }

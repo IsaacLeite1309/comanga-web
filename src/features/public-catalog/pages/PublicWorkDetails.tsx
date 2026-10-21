@@ -1,22 +1,29 @@
 import { PersonalCatalogSession } from "../PersonalCatalogSession";
-import { useEffect, useState, type ReactNode } from "react";
-import { AlertCircle, ArrowLeft, ChevronRight } from "lucide-react";
+import { useEffect, type ReactNode } from "react";
+import { useQuery, useQueryClient } from "@tanstack/react-query";
+import { ArrowLeft, ChevronRight } from "lucide-react";
 import { Link, useLocation, useParams } from "react-router-dom";
 import { CatalogCover } from "@/features/public-catalog/CatalogCover";
+import { CatalogRefreshNotice } from "@/features/public-catalog/CatalogRefreshNotice";
 import { OwnedVolumeBadge } from "@/features/public-catalog/OwnedVolumeBadge";
 import { WishedVolumeBadge } from "@/features/public-catalog/WishedVolumeBadge";
 import { ReadVolumeBadge } from "@/features/public-catalog/ReadVolumeBadge";
 import { getPublicWorkDetails } from "@/features/public-catalog/publicCatalogService";
+import { prefetchWorkEditions } from "@/features/public-catalog/prefetchCatalogDetails";
 import type {
   PublicEditionDetails,
   PublicVolumePreview,
   PublicWorkDetails as PublicWorkDetailsData,
 } from "@/features/public-catalog/publicCatalogTypes";
 import { LoadingState } from "@/components/shared/AsyncState";
+import { BackLink } from "@/components/shared/BackLink";
 import { getApiError } from "@/lib/apiError";
+import { PUBLIC_CATALOG_QUERY_ROOT } from "@/lib/queryClient";
+import { usePublicCatalogScope } from "@/features/public-catalog/usePublicCatalogScope";
 import { formatPublicationStatus, publicVolumeLabel } from "@/features/public-catalog/publicCatalogFormatters";
 import { publicAuthorPath, publicEditionPath, publicVolumePath } from "@/features/public-catalog/publicCatalogPaths";
 import { catalogNavigationState, catalogRoot } from "@/features/public-catalog/publicCatalogNavigation";
+import { useCatalogErrorToast } from "@/features/public-catalog/useCatalogErrorToast";
 
 function publicationPeriod(work: PublicWorkDetailsData) {
   const start = work.originalPublicationStartYear;
@@ -125,72 +132,56 @@ function EditionCard({ edition, workSlug, workTitle }: { edition: PublicEditionD
   );
 }
 
+function useWorkDetails(slug: string) {
+  const scope = usePublicCatalogScope();
+  const queryClient = useQueryClient();
+  const result = useQuery({
+    queryKey: [...PUBLIC_CATALOG_QUERY_ROOT, scope, "work", slug],
+    queryFn: () => getPublicWorkDetails(slug),
+    enabled: Boolean(slug),
+  });
+  const work: PublicWorkDetailsData | null = result.data ?? null;
+  useEffect(() => {
+    if (work) void prefetchWorkEditions(queryClient, scope, work);
+  }, [queryClient, scope, work]);
+  const loading = Boolean(slug) && result.isPending;
+  const error = !slug ? "Obra não encontrada." : result.isError && !work
+    ? getApiError(result.error, "Não foi possível carregar esta obra.") : "";
+  return {
+    work,
+    loading,
+    error,
+    refreshError: result.isError && work ? "Não foi possível atualizar esta obra." : "",
+    retry: () => { void result.refetch(); },
+  };
+}
+
 function PublicWorkDetailsContent() {
   const { slug = "" } = useParams();
   const location = useLocation();
   const navigationState = catalogNavigationState(location.state);
   const root = catalogRoot(navigationState.catalogOrigin);
-  const [work, setWork] = useState<PublicWorkDetailsData | null>(null);
-  const [loading, setLoading] = useState(true);
-  const [error, setError] = useState("");
-  const [retry, setRetry] = useState(0);
-
-  useEffect(() => {
-    let active = true;
-    setLoading(true);
-    setError("");
-
-    getPublicWorkDetails(slug)
-      .then((data) => {
-        if (active) setWork(data);
-      })
-      .catch((requestError) => {
-        if (!active) return;
-        setWork(null);
-        setError(getApiError(requestError, "Não foi possível carregar esta obra."));
-      })
-      .finally(() => {
-        if (active) setLoading(false);
-      });
-
-    return () => {
-      active = false;
-    };
-  }, [retry, slug]);
+  const { work, loading, error, refreshError, retry } = useWorkDetails(slug);
+  useCatalogErrorToast(error, retry, "work-details");
 
   if (loading) return <LoadingState message="Carregando Obra..." fullPage />;
 
   if (error || !work) {
-    return (
-      <div className="flex min-h-[calc(100dvh-5rem)] items-center justify-center px-4 py-12">
-        <section className="w-full max-w-lg rounded-2xl border border-red-500/20 bg-red-500/5 px-6 py-10 text-center">
-          <AlertCircle className="mx-auto h-9 w-9 text-red-400" aria-hidden="true" />
-          <h1 className="mt-4 text-xl font-bold text-foreground">Obra indisponível</h1>
-          <p className="mt-2 text-sm text-red-300">{error || "Obra não encontrada."}</p>
-          <div className="mt-6 flex flex-wrap justify-center gap-3">
-            <button type="button" onClick={() => setRetry((value) => value + 1)} className="rounded-lg bg-primary px-4 py-2 text-sm font-bold text-primary-foreground">
-              Tentar novamente
-            </button>
-            <Link to={root.path} className="rounded-lg border border-border bg-input px-4 py-2 text-sm font-bold text-foreground">
-              Voltar
-            </Link>
-          </div>
-        </section>
-      </div>
-    );
+    return <div className="page-gutter flex min-h-[calc(100dvh-5rem)] items-center justify-center py-12"><BackLink to={root.path} className="rounded-lg border border-border bg-input px-4 py-2 text-sm font-bold text-foreground">Voltar</BackLink></div>;
   }
 
   return (
-    <div className="min-w-0 flex-1 px-4 pb-7 pt-[4.5rem] sm:px-6 sm:pb-9 xl:px-10">
+    <div className="page-gutter min-w-0 flex-1 pb-7 pt-[4.5rem] sm:pb-9">
+      <CatalogRefreshNotice message={refreshError} onRetry={retry} />
       <div className="mx-auto w-full max-w-7xl">
-        <div className="fixed inset-x-0 top-0 z-50 flex h-16 min-w-0 items-center gap-3 border-b border-border bg-background px-4 md:left-20 sm:px-6 lg:left-64 xl:px-10">
-          <Link
+        <div className="page-gutter fixed inset-x-0 top-0 z-50 flex h-16 min-w-0 items-center gap-3 border-b border-border bg-background md:left-20 lg:left-56">
+          <BackLink
             to={root.path}
             className="inline-flex shrink-0 items-center gap-2 rounded-lg px-2 py-1 text-base font-bold leading-none text-foreground transition-colors hover:bg-sidebar-accent/30 hover:text-foreground"
           >
             <ArrowLeft className="h-5 w-5 text-primary" aria-hidden="true" />
             Voltar
-          </Link>
+          </BackLink>
 
           <nav className="flex min-w-0 items-center gap-1 text-base font-semibold leading-none" aria-label="Caminho de navegação">
             <Link

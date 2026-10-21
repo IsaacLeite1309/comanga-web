@@ -4,7 +4,10 @@ import UserProfile from "@/features/profile/pages/UserProfile";
 import { api } from "@/services/api";
 import { toast } from "sonner";
 
-const updateUserMock = vi.fn();
+const authState = vi.hoisted(() => ({ activeProfile: "Usuário Padrão" }));
+const updateUserMock = vi.fn((changes: { active_profile?: string }) => {
+  if (changes.active_profile) authState.activeProfile = changes.active_profile;
+});
 
 vi.mock("@/features/auth", async (importOriginal) => ({
   ...(await importOriginal<typeof import("@/features/auth")>()),
@@ -12,6 +15,7 @@ vi.mock("@/features/auth", async (importOriginal) => ({
     logout: vi.fn(),
     clearSession: vi.fn(),
     updateUser: updateUserMock,
+    activeProfile: authState.activeProfile,
   }),
 }));
 
@@ -43,6 +47,7 @@ function profilePayload(overrides: Record<string, unknown> = {}) {
 }
 
 function mockLoadedProfile(overrides: Record<string, unknown> = {}) {
+  authState.activeProfile = String(overrides.active_profile ?? "Usuário Padrão");
   vi.mocked(api.get).mockResolvedValueOnce({ data: { user: profilePayload(overrides) } });
 }
 

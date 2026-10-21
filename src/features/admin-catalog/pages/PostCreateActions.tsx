@@ -22,7 +22,7 @@ const PostCreateActions = () => {
   }
 
   return (
-    <div className="flex flex-1 items-center justify-center px-3 py-8 sm:px-4">
+    <div className="page-gutter flex flex-1 items-center justify-center py-8">
       <section className="w-full max-w-3xl rounded-2xl border border-border bg-card p-5 shadow-lg sm:p-7">
         <div className="min-w-0">
           <h1 className="text-2xl font-bold text-foreground">{state.title.endsWith("!") ? state.title : `${state.title}!`}</h1>

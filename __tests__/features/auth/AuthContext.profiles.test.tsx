@@ -13,7 +13,7 @@ vi.mock("@/services/api", () => ({
 }));
 
 vi.mock("sonner", () => ({
-  toast: { success: vi.fn() },
+  toast: { success: vi.fn(), error: vi.fn() },
 }));
 
 function AuthConsumer() {
@@ -109,6 +109,24 @@ describe("AuthContext — perfis de acesso", () => {
 
     await waitFor(() => expect(screen.getByTestId("active")).toHaveTextContent("Usuário Padrão"));
     expect(screen.getByTestId("admin")).toHaveTextContent("sim");
+  });
+
+  it("revalida o perfil ativo quando outra aba altera a sessão", async () => {
+    vi.mocked(api.get)
+      .mockResolvedValueOnce({ data: { user: {
+        id: "1", username: "admin", profiles: ["Administrador", "Usuário Padrão"], active_profile: "Usuário Padrão",
+      } } })
+      .mockResolvedValueOnce({ data: { user: {
+        id: "1", username: "admin", profiles: ["Administrador", "Usuário Padrão"], active_profile: "Administrador",
+      } } });
+
+    renderAuthProvider();
+    await waitFor(() => expect(screen.getByTestId("active")).toHaveTextContent("Usuário Padrão"));
+
+    fireEvent(window, new StorageEvent("storage", { key: "comanga:session-changed" }));
+
+    await waitFor(() => expect(screen.getByTestId("active")).toHaveTextContent("Administrador"));
+    expect(api.get).toHaveBeenCalledTimes(2);
   });
 
   it("ignora atualização de contexto quando não há sessão", async () => {

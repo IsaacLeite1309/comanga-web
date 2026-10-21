@@ -1,6 +1,8 @@
-import { act, fireEvent, render, screen, waitFor } from "@testing-library/react";
-import { MemoryRouter, Route, Routes, useLocation } from "react-router-dom";
+import { act, fireEvent, screen, waitFor } from "@testing-library/react";
+import { render } from "../../../support/queryRender";
+import { Link, MemoryRouter, Route, Routes, useLocation } from "react-router-dom";
 import { beforeEach, describe, expect, it, vi } from "vitest";
+import { toast } from "sonner";
 import Pesquisa from "@/features/public-catalog/pages/Pesquisa";
 import {
   getPublicCatalogOptions,
@@ -13,6 +15,8 @@ vi.mock("@/features/public-catalog/publicCatalogService", () => ({
   listPublicWorks: vi.fn(),
   listPublicEditions: vi.fn(),
 }));
+vi.mock("@/features/auth", () => ({ useAuth: () => ({ user: null, loading: false }) }));
+vi.mock("sonner", () => ({ toast: { error: vi.fn() } }));
 
 const options = {
   workTypes: [
@@ -96,6 +100,10 @@ function currentParams() {
   return new URLSearchParams(screen.getByTestId("location-search").textContent || "");
 }
 
+async function waitForCatalogReady() {
+  await waitFor(() => expect(screen.getByRole("searchbox", { name: /Pesquisar (obras|edições)/i })).toBeEnabled());
+}
+
 describe("Pesquisa", () => {
   beforeEach(() => {
     vi.clearAllMocks();
@@ -104,11 +112,31 @@ describe("Pesquisa", () => {
     vi.mocked(listPublicEditions).mockResolvedValue(editionsResponse);
   });
 
+  it("aproveita a consulta concluída enquanto outra página estava aberta", async () => {
+    let finish!: (value: typeof worksResponse) => void;
+    vi.mocked(listPublicWorks).mockImplementationOnce(() => new Promise(resolve => { finish = resolve; }));
+    render(
+      <MemoryRouter initialEntries={["/pesquisa"]}>
+        <nav><Link to="/pesquisa">Pesquisar</Link><Link to="/lancamentos">Lançamentos</Link></nav>
+        <Routes>
+          <Route path="/pesquisa" element={<Pesquisa />} />
+          <Route path="/lancamentos" element={<h1>Lançamentos</h1>} />
+        </Routes>
+      </MemoryRouter>,
+    );
+    await waitFor(() => expect(listPublicWorks).toHaveBeenCalledTimes(1));
+    fireEvent.click(screen.getByRole("link", { name: "Lançamentos" }));
+    await act(async () => { finish(worksResponse); });
+    fireEvent.click(screen.getByRole("link", { name: "Pesquisar" }));
+    expect(await screen.findByText("1 obra encontrada")).toBeInTheDocument();
+    expect(listPublicWorks).toHaveBeenCalledTimes(1);
+  });
+
   it("usa destaque por borda nos campos de pesquisa e filtros das duas abas", async () => {
     renderCatalog();
     await screen.findByRole("heading", { name: "Monster" });
 
-    const search = screen.getByRole("searchbox", { name: "Pesquisar no catálogo" });
+    const search = screen.getByRole("searchbox", { name: /Pesquisar (obras|edições)/i });
     expect(search).toHaveClass("rounded-lg", "hover:border-primary", "focus:border-primary");
     expect(search).not.toHaveClass("focus:ring-2");
     expect(screen.getByLabelText("Tipo de Obra")).toHaveClass("rounded-lg", "hover:border-primary");
@@ -183,6 +211,7 @@ describe("Pesquisa", () => {
     fireEvent.click(screen.getByRole("button", { name: "Coreia do Sul" }));
 
     await waitFor(() => expect(currentParams().get("country")).toBe("Coreia do Sul"));
+    await waitForCatalogReady();
     fireEvent.click(screen.getByLabelText("Tipo de Obra"));
     expect(screen.getByRole("button", { name: "Manhwa" })).toBeInTheDocument();
     expect(screen.queryByRole("button", { name: "Mangá" })).not.toBeInTheDocument();
@@ -221,6 +250,7 @@ describe("Pesquisa", () => {
     expect(currentParams().get("typeId")).toBe("3");
     expect(screen.getByLabelText("Tipo de Obra")).toHaveTextContent("Novel");
 
+    await waitForCatalogReady();
     fireEvent.click(screen.getByRole("button", { name: "Limpar País de Origem" }));
     await waitFor(() => expect(currentParams().has("country")).toBe(false));
     expect(currentParams().get("typeId")).toBe("3");
@@ -233,7 +263,7 @@ describe("Pesquisa", () => {
     await screen.findByRole("heading", { name: "Monster" });
     vi.mocked(listPublicWorks).mockClear();
 
-    fireEvent.change(screen.getByRole("searchbox", { name: /pesquisar no catálogo/i }), {
+    fireEvent.change(screen.getByRole("searchbox", { name: /Pesquisar (obras|edições)/i }), {
       target: { value: "Urasawa" },
     });
 
@@ -254,7 +284,7 @@ describe("Pesquisa", () => {
     expect(screen.getByRole("region", { name: "Filtros avançados" })).toBeInTheDocument();
     expect(listPublicWorks).toHaveBeenCalledTimes(1);
 
-    fireEvent.change(screen.getByRole("searchbox", { name: /pesquisar no catálogo/i }), {
+    fireEvent.change(screen.getByRole("searchbox", { name: /Pesquisar (obras|edições)/i }), {
       target: { value: "Urasawa" },
     });
     expect(listPublicWorks).toHaveBeenCalledTimes(1);
@@ -267,7 +297,7 @@ describe("Pesquisa", () => {
     renderCatalog("/pesquisa?term=Monster");
     await screen.findByRole("heading", { name: "Monster" });
 
-    const search = screen.getByRole("searchbox", { name: "Pesquisar no catálogo" });
+    const search = screen.getByRole("searchbox", { name: /Pesquisar (obras|edições)/i });
     expect(search).toHaveAttribute("placeholder", "Título, título original ou autor");
     expect(search).toHaveClass("pl-12", "pr-3");
     expect(search.parentElement?.parentElement).toHaveTextContent("Pesquisar");
@@ -331,24 +361,32 @@ describe("Pesquisa", () => {
     expect(screen.queryByPlaceholderText("Digite para buscar...")).not.toBeInTheDocument();
     expect(screen.queryByRole("button", { name: "Todos" })).not.toBeInTheDocument();
     fireEvent.click(screen.getByRole("button", { name: "Mangá" }));
+    await waitForCatalogReady();
     expect(screen.getByRole("button", { name: "Limpar Tipo de Obra" })).toBeInTheDocument();
     fireEvent.click(screen.getByLabelText("Status Original"));
     expect(screen.getByRole("button", { name: "Completa" })).toBeInTheDocument();
     expect(screen.getByRole("button", { name: "Cancelada" })).toBeInTheDocument();
     fireEvent.click(screen.getByRole("button", { name: "Em andamento" }));
+    await waitForCatalogReady();
     fireEvent.click(screen.getByRole("button", { name: /filtros avançados/i }));
     fireEvent.click(screen.getByLabelText("País de Origem"));
     fireEvent.click(screen.getByRole("button", { name: "Japão" }));
+    await waitForCatalogReady();
     fireEvent.click(screen.getByLabelText("Editora original"));
     fireEvent.click(screen.getByRole("button", { name: "Shueisha" }));
+    await waitForCatalogReady();
     fireEvent.click(screen.getByLabelText("Pré-publicação"));
     fireEvent.click(screen.getByRole("button", { name: "Weekly Shonen Jump" }));
+    await waitForCatalogReady();
     fireEvent.click(screen.getByLabelText("Início da publicação original"));
     fireEvent.click(screen.getByRole("button", { name: "1999" }));
+    await waitForCatalogReady();
     fireEvent.click(screen.getByLabelText("Fim da publicação original"));
     fireEvent.click(screen.getByRole("button", { name: "2014" }));
+    await waitForCatalogReady();
     fireEvent.click(screen.getByLabelText("Selecionar Demografia"));
     fireEvent.click(screen.getByRole("button", { name: "Seinen" }));
+    await waitForCatalogReady();
     fireEvent.click(screen.getByLabelText("Selecionar Gêneros"));
     fireEvent.click(screen.getByRole("button", { name: "Ação" }));
 
@@ -384,6 +422,7 @@ describe("Pesquisa", () => {
     expect(screen.queryByRole("button", { name: "Limpar Título" })).not.toBeInTheDocument();
 
     fireEvent.click(screen.getByRole("button", { name: "Limpar Tipo de Obra" }));
+    await waitForCatalogReady();
     fireEvent.click(screen.getByRole("button", { name: "Limpar Demografia" }));
 
     await waitFor(() => {
@@ -444,7 +483,7 @@ describe("Pesquisa", () => {
     fireEvent.pointerDown(screen.getByLabelText("País de Origem"));
     expect(screen.getByRole("region", { name: "Filtros avançados" })).toBeInTheDocument();
 
-    fireEvent.pointerDown(screen.getByRole("searchbox", { name: /pesquisar no catálogo/i }));
+    fireEvent.pointerDown(screen.getByRole("searchbox", { name: /Pesquisar (obras|edições)/i }));
     expect(screen.queryByRole("region", { name: "Filtros avançados" })).not.toBeInTheDocument();
   });
 
@@ -481,19 +520,25 @@ describe("Pesquisa", () => {
 
     fireEvent.click(screen.getByLabelText("Editora brasileira"));
     fireEvent.click(screen.getByRole("button", { name: "Panini" }));
+    await waitForCatalogReady();
     fireEvent.click(screen.getByLabelText("Status no Brasil"));
     expect(screen.getByRole("button", { name: "Completa" })).toBeInTheDocument();
     expect(screen.getByRole("button", { name: "Cancelada" })).toBeInTheDocument();
     fireEvent.click(screen.getByRole("button", { name: "Em hiato" }));
+    await waitForCatalogReady();
     fireEvent.click(screen.getByRole("button", { name: /filtros avançados/i }));
     fireEvent.click(screen.getByLabelText("Número da edição"));
     fireEvent.click(screen.getByRole("button", { name: "2ª edição" }));
+    await waitForCatalogReady();
     fireEvent.click(screen.getByLabelText("Acabamento"));
     fireEvent.click(screen.getByRole("button", { name: "Brochura" }));
+    await waitForCatalogReady();
     fireEvent.click(screen.getByLabelText("Formato"));
     fireEvent.click(screen.getByRole("button", { name: "13,7 × 20 cm" }));
+    await waitForCatalogReady();
     fireEvent.click(screen.getByLabelText("Início da publicação no Brasil"));
     fireEvent.click(screen.getByRole("button", { name: "2020" }));
+    await waitForCatalogReady();
     fireEvent.click(screen.getByLabelText("Fim da publicação no Brasil"));
     fireEvent.click(screen.getByRole("button", { name: "2024" }));
     await waitFor(() => expect(listPublicEditions).toHaveBeenCalledWith(expect.objectContaining({
@@ -532,7 +577,7 @@ describe("Pesquisa", () => {
     expect(currentParams().get("order")).toBe("DESC");
   });
 
-  it("mantém resultados e barra visíveis enquanto altera somente a ordenação", async () => {
+  it("mantém o resultado anterior durante a alteração da ordenação", async () => {
     renderCatalog();
     await screen.findByRole("heading", { name: "Monster" });
 
@@ -543,12 +588,11 @@ describe("Pesquisa", () => {
 
     fireEvent.click(screen.getByRole("button", { name: "Ordenar por título de Z a A" }));
 
-    expect(screen.getByText("1 obra encontrada")).toBeInTheDocument();
-    expect(screen.getByText("Título")).toBeInTheDocument();
     expect(screen.getByRole("heading", { name: "Monster" })).toBeInTheDocument();
-    expect(screen.queryByText("Carregando Obras...")).not.toBeInTheDocument();
+    expect(screen.getByRole("searchbox", { name: "Pesquisar obras" })).toBeEnabled();
 
     await act(async () => resolveSort(worksResponse));
+    expect(await screen.findByRole("heading", { name: "Monster" })).toBeInTheDocument();
   });
 
   it("exibe loading, erro recuperável e tenta carregar novamente", async () => {
@@ -559,30 +603,35 @@ describe("Pesquisa", () => {
 
     renderCatalog();
     expect(screen.getByText("Carregando Obras...")).toBeInTheDocument();
-    expect(screen.getByRole("searchbox", { name: "Pesquisar no catálogo" })).toBeDisabled();
-    expect(screen.getByRole("tab", { name: "Edições" })).toBeEnabled();
+    expect(screen.getByRole("searchbox", { name: /Pesquisar (obras|edições)/i })).toBeDisabled();
+    expect(screen.getByRole("tab", { name: "Edições" })).toBeDisabled();
     expect(screen.getByRole("button", { name: "Filtros avançados" })).toBeDisabled();
     expect(screen.getByTestId("results-divider")).toBeInTheDocument();
     expect(screen.queryByText("1 obra encontrada")).not.toBeInTheDocument();
     expect(screen.queryByText("Título")).not.toBeInTheDocument();
 
     await act(async () => rejectRequest(new Error("indisponível")));
-    expect(await screen.findByText("Não foi possível carregar as Obras.")).toBeInTheDocument();
+    await waitFor(() => expect(toast.error).toHaveBeenCalledWith("Não foi possível carregar as Obras.", expect.any(Object)));
 
     vi.mocked(listPublicWorks).mockResolvedValueOnce(worksResponse);
-    fireEvent.click(screen.getByRole("button", { name: "Tentar novamente" }));
+    const retry = vi.mocked(toast.error).mock.calls[0][1] as unknown as { action: { onClick: () => void } };
+    retry.action.onClick();
     expect(await screen.findByRole("heading", { name: "Monster" })).toBeInTheDocument();
-    expect(screen.getByRole("searchbox", { name: "Pesquisar no catálogo" })).toBeEnabled();
+    expect(screen.getByRole("searchbox", { name: /Pesquisar (obras|edições)/i })).toBeEnabled();
   });
 
-  it("permite trocar Obras por Edições enquanto o resultado anterior carrega", async () => {
-    vi.mocked(listPublicWorks).mockImplementationOnce(() => new Promise<Awaited<ReturnType<typeof listPublicWorks>>>(() => undefined));
+  it("libera a troca de aba após concluir o carregamento", async () => {
+    let finish!: (value: typeof worksResponse) => void;
+    vi.mocked(listPublicWorks).mockImplementationOnce(() => new Promise(resolve => { finish = resolve; }));
     renderCatalog();
-    expect(screen.getByRole("searchbox", { name: "Pesquisar no catálogo" })).toBeDisabled();
+    expect(screen.getByRole("searchbox", { name: /Pesquisar (obras|edições)/i })).toBeDisabled();
+    expect(screen.getByRole("tab", { name: "Edições" })).toBeDisabled();
+    await act(async () => finish(worksResponse));
+    await waitForCatalogReady();
     fireEvent.click(screen.getByRole("tab", { name: "Edições" }));
     await waitFor(() => expect(listPublicEditions).toHaveBeenCalled());
     expect(await screen.findByRole("heading", { name: "Monster" })).toBeInTheDocument();
-    expect(screen.getByRole("searchbox", { name: "Pesquisar no catálogo" })).toBeEnabled();
+    expect(screen.getByRole("searchbox", { name: /Pesquisar (obras|edições)/i })).toBeEnabled();
   });
 
   it("oferece limpar filtros no estado vazio", async () => {
@@ -592,14 +641,14 @@ describe("Pesquisa", () => {
     });
     renderCatalog("/pesquisa?tab=works&term=inexistente&typeId=1&page=1");
 
-    expect(await screen.findByText("Nenhuma obra encontrada.")).toBeInTheDocument();
+    expect(await screen.findByText("Nenhuma obra encontrada com os filtros selecionados.")).toBeInTheDocument();
     fireEvent.click(screen.getByRole("button", { name: "Limpar filtros" }));
 
     await waitFor(() => {
       expect(currentParams().has("term")).toBe(false);
       expect(currentParams().has("typeId")).toBe(false);
     });
-    expect(screen.getByRole("searchbox", { name: /pesquisar no catálogo/i })).toHaveValue("");
+    expect(screen.getByRole("searchbox", { name: /Pesquisar (obras|edições)/i })).toHaveValue("");
   });
 
   it("pagina resultados e mantém a página ativa na URL", async () => {
