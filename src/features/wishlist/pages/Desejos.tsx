@@ -54,6 +54,9 @@ function WishlistSummary({ total, filtered, order, disabled, onToggle }: {
   disabled: boolean;
   onToggle: () => void;
 }) {
+  if (total === 0 && !filtered) {
+    return <div className="catalog-menu-summary-space flex min-h-5 items-center" aria-hidden="true"><span className="h-px flex-1 bg-border" /></div>;
+  }
   const SortIcon = order === "DESC" ? ArrowUpAZ : ArrowDownAZ;
   return (
     <div className="catalog-menu-summary-space flex min-h-5 items-center gap-3 text-sm text-primary" role="status">
@@ -72,7 +75,7 @@ function WishlistSummary({ total, filtered, order, disabled, onToggle }: {
 function EmptyWishlist({ filtered, onClearFilters }: { filtered: boolean; onClearFilters: () => void }) {
   if (filtered) return <FilteredEmptyState message="Nenhum volume da sua lista de desejos corresponde aos filtros selecionados." onClear={onClearFilters} />;
   return (
-    <div className="flex items-center justify-center">
+    <div className="flex flex-1 items-center justify-center">
       <div className="w-full max-w-xs rounded-2xl border border-sidebar-foreground/30 bg-sidebar px-4 py-6 text-center">
         <p className="text-base text-white">Você ainda não adicionou nenhum volume à sua lista de desejos!</p>
         <Link to="/pesquisa" className="mt-4 flex w-full items-center justify-center rounded-lg bg-primary px-4 py-2 text-base font-bold text-white transition-colors hover:bg-primary/90">Explorar catálogo</Link>
@@ -159,7 +162,7 @@ function AuthenticatedWishlist() {
             <SearchableSelect ariaLabel="Editora brasileira" value={publisherId} options={publishers} onChange={value => { state.setPage(1); setFilters({ publisherId: value }); }} disabled={controlsDisabled || optionsLoading || optionsError} placeholder="Todas" searchable clearable allowEmptyOption={false} tone="sidebar" textSize="sm" focusStyle="border" />
           </div>
         </div>
-        <div className={`catalog-menu-divider-space ${wishlistIsEmpty ? "flex flex-1 flex-col justify-center" : ""}`}>
+        <div className={`catalog-menu-divider-space ${wishlistIsEmpty ? "flex flex-1 flex-col" : ""}`}>
           {state.loading && <>
             <div className="flex min-h-5 items-center" aria-hidden="true">
               <span className="h-px flex-1 bg-border" />

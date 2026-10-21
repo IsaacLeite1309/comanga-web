@@ -1,5 +1,5 @@
 import type { QueryClient } from "@tanstack/react-query";
-import { getPublicEditionDetails, getPublicVolumeDetails } from "./publicCatalogService";
+import { getPublicAuthorWorks, getPublicEditionDetails, getPublicVolumeDetails } from "./publicCatalogService";
 import type { PublicEditionDetailsResponse, PublicWorkDetails, PublicVolumeDetails } from "./publicCatalogTypes";
 import { PUBLIC_CATALOG_QUERY_ROOT } from "@/lib/queryClient";
 
@@ -49,6 +49,14 @@ export function fetchVolumeDetails(queryClient: QueryClient, scope: Scope, workS
 export function prefetchWorkEditions(queryClient: QueryClient, scope: Scope, work: PublicWorkDetails) {
   return prefetchMany(work.editions, (edition) =>
     fetchEditionDetails(queryClient, scope, work.slug, edition.chronologicalNumber));
+}
+
+export function prefetchWorkAuthors(queryClient: QueryClient, scope: Scope, work: PublicWorkDetails) {
+  const slugs = [...new Set(work.authors.map((author) => author.slug).filter((slug): slug is string => Boolean(slug)))];
+  return prefetchMany(slugs, (slug) => queryClient.prefetchQuery({
+    queryKey: [...PUBLIC_CATALOG_QUERY_ROOT, scope, "author", slug, 1],
+    queryFn: () => getPublicAuthorWorks(slug, { page: 1, limit: 24, sortBy: "title", order: "ASC" }),
+  }));
 }
 
 export async function prefetchListedEditions(
