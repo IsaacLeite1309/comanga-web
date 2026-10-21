@@ -8,8 +8,8 @@ import {
   NewMangaHeader,
   NewMangaSteps,
   PublicationStep,
-} from "./NewMangaSections";
-import { useNewMangaForm } from "./useNewMangaForm";
+} from "../components/NewMangaSections";
+import { useNewMangaForm } from "../hooks/useNewMangaForm";
 import type { NewMangaMode } from "./newMangaTypes";
 
 export type { AuthorField } from "./newMangaTypes";

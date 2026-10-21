@@ -7,19 +7,16 @@ export default defineConfig({
   test: {
     environment: "jsdom",
     globals: true,
-    setupFiles: ["./src/test/setup.ts"],
+    setupFiles: ["./__tests__/setup.ts"],
     testTimeout: 30000,
-    include: ["src/**/*.{test,spec}.{ts,tsx}"],
+    include: ["__tests__/**/*.{test,spec}.{ts,tsx}"],
     coverage: {
       provider: "v8",
       reporter: ["text", "html", "json-summary"],
       include: ["src/**/*.{ts,tsx}"],
       exclude: [
-        "src/**/*.test.{ts,tsx}",
-        "src/**/*.spec.{ts,tsx}",
         "src/**/*.d.ts",
         "src/main.tsx",
-        "src/test/**",
       ],
       thresholds: {
         statements: 80,

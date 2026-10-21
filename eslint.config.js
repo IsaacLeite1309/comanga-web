@@ -26,7 +26,7 @@ const domains = {
     "personal-library": {"path": "src/features/personal-library", "dependencies": []}
 };
 const composition = ["src/app/**/*", "src/App.tsx", "src/main.tsx"];
-const shared = ["src/components/**/*", "src/hooks/**/*", "src/lib/**/*", "src/services/**/*", "src/types/**/*", "src/vite-env.d.ts", "src/test/**/*", "src/index.css"];
+const shared = ["src/components/**/*", "src/hooks/**/*", "src/lib/**/*", "src/services/**/*", "src/types/**/*", "src/vite-env.d.ts", "src/index.css"];
 
 function createArchitectureConfig(root = projectRoot) {
     const resolver = { project: path.join(root, 'tsconfig.app.json') };
@@ -35,7 +35,7 @@ function createArchitectureConfig(root = projectRoot) {
     return {
         name: 'comanga/architecture',
         files: ['src/**/*.{js,jsx,cjs,mjs,ts,tsx,cts,mts}'],
-        ignores: ['**/*.{test,spec}.{js,jsx,cjs,mjs,ts,tsx,cts,mts}', 'src/test/**'],
+        ignores: ['**/*.{test,spec}.{js,jsx,cjs,mjs,ts,tsx,cts,mts}'],
         languageOptions: { parser: tseslint.parser, sourceType: 'module', ecmaVersion: 'latest' },
         plugins: { boundaries, 'import-x': importX, '@typescript-eslint': tseslint.plugin },
         settings: {
@@ -44,7 +44,7 @@ function createArchitectureConfig(root = projectRoot) {
                 ...Object.entries(domains).map(([name, domain]) => ({ category: name, pattern: `${domain.path}/**/*` })),
                 { category: 'composition', pattern: composition },
                 { category: 'shared', pattern: shared },
-                { category: 'test', pattern: ['**/*.{test,spec}.*', 'src/test/**/*'] }
+                { category: 'test', pattern: ['**/*.{test,spec}.*'] }
             ],
             'boundaries/additional-dependency-nodes': [
                 { selector: 'TSImportType > Literal', kind: 'type', name: 'ts-import-type' }

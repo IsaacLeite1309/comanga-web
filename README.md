@@ -62,7 +62,7 @@ As páginas de Coleção, Checklist e Lista de Desejos existem como navegação/
 - Tailwind CSS, Radix UI, Lucide e Sonner para interface e feedback.
 - Vitest e React Testing Library para testes.
 
-O código é organizado por funcionalidade em `src/features`: `auth`, `profile`, `admin-catalog`, `admin-media`, `admin-users`, `public-catalog`, `collection` e `wishlist`. Cada feature é responsável pelas suas páginas, componentes específicos, estado, regras e testes, expondo sua API pública por `index.ts`. As duas últimas preservam as telas provisórias e não representam funcionalidades de coleção/desejos concluídas.
+O código é organizado por funcionalidade em `src/features`: `auth`, `profile`, `admin-catalog`, `admin-media`, `admin-users`, `public-catalog`, `collection` e `wishlist`. Cada feature é responsável pelas suas páginas, componentes específicos, estado e regras, expondo sua API pública por `index.ts`. Os testes ficam em `__tests__/`, com a mesma estrutura relativa de `src/`, seguindo o padrão do repositório da API. As duas últimas preservam as telas provisórias e não representam funcionalidades de coleção/desejos concluídas.
 
 `src/App.tsx` e `src/app` compõem rotas, navegação e proteção de páginas. O contexto de autenticação pertence a `features/auth`. Componentes reutilizáveis ficam em `src/components`, o cliente HTTP em `src/services` e utilitários transversais em `src/lib`; essa base compartilhada não depende das features.
 
