@@ -17,6 +17,7 @@ import {
 import { WishlistPage } from "@/features/wishlist";
 import { PublicNav } from "@/app/PublicNav";
 import { CollectorMenuPrefetch } from "@/app/CollectorMenuPrefetch";
+import { DetailScrollReset } from "@/app/DetailScrollReset";
 import { ProtectedRoute } from "@/app/ProtectedRoute";
 import { PersonalRoute } from "@/app/PersonalRoute";
 import { GuestRoute } from "@/app/GuestRoute";
@@ -72,6 +73,7 @@ const App = () => (
     <BrowserRouter>
       <AuthProvider>
         <CollectorMenuPrefetch />
+        <DetailScrollReset />
         <div className="flex min-h-screen w-full max-w-full overflow-x-clip bg-background">
           <PublicNav />
           <main className="min-w-0 flex-1 flex flex-col md:ml-20 lg:ml-56 pb-16 md:pb-0">

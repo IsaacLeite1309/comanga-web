@@ -9,7 +9,7 @@ import { OwnedVolumeBadge } from "@/features/public-catalog/OwnedVolumeBadge";
 import { WishedVolumeBadge } from "@/features/public-catalog/WishedVolumeBadge";
 import { ReadVolumeBadge } from "@/features/public-catalog/ReadVolumeBadge";
 import { getPublicWorkDetails } from "@/features/public-catalog/publicCatalogService";
-import { prefetchWorkEditions } from "@/features/public-catalog/prefetchCatalogDetails";
+import { prefetchWorkAuthors, prefetchWorkEditions } from "@/features/public-catalog/prefetchCatalogDetails";
 import type {
   PublicEditionDetails,
   PublicVolumePreview,
@@ -142,7 +142,10 @@ function useWorkDetails(slug: string) {
   });
   const work: PublicWorkDetailsData | null = result.data ?? null;
   useEffect(() => {
-    if (work) void prefetchWorkEditions(queryClient, scope, work);
+    if (work) {
+      void prefetchWorkEditions(queryClient, scope, work);
+      void prefetchWorkAuthors(queryClient, scope, work);
+    }
   }, [queryClient, scope, work]);
   const loading = Boolean(slug) && result.isPending;
   const error = !slug ? "Obra não encontrada." : result.isError && !work
