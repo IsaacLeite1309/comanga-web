@@ -275,7 +275,7 @@ describe("PublicEditionDetails", () => {
     expect(screen.queryByText("2026-2026")).not.toBeInTheDocument();
   });
 
-  it("exibe erro seguro e permite tentar novamente", async () => {
+  it("exibe erro seguro sem ação de repetição manual", async () => {
     const notFound = new AxiosError("Not found", "ERR_BAD_REQUEST", undefined, undefined, {
       data: { error: "Edição não encontrada." },
       status: 404,
@@ -283,16 +283,11 @@ describe("PublicEditionDetails", () => {
       headers: {},
       config: { headers: new AxiosHeaders() },
     });
-    vi.mocked(getPublicEditionDetails)
-      .mockRejectedValueOnce(notFound)
-      .mockResolvedValueOnce(response);
+    vi.mocked(getPublicEditionDetails).mockRejectedValueOnce(notFound);
     renderPage();
 
-    await waitFor(() => expect(toast.error).toHaveBeenCalledWith("Edição não encontrada.", expect.any(Object)));
-    const retry = vi.mocked(toast.error).mock.calls[0][1] as unknown as { action: { onClick: () => void } };
-    retry.action.onClick();
-
-    await waitFor(() => expect(getPublicEditionDetails).toHaveBeenCalledTimes(2));
-    expect(await screen.findByRole("heading", { name: "2ª edição" })).toBeInTheDocument();
+    await waitFor(() => expect(toast.error).toHaveBeenCalledWith("Edição não encontrada. Tente novamente em instantes.", { id: "catalog-error-edition-details" }));
+    expect(vi.mocked(toast.error).mock.lastCall?.[1]).not.toHaveProperty("action");
+    expect(getPublicEditionDetails).toHaveBeenCalledTimes(1);
   });
 });

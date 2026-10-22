@@ -277,7 +277,7 @@ describe("PublicWorkDetails", () => {
     expect(await screen.findByText("Nenhuma edição pública cadastrada para esta obra.")).toBeInTheDocument();
   });
 
-  it("exibe erro genérico sem revelar se a Obra é privada ou adulta e permite tentar novamente", async () => {
+  it("exibe erro genérico sem revelar se a Obra é privada ou adulta e sem ação manual", async () => {
     const notFound = new AxiosError("Not found", "ERR_BAD_REQUEST", undefined, undefined, {
       data: { error: "Obra não encontrada." },
       status: 404,
@@ -285,17 +285,12 @@ describe("PublicWorkDetails", () => {
       headers: {},
       config: { headers: new AxiosHeaders() },
     });
-    vi.mocked(getPublicWorkDetails)
-      .mockRejectedValueOnce(notFound)
-      .mockResolvedValueOnce(work);
+    vi.mocked(getPublicWorkDetails).mockRejectedValueOnce(notFound);
     renderPage("obra-restrita");
 
-    await waitFor(() => expect(toast.error).toHaveBeenCalledWith("Obra não encontrada.", expect.any(Object)));
-    const retry = vi.mocked(toast.error).mock.calls[0][1] as unknown as { action: { onClick: () => void } };
-    retry.action.onClick();
-
-    await waitFor(() => expect(getPublicWorkDetails).toHaveBeenCalledTimes(2));
-    expect(await screen.findByRole("heading", { name: "Monster", level: 1 })).toBeInTheDocument();
+    await waitFor(() => expect(toast.error).toHaveBeenCalledWith("Obra não encontrada. Tente novamente em instantes.", { id: "catalog-error-work-details" }));
+    expect(vi.mocked(toast.error).mock.lastCall?.[1]).not.toHaveProperty("action");
+    expect(getPublicWorkDetails).toHaveBeenCalledTimes(1);
   });
 
   it("usa fallback quando a capa não pode ser carregada", async () => {

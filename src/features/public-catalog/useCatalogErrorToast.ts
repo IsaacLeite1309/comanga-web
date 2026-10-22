@@ -1,14 +1,11 @@
-import { useEffect, useRef } from "react";
+import { useEffect } from "react";
 import { toast } from "sonner";
 
-export function useCatalogErrorToast(error: string, retry: () => void, id: string) {
-  const retryRef = useRef(retry);
-  retryRef.current = retry;
+export function useCatalogErrorToast(error: string, _retry: () => void, id: string) {
   useEffect(() => {
     if (!error) return;
-    toast.error(error, {
+    toast.error(`${error} Tente novamente em instantes.`, {
       id: `catalog-error-${id}`,
-      action: { label: "Tentar novamente", onClick: () => retryRef.current() },
     });
   }, [error, id]);
 }

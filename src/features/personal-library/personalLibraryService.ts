@@ -49,16 +49,11 @@ export async function syncCollectionEdition(editionId: number, delta: Collection
   const response = await api.put<{ editionId: number; addedVolumeIds: number[]; removedVolumeIds: number[] }>(`${ROOT}/collection/editions/${editionId}`, delta);
   updated(); return response.data;
 }
-export async function syncWishlist(delta: CollectionDelta, shouldContinue = () => true) {
-  const changes = [
-    ...delta.removeVolumeIds.map((id) => () => removeWishlistVolume(id)),
-    ...delta.addVolumeIds.map((id) => () => addWishlistVolume(id)),
-  ];
-  const failures: unknown[] = [];
-  for (let index = 0; index < changes.length; index += 4) {
-    if (!shouldContinue()) break;
-    const results = await Promise.allSettled(changes.slice(index, index + 4).map((change) => change()));
-    for (const result of results) if (result.status === "rejected") failures.push(result.reason);
-  }
-  return failures;
+export async function syncWishlist(editionId: number, delta: CollectionDelta) {
+  const response = await api.put(`${ROOT}/wishlist/editions/${editionId}`, delta);
+  updated(); return response.data;
+}
+export async function syncReading(editionId: number, delta: CollectionDelta) {
+  const response = await api.put(`${ROOT}/reading/editions/${editionId}`, delta);
+  updated(); return response.data;
 }

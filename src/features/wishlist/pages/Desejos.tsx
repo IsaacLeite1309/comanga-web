@@ -113,10 +113,9 @@ function AuthenticatedWishlist() {
   const publishers: PublicOption[] = optionsQuery.data?.brazilianPublishers ?? [];
   const optionsError = optionsQuery.isError && !optionsQuery.data;
   const optionsLoading = optionsQuery.isPending;
-  const { refetch: refetchOptions } = optionsQuery;
   useEffect(() => {
-    if (optionsError) toast.error("Não foi possível carregar as editoras.", { id: "wishlist-publishers-error", action: { label: "Tentar novamente", onClick: () => { void refetchOptions(); } } });
-  }, [optionsError, refetchOptions]);
+    if (optionsError) toast.error("Não foi possível carregar as editoras. Tente novamente em instantes.", { id: "wishlist-publishers-error" });
+  }, [optionsError]);
   const loadWishlist = useCallback((page: number) => listWishlist(page, {
     ...(term ? { term } : {}),
     ...(publisherId ? { brazilianPublisherId: Number(publisherId) } : {}),

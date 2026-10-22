@@ -122,7 +122,7 @@ describe("PublicAuthorWorks", () => {
     expect(screen.getByRole("link", { name: "Voltar" })).toHaveAttribute("href", "/pesquisa?tab=works&sortBy=title&order=ASC&page=1");
   });
 
-  it("exibe erro seguro, permite tentar novamente e rejeita ID inválido localmente", async () => {
+  it("exibe erro seguro sem ação manual e rejeita ID inválido localmente", async () => {
     const notFound = new AxiosError("Not found", "ERR_BAD_REQUEST", undefined, undefined, {
       data: { error: "Autor não encontrado." },
       status: 404,
@@ -130,21 +130,17 @@ describe("PublicAuthorWorks", () => {
       headers: {},
       config: { headers: new AxiosHeaders() },
     });
-    vi.mocked(getPublicAuthorWorks)
-      .mockRejectedValueOnce(notFound)
-      .mockResolvedValueOnce(response);
+    vi.mocked(getPublicAuthorWorks).mockRejectedValueOnce(notFound);
     const { unmount } = renderPage();
 
-    await waitFor(() => expect(toast.error).toHaveBeenCalledWith("Autor não encontrado.", expect.any(Object)));
-    const retry = vi.mocked(toast.error).mock.lastCall?.[1] as unknown as { action: { onClick: () => void } };
-    retry.action.onClick();
-    await waitFor(() => expect(getPublicAuthorWorks).toHaveBeenCalledTimes(2));
-    expect(await screen.findByRole("heading", { name: "Naoki Urasawa" })).toBeInTheDocument();
+    await waitFor(() => expect(toast.error).toHaveBeenCalledWith("Autor não encontrado. Tente novamente em instantes.", { id: "catalog-error-author-works" }));
+    expect(vi.mocked(toast.error).mock.lastCall?.[1]).not.toHaveProperty("action");
+    expect(getPublicAuthorWorks).toHaveBeenCalledTimes(1);
 
     unmount();
     vi.clearAllMocks();
     renderPage("/autor/autor invalido");
-    await waitFor(() => expect(toast.error).toHaveBeenCalledWith("Autor não encontrado.", expect.any(Object)));
+    await waitFor(() => expect(toast.error).toHaveBeenCalledWith("Autor não encontrado. Tente novamente em instantes.", { id: "catalog-error-author-works" }));
     expect(getPublicAuthorWorks).not.toHaveBeenCalled();
   });
 });

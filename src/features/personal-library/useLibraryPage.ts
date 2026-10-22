@@ -28,8 +28,8 @@ export function useLibraryPage<T extends { pagination: PersonalPagination }>(
   }, [data, page]);
   useEffect(() => {
     if (!error) return;
-    toast.error(error, { id: "personal-library-load-error", action: { label: "Tentar novamente", onClick: () => { void reload(); } } });
-  }, [error, reload]);
+    toast.error(`${error} Tente novamente em instantes.`, { id: "personal-library-load-error" });
+  }, [error]);
   async function mutate(operation: () => Promise<unknown>, success: string) {
     setBusy(true);
     let result = success;

@@ -145,27 +145,26 @@ describe("PublicCalendar", () => {
     expect(currentParams().has("order")).toBe(false);
   });
 
-  it("informa mês vazio e recupera falhas de consulta e das editoras separadamente", async () => {
+  it("avisa sobre falhas de consulta e das editoras sem ação manual e informa mês vazio", async () => {
     vi.mocked(listPublicCalendar).mockRejectedValueOnce(new Error("offline")).mockResolvedValue({ ...response, volumes: [], pagination: { ...response.pagination, total: 0, totalPages: 0 } });
     vi.mocked(getPublicCatalogOptions).mockRejectedValueOnce(new Error("offline"));
-    renderCalendar();
-    await waitFor(() => expect(toast.error).toHaveBeenCalledWith("Não foi possível carregar os lançamentos.", expect.any(Object)));
-    const resultsRetry = vi.mocked(toast.error).mock.calls.find(([, options]) => options?.id === "catalog-error-calendar-results")?.[1] as unknown as { action: { onClick: () => void } };
-    resultsRetry.action.onClick();
-    expect(await screen.findByText("Nenhum volume encontrado neste mês com os filtros selecionados.")).toBeInTheDocument();
+    const first = renderCalendar();
+    await waitFor(() => expect(toast.error).toHaveBeenCalledWith("Não foi possível carregar os lançamentos. Tente novamente em instantes.", { id: "catalog-error-calendar-results" }));
+    await waitFor(() => expect(toast.error).toHaveBeenCalledWith("Não foi possível carregar as editoras. Tente novamente em instantes.", { id: "catalog-error-calendar-publishers" }));
+    expect(vi.mocked(toast.error).mock.calls.every(([, options]) => !options?.action)).toBe(true);
     expect(screen.getByLabelText("Editora brasileira")).toBeDisabled();
-    const optionsRetry = vi.mocked(toast.error).mock.calls.find(([, options]) => options?.id === "catalog-error-calendar-publishers")?.[1] as unknown as { action: { onClick: () => void } };
-    optionsRetry.action.onClick();
+    first.unmount();
+    renderCalendar();
+    expect(await screen.findByText("Nenhum volume encontrado neste mês com os filtros selecionados.")).toBeInTheDocument();
     await waitFor(() => expect(screen.getByLabelText("Editora brasileira")).not.toBeDisabled());
   });
 
-  it.each(["month=13", "year=1899", "page=-1", "brazilianPublisherId=x", "month=", "order=INVALID", `term=${"a".repeat(256)}`])("trata parâmetro inválido %s sem solicitar checklist", async query => {
+  it.each(["month=13", "year=1899", "page=-1", "brazilianPublisherId=x", "month=", "order=INVALID", `term=${"a".repeat(256)}`])("trata parâmetro inválido %s sem consultar lançamentos nem mostrar ação manual", async query => {
     renderCalendar(`/lancamentos?${query}`);
     await waitFor(() => expect(toast.error).toHaveBeenCalledWith(expect.any(String), expect.objectContaining({ id: "catalog-error-calendar-results" })));
     expect(listPublicCalendar).not.toHaveBeenCalled();
-    const retry = vi.mocked(toast.error).mock.calls.find(([, options]) => options?.id === "catalog-error-calendar-results")?.[1] as unknown as { action: { onClick: () => void } };
-    retry.action.onClick();
-    expect(await screen.findByText("25 volumes encontrados")).toBeInTheDocument();
+    const options = vi.mocked(toast.error).mock.calls.find(([, config]) => config?.id === "catalog-error-calendar-results")?.[1];
+    expect(options).not.toHaveProperty("action");
   });
 
   it.each(["1900-01", "2200-12"])("respeita o limite do período %s", async value => {

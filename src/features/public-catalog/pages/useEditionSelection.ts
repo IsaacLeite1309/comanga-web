@@ -4,7 +4,7 @@ import { getPublicEditionDetails } from "../publicCatalogService";
 import type { PublicEditionDetailsResponse } from "../publicCatalogTypes";
 import { updatePersonalVolumeCache } from "../updatePersonalVolumeCache";
 import { usePublicCatalogScope } from "../usePublicCatalogScope";
-import { getCompleteCollectionEdition, syncCollectionEdition, syncWishlist, updateVolumeReading, type CollectionEditionResponse } from "@/features/personal-library";
+import { getCompleteCollectionEdition, syncCollectionEdition, syncWishlist, syncReading, type CollectionEditionResponse } from "@/features/personal-library";
 import { getApiError } from "@/lib/apiError";
 import { PUBLIC_CATALOG_QUERY_ROOT, PUBLIC_CATALOG_STALE_TIME_MS } from "@/lib/queryClient";
 
@@ -62,23 +62,10 @@ function selectedVolumeIds(result: CollectionEditionResponse, mode: SelectionMod
   }).map(({ id }) => id));
 }
 
-async function syncReading(delta: { addVolumeIds: number[]; removeVolumeIds: number[] }, active: () => boolean) {
-  const changes = [
-    ...delta.removeVolumeIds.map((id) => ({ id, read: false })),
-    ...delta.addVolumeIds.map((id) => ({ id, read: true })),
-  ];
-  let failure: unknown;
-  for (let index = 0; index < changes.length && active(); index += 4) {
-    const results = await Promise.allSettled(changes.slice(index, index + 4).map(({ id, read }) => updateVolumeReading(id, read)));
-    failure ??= results.find((result) => result.status === "rejected")?.reason;
-  }
-  return failure;
-}
-
-async function syncSelection(mode: SelectionMode, editionId: number, delta: { addVolumeIds: number[]; removeVolumeIds: number[] }, active: () => boolean) {
+async function syncSelection(mode: SelectionMode, editionId: number, delta: { addVolumeIds: number[]; removeVolumeIds: number[] }) {
   if (mode === "colecao") return syncCollectionEdition(editionId, delta).then(() => undefined);
-  if (mode === "desejos") return (await syncWishlist(delta, active))[0];
-  return syncReading(delta, active);
+  if (mode === "desejos") return syncWishlist(editionId, delta).then(() => undefined);
+  return syncReading(editionId, delta).then(() => undefined);
 }
 
 function updateSelectionCache(queryClient: QueryClient, scope: readonly [string, boolean, string], before: CollectionEditionResponse, after: CollectionEditionResponse) {
@@ -141,15 +128,15 @@ export function useEditionSelection(slug: string, editionNumber: number, mode: S
       addVolumeIds: [...selectedIds].filter((id) => !initialIds.has(id)),
       removeVolumeIds: [...initialIds].filter((id) => !selectedIds.has(id)),
     };
-    if (mode === "colecao" && delta.addVolumeIds.length + delta.removeVolumeIds.length > 100) {
-      setMessage("Altere até 100 Volumes por vez para salvar a coleção em uma única operação."); return false;
+    if (delta.addVolumeIds.length + delta.removeVolumeIds.length > 100) {
+      setMessage("Altere até 100 Volumes por vez para salvar em uma única operação."); return false;
     }
     const current = version.current;
     const active = () => current === version.current;
     setSaving(true); setMessage("");
     let failure: unknown;
     try {
-      failure = await syncSelection(mode, data.edition.id, delta, active);
+      failure = await syncSelection(mode, data.edition.id, delta);
     } catch (requestError) { failure = requestError; }
     if (!active()) return false;
     try {
@@ -157,7 +144,7 @@ export function useEditionSelection(slug: string, editionNumber: number, mode: S
       if (!active()) return false;
       updateSelectionCache(queryClient, scope, data, result);
       accept(result);
-      setMessage(failure ? getApiError(failure, "Algumas alterações não foram salvas. Confira a seleção atualizada e tente novamente.") : "Seleção salva com sucesso.");
+      setMessage(failure ? getApiError(failure, "Nenhuma alteração foi salva. Tente novamente em instantes.") : "Seleção salva com sucesso.");
     } catch (refreshError) {
       if (!active()) return false;
       setData(null); setError(getApiError(refreshError, "Não foi possível confirmar a seleção salva. Recarregue antes de continuar."));
