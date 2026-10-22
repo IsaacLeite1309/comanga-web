@@ -4,7 +4,7 @@ import { MemoryRouter, Route, Routes } from "react-router-dom";
 import { beforeEach, describe, expect, it, vi } from "vitest";
 import { toast } from "sonner";
 import EditionVolumeSelection from "@/features/public-catalog/pages/EditionVolumeSelection";
-import { getCompleteCollectionEdition, syncCollectionEdition, syncWishlist, updateVolumeReading } from "@/features/personal-library";
+import { getCompleteCollectionEdition, syncCollectionEdition, syncReading, syncWishlist } from "@/features/personal-library";
 import { getPublicEditionDetails } from "@/features/public-catalog/publicCatalogService";
 
 vi.mock("@/features/public-catalog/publicCatalogService", () => ({
@@ -16,7 +16,7 @@ vi.mock("@/features/auth", () => ({
 
 vi.mock("@/features/personal-library", async (original) => ({
   ...(await original<typeof import("@/features/personal-library")>()),
-  getCompleteCollectionEdition: vi.fn(), syncCollectionEdition: vi.fn(), syncWishlist: vi.fn(), updateVolumeReading: vi.fn(),
+  getCompleteCollectionEdition: vi.fn(), syncCollectionEdition: vi.fn(), syncReading: vi.fn(), syncWishlist: vi.fn(),
 }));
 vi.mock("sonner", () => ({ toast: { warning: vi.fn(), success: vi.fn(), error: vi.fn() } }));
 
@@ -89,7 +89,7 @@ describe("EditionVolumeSelection", () => {
     vi.mocked(getCompleteCollectionEdition).mockResolvedValue(personal());
     vi.mocked(syncCollectionEdition).mockResolvedValue({ editionId: 20, addedVolumeIds: [30], removedVolumeIds: [] });
     vi.mocked(syncWishlist).mockResolvedValue([]);
-    vi.mocked(updateVolumeReading).mockResolvedValue({ volumeId: 30, owned: true, read: true, wished: false });
+    vi.mocked(syncReading).mockResolvedValue({});
   });
   it("carrega seleção persistida, modifica e salva um delta atômico antes de voltar", async () => {
     vi.mocked(getCompleteCollectionEdition).mockResolvedValueOnce(personal([30])).mockResolvedValueOnce(personal([31]));
@@ -149,7 +149,7 @@ describe("EditionVolumeSelection", () => {
     expect(screen.getByRole("button", { name: "Desmarcar Volume 1" }).querySelector("svg")).toHaveClass("lucide-book-open");
     fireEvent.click(screen.getByRole("button", { name: "OK" }));
     expect(await screen.findByText("Edição")).toBeInTheDocument();
-    expect(updateVolumeReading).toHaveBeenCalledWith(30, true);
+    expect(syncReading).toHaveBeenCalledWith(20, { addVolumeIds: [30], removeVolumeIds: [] });
     expect(syncCollectionEdition).not.toHaveBeenCalled();
     expect(toast.success).toHaveBeenCalledWith("Volumes lidos atualizados.");
   });
@@ -158,35 +158,33 @@ describe("EditionVolumeSelection", () => {
     expect(await screen.findByText("Nenhum volume desta edição está na sua coleção.")).toBeInTheDocument();
     expect(screen.getByText("0 de 0 selecionados")).toBeInTheDocument();
   });
-  it("reconcilia falha parcial e conflito de desejo com a seleção do servidor", async () => {
-    vi.mocked(getCompleteCollectionEdition).mockResolvedValueOnce(personal()).mockResolvedValueOnce(personal([], [31]));
-    vi.mocked(syncWishlist).mockResolvedValueOnce([{ isAxiosError: true, response: { status: 409, data: { error: "Volume já adquirido." } } }]);
+  it("reconcilia falha atômica e conflito de desejo com a seleção do servidor", async () => {
+    vi.mocked(getCompleteCollectionEdition).mockResolvedValueOnce(personal()).mockResolvedValueOnce(personal());
+    vi.mocked(syncWishlist).mockRejectedValueOnce({ isAxiosError: true, response: { status: 409, data: { error: "Volume já adquirido." } } });
     renderPage("desejos");
     await screen.findByText("0 de 2 selecionados");
     fireEvent.click(screen.getByRole("button", { name: "Selecionar todos" }));
     fireEvent.click(screen.getByRole("button", { name: "OK" }));
-    expect(await screen.findByText("Volume já adquirido.")).toBeInTheDocument();
-    expect(screen.getByText("1 de 2 selecionados")).toBeInTheDocument();
+    expect(await screen.findByText(/Volume já adquirido/)).toBeInTheDocument();
+    expect(screen.getByText("0 de 2 selecionados")).toBeInTheDocument();
     expect(screen.getByRole("button", { name: "Selecionar Volume 1" })).toHaveAttribute("aria-pressed", "false");
     expect(screen.getByRole("button", { name: "OK" })).toBeDisabled();
   });
-  it("descarta seleção após falha de confirmação e permite recarregar", async () => {
+  it("descarta seleção após falha de confirmação e informa como proceder", async () => {
     vi.mocked(getCompleteCollectionEdition).mockResolvedValueOnce(personal()).mockRejectedValueOnce(new Error("rede"));
     renderPage(); await screen.findByText("0 de 2 selecionados");
     fireEvent.click(screen.getByRole("button", { name: "Selecionar Volume 1" }));
     fireEvent.click(screen.getByRole("button", { name: "OK" }));
-    await waitFor(() => expect(toast.error).toHaveBeenCalledWith("Não foi possível confirmar a seleção salva. Recarregue antes de continuar.", expect.any(Object)));
+    await waitFor(() => expect(toast.error).toHaveBeenCalledWith("Não foi possível confirmar a seleção salva. Recarregue antes de continuar. Tente novamente em instantes.", { id: "catalog-error-edition-volume-selection" }));
     expect(screen.queryByRole("button", { name: "OK" })).not.toBeInTheDocument();
-    const retry = vi.mocked(toast.error).mock.lastCall?.[1] as unknown as { action: { onClick: () => void } };
-    retry.action.onClick();
-    expect(await screen.findByText("0 de 2 selecionados")).toBeInTheDocument();
+    expect(vi.mocked(toast.error).mock.lastCall?.[1]).not.toHaveProperty("action");
   });
   it("reconsulta seleção também após falha da sincronização atômica", async () => {
     vi.mocked(syncCollectionEdition).mockRejectedValueOnce(new Error("rede"));
     renderPage(); await screen.findByText("0 de 2 selecionados");
     fireEvent.click(screen.getByRole("button", { name: "Selecionar Volume 1" }));
     fireEvent.click(screen.getByRole("button", { name: "OK" }));
-    expect(await screen.findByText(/Algumas alterações não foram salvas/)).toBeInTheDocument();
+    expect(await screen.findByText(/Nenhuma alteração foi salva/)).toBeInTheDocument();
     expect(screen.getByText("0 de 2 selecionados")).toBeInTheDocument();
   });
   it("não divide uma seleção com mais de 100 mudanças", async () => {

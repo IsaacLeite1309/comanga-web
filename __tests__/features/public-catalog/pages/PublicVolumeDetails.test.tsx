@@ -190,7 +190,7 @@ describe("PublicVolumeDetails", () => {
     expect(await screen.findByText(expected)).toBeInTheDocument();
   });
 
-  it("exibe erro seguro, permite tentar novamente e trata ID inválido localmente", async () => {
+  it("exibe erro seguro sem ação manual e trata ID inválido localmente", async () => {
     const notFound = new AxiosError("Not found", "ERR_BAD_REQUEST", undefined, undefined, {
       data: { error: "Volume não encontrado." },
       status: 404,
@@ -198,21 +198,17 @@ describe("PublicVolumeDetails", () => {
       headers: {},
       config: { headers: new AxiosHeaders() },
     });
-    vi.mocked(getPublicVolumeDetails)
-      .mockRejectedValueOnce(notFound)
-      .mockResolvedValueOnce(volume);
+    vi.mocked(getPublicVolumeDetails).mockRejectedValueOnce(notFound);
     const { unmount } = renderPage();
 
-    await waitFor(() => expect(toast.error).toHaveBeenCalledWith("Volume não encontrado.", expect.any(Object)));
-    const retry = vi.mocked(toast.error).mock.calls[0][1] as unknown as { action: { onClick: () => void } };
-    retry.action.onClick();
-    await waitFor(() => expect(getPublicVolumeDetails).toHaveBeenCalledTimes(2));
-    expect(await screen.findByRole("heading", { name: "Monster volume 1" })).toBeInTheDocument();
+    await waitFor(() => expect(toast.error).toHaveBeenCalledWith("Volume não encontrado. Tente novamente em instantes.", { id: "catalog-error-volume-details" }));
+    expect(vi.mocked(toast.error).mock.lastCall?.[1]).not.toHaveProperty("action");
+    expect(getPublicVolumeDetails).toHaveBeenCalledTimes(1);
 
     unmount();
     vi.clearAllMocks();
     renderPage("/obra/monster/edicao/2/volume/invalido");
-    await waitFor(() => expect(toast.error).toHaveBeenCalledWith("Volume não encontrado.", expect.any(Object)));
+    await waitFor(() => expect(toast.error).toHaveBeenCalledWith("Volume não encontrado. Tente novamente em instantes.", { id: "catalog-error-volume-details" }));
     expect(getPublicVolumeDetails).not.toHaveBeenCalled();
   });
 });

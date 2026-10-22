@@ -79,13 +79,10 @@ describe("Lista de Desejos conectada", () => {
     await waitFor(() => expect(listWishlist).toHaveBeenCalledWith(1, { order: "DESC" }));
     expect(await screen.findByRole("button", { name: "Ordenar por título de A a Z" })).toBeInTheDocument();
   });
-  it("apresenta erro inicial e permite recarregar", async () => {
+  it("apresenta erro inicial sem ação de repetição manual", async () => {
     vi.mocked(listWishlist).mockRejectedValueOnce(new Error("offline"));
     mount();
-    await waitFor(() => expect(toast.error).toHaveBeenCalledWith("Não foi possível carregar seu acervo.", expect.any(Object)));
-    const retry = vi.mocked(toast.error).mock.calls[0][1] as unknown as { action: { onClick: () => void } };
-    retry.action.onClick();
-    expect(await screen.findByRole("heading", { name: "Monster" })).toBeInTheDocument();
+    await waitFor(() => expect(toast.error).toHaveBeenCalledWith("Não foi possível carregar seu acervo. Tente novamente em instantes.", { id: "personal-library-load-error" }));
   });
   it("retorna à primeira página após remover o último item da página2", async () => {
     vi.mocked(listWishlist).mockResolvedValueOnce({ ...full, pagination: { page: 1, limit: 24, total: 25, totalPages: 2 } }).mockResolvedValueOnce({ ...full, pagination: { page: 2, limit: 24, total: 25, totalPages: 2 } }).mockResolvedValueOnce({ ...empty, pagination: { page: 2, limit: 24, total: 24, totalPages: 1 } }).mockResolvedValueOnce(full);

@@ -595,7 +595,7 @@ describe("Pesquisa", () => {
     expect(await screen.findByRole("heading", { name: "Monster" })).toBeInTheDocument();
   });
 
-  it("exibe loading, erro recuperável e tenta carregar novamente", async () => {
+  it("exibe loading e erro sem ação de repetição manual", async () => {
     let rejectRequest!: (reason?: unknown) => void;
     vi.mocked(listPublicWorks).mockImplementationOnce(() => new Promise((_resolve, reject) => {
       rejectRequest = reject;
@@ -611,13 +611,9 @@ describe("Pesquisa", () => {
     expect(screen.queryByText("Título")).not.toBeInTheDocument();
 
     await act(async () => rejectRequest(new Error("indisponível")));
-    await waitFor(() => expect(toast.error).toHaveBeenCalledWith("Não foi possível carregar as Obras.", expect.any(Object)));
-
-    vi.mocked(listPublicWorks).mockResolvedValueOnce(worksResponse);
-    const retry = vi.mocked(toast.error).mock.calls[0][1] as unknown as { action: { onClick: () => void } };
-    retry.action.onClick();
-    expect(await screen.findByRole("heading", { name: "Monster" })).toBeInTheDocument();
-    expect(screen.getByRole("searchbox", { name: /Pesquisar (obras|edições)/i })).toBeEnabled();
+    await waitFor(() => expect(toast.error).toHaveBeenCalledWith("Não foi possível carregar as Obras. Tente novamente em instantes.", { id: "catalog-error-search" }));
+    expect(vi.mocked(toast.error).mock.lastCall?.[1]).not.toHaveProperty("action");
+    expect(listPublicWorks).toHaveBeenCalledTimes(1);
   });
 
   it("libera a troca de aba após concluir o carregamento", async () => {

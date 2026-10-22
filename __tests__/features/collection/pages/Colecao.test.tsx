@@ -92,13 +92,16 @@ describe("Estante conectada à API", () => {
     expect(screen.queryByAltText("Capa de Volume 60 de Monster")).not.toBeInTheDocument();
     expect(getCompleteCollectionEdition).toHaveBeenCalledWith(20);
   });
-  it("trata falha inicial, retry e coleção vazia", async () => {
-    vi.mocked(listCollection).mockRejectedValueOnce(new Error("offline")).mockResolvedValueOnce({ works: [], totals: { editions: 0, volumes: 0 }, pagination: { page: 1, limit: 12, total: 0, totalPages: 0 } });
+  it("avisa sobre falha inicial sem mostrar estado vazio; mostra o convite quando não há volumes", async () => {
+    vi.mocked(listCollection).mockRejectedValueOnce(new Error("offline"));
+    const first = mount();
+    await waitFor(() => expect(toast.error).toHaveBeenCalledWith("Não foi possível carregar seu acervo. Tente novamente em instantes.", { id: "personal-library-load-error" }));
+    expect(screen.queryByRole("link", { name: "Explorar catálogo" })).not.toBeInTheDocument();
+    expect(vi.mocked(toast.error).mock.lastCall?.[1]).not.toHaveProperty("action");
+    first.unmount();
+    vi.mocked(listCollection).mockResolvedValue({ works: [], totals: { editions: 0, volumes: 0 }, pagination: { page: 1, limit: 12, total: 0, totalPages: 0 } });
     mount();
-    await waitFor(() => expect(toast.error).toHaveBeenCalledWith("Não foi possível carregar seu acervo.", expect.any(Object)));
-    const retry = vi.mocked(toast.error).mock.calls[0][1] as unknown as { action: { onClick: () => void } };
-    retry.action.onClick();
-    expect(await screen.findByText("Você ainda não adicionou nenhum volume à sua coleção!")).toBeInTheDocument();
+    await screen.findByText("Você ainda não adicionou nenhum volume à sua coleção!");
     expect(screen.getByRole("link", { name: "Explorar catálogo" })).toHaveAttribute("href", "/pesquisa");
     expect(screen.getByRole("searchbox", { name: "Pesquisar na coleção" })).toBeDisabled();
     expect(screen.getByRole("button", { name: "Status da coleção" })).toBeDisabled();
