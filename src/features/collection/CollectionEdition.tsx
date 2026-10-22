@@ -19,7 +19,7 @@ export function CollectionEdition({ item, work }: { item: CollectedEdition; work
       if (version === expansion.current) setExpanded(result.volumes.filter((volume) => volume.owned).map((volume) => ({ ...volume, read: Boolean(volume.read) })));
     } catch (failure) {
       const message = getApiError(failure, "Não foi possível carregar os demais Volumes.");
-      toast.error(message, { id: `collection-edition-${item.edition.id}-error`, action: { label: "Tentar novamente", onClick: () => { void expand(); } } });
+      toast.error(`${message} Tente novamente em instantes.`, { id: `collection-edition-${item.edition.id}-error` });
     }
     finally { setLoading(false); }
   }

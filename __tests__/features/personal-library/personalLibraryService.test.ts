@@ -1,6 +1,6 @@
 import { beforeEach, describe, expect, it, vi } from "vitest";
 import { api } from "@/services/api";
-import { addCollectionVolume, addWishlistVolume, getCompleteCollectionEdition, listCollection, listWishlist, removeCollectionVolume, removeWishlistVolume, subscribePersonalLibraryUpdates, syncCollectionEdition, syncWishlist, updateVolumeReading } from "@/features/personal-library/personalLibraryService";
+import { addCollectionVolume, addWishlistVolume, getCompleteCollectionEdition, listCollection, listWishlist, removeCollectionVolume, removeWishlistVolume, subscribePersonalLibraryUpdates, syncCollectionEdition, syncReading, syncWishlist, updateVolumeReading } from "@/features/personal-library/personalLibraryService";
 vi.mock("@/services/api", () => ({ api: { get: vi.fn(), put: vi.fn(), patch: vi.fn(), delete: vi.fn() } }));
 describe("cliente do acervo pessoal", () => {
   beforeEach(() => { vi.clearAllMocks(); });
@@ -39,12 +39,17 @@ describe("cliente do acervo pessoal", () => {
     expect(callback).toHaveBeenCalledTimes(6); unsubscribe();
     await removeWishlistVolume(8); expect(callback).toHaveBeenCalledTimes(6);
   });
-  it("retorna falhas parciais e interrompe novos pedidos após mudar a sessão", async () => {
-    vi.mocked(api.put).mockResolvedValue({ data: {} }).mockRejectedValueOnce(new Error("conflito"));
-    expect(await syncWishlist({ addVolumeIds: [1, 2], removeVolumeIds: [3] })).toHaveLength(1);
-    expect(api.delete).toHaveBeenCalledWith("/users/me/wishlist/volumes/3");
-    vi.clearAllMocks();
-    await syncWishlist({ addVolumeIds: [1, 2, 3, 4, 5], removeVolumeIds: [] }, () => false);
-    expect(api.put).not.toHaveBeenCalled();
+  it("envia lista e leitura em uma operação por edição e só invalida após confirmação", async () => {
+    const callback = vi.fn(); const unsubscribe = subscribePersonalLibraryUpdates(callback);
+    const delta = { addVolumeIds: [1, 2], removeVolumeIds: [3] };
+    vi.mocked(api.put).mockResolvedValue({ data: {} });
+    await syncWishlist(5, delta);
+    await syncReading(5, delta);
+    expect(api.put).toHaveBeenNthCalledWith(1, "/users/me/wishlist/editions/5", delta);
+    expect(api.put).toHaveBeenNthCalledWith(2, "/users/me/reading/editions/5", delta);
+    expect(callback).toHaveBeenCalledTimes(2);
+    vi.mocked(api.put).mockRejectedValueOnce(new Error("conflito"));
+    await expect(syncWishlist(5, delta)).rejects.toThrow("conflito");
+    expect(callback).toHaveBeenCalledTimes(2); unsubscribe();
   });
 });
