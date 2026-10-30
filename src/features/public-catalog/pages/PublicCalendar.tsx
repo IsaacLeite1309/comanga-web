@@ -14,6 +14,7 @@ import { CatalogResultsLoading } from "@/features/public-catalog/CatalogResultsL
 import { CatalogRefreshNotice } from "@/features/public-catalog/CatalogRefreshNotice";
 import { useCatalogErrorToast } from "@/features/public-catalog/useCatalogErrorToast";
 import { CatalogPagination } from "@/features/public-catalog/CatalogPagination";
+import { CatalogSearchClearButton } from "@/features/public-catalog/CatalogSearchClearButton";
 import { publicVolumeLabel } from "@/features/public-catalog/publicCatalogFormatters";
 import { publicVolumePath } from "@/features/public-catalog/publicCatalogPaths";
 import { usePublicCatalogScope } from "@/features/public-catalog/usePublicCatalogScope";
@@ -120,7 +121,8 @@ function CalendarFilters({ calendar }: { calendar: CalendarState }) {
           Pesquisar nos lançamentos
           <span className="relative mt-2 block">
             <Search className="pointer-events-none absolute left-4 top-1/2 h-5 w-5 -translate-y-1/2 text-foreground" aria-hidden="true" />
-            <input type="search" aria-label="Pesquisar nos lançamentos" placeholder="Título, título original ou autor" maxLength={255} value={calendar.searchTerm} disabled={calendar.loading} onChange={event => calendar.setSearchTerm(event.target.value)} className="catalog-search-input block h-12 w-full appearance-none rounded-lg border border-sidebar-foreground/35 bg-sidebar pl-12 pr-3 text-sm font-semibold text-foreground outline-none transition-colors placeholder:text-muted-foreground hover:border-primary focus:border-primary disabled:cursor-not-allowed disabled:opacity-60" />
+            <input type="search" aria-label="Pesquisar nos lançamentos" placeholder="Título, título original ou autor" maxLength={255} value={calendar.searchTerm} onChange={event => calendar.setSearchTerm(event.target.value)} className="catalog-search-input block h-12 w-full appearance-none rounded-lg border border-sidebar-foreground/35 bg-sidebar pl-12 pr-11 text-sm font-semibold text-foreground outline-none transition-colors placeholder:text-muted-foreground hover:border-primary focus:border-primary disabled:cursor-not-allowed disabled:opacity-60" />
+            <CatalogSearchClearButton value={calendar.searchTerm} onClear={() => { calendar.setSearchTerm(""); calendar.updateFilters({ term: "" }); }} />
           </span>
         </label>
       </form>

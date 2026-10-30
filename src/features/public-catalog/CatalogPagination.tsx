@@ -14,11 +14,16 @@ export function CatalogPagination({
 }: CatalogPaginationProps) {
   if (pagination.totalPages <= 1) return null;
 
+  const changePage = (page: number) => {
+    onPageChange(page);
+    window.scrollTo({ top: 0, behavior: "auto" });
+  };
+
   return (
     <nav className="mt-10 flex flex-col items-center justify-center gap-3 sm:flex-row" aria-label={ariaLabel}>
       <button
         type="button"
-        onClick={() => onPageChange(pagination.page - 1)}
+        onClick={() => changePage(pagination.page - 1)}
         disabled={pagination.page <= 1}
         className="inline-flex h-10 items-center gap-2 rounded-lg border border-border bg-input px-4 text-sm font-bold text-foreground transition-colors hover:border-primary hover:text-primary disabled:cursor-not-allowed disabled:opacity-40"
       >
@@ -30,7 +35,7 @@ export function CatalogPagination({
       </span>
       <button
         type="button"
-        onClick={() => onPageChange(pagination.page + 1)}
+        onClick={() => changePage(pagination.page + 1)}
         disabled={pagination.page >= pagination.totalPages}
         className="inline-flex h-10 items-center gap-2 rounded-lg border border-border bg-input px-4 text-sm font-bold text-foreground transition-colors hover:border-primary hover:text-primary disabled:cursor-not-allowed disabled:opacity-40"
       >

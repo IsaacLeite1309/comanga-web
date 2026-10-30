@@ -23,7 +23,7 @@ describe("Estante conectada à API", () => {
     mount();
     expect(screen.getByRole("heading", { name: "Sua coleção" })).toHaveClass("sr-only");
     expect(screen.getByRole("status")).toHaveTextContent("Carregando sua coleção");
-    expect(screen.getByRole("searchbox", { name: "Pesquisar na coleção" })).toBeDisabled();
+    expect(screen.getByRole("searchbox", { name: "Pesquisar na coleção" })).toBeEnabled();
     const heading = await screen.findByRole("heading", { name: "Monster · 1ª edição · Coleção incompleta" });
     expect(heading).toHaveClass("text-white");
     expect(heading.querySelectorAll(".mx-2")).toHaveLength(2);

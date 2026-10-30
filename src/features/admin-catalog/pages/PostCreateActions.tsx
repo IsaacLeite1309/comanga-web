@@ -38,7 +38,7 @@ const PostCreateActions = () => {
               to={action.to}
               state={action.state}
               className={`inline-flex min-h-16 items-center justify-center gap-3 rounded-xl px-5 text-center text-base font-bold transition-colors ${
-                index === 0
+                index === state.actions.length - 1
                   ? "bg-primary text-primary-foreground hover:opacity-90"
                   : "border border-border bg-input text-foreground hover:border-primary hover:text-primary"
               }`}

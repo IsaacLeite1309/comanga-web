@@ -125,6 +125,7 @@ describe("EditionDetails", () => {
     expect(await screen.findByText("Volume 1")).toBeInTheDocument();
     expect(screen.getByText("208")).toBeInTheDocument();
     expect(screen.getAllByText("R$ 39,90").length).toBeGreaterThan(0);
+    expect(screen.getByText("Preço").parentElement).not.toHaveTextContent("Visibilidade");
     expect(screen.getByRole("link", { name: /editar volume 1/i })).toHaveAttribute("href", "/admin/gerenciar-mangas/obras/Naruto/edicoes/1/volumes/1/editar");
   });
 
