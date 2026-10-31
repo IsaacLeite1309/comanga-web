@@ -49,7 +49,7 @@ describe("PublicCalendar", () => {
   it("usa o período do servidor e reúne todos os volumes do mês sem agrupar por dia", async () => {
     renderCalendar();
     expect(screen.getByRole("status", { name: "Carregando lançamentos..." })).toBeInTheDocument();
-    expect(screen.getByRole("searchbox", { name: "Pesquisar nos lançamentos" })).toBeDisabled();
+    expect(screen.getByRole("searchbox", { name: "Pesquisar nos lançamentos" })).toBeEnabled();
     expect(screen.getByRole("button", { name: "Mês atual" })).toBeDisabled();
     expect(screen.getByRole("button", { name: "Mês e ano" })).toBeDisabled();
     const results = await screen.findByRole("region", { name: "Volumes encontrados neste mês" });

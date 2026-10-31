@@ -1,4 +1,5 @@
 import { Search, SlidersHorizontal } from 'lucide-react';
+import { CatalogSearchClearButton } from '@/features/public-catalog/CatalogSearchClearButton';
 import { MultiSelect } from '@/components/forms/MultiSelect';
 import { SearchableSelect, type SelectOption } from '@/components/forms/SearchableSelect';
 import { formatPublicationStatus } from '@/features/public-catalog/publicCatalogFormatters';
@@ -71,7 +72,6 @@ function TabSelector({ catalog }: { catalog: PesquisaCatalog }) {
           type="button"
           role="tab"
           aria-selected={catalog.tab === tab}
-          disabled={catalog.loading}
           onClick={() => catalog.changeTab(tab)}
           className={`inline-flex h-full flex-1 items-center justify-center rounded-full px-5 text-sm font-semibold transition-all disabled:cursor-not-allowed disabled:opacity-60 sm:flex-none ${catalog.tab === tab ? "bg-primary text-primary-foreground" : "text-foreground hover:bg-sidebar-accent"}`}
         >
@@ -93,10 +93,10 @@ function SearchInput({ catalog }: { catalog: PesquisaCatalog }) {
           aria-label={catalog.tab === "works" ? "Pesquisar obras" : "Pesquisar edições"}
           value={catalog.searchTerm}
           onChange={(event) => catalog.setSearchTerm(event.target.value)}
-          disabled={catalog.loading}
           placeholder="Título, título original ou autor"
-          className="catalog-search-input block h-12 w-full appearance-none rounded-lg border border-sidebar-foreground/35 bg-sidebar pl-12 pr-3 text-sm font-semibold text-foreground outline-none transition-colors placeholder:text-muted-foreground hover:border-primary focus:border-primary disabled:cursor-not-allowed disabled:opacity-60"
+          className="catalog-search-input block h-12 w-full appearance-none rounded-lg border border-sidebar-foreground/35 bg-sidebar pl-12 pr-11 text-sm font-semibold text-foreground outline-none transition-colors placeholder:text-muted-foreground hover:border-primary focus:border-primary disabled:cursor-not-allowed disabled:opacity-60"
         />
+        <CatalogSearchClearButton value={catalog.searchTerm} onClear={() => catalog.setSearchTerm("")} />
       </span>
     </label>
   );

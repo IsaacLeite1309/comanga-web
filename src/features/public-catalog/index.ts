@@ -9,6 +9,7 @@ export { default as PublicVolumeDetailsPage } from "./pages/PublicVolumeDetails"
 export { CatalogCover } from "./CatalogCover";
 export { CatalogResultsLoading } from "./CatalogResultsLoading";
 export { CatalogPagination } from "./CatalogPagination";
+export { CatalogSearchClearButton } from "./CatalogSearchClearButton";
 export { getPublicCatalogOptions, listPublicCalendar, listPublicEditions, listPublicWorks } from "./publicCatalogService";
 export { prefetchListedEditions } from "./prefetchCatalogDetails";
 export type { PublicOption, PublicPersonalVolumeState } from "./publicCatalogTypes";

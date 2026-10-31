@@ -133,14 +133,7 @@ function VolumeGridCard({
         )}
       </div>
       <h3 className="mt-2 truncate text-center text-sm font-bold text-foreground">{label}</h3>
-      <div className="mt-2 grid grid-cols-3 gap-1.5">
-        <button
-          type="button"
-          aria-label={`Visibilidade de ${label}`}
-          className={visibilityActionClassName(volume.visibility) + " inline-flex h-8 items-center justify-center rounded-md border"}
-        >
-          <VisibilityIcon visibility={volume.visibility} />
-        </button>
+      <div className="mt-2 grid grid-cols-2 gap-1.5">
         <Link
           to={volumeEditAdminPath(navigation.workSlug, navigation.editionNumber, volume.number)}
           state={{ workId: navigation.workId, editionId: navigation.editionId, volumeId: volume.id }}
@@ -177,7 +170,7 @@ function VolumeListRow({
   const deleting = actions.deletingId === volume.id;
 
   return (
-    <article className="grid grid-cols-[72px_minmax(0,1fr)_auto] gap-4 border-b border-border px-4 py-4 last:border-b-0 md:grid-cols-[72px_minmax(120px,1fr)_100px_100px_132px_92px_92px] md:items-center">
+    <article className="grid grid-cols-[72px_minmax(0,1fr)_auto] gap-4 border-b border-border px-4 py-4 last:border-b-0 md:grid-cols-[72px_minmax(120px,1fr)_100px_100px_92px_92px] md:items-center">
       <div className="aspect-[2/3] w-16 overflow-hidden rounded-md border border-border bg-input">
         {volume.coverUrl ? (
           <img src={volume.coverUrl} alt={`Capa do ${label}`} className="h-full w-full object-cover" />
@@ -202,17 +195,7 @@ function VolumeListRow({
         {volume.pages ? `${volume.pages}` : "-"}
       </p>
       <p className="hidden text-sm font-semibold text-muted-foreground md:block">{price}</p>
-      <div className="hidden justify-self-start md:block">
-        <span className={visibilityActionClassName(volume.visibility) + " inline-flex h-10 min-w-[118px] items-center justify-center gap-2 rounded-lg border px-3 text-sm font-bold"}>
-          <VisibilityIcon visibility={volume.visibility} />
-          {volume.visibility}
-        </span>
-      </div>
       <div className="flex items-center justify-start gap-2 md:contents">
-        <span className={visibilityActionClassName(volume.visibility) + " inline-flex items-center gap-1.5 rounded-lg border px-2 py-1 text-xs font-bold md:hidden"}>
-          <VisibilityIcon visibility={volume.visibility} className="h-3.5 w-3.5" />
-          {volume.visibility}
-        </span>
         <Link
           to={volumeEditAdminPath(navigation.workSlug, navigation.editionNumber, volume.number)}
           state={{ workId: navigation.workId, editionId: navigation.editionId, volumeId: volume.id }}
@@ -237,12 +220,11 @@ function VolumeListRow({
 
 function VolumesListHeader() {
   return (
-    <div className="grid grid-cols-[72px_minmax(0,1fr)_auto] items-center gap-4 border-b border-border bg-muted/20 px-4 py-3 text-xs font-bold uppercase tracking-wide text-muted-foreground md:grid-cols-[72px_minmax(120px,1fr)_100px_100px_132px_92px_92px]">
+    <div className="grid grid-cols-[72px_minmax(0,1fr)_auto] items-center gap-4 border-b border-border bg-muted/20 px-4 py-3 text-xs font-bold uppercase tracking-wide text-muted-foreground md:grid-cols-[72px_minmax(120px,1fr)_100px_100px_92px_92px]">
       <span>Capa</span>
       <span>Número</span>
       <span className="hidden md:block">Páginas</span>
       <span className="hidden md:block">Preço</span>
-      <span className="hidden md:block">Visibilidade</span>
       <span className="hidden justify-self-center md:block">Editar</span>
       <span className="hidden justify-self-center md:block">Excluir</span>
     </div>

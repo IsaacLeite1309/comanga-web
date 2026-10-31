@@ -101,7 +101,7 @@ function currentParams() {
 }
 
 async function waitForCatalogReady() {
-  await waitFor(() => expect(screen.getByRole("searchbox", { name: /Pesquisar (obras|edições)/i })).toBeEnabled());
+  await waitFor(() => expect(screen.queryByRole("status", { name: /Carregando (Obras|Edições)/i })).not.toBeInTheDocument());
 }
 
 describe("Pesquisa", () => {
@@ -293,18 +293,19 @@ describe("Pesquisa", () => {
     expect(listPublicWorks).toHaveBeenLastCalledWith(expect.objectContaining({ term: "Urasawa" }));
   });
 
-  it("usa o visual da barra de Lançamentos e permite limpar a busca apagando o texto", async () => {
+  it("usa o visual da barra de Lançamentos e permite limpar a busca pelo X", async () => {
     renderCatalog("/pesquisa?term=Monster");
     await screen.findByRole("heading", { name: "Monster" });
 
     const search = screen.getByRole("searchbox", { name: /Pesquisar (obras|edições)/i });
     expect(search).toHaveAttribute("placeholder", "Título, título original ou autor");
-    expect(search).toHaveClass("pl-12", "pr-3");
+    expect(search).toHaveClass("pl-12", "pr-11");
     expect(search.parentElement?.parentElement).toHaveTextContent("Pesquisar");
-    expect(screen.queryByRole("button", { name: "Limpar pesquisa" })).not.toBeInTheDocument();
-    fireEvent.change(search, { target: { value: "" } });
+    fireEvent.click(screen.getByRole("button", { name: "Limpar pesquisa" }));
 
     await waitFor(() => expect(currentParams().has("term")).toBe(false));
+    expect(search).toHaveValue("");
+    expect(screen.queryByRole("button", { name: "Limpar pesquisa" })).not.toBeInTheDocument();
   });
 
   it("restringe os Tipos de Obra ao país selecionado", async () => {
@@ -603,8 +604,8 @@ describe("Pesquisa", () => {
 
     renderCatalog();
     expect(screen.getByText("Carregando Obras...")).toBeInTheDocument();
-    expect(screen.getByRole("searchbox", { name: /Pesquisar (obras|edições)/i })).toBeDisabled();
-    expect(screen.getByRole("tab", { name: "Edições" })).toBeDisabled();
+    expect(screen.getByRole("searchbox", { name: /Pesquisar (obras|edições)/i })).toBeEnabled();
+    expect(screen.getByRole("tab", { name: "Edições" })).toBeEnabled();
     expect(screen.getByRole("button", { name: "Filtros avançados" })).toBeDisabled();
     expect(screen.getByTestId("results-divider")).toBeInTheDocument();
     expect(screen.queryByText("1 obra encontrada")).not.toBeInTheDocument();
@@ -616,16 +617,15 @@ describe("Pesquisa", () => {
     expect(listPublicWorks).toHaveBeenCalledTimes(1);
   });
 
-  it("libera a troca de aba após concluir o carregamento", async () => {
+  it("permite a troca de aba durante o carregamento", async () => {
     let finish!: (value: typeof worksResponse) => void;
     vi.mocked(listPublicWorks).mockImplementationOnce(() => new Promise(resolve => { finish = resolve; }));
     renderCatalog();
-    expect(screen.getByRole("searchbox", { name: /Pesquisar (obras|edições)/i })).toBeDisabled();
-    expect(screen.getByRole("tab", { name: "Edições" })).toBeDisabled();
-    await act(async () => finish(worksResponse));
-    await waitForCatalogReady();
+    expect(screen.getByRole("searchbox", { name: /Pesquisar (obras|edições)/i })).toBeEnabled();
+    expect(screen.getByRole("tab", { name: "Edições" })).toBeEnabled();
     fireEvent.click(screen.getByRole("tab", { name: "Edições" }));
     await waitFor(() => expect(listPublicEditions).toHaveBeenCalled());
+    await act(async () => finish(worksResponse));
     expect(await screen.findByRole("heading", { name: "Monster" })).toBeInTheDocument();
     expect(screen.getByRole("searchbox", { name: /Pesquisar (obras|edições)/i })).toBeEnabled();
   });
