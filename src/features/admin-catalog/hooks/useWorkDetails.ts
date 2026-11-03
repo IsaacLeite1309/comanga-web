@@ -1,7 +1,9 @@
+import { adminCachedGet, readAdminCachedResponse } from "@/services/adminCachedGet";
 import { useCallback, useEffect, useState } from "react";
 import { toast } from "sonner";
 import { api } from "@/services/api";
 import { getApiError } from "@/lib/apiError";
+import { clearAdminCache } from "@/lib/queryClient";
 import type { EditionDetail, WorkDetail } from "../domain/adminCatalogDetails";
 import {
   EDITIONS_LIST_ORDER,
@@ -21,21 +23,29 @@ interface EditionsResponse {
 }
 
 export function useWorkSummary(workSlug: string) {
-  const [work, setWork] = useState<WorkDetail | null>(null);
-  const [loading, setLoading] = useState(true);
+  const url = `/admin/works/slug/${encodeURIComponent(workSlug)}`;
+  const initial = readAdminCachedResponse<WorkDetailResponse>(url)?.data.work;
+  const [work, setWork] = useState<WorkDetail | null>(initial ?? null);
+  const [loading, setLoading] = useState(!initial);
   const [error, setError] = useState("");
 
   useEffect(() => {
     let isMounted = true;
 
     async function loadWork() {
+      const cached = readAdminCachedResponse<WorkDetailResponse>(url)?.data.work;
+      if (cached) {
+        setWork(cached);
+        setLoading(false);
+        return;
+      }
       setLoading(true);
       setError("");
 
       try {
         if (!workSlug) throw new Error("Obra não encontrada.");
-        const workResponse = await api.get<WorkDetailResponse>(
-          `/admin/works/slug/${encodeURIComponent(workSlug)}`,
+        const workResponse = await adminCachedGet<WorkDetailResponse>(
+          url,
         );
 
         if (!isMounted) return;
@@ -53,7 +63,7 @@ export function useWorkSummary(workSlug: string) {
     return () => {
       isMounted = false;
     };
-  }, [workSlug]);
+  }, [workSlug, url]);
 
   return { work, loading, error };
 }
@@ -66,7 +76,7 @@ export function useWorkDetails(workSlug: string) {
   const workId = work?.id;
 
   const loadEditionsPage = useCallback(async (page: number, limit: number) => {
-    const response = await api.get<EditionsResponse>(`/admin/works/${workId}/editions`, {
+    const response = await adminCachedGet<EditionsResponse>(`/admin/works/${workId}/editions`, {
       params: { order: EDITIONS_LIST_ORDER, page, limit },
     });
     const editions = response.data.editions;
@@ -93,6 +103,7 @@ export function useWorkDetails(workSlug: string) {
       const response = await api.patch<{ edition: EditionDetail }>(`/admin/editions/${edition.id}/visibility`, {
         visibility: nextVisibility,
       });
+      clearAdminCache();
       editionsList.setItems((current) => current.map((item) => (
         item.id === edition.id ? response.data.edition : item
       )));
@@ -111,6 +122,7 @@ export function useWorkDetails(workSlug: string) {
 
     try {
       await api.delete(`/admin/editions/${deletingEdition.id}`);
+      clearAdminCache();
       toast.success("Edição excluída com sucesso.");
       setDeletingEdition(null);
       editionsList.refreshAfterRemoval();

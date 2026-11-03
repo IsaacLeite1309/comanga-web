@@ -1,7 +1,9 @@
+import { adminCachedGet, readAdminCachedResponse } from "@/services/adminCachedGet";
 import { useEffect, useMemo, useState } from "react";
 import { toast } from "sonner";
 import { api } from "@/services/api";
 import { getApiError } from "@/lib/apiError";
+import { clearAdminCache } from "@/lib/queryClient";
 import {
   COUNTRY_OPTIONS,
   FilterOption,
@@ -15,22 +17,38 @@ import {
   WorkVisibility,
 } from "../pages/editMangasModel";
 
+const rememberedWorkFilters = {
+  searchTerm: "", typeId: "Todos", countryId: "Todos", visibility: "Todos" as WorkFilterVisibility,
+  viewMode: "list" as "list" | "grid", order: "ASC" as "ASC" | "DESC", page: 1,
+};
+
+export function resetEditMangasMemoryForTests() {
+  Object.assign(rememberedWorkFilters, {
+    searchTerm: "", typeId: "Todos", countryId: "Todos", visibility: "Todos",
+    viewMode: "list", order: "ASC", page: 1,
+  });
+}
+
 function useWorkFilters() {
   const [workTypes, setWorkTypes] = useState<OptionValue[]>([]);
-  const [searchTerm, setSearchTerm] = useState("");
-  const [debouncedTerm, setDebouncedTerm] = useState("");
-  const [typeId, setTypeId] = useState("Todos");
-  const [countryId, setCountryId] = useState("Todos");
-  const [visibility, setVisibility] = useState<WorkFilterVisibility>("Todos");
-  const [viewMode, setViewMode] = useState<"list" | "grid">("list");
+  const [searchTerm, setSearchTerm] = useState(rememberedWorkFilters.searchTerm);
+  const [debouncedTerm, setDebouncedTerm] = useState(rememberedWorkFilters.searchTerm.trim());
+  const [typeId, setTypeId] = useState(rememberedWorkFilters.typeId);
+  const [countryId, setCountryId] = useState(rememberedWorkFilters.countryId);
+  const [visibility, setVisibility] = useState<WorkFilterVisibility>(rememberedWorkFilters.visibility);
+  const [viewMode, setViewMode] = useState<"list" | "grid">(rememberedWorkFilters.viewMode);
   const [isMobileGrid, setIsMobileGrid] = useState(false);
-  const [order, setOrder] = useState<"ASC" | "DESC">("ASC");
-  const [page, setPage] = useState(1);
+  const [order, setOrder] = useState<"ASC" | "DESC">(rememberedWorkFilters.order);
+  const [page, setPage] = useState(rememberedWorkFilters.page);
+
+  useEffect(() => {
+    Object.assign(rememberedWorkFilters, { searchTerm, typeId, countryId, visibility, viewMode, order, page });
+  }, [searchTerm, typeId, countryId, visibility, viewMode, order, page]);
 
   useEffect(() => {
     async function loadFilterOptions() {
       try {
-        const response = await api.get<WorkTypeOptionsResponse>("/admin/options/tipos-obra", {
+        const response = await adminCachedGet<WorkTypeOptionsResponse>("/admin/options/tipos-obra", {
           params: {
             order: "ASC",
             page: 1,
@@ -47,11 +65,14 @@ function useWorkFilters() {
 
   useEffect(() => {
     const timeoutId = window.setTimeout(() => {
-      setDebouncedTerm(searchTerm.trim());
-      setPage(1);
+      const nextTerm = searchTerm.trim();
+      if (nextTerm !== debouncedTerm) {
+        setDebouncedTerm(nextTerm);
+        setPage(1);
+      }
     }, 300);
     return () => window.clearTimeout(timeoutId);
-  }, [searchTerm]);
+  }, [searchTerm, debouncedTerm]);
 
   useEffect(() => {
     const mediaQuery = window.matchMedia("(max-width: 767px)");
@@ -132,23 +153,31 @@ function useWorkFilters() {
 type Filters = ReturnType<typeof useWorkFilters>;
 
 function useWorksData(filters: Filters) {
-  const [works, setWorks] = useState<WorkSummary[]>([]);
-  const [pagination, setPagination] = useState<WorksPagination>({
+  const initial = readAdminCachedResponse<WorksResponse>("/admin/works", { params: filters.requestParams })?.data;
+  const [works, setWorks] = useState<WorkSummary[]>(initial?.works ?? []);
+  const [pagination, setPagination] = useState<WorksPagination>(initial?.pagination ?? {
     page: 1,
     limit: WORKS_PAGE_SIZE,
     total: 0,
     totalPages: 1,
   });
-  const [loading, setLoading] = useState(true);
+  const [loading, setLoading] = useState(!initial);
   const [error, setError] = useState("");
 
   useEffect(() => {
     let isMounted = true;
     async function loadWorks() {
+      const cached = readAdminCachedResponse<WorksResponse>("/admin/works", { params: filters.requestParams })?.data;
+      if (cached) {
+        setWorks(cached.works);
+        setPagination(cached.pagination);
+        setLoading(false);
+        return;
+      }
       setLoading(true);
       setError("");
       try {
-        const response = await api.get<WorksResponse>("/admin/works", {
+        const response = await adminCachedGet<WorksResponse>("/admin/works", {
           params: filters.requestParams,
         });
         if (!isMounted) return;
@@ -188,6 +217,7 @@ function useWorkMutations(data: WorksData) {
     setUpdatingVisibilityId(work.id);
     try {
       const response = await api.patch(`/admin/works/${work.id}/visibility`, { visibility });
+      clearAdminCache();
       const updatedWork = response.data.work as WorkSummary;
       data.setWorks((current) => current.map((item) => (
         item.id === work.id ? { ...item, visibility: updatedWork.visibility } : item
@@ -205,6 +235,7 @@ function useWorkMutations(data: WorksData) {
     setIsDeleting(true);
     try {
       await api.delete(`/admin/works/${deletingWork.id}`);
+      clearAdminCache();
       data.setWorks((current) => current.filter((work) => work.id !== deletingWork.id));
       toast.success("Obra excluída com sucesso.");
       setDeletingWork(null);

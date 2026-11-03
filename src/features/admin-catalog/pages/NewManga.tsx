@@ -36,7 +36,7 @@ const NewManga = ({ mode = "create", workId, returnPath = "/admin/gerenciar-mang
   return (
     <div className="page-gutter flex-1 min-w-0 py-6 sm:py-8">
       <UnsavedChangesPrompt
-        when={controller.hasUnsavedChanges}
+        when={isEditMode && controller.hasUnsavedChanges}
         continueLabel={isEditMode ? "Continuar editando" : "Continuar cadastrando"}
       />
       <form

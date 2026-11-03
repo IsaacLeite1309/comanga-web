@@ -1,5 +1,5 @@
 import axios from 'axios';
-import { invalidatePublicCatalog } from '@/lib/queryClient';
+import { clearAdminCache, invalidatePublicCatalog } from '@/lib/queryClient';
 
 export const api = axios.create({
   baseURL: import.meta.env.VITE_API_URL || "/api",
@@ -11,6 +11,7 @@ api.interceptors.response.use((response) => {
   const isPersonalLibraryMutation = response.config.url?.includes("/users/me/");
   if (method && !["GET", "HEAD", "OPTIONS"].includes(method) && !isPersonalLibraryMutation) {
     invalidatePublicCatalog();
+    if (response.config.url?.startsWith("/admin/")) clearAdminCache();
   }
   return response;
 });

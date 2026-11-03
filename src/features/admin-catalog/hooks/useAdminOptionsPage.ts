@@ -1,7 +1,10 @@
-import { FormEvent, useCallback, useEffect, useMemo, useState } from "react";
+import { adminCachedGet, readAdminCachedResponse } from "@/services/adminCachedGet";
+import { FormEvent, useCallback, useEffect, useMemo, useRef, useState } from "react";
 import { toast } from "sonner";
 import { api } from "@/services/api";
 import { getApiError } from "@/lib/apiError";
+import { clearAdminCache } from "@/lib/queryClient";
+
 import {
   getRememberedAdminOptionsCategory,
   getRememberedAdminOptionsCountryIds,
@@ -29,6 +32,8 @@ import {
   parseNewValueLabels,
   SortOrder,
 } from "../pages/adminOptionsModel";
+
+let rememberedOptionsPage = 1;
 
 function useAdminOptionsSelection() {
   const rememberedCategory = getRememberedAdminOptionsCategory();
@@ -141,14 +146,23 @@ function useAdminOptionsSelection() {
 type Selection = ReturnType<typeof useAdminOptionsSelection>;
 
 function useAdminOptionsData(selection: Selection) {
-  const [values, setValues] = useState<DomainOptionValue[]>([]);
-  const [loading, setLoading] = useState(true);
+  const initialCategory = selection.selectedCategory;
+  const initialParams = initialCategory ? {
+    ...(selection.debouncedSearchTerm ? { term: selection.debouncedSearchTerm } : {}),
+    ...(isSystemManagedCategory(initialCategory) ? { includeInactive: "true" } : {}),
+    order: selection.order, page: rememberedOptionsPage, limit: getPageSizeForCategory(initialCategory),
+  } : null;
+  const initial = initialParams
+    ? readAdminCachedResponse<OptionsResponse>(`/admin/options/${initialCategory}`, { params: initialParams })?.data
+    : undefined;
+  const [values, setValues] = useState<DomainOptionValue[]>(initial?.values ?? []);
+  const [loading, setLoading] = useState(!initial);
   const [error, setError] = useState("");
   const [countryOptions, setCountryOptions] = useState<DomainOptionValue[]>([]);
   const [countryLoading, setCountryLoading] = useState(false);
   const [countryError, setCountryError] = useState("");
-  const [page, setPage] = useState(1);
-  const [pagination, setPagination] = useState<OptionsPagination>({
+  const [page, setPage] = useState(rememberedOptionsPage);
+  const [pagination, setPagination] = useState<OptionsPagination>(initial?.pagination ?? {
     page: 1,
     limit: DEFAULT_PAGE_SIZE,
     total: 0,
@@ -166,21 +180,22 @@ function useAdminOptionsData(selection: Selection) {
     sortOrder: SortOrder,
     currentPage: number
   ) => {
+    const params = {
+      ...(term ? { term } : {}),
+      ...(isSystemManagedCategory(categorySlug) ? { includeInactive: "true" } : {}),
+      order: sortOrder, page: currentPage, limit: getPageSizeForCategory(categorySlug),
+    };
+    const cached = readAdminCachedResponse<OptionsResponse>(`/admin/options/${categorySlug}`, { params })?.data;
+    if (cached) {
+      setValues(cached.values);
+      setPagination(cached.pagination);
+      setLoading(false);
+      return;
+    }
     setLoading(true);
     setError("");
     try {
-      const response = await api.get<OptionsResponse>(`/admin/options/${categorySlug}`, {
-        params: {
-          ...(term ? { term } : {}),
-          // Valores desativados precisam aparecer para poderem ser reativados.
-          ...(isSystemManagedCategory(categorySlug)
-            ? { includeInactive: "true" }
-            : {}),
-          order: sortOrder,
-          page: currentPage,
-          limit: getPageSizeForCategory(categorySlug),
-        },
-      });
+      const response = await adminCachedGet<OptionsResponse>(`/admin/options/${categorySlug}`, { params });
       setValues(response.data.values);
       setPagination(response.data.pagination);
     } catch (requestError) {
@@ -217,10 +232,15 @@ function useAdminOptionsData(selection: Selection) {
     selection.selectedCategory,
   ]);
 
+  const filterKey = `${pageSize}|${selection.debouncedSearchTerm}|${selection.order}|${selection.selectedCategory}`;
+  const previousFilterKey = useRef(filterKey);
   useEffect(() => {
+    if (previousFilterKey.current === filterKey) return;
+    previousFilterKey.current = filterKey;
     setPage(1);
     setPagination((current) => ({ ...current, limit: pageSize }));
-  }, [pageSize, selection.debouncedSearchTerm, selection.order, selection.selectedCategory]);
+  }, [filterKey, pageSize]);
+  useEffect(() => { rememberedOptionsPage = page; }, [page]);
 
   useEffect(() => {
     if (!countryDependent) {
@@ -232,7 +252,7 @@ function useAdminOptionsData(selection: Selection) {
       setCountryLoading(true);
       setCountryError("");
       try {
-        const response = await api.get<OptionsResponse>(`/admin/options/${COUNTRY_CATEGORY_SLUG}`, {
+        const response = await adminCachedGet<OptionsResponse>(`/admin/options/${COUNTRY_CATEGORY_SLUG}`, {
           params: {
             order: "ASC",
             page: 1,
@@ -345,6 +365,7 @@ function useAdminOptionMutations(selection: Selection, data: Data, editing: Edit
         label,
         ...(data.countryDependent ? { dependsOnValueIds: selection.selectedCountryIds } : {}),
       });
+      clearAdminCache();
       selection.clearNewValue();
       data.setPage(1);
       await data.fetchOptions(
@@ -377,6 +398,7 @@ function useAdminOptionMutations(selection: Selection, data: Data, editing: Edit
         label,
         ...(data.countryDependent ? { dependsOnValueIds: editing.editingCountryIds } : {}),
       });
+      clearAdminCache();
       editing.cancelEditing();
       await data.fetchOptions(
         selection.selectedCategory,
@@ -397,6 +419,7 @@ function useAdminOptionMutations(selection: Selection, data: Data, editing: Edit
     setDeletingId(pendingDeleteValue.id);
     try {
       await api.delete(`/admin/options/${pendingDeleteValue.id}`);
+      clearAdminCache();
       setPendingDeleteValue(null);
       await data.fetchOptions(
         selection.selectedCategory,
@@ -442,6 +465,7 @@ function useOptionStatusMutations(selection: Selection, data: Data) {
       await api.patch<{ value: DomainOptionValue }>(`/admin/options/${value.id}`, {
         active: value.active === false,
       });
+      clearAdminCache();
       await refreshCurrentPage();
       toast.success(value.active === false ? "Valor ativado." : "Valor desativado.");
     } catch (requestError) {

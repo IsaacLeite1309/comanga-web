@@ -1,4 +1,7 @@
 import type { AuthorField } from "./NewManga";
+import { readAdminDraft, removeAdminDraft, writeAdminDraft } from "@/lib/adminDraftStorage";
+
+const STORAGE_KEY = "work:new";
 
 export type RememberedNewMangaDraft = {
   currentStep: "identification" | "authors" | "publication" | "media";
@@ -46,16 +49,14 @@ export const emptyNewMangaDraft: RememberedNewMangaDraft = {
   magazineIds: [],
 };
 
-let rememberedDraft: RememberedNewMangaDraft = structuredClone(emptyNewMangaDraft);
-
 export function getRememberedNewMangaDraft() {
-  return structuredClone(rememberedDraft);
+  return structuredClone(readAdminDraft<RememberedNewMangaDraft>(STORAGE_KEY) || emptyNewMangaDraft);
 }
 
 export function rememberNewMangaDraft(draft: RememberedNewMangaDraft) {
-  rememberedDraft = structuredClone(draft);
+  writeAdminDraft(STORAGE_KEY, draft);
 }
 
 export function resetNewMangaDraftMemory() {
-  rememberedDraft = structuredClone(emptyNewMangaDraft);
+  removeAdminDraft(STORAGE_KEY);
 }

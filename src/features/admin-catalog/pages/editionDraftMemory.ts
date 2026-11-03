@@ -1,3 +1,5 @@
+import { clearAdminDraftStorage, readAdminDraft, removeAdminDraft, writeAdminDraft } from "@/lib/adminDraftStorage";
+
 export interface EditionDraft {
   brazilianPublisherId: string;
   coverTypeId: string;
@@ -16,20 +18,20 @@ export const emptyEditionDraft: EditionDraft = {
   brazilPublicationStatus: "",
 };
 
-const rememberedDrafts = new Map<string, EditionDraft>();
+const storageKey = (key: string) => `edition:new:${key}`;
 
 export function getRememberedEditionDraft(key: string) {
-  return structuredClone(rememberedDrafts.get(key) || emptyEditionDraft);
+  return structuredClone(readAdminDraft<EditionDraft>(storageKey(key)) || emptyEditionDraft);
 }
 
 export function rememberEditionDraft(key: string, draft: EditionDraft) {
-  rememberedDrafts.set(key, structuredClone(draft));
+  writeAdminDraft(storageKey(key), draft);
 }
 
 export function resetEditionDraftMemory(key: string) {
-  rememberedDrafts.delete(key);
+  removeAdminDraft(storageKey(key));
 }
 
 export function resetEditionDraftMemoryForTests() {
-  rememberedDrafts.clear();
+  clearAdminDraftStorage("edition:new:");
 }

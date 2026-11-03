@@ -37,7 +37,7 @@ export function CollectionEdition({ item, work }: { item: CollectedEdition; work
       >
         <div className="min-w-0 flex-1">
           <h2 className="min-w-0 text-lg font-bold text-white" aria-label={`${work.title} · ${item.edition.chronologicalNumber}ª edição · Coleção ${isComplete ? "completa" : "incompleta"}`}>{work.title}<span className="mx-2"> · </span>{item.edition.chronologicalNumber}ª edição<span className="mx-2"> · </span><span className="font-bold">Coleção {isComplete ? "completa" : "incompleta"}</span></h2>
-          <span className="mt-1 block text-sm text-muted-foreground">{item.progress.owned}/{item.progress.total} volumes adquiridos · {item.progress.read}/{item.progress.owned} {item.progress.read === 1 ? "volume lido" : "volumes lidos"} · {item.progress.wished}/{missingCount} {item.progress.wished === 1 ? "volume faltante desejado" : "volumes faltantes desejados"}</span>
+          <span className="mt-1 block text-sm text-muted-foreground">{item.progress.owned}/{item.progress.total} volumes adquiridos · {item.progress.read}/{item.progress.owned} {item.progress.read === 1 ? "volume lido" : "volumes lidos"}{!isComplete && <> · {item.progress.wished}/{missingCount} {item.progress.wished === 1 ? "volume faltante desejado" : "volumes faltantes desejados"}</>}</span>
           <span className="mt-3 flex min-w-0 gap-3 overflow-x-auto">
             {(expanded || item.volumes).map((volume) => {
               const label = publicVolumeLabel(volume);

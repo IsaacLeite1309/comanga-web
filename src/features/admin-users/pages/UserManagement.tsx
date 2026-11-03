@@ -1,3 +1,4 @@
+import { adminCachedGet, readAdminCachedResponse } from "@/services/adminCachedGet";
 import { useEffect, useMemo, useRef, useState } from "react";
 import { ArrowDownAZ, ArrowUpAZ, Check, ChevronDown, Loader2, Search, ShieldAlert } from "lucide-react";
 import { isAxiosError } from "axios";
@@ -40,6 +41,8 @@ interface UsersResponse {
 const ROLE_OPTIONS: Array<"Todos" | UserRole> = ["Todos", "Administrador", "Usuário Padrão"];
 const STATUS_OPTIONS: Array<"Todos" | UserStatus> = ["Todos", "Pendente", "Ativada", "Bloqueada"];
 const USERS_PAGE_SIZE = 8;
+let rememberedUserPage = 1;
+let rememberedUserOrder: SortOrder = "ASC";
 
 interface FilterDropdownProps<T extends string> {
   label: string;
@@ -484,23 +487,51 @@ function DesktopUsersView(props: UsersViewProps & { order: SortOrder; onToggleOr
   );
 }
 
+function readRememberedUsers(filters: ReturnType<typeof getRememberedUserManagementFilters>) {
+  const initialParams = {
+    ...(filters.searchTerm.trim() ? { term: filters.searchTerm.trim() } : {}),
+    ...(filters.role !== "Todos" ? { role: filters.role } : {}),
+    ...(filters.status !== "Todos" ? { status: filters.status } : {}),
+    order: rememberedUserOrder, page: rememberedUserPage, limit: USERS_PAGE_SIZE,
+  };
+  return readAdminCachedResponse<UsersResponse>("/admin/users", { params: initialParams })?.data;
+}
+
+function useRememberedUsersNavigation(term: string, role: string, status: string) {
+  const [order, setOrder] = useState<SortOrder>(rememberedUserOrder);
+  const [page, setPage] = useState(rememberedUserPage);
+  const filterKey = `${term}|${role}|${status}|${order}`;
+  const previousFilterKey = useRef(filterKey);
+  useEffect(() => {
+    if (previousFilterKey.current !== filterKey) {
+      previousFilterKey.current = filterKey;
+      setPage(1);
+    }
+  }, [filterKey]);
+  useEffect(() => {
+    rememberedUserPage = page;
+    rememberedUserOrder = order;
+  }, [page, order]);
+  return { order, setOrder, page, setPage };
+}
+
 const UserManagement = () => {
   const { user: currentUser } = useAuth();
   const rememberedFilters = getRememberedUserManagementFilters();
-  const [users, setUsers] = useState<AdminUser[]>([]);
+  const initialUsers = readRememberedUsers(rememberedFilters);
+  const [users, setUsers] = useState<AdminUser[]>(initialUsers?.users ?? []);
   const [searchTerm, setSearchTerm] = useState(rememberedFilters.searchTerm);
   const [debouncedTerm, setDebouncedTerm] = useState(rememberedFilters.searchTerm.trim());
   const [roleFilter, setRoleFilter] = useState<"Todos" | UserRole>(rememberedFilters.role as "Todos" | UserRole);
   const [statusFilter, setStatusFilter] = useState<"Todos" | UserStatus>(rememberedFilters.status as "Todos" | UserStatus);
-  const [order, setOrder] = useState<SortOrder>("ASC");
-  const [page, setPage] = useState(1);
-  const [pagination, setPagination] = useState({
+  const { order, setOrder, page, setPage } = useRememberedUsersNavigation(debouncedTerm, roleFilter, statusFilter);
+  const [pagination, setPagination] = useState(initialUsers?.pagination ?? {
     page: 1,
     limit: USERS_PAGE_SIZE,
     total: 0,
     totalPages: 1,
   });
-  const [loading, setLoading] = useState(true);
+  const [loading, setLoading] = useState(!initialUsers);
   const [error, setError] = useState("");
   const [updatingUserId, setUpdatingUserId] = useState<string | null>(null);
 
@@ -511,10 +542,6 @@ const UserManagement = () => {
 
     return () => window.clearTimeout(timer);
   }, [searchTerm]);
-
-  useEffect(() => {
-    setPage(1);
-  }, [debouncedTerm, roleFilter, statusFilter, order]);
 
   const params = useMemo(() => ({
     ...(debouncedTerm ? { term: debouncedTerm } : {}),
@@ -527,11 +554,18 @@ const UserManagement = () => {
 
   useEffect(() => {
     async function fetchUsers() {
+      const cached = readAdminCachedResponse<UsersResponse>("/admin/users", { params })?.data;
+      if (cached) {
+        setUsers(cached.users);
+        setPagination(cached.pagination);
+        setLoading(false);
+        return;
+      }
       setLoading(true);
       setError("");
 
       try {
-        const response = await api.get<UsersResponse>("/admin/users", { params });
+        const response = await adminCachedGet<UsersResponse>("/admin/users", { params });
         setUsers(response.data.users);
         setPagination(response.data.pagination);
       } catch (requestError) {
