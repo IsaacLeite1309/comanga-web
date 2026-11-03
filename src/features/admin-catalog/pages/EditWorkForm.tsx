@@ -1,7 +1,7 @@
+import { adminCachedGet } from "@/services/adminCachedGet";
 import { useEffect, useState } from "react";
 import { useLocation, useParams } from "react-router-dom";
 import { Loader2 } from "lucide-react";
-import { api } from "@/services/api";
 import { getApiError } from "@/lib/apiError";
 import { adminCatalogPath } from "../domain/catalogPaths";
 import NewManga from "./NewManga";
@@ -35,7 +35,7 @@ const EditWorkForm = () => {
       setError("");
 
       try {
-        const response = await api.get<WorkResponse>(`/admin/works/slug/${encodeURIComponent(workSlug)}`);
+        const response = await adminCachedGet<WorkResponse>(`/admin/works/slug/${encodeURIComponent(workSlug)}`);
 
         if (!isMounted) return;
 

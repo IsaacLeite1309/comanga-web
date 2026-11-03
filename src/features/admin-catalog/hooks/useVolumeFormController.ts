@@ -1,3 +1,4 @@
+import { adminCachedGet } from "@/services/adminCachedGet";
 import { type Dispatch, type SetStateAction, useEffect, useMemo, useState } from "react";
 import { useLocation, useNavigate, useParams } from "react-router-dom";
 import { toast } from "sonner";
@@ -183,7 +184,7 @@ function useSingleVolumeAvailability(editionId: number | null, volumeId: number 
   useEffect(() => {
     let active = true;
     if (!editionId) return;
-    api.get<{ volumes: Array<{ id: number }>; pagination: { total: number } }>(`/admin/editions/${editionId}/volumes`, {
+    adminCachedGet<{ volumes: Array<{ id: number }>; pagination: { total: number } }>(`/admin/editions/${editionId}/volumes`, {
       params: { page: 1, limit: 2 },
     }).then(({ data }) => {
       if (!active) return;

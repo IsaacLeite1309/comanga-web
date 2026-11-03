@@ -1,6 +1,7 @@
 import { ArrowDownAZ, ArrowUpAZ, Check, ChevronDown, LayoutGrid, List, Loader2, Pencil, Search, Settings, Trash2 } from "lucide-react";
 import { Link } from "react-router-dom";
 import { EmptyState, LoadingState } from "@/components/shared/AsyncState";
+import { PageNumberNavigation } from "@/components/shared/PageNumberNavigation";
 import { useDropdown } from "@/hooks/useDropdown";
 import { CatalogVisibilityAction } from "./CatalogVisibility";
 import { workAdminPath, workEditAdminPath } from "../domain/catalogPaths";
@@ -307,7 +308,7 @@ function WorksPagination({ model }: { model: EditMangasPageModel }) {
   return (
     <div className="flex flex-col gap-3 border-t border-border px-4 py-4 text-sm text-muted-foreground sm:flex-row sm:items-center sm:justify-between">
       <span>Exibindo {model.works.length} de {model.pagination.total} Obras</span>
-      <div className="flex items-center gap-2">
+      <div className="flex flex-wrap items-center justify-center gap-2 sm:justify-end">
         <button
           type="button"
           onClick={() => model.setPage((current) => Math.max(current - 1, 1))}
@@ -316,9 +317,10 @@ function WorksPagination({ model }: { model: EditMangasPageModel }) {
         >
           Anterior
         </button>
-        <span className="min-w-16 text-center font-semibold text-foreground">
+        <span className="sr-only">
           {model.pagination.page} / {model.pagination.totalPages}
         </span>
+        <PageNumberNavigation page={model.page} totalPages={model.pagination.totalPages} onPageChange={model.setPage} />
         <button
           type="button"
           onClick={() => model.setPage((current) => Math.min(current + 1, model.pagination.totalPages))}

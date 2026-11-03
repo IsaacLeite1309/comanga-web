@@ -1,5 +1,5 @@
+import { adminCachedGet } from "@/services/adminCachedGet";
 import { useEffect, useRef, useState, type Dispatch, type SetStateAction } from 'react';
-import { api } from '@/services/api';
 import { getApiError } from '@/lib/apiError';
 import { draftFromWork, emptyOptions, filterOptionsByDependency, filterWorkTypesByCountry, findOptionByLabels, getDefaultCountryAndType, getDefaultWorkTypeLabels, isHentaiGenre, isGenreWithoutDemography, normalizeSearchText } from '../pages/newMangaLogic';
 import type { NewMangaDraft, NewMangaMode, NewMangaStep, WorkDetailResponse, WorkFormOptions, WorkFormOptionsResponse } from '../pages/newMangaTypes';
@@ -28,8 +28,8 @@ function useNewMangaOptions(
       setOptionsError("");
       try {
         const [optionsResponse, workResponse] = await Promise.all([
-          api.get<WorkFormOptionsResponse>("/admin/works/form-options"),
-          isEditMode && workId ? api.get<WorkDetailResponse>(`/admin/works/${workId}`) : Promise.resolve(null),
+          adminCachedGet<WorkFormOptionsResponse>("/admin/works/form-options"),
+          isEditMode && workId ? adminCachedGet<WorkDetailResponse>(`/admin/works/${workId}`) : Promise.resolve(null),
         ]);
         if (!isMounted) return;
         const formOptions = preserveLinkedOptions(optionsResponse.data.options, workResponse?.data.work);

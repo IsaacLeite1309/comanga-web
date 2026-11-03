@@ -1,3 +1,5 @@
+import { adminCachedGet, readAdminCachedResponse } from "@/services/adminCachedGet";
+import { PageNumberNavigation } from "@/components/shared/PageNumberNavigation";
 import { useEffect, useMemo, useRef, useState } from "react";
 import { ArrowDownAZ, ArrowUpAZ, Check, ChevronDown, Loader2, Search, ShieldAlert } from "lucide-react";
 import { isAxiosError } from "axios";
@@ -40,6 +42,8 @@ interface UsersResponse {
 const ROLE_OPTIONS: Array<"Todos" | UserRole> = ["Todos", "Administrador", "Usuário Padrão"];
 const STATUS_OPTIONS: Array<"Todos" | UserStatus> = ["Todos", "Pendente", "Ativada", "Bloqueada"];
 const USERS_PAGE_SIZE = 8;
+let rememberedUserPage = 1;
+let rememberedUserOrder: SortOrder = "ASC";
 
 interface FilterDropdownProps<T extends string> {
   label: string;
@@ -120,6 +124,7 @@ interface PaginationControlsProps {
   currentCount: number;
   onPrevious: () => void;
   onNext: () => void;
+  onPageChange: (page: number) => void;
 }
 
 function PaginationControls({
@@ -129,13 +134,14 @@ function PaginationControls({
   currentCount,
   onPrevious,
   onNext,
+  onPageChange,
 }: PaginationControlsProps) {
   return (
     <div className="flex flex-col gap-3 border-t border-border px-4 py-4 text-sm text-muted-foreground sm:flex-row sm:items-center sm:justify-between">
       <span>
         Exibindo {currentCount} de {total} usuários
       </span>
-      <div className="flex items-center gap-2">
+      <div className="flex flex-wrap items-center justify-center gap-2 sm:justify-end">
         <button
           type="button"
           onClick={onPrevious}
@@ -144,9 +150,10 @@ function PaginationControls({
         >
           Anterior
         </button>
-        <span className="min-w-16 text-center font-semibold text-foreground">
+        <span className="sr-only">
           {page} / {totalPages}
         </span>
+        <PageNumberNavigation page={page} totalPages={totalPages} onPageChange={onPageChange} />
         <button
           type="button"
           onClick={onNext}
@@ -357,6 +364,7 @@ interface UsersViewProps {
   onRoleChange: (user: AdminUser, role: UserRole) => void;
   onPrevious: () => void;
   onNext: () => void;
+  onPageChange: (page: number) => void;
 }
 
 function MobileUsersView(props: UsersViewProps) {
@@ -401,6 +409,7 @@ function MobileUsersView(props: UsersViewProps) {
             currentCount={props.users.length}
             onPrevious={props.onPrevious}
             onNext={props.onNext}
+            onPageChange={props.onPageChange}
           />
         </div>
       )}
@@ -478,29 +487,58 @@ function DesktopUsersView(props: UsersViewProps & { order: SortOrder; onToggleOr
           currentCount={props.users.length}
           onPrevious={props.onPrevious}
           onNext={props.onNext}
+          onPageChange={props.onPageChange}
         />
       )}
     </div>
   );
 }
 
+function readRememberedUsers(filters: ReturnType<typeof getRememberedUserManagementFilters>) {
+  const initialParams = {
+    ...(filters.searchTerm.trim() ? { term: filters.searchTerm.trim() } : {}),
+    ...(filters.role !== "Todos" ? { role: filters.role } : {}),
+    ...(filters.status !== "Todos" ? { status: filters.status } : {}),
+    order: rememberedUserOrder, page: rememberedUserPage, limit: USERS_PAGE_SIZE,
+  };
+  return readAdminCachedResponse<UsersResponse>("/admin/users", { params: initialParams })?.data;
+}
+
+function useRememberedUsersNavigation(term: string, role: string, status: string) {
+  const [order, setOrder] = useState<SortOrder>(rememberedUserOrder);
+  const [page, setPage] = useState(rememberedUserPage);
+  const filterKey = `${term}|${role}|${status}|${order}`;
+  const previousFilterKey = useRef(filterKey);
+  useEffect(() => {
+    if (previousFilterKey.current !== filterKey) {
+      previousFilterKey.current = filterKey;
+      setPage(1);
+    }
+  }, [filterKey]);
+  useEffect(() => {
+    rememberedUserPage = page;
+    rememberedUserOrder = order;
+  }, [page, order]);
+  return { order, setOrder, page, setPage };
+}
+
 const UserManagement = () => {
   const { user: currentUser } = useAuth();
   const rememberedFilters = getRememberedUserManagementFilters();
-  const [users, setUsers] = useState<AdminUser[]>([]);
+  const initialUsers = readRememberedUsers(rememberedFilters);
+  const [users, setUsers] = useState<AdminUser[]>(initialUsers?.users ?? []);
   const [searchTerm, setSearchTerm] = useState(rememberedFilters.searchTerm);
   const [debouncedTerm, setDebouncedTerm] = useState(rememberedFilters.searchTerm.trim());
   const [roleFilter, setRoleFilter] = useState<"Todos" | UserRole>(rememberedFilters.role as "Todos" | UserRole);
   const [statusFilter, setStatusFilter] = useState<"Todos" | UserStatus>(rememberedFilters.status as "Todos" | UserStatus);
-  const [order, setOrder] = useState<SortOrder>("ASC");
-  const [page, setPage] = useState(1);
-  const [pagination, setPagination] = useState({
+  const { order, setOrder, page, setPage } = useRememberedUsersNavigation(debouncedTerm, roleFilter, statusFilter);
+  const [pagination, setPagination] = useState(initialUsers?.pagination ?? {
     page: 1,
     limit: USERS_PAGE_SIZE,
     total: 0,
     totalPages: 1,
   });
-  const [loading, setLoading] = useState(true);
+  const [loading, setLoading] = useState(!initialUsers);
   const [error, setError] = useState("");
   const [updatingUserId, setUpdatingUserId] = useState<string | null>(null);
 
@@ -511,10 +549,6 @@ const UserManagement = () => {
 
     return () => window.clearTimeout(timer);
   }, [searchTerm]);
-
-  useEffect(() => {
-    setPage(1);
-  }, [debouncedTerm, roleFilter, statusFilter, order]);
 
   const params = useMemo(() => ({
     ...(debouncedTerm ? { term: debouncedTerm } : {}),
@@ -527,11 +561,18 @@ const UserManagement = () => {
 
   useEffect(() => {
     async function fetchUsers() {
+      const cached = readAdminCachedResponse<UsersResponse>("/admin/users", { params })?.data;
+      if (cached) {
+        setUsers(cached.users);
+        setPagination(cached.pagination);
+        setLoading(false);
+        return;
+      }
       setLoading(true);
       setError("");
 
       try {
-        const response = await api.get<UsersResponse>("/admin/users", { params });
+        const response = await adminCachedGet<UsersResponse>("/admin/users", { params });
         setUsers(response.data.users);
         setPagination(response.data.pagination);
       } catch (requestError) {
@@ -616,6 +657,7 @@ const UserManagement = () => {
     onRoleChange: handleRoleChange,
     onPrevious: () => setPage((current) => Math.max(1, current - 1)),
     onNext: () => setPage((current) => Math.min(totalPages, current + 1)),
+    onPageChange: (target) => setPage(Math.min(Math.max(1, target), totalPages)),
   };
 
   return (

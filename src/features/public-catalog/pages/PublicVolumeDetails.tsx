@@ -232,12 +232,11 @@ function PurchaseActions({ volume, onRefresh }: { volume: PublicVolume; onRefres
 
 function VolumeArticle({ volume, volumeLabel, editionLabel, onRefresh }: VolumeSectionProps & { onRefresh: () => void }) {
   const navigationState = catalogNavigationState(useLocation().state);
-  const volumePageTitle = `${volume.edition.work.title} ${volumeLabel.replace(/^Volume\b/, "volume")}`;
   const editionPath = publicEditionPath(volume.edition.work.slug, volume.edition.chronologicalNumber);
   return (
     <article className="flex min-w-0 flex-col bg-card/30 lg:col-start-2 lg:row-start-1">
       <div className="px-5 pb-0 pt-6 sm:px-8">
-        <h1 className="text-2xl font-bold leading-tight text-foreground sm:text-3xl">{volumePageTitle}</h1>
+        <h1 className="text-2xl font-bold leading-tight text-foreground sm:text-3xl">{volumeLabel}</h1>
         <div className="mt-4 flex flex-wrap gap-x-7 gap-y-3">
           <div>
             <p className="text-sm font-bold uppercase tracking-wide text-muted-foreground">Obra</p>

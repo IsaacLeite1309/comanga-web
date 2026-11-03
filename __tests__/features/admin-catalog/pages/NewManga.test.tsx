@@ -740,7 +740,6 @@ describe("NewManga", () => {
     vi.mocked(api.get)
       .mockResolvedValueOnce({ data: { options: formOptions } })
       .mockResolvedValueOnce({ data: { work: workDetail } })
-      .mockResolvedValueOnce({ data: { options: formOptions } })
       .mockResolvedValueOnce({ data: { work: secondWork } });
 
     const view = render(

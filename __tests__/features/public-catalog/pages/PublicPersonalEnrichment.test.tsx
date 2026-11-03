@@ -51,7 +51,7 @@ describe("estado pessoal nos detalhes públicos", () => {
     expect(toast.warning).toHaveBeenCalledWith("Faça login para poder adicionar este volume à sua coleção.");
     fireEvent.click(screen.getByRole("button", { name: "Adicionar à lista de desejos" }));
     expect(toast.warning).toHaveBeenCalledWith("Faça login para poder adicionar este volume à sua lista de desejos.");
-    expect(screen.getByRole("heading", { name: "Monster volume 1" })).toBeInTheDocument();
+    expect(screen.getByRole("heading", { name: "Volume 1" })).toBeInTheDocument();
     expect(mocks.put).not.toHaveBeenCalled();
   });
 
@@ -135,7 +135,7 @@ describe("estado pessoal nos detalhes públicos", () => {
     render(<Page />);
     fireEvent.click(await screen.findByRole("button", { name: "Adicionar à coleção" }));
     await waitFor(() => expect(toast.warning).toHaveBeenCalledWith("Faça login para poder adicionar este volume à sua coleção."));
-    expect(screen.getByRole("heading", { name: "Monster volume 1" })).toBeInTheDocument();
+    expect(screen.getByRole("heading", { name: "Volume 1" })).toBeInTheDocument();
     expect(mocks.clearSession).toHaveBeenCalledTimes(1);
   });
 

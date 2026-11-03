@@ -24,7 +24,7 @@ describe("Estante conectada à API", () => {
     expect(screen.getByRole("heading", { name: "Sua coleção" })).toHaveClass("sr-only");
     expect(screen.getByRole("status")).toHaveTextContent("Carregando sua coleção");
     expect(screen.getByRole("searchbox", { name: "Pesquisar na coleção" })).toBeEnabled();
-    const heading = await screen.findByRole("heading", { name: "Monster · 1ª edição · Coleção incompleta" });
+    const heading = await screen.findByRole("heading", { name: "Monster · 1ª edição completa · Coleção incompleta" });
     expect(heading).toHaveClass("text-white");
     expect(heading.querySelectorAll(".mx-2")).toHaveLength(2);
     expect(heading.querySelector("span.font-bold")).toHaveTextContent("Coleção incompleta");
@@ -53,7 +53,7 @@ describe("Estante conectada à API", () => {
   it("abre a edição pela faixa com título, resumo e capas", async () => {
     mount();
     const edition = await screen.findByRole("region", { name: "1ª edição de Monster" });
-    expect(within(edition).getByRole("heading", { name: "Monster · 1ª edição · Coleção incompleta" })).toBeInTheDocument();
+    expect(within(edition).getByRole("heading", { name: "Monster · 1ª edição completa · Coleção incompleta" })).toBeInTheDocument();
     expect(within(edition).getByRole("link", { name: "Ver 1ª edição de Monster" })).toHaveAttribute("href", "/obra/monster/edicao/1");
     expect(within(edition).queryByRole("link", { name: /adquiridos|lidos|desejados/ })).not.toBeInTheDocument();
   });
@@ -69,7 +69,7 @@ describe("Estante conectada à API", () => {
     vi.mocked(listCollection).mockResolvedValue(data);
     mount();
     const edition = await screen.findByRole("region", { name: "1ª edição de Monster" });
-    expect(within(edition).getByRole("heading", { name: `Monster · 1ª edição · ${expected}` })).toBeInTheDocument();
+    expect(within(edition).getByRole("heading", { name: `Monster · 1ª edição ${String(publicationStatus).toLocaleLowerCase("pt-BR")} · ${expected}` })).toBeInTheDocument();
   });
   it("separa edições da mesma Obra por linhas divisórias", async () => {
     const data = response();
@@ -110,7 +110,7 @@ describe("Estante conectada à API", () => {
   it("mantém os filtros quando a coleção só não tem resultados para a seleção", async () => {
     vi.mocked(listCollection).mockResolvedValueOnce(response()).mockResolvedValue({ works: [], totals: { editions: 0, volumes: 0 }, pagination: { page: 1, limit: 12, total: 0, totalPages: 0 } });
     mount();
-    await screen.findByRole("heading", { name: "Monster · 1ª edição · Coleção incompleta" });
+    await screen.findByRole("heading", { name: "Monster · 1ª edição completa · Coleção incompleta" });
     fireEvent.click(screen.getByRole("button", { name: "Status da coleção" }));
     fireEvent.click(screen.getByRole("button", { name: "Completa" }));
     expect(await screen.findByText("Nenhuma edição da sua coleção corresponde aos filtros selecionados.")).toBeInTheDocument();
@@ -118,7 +118,7 @@ describe("Estante conectada à API", () => {
   });
   it("aplica busca, status e editora antes de consultar a página", async () => {
     mount();
-    await screen.findByRole("heading", { name: "Monster · 1ª edição · Coleção incompleta" });
+    await screen.findByRole("heading", { name: "Monster · 1ª edição completa · Coleção incompleta" });
     fireEvent.change(screen.getByRole("searchbox", { name: "Pesquisar na coleção" }), { target: { value: "Naoki" } });
     await waitFor(() => expect(listCollection).toHaveBeenCalledWith(1, { term: "Naoki" }));
     await waitFor(() => expect(screen.getByRole("button", { name: "Status da coleção" })).toBeEnabled());
@@ -137,6 +137,6 @@ describe("Estante conectada à API", () => {
     mount(); fireEvent.click(await screen.findByRole("button", { name: "Próxima" }));
     await screen.findByText("Página 2 de 2");
     expect(listCollection).toHaveBeenNthCalledWith(2, 2, {});
-    expect(screen.getByRole("heading", { name: "Monster · 1ª edição · Coleção incompleta" })).toBeInTheDocument();
+    expect(screen.getByRole("heading", { name: "Monster · 1ª edição completa · Coleção incompleta" })).toBeInTheDocument();
   });
 });

@@ -1,4 +1,5 @@
 import { ChevronLeft, ChevronRight } from "lucide-react";
+import { PageNumberNavigation } from "@/components/shared/PageNumberNavigation";
 import type { PublicPagination } from "@/features/public-catalog/publicCatalogTypes";
 
 type CatalogPaginationProps = {
@@ -30,9 +31,10 @@ export function CatalogPagination({
         <ChevronLeft className="h-4 w-4" aria-hidden="true" />
         Anterior
       </button>
-      <span className="min-w-28 text-center text-sm font-semibold text-muted-foreground">
+      <span className="sr-only">
         Página {pagination.page} de {pagination.totalPages}
       </span>
+      <PageNumberNavigation page={pagination.page} totalPages={pagination.totalPages} onPageChange={changePage} />
       <button
         type="button"
         onClick={() => changePage(pagination.page + 1)}

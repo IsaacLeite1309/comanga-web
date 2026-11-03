@@ -1,3 +1,5 @@
+import { clearAdminDraftStorage, readAdminDraft, removeAdminDraft, writeAdminDraft } from "@/lib/adminDraftStorage";
+
 export type RememberedVolumeStep = "details" | "media";
 
 export interface VolumeDraft {
@@ -43,23 +45,23 @@ interface RememberedVolumeDraft {
   currentStep: RememberedVolumeStep;
 }
 
-const rememberedDrafts = new Map<string, RememberedVolumeDraft>();
+const storageKey = (key: string) => `volume:new:${key}`;
 
 export function getRememberedVolumeDraft(key: string): RememberedVolumeDraft {
-  return structuredClone(rememberedDrafts.get(key) || {
+  return structuredClone(readAdminDraft<RememberedVolumeDraft>(storageKey(key)) || {
     form: emptyVolumeDraft,
     currentStep: "details",
   });
 }
 
 export function rememberVolumeDraft(key: string, draft: RememberedVolumeDraft) {
-  rememberedDrafts.set(key, structuredClone(draft));
+  writeAdminDraft(storageKey(key), draft);
 }
 
 export function resetVolumeDraftMemory(key: string) {
-  rememberedDrafts.delete(key);
+  removeAdminDraft(storageKey(key));
 }
 
 export function resetVolumeDraftMemoryForTests() {
-  rememberedDrafts.clear();
+  clearAdminDraftStorage("volume:new:");
 }

@@ -28,7 +28,7 @@ const VolumeForm = () => {
   return (
     <div className="page-gutter flex-1 min-w-0 py-6 sm:py-8">
       <UnsavedChangesPrompt
-        when={controller.hasUnsavedChanges}
+        when={controller.isEditing && controller.hasUnsavedChanges}
         continueLabel={controller.isEditing ? "Continuar editando" : "Continuar cadastrando"}
       />
       <div className="mx-auto w-full max-w-6xl space-y-6">

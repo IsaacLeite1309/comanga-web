@@ -1,7 +1,9 @@
+import { adminCachedGet, readAdminCachedResponse } from "@/services/adminCachedGet";
 import { useCallback, useEffect, useState } from "react";
 import { toast } from "sonner";
 import { api } from "@/services/api";
 import { getApiError } from "@/lib/apiError";
+import { clearAdminCache } from "@/lib/queryClient";
 import type { EditionDetail, VolumeDetail } from "../domain/adminCatalogDetails";
 import { getEditionByNumber } from "../domain/contextualAdminCatalog";
 import {
@@ -18,8 +20,10 @@ interface VolumesResponse {
 }
 
 function useEditionSummary(workSlug: string, editionNumber: string | number | undefined) {
-  const [edition, setEdition] = useState<EditionDetail | null>(null);
-  const [loading, setLoading] = useState(true);
+  const url = `/admin/works/slug/${encodeURIComponent(workSlug)}/editions/${editionNumber || ""}`;
+  const initial = readAdminCachedResponse<{ edition: EditionDetail }>(url)?.data.edition;
+  const [edition, setEdition] = useState<EditionDetail | null>(initial ?? null);
+  const [loading, setLoading] = useState(!initial);
   const [error, setError] = useState("");
   const [revision, setRevision] = useState(0);
 
@@ -27,6 +31,12 @@ function useEditionSummary(workSlug: string, editionNumber: string | number | un
     let isMounted = true;
 
     async function loadEdition() {
+      const cached = readAdminCachedResponse<{ edition: EditionDetail }>(url)?.data.edition;
+      if (cached) {
+        setEdition(cached);
+        setLoading(false);
+        return;
+      }
       setLoading(true);
       setError("");
 
@@ -45,7 +55,7 @@ function useEditionSummary(workSlug: string, editionNumber: string | number | un
     return () => {
       isMounted = false;
     };
-  }, [workSlug, editionNumber, revision]);
+  }, [workSlug, editionNumber, revision, url]);
 
   return { edition, loading, error, refresh: () => setRevision(current => current + 1) };
 }
@@ -57,7 +67,7 @@ export function useEditionDetails(workSlug: string, editionNumber: string | numb
   const [deletingId, setDeletingId] = useState<number | null>(null);
 
   const loadVolumesPage = useCallback(async (page: number, limit: number) => {
-    const response = await api.get<VolumesResponse>(`/admin/editions/${editionId}/volumes`, {
+    const response = await adminCachedGet<VolumesResponse>(`/admin/editions/${editionId}/volumes`, {
       params: { order: VOLUMES_LIST_ORDER, page, limit },
     });
     const volumes = response.data.volumes;
@@ -82,6 +92,7 @@ export function useEditionDetails(workSlug: string, editionNumber: string | numb
 
     try {
       await api.delete(`/admin/volumes/${deletingVolume.id}`);
+      clearAdminCache();
       toast.success("Volume excluído com sucesso.");
       setDeletingVolume(null);
       volumesList.refreshAfterRemoval();

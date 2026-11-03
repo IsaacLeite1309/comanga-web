@@ -1,5 +1,6 @@
 ﻿import { fireEvent, render, screen, waitFor } from "@testing-library/react";
 import { beforeEach, describe, expect, it, vi } from "vitest";
+import { resetEditMangasMemoryForTests } from "@/features/admin-catalog/hooks/useEditMangasPage";
 import EditMangas from "@/features/admin-catalog/pages/EditMangas";
 import { MemoryRouter } from "react-router-dom";
 import { api } from "@/services/api";
@@ -63,6 +64,7 @@ function renderEditMangas() {
 
 describe("EditMangas", () => {
   beforeEach(() => {
+    resetEditMangasMemoryForTests();
     vi.clearAllMocks();
   });
 

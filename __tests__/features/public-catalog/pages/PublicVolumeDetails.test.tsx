@@ -64,7 +64,7 @@ describe("PublicVolumeDetails", () => {
     renderPage();
 
     expect(screen.getByText("Carregando volume...")).toBeInTheDocument();
-    expect(await screen.findByRole("heading", { name: "Monster volume 1", level: 1 })).toBeInTheDocument();
+    expect(await screen.findByRole("heading", { name: "Volume 1", level: 1 })).toBeInTheDocument();
     expect(getPublicVolumeDetails).toHaveBeenCalledWith("monster", 2, 1);
     expect(screen.getByText("2ª edição · Panini")).toBeInTheDocument();
     expect(screen.getByText("20/08/2026")).toBeInTheDocument();
@@ -86,7 +86,7 @@ describe("PublicVolumeDetails", () => {
 
   it("oferece retorno contextual para a Edição e para a Obra", async () => {
     renderPage();
-    await screen.findByRole("heading", { name: "Monster volume 1" });
+    await screen.findByRole("heading", { name: "Volume 1" });
 
     expect(screen.getByRole("link", { name: "Voltar para 2ª edição" })).toHaveAttribute("href", "/obra/monster/edicao/2");
     expect(screen.getByRole("link", { name: "Pesquisar" })).toHaveAttribute("href", "/pesquisa?tab=works&sortBy=title&order=ASC&page=1");
@@ -97,7 +97,7 @@ describe("PublicVolumeDetails", () => {
 
   it("mostra Lançamentos como origem quando o Volume foi aberto por lá", async () => {
     renderPage({ pathname: "/obra/monster/edicao/2/volume/1", state: { catalogOrigin: "checklist" } });
-    await screen.findByRole("heading", { name: "Monster volume 1" });
+    await screen.findByRole("heading", { name: "Volume 1" });
 
     const path = screen.getByRole("navigation", { name: "Caminho de navegação" });
     expect(path).toHaveTextContent("LançamentosMonster2ª ediçãoVolume 1");
@@ -106,7 +106,7 @@ describe("PublicVolumeDetails", () => {
 
   it("navega para os Volumes público anterior e seguinte da mesma Edição", async () => {
     renderPage();
-    await screen.findByRole("heading", { name: "Monster volume 1" });
+    await screen.findByRole("heading", { name: "Volume 1" });
 
     expect(screen.getByRole("navigation", { name: "Navegação entre volumes" })).toHaveClass("max-w-sm", "sm:max-w-md", "lg:max-w-[23rem]");
     expect(screen.getByRole("link", { name: "Volume 0" })).toHaveClass("min-h-12", "text-base");
@@ -128,12 +128,12 @@ describe("PublicVolumeDetails", () => {
       nextVolume: number === 2 ? null : volume.nextVolume,
     }));
     renderPage();
-    await screen.findByRole("heading", { name: "Monster volume 1" });
+    await screen.findByRole("heading", { name: "Volume 1" });
     fireEvent.click(screen.getByRole("link", { name: "Volume 2" }));
-    await screen.findByRole("heading", { name: "Monster volume 2" });
+    await screen.findByRole("heading", { name: "Volume 2" });
     await waitFor(() => expect(getPublicVolumeDetails).toHaveBeenCalledTimes(3));
     fireEvent.click(screen.getByRole("link", { name: "Volume 1" }));
-    expect(await screen.findByRole("heading", { name: "Monster volume 1" })).toBeInTheDocument();
+    expect(await screen.findByRole("heading", { name: "Volume 1" })).toBeInTheDocument();
     expect(getPublicVolumeDetails).toHaveBeenCalledTimes(3);
   });
 
@@ -158,7 +158,7 @@ describe("PublicVolumeDetails", () => {
     });
     renderPage();
 
-    expect(await screen.findByRole("heading", { name: "Monster volume único" })).toBeInTheDocument();
+    expect(await screen.findByRole("heading", { name: "Volume único" })).toBeInTheDocument();
     expect(screen.getByText("Sem capa")).toBeInTheDocument();
     expect(screen.queryByText("Número de páginas")).not.toBeInTheDocument();
     expect(screen.queryByText("Preço")).not.toBeInTheDocument();

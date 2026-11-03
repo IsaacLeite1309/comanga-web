@@ -1,3 +1,4 @@
+import { adminCachedGet } from "@/services/adminCachedGet";
 import { type FormEvent, useEffect, useMemo, useState } from "react";
 import { useNavigate, useParams } from "react-router-dom";
 import { toast } from "sonner";
@@ -52,7 +53,7 @@ export function useEditionFormController() {
       try {
         const [workResponse, optionsResponse, editionResponse] = await Promise.all([
           resolveWork(workSlug),
-          api.get<EditionFormOptionsResponse>("/admin/editions/form-options"),
+          adminCachedGet<EditionFormOptionsResponse>("/admin/editions/form-options"),
           editionId ? getEditionByNumber<EditionResponse["edition"]>(workSlug, editionId).then((edition) => ({ data: { edition } })) : Promise.resolve(null),
         ]);
         if (!isMounted) return;
@@ -124,7 +125,7 @@ export function useEditionFormController() {
 }
 
 async function resolveWork(workSlug: string) {
-  return api.get<WorkResponse>(`/admin/works/slug/${encodeURIComponent(workSlug)}`);
+  return adminCachedGet<WorkResponse>(`/admin/works/slug/${encodeURIComponent(workSlug)}`);
 }
 
 function getLoadError(loadError: unknown) {

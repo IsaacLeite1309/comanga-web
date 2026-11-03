@@ -125,6 +125,7 @@ describe("PublicCalendar", () => {
     fireEvent.change(screen.getByRole("searchbox"), { target: { value: "  Naoki Urasawa  " } });
     await waitFor(() => expect(currentParams().get("term")).toBe("Naoki Urasawa"));
     await waitForCalendarReady();
+    await waitFor(() => expect(screen.getByLabelText("Editora brasileira")).toBeEnabled());
     fireEvent.click(screen.getByLabelText("Editora brasileira"));
     fireEvent.click(screen.getByRole("button", { name: "Panini" }));
     await waitFor(() => expect(listPublicCalendar).toHaveBeenLastCalledWith(expect.objectContaining({ term: "Naoki Urasawa", brazilianPublisherId: 3, page: 1 })));

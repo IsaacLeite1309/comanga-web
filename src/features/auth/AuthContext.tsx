@@ -3,7 +3,8 @@ import { isAxiosError } from "axios";
 import { api } from "@/services/api";
 import { toast } from "sonner";
 import { useLocation, useNavigate } from "react-router-dom";
-import { PERSONAL_LIBRARY_QUERY_ROOT, PUBLIC_CATALOG_QUERY_ROOT, queryClient } from "@/lib/queryClient";
+import { ADMIN_QUERY_ROOT, PERSONAL_LIBRARY_QUERY_ROOT, PUBLIC_CATALOG_QUERY_ROOT, queryClient } from "@/lib/queryClient";
+import { clearAdminDraftStorage } from "@/lib/adminDraftStorage";
 import {
   ADMIN_PROFILE,
   AuthContext,
@@ -22,6 +23,20 @@ function notifyOtherTabs() {
   }
 }
 
+function syncAdminSessionCache(previous: string | null, user: AuthUser | null) {
+  if (!user) {
+    queryClient.removeQueries({ queryKey: ADMIN_QUERY_ROOT });
+    clearAdminDraftStorage();
+    return null;
+  }
+  const next = `${user.id}:${user.active_profile ?? ""}`;
+  if (previous && previous !== next) {
+    queryClient.removeQueries({ queryKey: ADMIN_QUERY_ROOT });
+    if (!previous.startsWith(`${user.id}:`)) clearAdminDraftStorage();
+  }
+  return next;
+}
+
 export function AuthProvider({ children }: { children: ReactNode }) {
   const [user, setUser] = useState<AuthUser | null>(null);
   const [loading, setLoading] = useState(true);
@@ -31,6 +46,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
   const navigate = useNavigate();
   const { pathname } = useLocation();
   const sessionRevision = useRef(0);
+  const lastSessionKey = useRef<string | null>(null);
 
   const validateSession = useCallback(async (initial = false) => {
     const revision = ++sessionRevision.current;
@@ -39,6 +55,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
     try {
       const response = await api.get("/auth/me");
       if (revision === sessionRevision.current) {
+        lastSessionKey.current = syncAdminSessionCache(lastSessionKey.current, response.data.user);
         setInitialSessionUnavailable(false);
         setIsSessionEnding(false);
         setUser(response.data.user);
@@ -49,6 +66,9 @@ export function AuthProvider({ children }: { children: ReactNode }) {
           setInitialSessionUnavailable(false);
           queryClient.removeQueries({ queryKey: PUBLIC_CATALOG_QUERY_ROOT });
           queryClient.removeQueries({ queryKey: PERSONAL_LIBRARY_QUERY_ROOT });
+          queryClient.removeQueries({ queryKey: ADMIN_QUERY_ROOT });
+          clearAdminDraftStorage();
+          lastSessionKey.current = null;
           setUser(null);
         } else {
           if (initial) {
@@ -91,9 +111,12 @@ export function AuthProvider({ children }: { children: ReactNode }) {
 
   function login(userData: AuthUser) {
     sessionRevision.current += 1;
+    lastSessionKey.current = `${userData.id}:${userData.active_profile ?? ""}`;
     setInitialSessionUnavailable(false);
     queryClient.removeQueries({ queryKey: PUBLIC_CATALOG_QUERY_ROOT });
     queryClient.removeQueries({ queryKey: PERSONAL_LIBRARY_QUERY_ROOT });
+    queryClient.removeQueries({ queryKey: ADMIN_QUERY_ROOT });
+    clearAdminDraftStorage();
     setIsSessionEnding(false);
     setLoading(false);
     setUser(userData);
@@ -103,6 +126,8 @@ export function AuthProvider({ children }: { children: ReactNode }) {
   // Mantém o contexto sincronizado após alterações do próprio perfil, sem recarregar a página.
   function updateUser(changes: Partial<AuthUser>) {
     sessionRevision.current += 1;
+    lastSessionKey.current = null;
+    queryClient.removeQueries({ queryKey: ADMIN_QUERY_ROOT });
     setLoading(false);
     setUser((current) => (current ? { ...current, ...changes } : current));
     notifyOtherTabs();
@@ -110,9 +135,12 @@ export function AuthProvider({ children }: { children: ReactNode }) {
 
   function clearSession() {
     sessionRevision.current += 1;
+    lastSessionKey.current = null;
     setInitialSessionUnavailable(false);
     queryClient.removeQueries({ queryKey: PUBLIC_CATALOG_QUERY_ROOT });
     queryClient.removeQueries({ queryKey: PERSONAL_LIBRARY_QUERY_ROOT });
+    queryClient.removeQueries({ queryKey: ADMIN_QUERY_ROOT });
+    clearAdminDraftStorage();
     setIsSessionEnding(true);
     setLoading(false);
     navigate("/entrar");

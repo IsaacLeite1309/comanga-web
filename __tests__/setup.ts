@@ -1,5 +1,12 @@
 import "@testing-library/jest-dom";
-import { vi } from "vitest";
+import { beforeEach, vi } from "vitest";
+import { clearAdminDraftStorage } from "@/lib/adminDraftStorage";
+import { queryClient } from "@/lib/queryClient";
+
+beforeEach(() => {
+  queryClient.clear();
+  clearAdminDraftStorage();
+});
 
 // Os testes de tela verificam o estado pendente real; a pausa visual de dois
 // segundos é desativada para não exigir relógios em cada interação de filtro.
