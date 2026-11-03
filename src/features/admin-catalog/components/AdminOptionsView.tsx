@@ -14,6 +14,7 @@ import {
   X
 } from "lucide-react";
 import { SearchableSelect } from "@/components/forms/SearchableSelect";
+import { PageNumberNavigation } from "@/components/shared/PageNumberNavigation";
 import { AdminOptionsPageModel } from "../hooks/useAdminOptionsPage";
 import { DomainOptionValue, FORM_OPTIONS, OptionCategory } from "../pages/adminOptionsModel";
 
@@ -390,7 +391,7 @@ function OptionsPagination({ model }: { model: AdminOptionsPageModel }) {
   return (
     <div className="flex flex-col gap-3 border-t border-border px-4 py-3 text-sm text-muted-foreground sm:flex-row sm:items-center sm:justify-between">
       <span>Exibindo {model.values.length} de {model.pagination.total} valores</span>
-      <div className="flex items-center gap-2">
+      <div className="flex flex-wrap items-center justify-center gap-2 sm:justify-end">
         <button
           type="button"
           onClick={() => model.setPage((current) => Math.max(1, current - 1))}
@@ -399,7 +400,8 @@ function OptionsPagination({ model }: { model: AdminOptionsPageModel }) {
         >
           Anterior
         </button>
-        <span className="font-semibold text-foreground">{model.page} / {totalPages}</span>
+        <span className="sr-only">{model.page} / {totalPages}</span>
+        <PageNumberNavigation page={model.page} totalPages={totalPages} onPageChange={model.setPage} />
         <button
           type="button"
           onClick={() => model.setPage((current) => Math.min(totalPages, current + 1))}

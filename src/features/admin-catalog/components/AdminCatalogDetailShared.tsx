@@ -1,4 +1,5 @@
 import type React from "react";
+import { PageNumberNavigation } from "@/components/shared/PageNumberNavigation";
 import { LayoutGrid, List, Loader2 } from "lucide-react";
 import type { CatalogViewMode } from "../hooks/useCatalogDetailView";
 import type { CatalogPaginationView } from "../hooks/useCatalogPagedList";
@@ -81,7 +82,7 @@ export function CatalogPaginationControls({
   return (
     <div className="flex flex-col gap-3 border-t border-border px-4 py-4 text-sm text-muted-foreground sm:flex-row sm:items-center sm:justify-between">
       <span>Exibindo {pagination.shown} de {pagination.total} {itemsLabel}</span>
-      <div className="flex items-center gap-2">
+      <div className="flex flex-wrap items-center justify-center gap-2 sm:justify-end">
         <button
           type="button"
           onClick={pagination.goToPrevious}
@@ -91,9 +92,10 @@ export function CatalogPaginationControls({
         >
           Anterior
         </button>
-        <span className="min-w-16 text-center font-semibold text-foreground">
+        <span className="sr-only">
           {pagination.page} / {pagination.totalPages}
         </span>
+        <PageNumberNavigation page={pagination.page} totalPages={pagination.totalPages} onPageChange={pagination.goToPage} />
         <button
           type="button"
           onClick={pagination.goToNext}

@@ -32,6 +32,7 @@ export interface CatalogPaginationView {
   shown: number;
   canGoPrevious: boolean;
   canGoNext: boolean;
+  goToPage: (page: number) => void;
   goToPrevious: () => void;
   goToNext: () => void;
 }
@@ -124,6 +125,7 @@ export function useCatalogPagedList<TItem>({
     shown: items.length,
     canGoPrevious: !error && page > 1,
     canGoNext: !error && page < pagination.totalPages,
+    goToPage,
     goToPrevious: () => goToPage(page - 1),
     goToNext: () => goToPage(page + 1),
   };

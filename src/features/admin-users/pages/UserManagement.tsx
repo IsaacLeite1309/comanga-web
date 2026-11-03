@@ -1,4 +1,5 @@
 import { adminCachedGet, readAdminCachedResponse } from "@/services/adminCachedGet";
+import { PageNumberNavigation } from "@/components/shared/PageNumberNavigation";
 import { useEffect, useMemo, useRef, useState } from "react";
 import { ArrowDownAZ, ArrowUpAZ, Check, ChevronDown, Loader2, Search, ShieldAlert } from "lucide-react";
 import { isAxiosError } from "axios";
@@ -123,6 +124,7 @@ interface PaginationControlsProps {
   currentCount: number;
   onPrevious: () => void;
   onNext: () => void;
+  onPageChange: (page: number) => void;
 }
 
 function PaginationControls({
@@ -132,13 +134,14 @@ function PaginationControls({
   currentCount,
   onPrevious,
   onNext,
+  onPageChange,
 }: PaginationControlsProps) {
   return (
     <div className="flex flex-col gap-3 border-t border-border px-4 py-4 text-sm text-muted-foreground sm:flex-row sm:items-center sm:justify-between">
       <span>
         Exibindo {currentCount} de {total} usuários
       </span>
-      <div className="flex items-center gap-2">
+      <div className="flex flex-wrap items-center justify-center gap-2 sm:justify-end">
         <button
           type="button"
           onClick={onPrevious}
@@ -147,9 +150,10 @@ function PaginationControls({
         >
           Anterior
         </button>
-        <span className="min-w-16 text-center font-semibold text-foreground">
+        <span className="sr-only">
           {page} / {totalPages}
         </span>
+        <PageNumberNavigation page={page} totalPages={totalPages} onPageChange={onPageChange} />
         <button
           type="button"
           onClick={onNext}
@@ -360,6 +364,7 @@ interface UsersViewProps {
   onRoleChange: (user: AdminUser, role: UserRole) => void;
   onPrevious: () => void;
   onNext: () => void;
+  onPageChange: (page: number) => void;
 }
 
 function MobileUsersView(props: UsersViewProps) {
@@ -404,6 +409,7 @@ function MobileUsersView(props: UsersViewProps) {
             currentCount={props.users.length}
             onPrevious={props.onPrevious}
             onNext={props.onNext}
+            onPageChange={props.onPageChange}
           />
         </div>
       )}
@@ -481,6 +487,7 @@ function DesktopUsersView(props: UsersViewProps & { order: SortOrder; onToggleOr
           currentCount={props.users.length}
           onPrevious={props.onPrevious}
           onNext={props.onNext}
+          onPageChange={props.onPageChange}
         />
       )}
     </div>
@@ -650,6 +657,7 @@ const UserManagement = () => {
     onRoleChange: handleRoleChange,
     onPrevious: () => setPage((current) => Math.max(1, current - 1)),
     onNext: () => setPage((current) => Math.min(totalPages, current + 1)),
+    onPageChange: (target) => setPage(Math.min(Math.max(1, target), totalPages)),
   };
 
   return (
