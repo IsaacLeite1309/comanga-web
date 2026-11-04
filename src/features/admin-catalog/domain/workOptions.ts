@@ -6,13 +6,14 @@ export const NATIVE_AUTHOR_ROLE_OPTIONS: OptionValue[] = [
   { id: "Arte", value: "Arte", label: "Arte" },
   { id: "Criador Original", value: "Criador Original", label: "Criador Original" },
   { id: "História Original", value: "História Original", label: "História Original" },
+  { id: "História e ilustrações", value: "História e ilustrações", label: "História e ilustrações" },
   { id: "Ilustrador", value: "Ilustrador", label: "Ilustrador" },
   { id: "Design de Personagens", value: "Design de Personagens", label: "Design de Personagens" },
 ];
 
 const COMBINED_AUTHOR_ROLE = "História e Arte";
 const SEPARATE_AUTHOR_ROLES = ["História", "Arte"];
-const AUTHOR_ROLE_PRIORITY = ["Criador Original", "História Original", "História e Arte", "História", "Arte", "Ilustrador", "Design de Personagens"];
+const AUTHOR_ROLE_PRIORITY = ["Criador Original", "História Original", "História e Arte", "História", "Arte", "História e ilustrações", "Ilustrador", "Design de Personagens"];
 
 export function isAuthorRoleDisabled(selectedRoles: string[], role: string) {
   const hasCombinedRole = selectedRoles.includes(COMBINED_AUTHOR_ROLE);

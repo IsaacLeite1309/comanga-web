@@ -454,6 +454,7 @@ describe("NewManga", () => {
       "Arte",
       "Criador Original",
       "História Original",
+      "História e ilustrações",
       "Ilustrador",
       "Design de Personagens",
     ]);
