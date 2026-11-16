@@ -21,22 +21,22 @@ import { usePublicCatalogScope } from "@/features/public-catalog/usePublicCatalo
 import { updatePersonalVolumeCache } from "@/features/public-catalog/updatePersonalVolumeCache";
 import type { PublicCalendarResponse, PublicCalendarVolume, PublicPersonalVolumeState } from "@/features/public-catalog/publicCatalogTypes";
 import { usePublicCalendar, type CalendarState } from "./usePublicCalendar";
-import { usePageScrollLock } from "@/hooks/usePageScrollLock";
+import { useLoadingScrollReset } from "@/hooks/useLoadingScrollReset";
 
 const buttonClass = "inline-flex h-11 items-center justify-center gap-2 rounded-lg border border-border bg-input px-3 text-sm font-bold text-foreground hover:border-primary focus-visible:border-primary focus-visible:outline-none disabled:cursor-not-allowed disabled:opacity-40";
 const toolbarButtonClass = "inline-flex h-12 items-center justify-center gap-2 rounded-lg border border-sidebar-foreground/35 bg-sidebar px-3 text-sm font-bold text-foreground transition-colors hover:border-primary focus:border-primary focus:outline-none disabled:cursor-not-allowed disabled:opacity-40";
 const months = ["janeiro", "fevereiro", "março", "abril", "maio", "junho", "julho", "agosto", "setembro", "outubro", "novembro", "dezembro"];
 
 function isMonthNavigationDisabled(calendar: CalendarState, direction: -1 | 1) {
-  return calendar.loading || !calendar.period || calendar.periodValue === (direction < 0 ? "1900-01" : "2200-12");
+  return !calendar.period || calendar.periodValue === (direction < 0 ? "1900-01" : "2200-12");
 }
 
-function isYearNavigationDisabled(loading: boolean, validYear: boolean, year: number, direction: -1 | 1) {
-  return loading || !validYear || (direction < 0 ? year <= 1900 : year >= 2200);
+function isYearNavigationDisabled(validYear: boolean, year: number, direction: -1 | 1) {
+  return !validYear || (direction < 0 ? year <= 1900 : year >= 2200);
 }
 
-function isMonthSelectionDisabled(loading: boolean, validYear: boolean) {
-  return loading || !validYear;
+function isMonthSelectionDisabled(validYear: boolean) {
+  return !validYear;
 }
 
 function MonthSelect({ calendar }: { calendar: CalendarState }) {
@@ -72,7 +72,7 @@ function MonthSelect({ calendar }: { calendar: CalendarState }) {
         <button type="button" aria-label="Mês anterior" className="inline-flex w-11 shrink-0 items-center justify-center text-foreground transition-colors hover:bg-sidebar-accent focus-visible:outline-none disabled:cursor-not-allowed disabled:opacity-40" disabled={isMonthNavigationDisabled(calendar, -1)} onClick={() => calendar.moveMonth(-1)}>
           <ChevronLeft className="h-5 w-5" aria-hidden="true" />
         </button>
-        <button type="button" aria-label="Mês e ano" aria-expanded={open} aria-haspopup="dialog" disabled={calendar.loading || !calendar.period} onClick={() => setOpen(current => !current)} className="flex min-w-0 flex-1 items-center gap-2 px-3 text-sm font-bold text-foreground transition-colors hover:bg-sidebar-accent focus-visible:outline-none disabled:cursor-not-allowed disabled:opacity-40 sm:flex-none">
+        <button type="button" aria-label="Mês e ano" aria-expanded={open} aria-haspopup="dialog" disabled={!calendar.period} onClick={() => setOpen(current => !current)} className="flex min-w-0 flex-1 items-center gap-2 px-3 text-sm font-bold text-foreground transition-colors hover:bg-sidebar-accent focus-visible:outline-none disabled:cursor-not-allowed disabled:opacity-40 sm:flex-none">
           <span className="grid min-w-0 text-left">
             <span className="invisible col-start-1 row-start-1 whitespace-nowrap" aria-hidden="true">novembro de 2200</span>
             <span className="col-start-1 row-start-1 truncate">{calendar.period ? `${months[calendar.period.month - 1]} de ${calendar.period.year}` : "Carregando..."}</span>
@@ -86,14 +86,14 @@ function MonthSelect({ calendar }: { calendar: CalendarState }) {
       {open && (
         <div role="dialog" aria-label="Selecionar mês e ano" className="absolute inset-x-0 top-full z-50 mt-2 rounded-xl border border-sidebar-foreground/35 bg-sidebar p-3 text-foreground shadow-2xl">
           <div className="flex items-center justify-center gap-3 border-b border-border pb-3">
-            <button type="button" aria-label="Ano anterior" disabled={isYearNavigationDisabled(calendar.loading, validYear, yearNumber, -1)} onClick={() => setYear(String(yearNumber - 1))} className="inline-flex h-8 w-8 items-center justify-center rounded-md text-muted-foreground transition-colors hover:bg-sidebar-accent hover:text-foreground focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary disabled:opacity-40"><ChevronLeft className="h-4 w-4" aria-hidden="true" /></button>
-            <input type="text" inputMode="numeric" maxLength={4} aria-label="Ano" value={year} disabled={calendar.loading} onChange={event => setYear(event.target.value.replace(/\D/g, ""))} className="h-8 w-20 rounded-md border border-transparent bg-transparent px-1 text-center text-sm font-bold text-foreground outline-none hover:border-border focus:border-primary disabled:cursor-not-allowed disabled:opacity-50" />
-            <button type="button" aria-label="Próximo ano" disabled={isYearNavigationDisabled(calendar.loading, validYear, yearNumber, 1)} onClick={() => setYear(String(yearNumber + 1))} className="inline-flex h-8 w-8 items-center justify-center rounded-md text-muted-foreground transition-colors hover:bg-sidebar-accent hover:text-foreground focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary disabled:opacity-40"><ChevronRight className="h-4 w-4" aria-hidden="true" /></button>
+            <button type="button" aria-label="Ano anterior" disabled={isYearNavigationDisabled(validYear, yearNumber, -1)} onClick={() => setYear(String(yearNumber - 1))} className="inline-flex h-8 w-8 items-center justify-center rounded-md text-muted-foreground transition-colors hover:bg-sidebar-accent hover:text-foreground focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary disabled:opacity-40"><ChevronLeft className="h-4 w-4" aria-hidden="true" /></button>
+            <input type="text" inputMode="numeric" maxLength={4} aria-label="Ano" value={year} onChange={event => setYear(event.target.value.replace(/\D/g, ""))} className="h-8 w-20 rounded-md border border-transparent bg-transparent px-1 text-center text-sm font-bold text-foreground outline-none hover:border-border focus:border-primary disabled:cursor-not-allowed disabled:opacity-50" />
+            <button type="button" aria-label="Próximo ano" disabled={isYearNavigationDisabled(validYear, yearNumber, 1)} onClick={() => setYear(String(yearNumber + 1))} className="inline-flex h-8 w-8 items-center justify-center rounded-md text-muted-foreground transition-colors hover:bg-sidebar-accent hover:text-foreground focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary disabled:opacity-40"><ChevronRight className="h-4 w-4" aria-hidden="true" /></button>
           </div>
           {!validYear && <p className="mt-2 text-xs text-red-300">Escolha um ano entre 1900 e 2200.</p>}
           <div className="mt-3 grid grid-cols-3 gap-1.5">
             {months.map((month, index) => (
-              <button key={month} type="button" aria-label={`Selecionar ${month} de ${year}`} aria-pressed={validYear && yearNumber === selectedYear && index + 1 === selectedMonth} disabled={isMonthSelectionDisabled(calendar.loading, validYear)} onClick={() => { calendar.changeMonth(`${year}-${String(index + 1).padStart(2, "0")}`); setOpen(false); }} className={`h-10 min-w-0 rounded-md px-1 text-xs font-semibold capitalize transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary disabled:opacity-40 ${validYear && yearNumber === selectedYear && index + 1 === selectedMonth ? "bg-primary text-primary-foreground" : "text-foreground hover:bg-sidebar-accent"}`}>
+              <button key={month} type="button" aria-label={`Selecionar ${month} de ${year}`} aria-pressed={validYear && yearNumber === selectedYear && index + 1 === selectedMonth} disabled={isMonthSelectionDisabled(validYear)} onClick={() => { calendar.changeMonth(`${year}-${String(index + 1).padStart(2, "0")}`); setOpen(false); }} className={`h-10 min-w-0 rounded-md px-1 text-xs font-semibold capitalize transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary disabled:opacity-40 ${validYear && yearNumber === selectedYear && index + 1 === selectedMonth ? "bg-primary text-primary-foreground" : "text-foreground hover:bg-sidebar-accent"}`}>
                 {month}
               </button>
             ))}
@@ -108,7 +108,7 @@ function CalendarPeriod({ calendar }: { calendar: CalendarState }) {
   return (
     <div className="flex flex-wrap items-end gap-2 xl:shrink-0 xl:flex-nowrap">
       <MonthSelect calendar={calendar} />
-      <button type="button" className={toolbarButtonClass} disabled={calendar.loading} onClick={calendar.currentMonth}>Mês atual</button>
+      <button type="button" className={toolbarButtonClass} onClick={calendar.currentMonth}>Mês atual</button>
     </div>
   );
 }
@@ -128,7 +128,7 @@ function CalendarFilters({ calendar }: { calendar: CalendarState }) {
       </form>
       <div className="min-w-0 sm:w-64 sm:shrink-0 xl:w-48 2xl:w-56">
         <span className="text-xs font-bold uppercase tracking-wide">Editora brasileira</span>
-        <SearchableSelect ariaLabel="Editora brasileira" value={calendar.query.brazilianPublisherId ? String(calendar.query.brazilianPublisherId) : ""} options={calendar.publishers} onChange={value => calendar.updateFilters({ brazilianPublisherId: value })} disabled={calendar.loading || calendar.optionsLoading || calendar.optionsError} placeholder="Todas" searchable clearable allowEmptyOption={false} tone="sidebar" textSize="sm" focusStyle="border" />
+        <SearchableSelect ariaLabel="Editora brasileira" value={calendar.query.brazilianPublisherId ? String(calendar.query.brazilianPublisherId) : ""} options={calendar.publishers} onChange={value => calendar.updateFilters({ brazilianPublisherId: value })} disabled={calendar.optionsLoading || calendar.optionsError} placeholder="Todas" searchable clearable allowEmptyOption={false} tone="sidebar" textSize="sm" focusStyle="border" />
       </div>
     </div>
   );
@@ -394,7 +394,7 @@ function CalendarResults({ calendar }: { calendar: CalendarState }) {
 
 export default function PublicChecklist() {
   const calendar = usePublicCalendar();
-  usePageScrollLock(calendar.loading);
+  useLoadingScrollReset(calendar.loading);
   useCatalogErrorToast(calendar.error, calendar.validationError ? calendar.resetCalendar : calendar.retryResults, "calendar-results");
   useCatalogErrorToast(calendar.optionsError ? "Não foi possível carregar as editoras." : "", calendar.retryOptions, "calendar-publishers");
   return (
