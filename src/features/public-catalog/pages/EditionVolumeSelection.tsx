@@ -9,7 +9,7 @@ import { CollectionChangeDialog } from "@/features/personal-library";
 import type { PersonalVolume } from "@/features/personal-library";
 import { useEditionSelection, type SelectionMode } from "./useEditionSelection";
 import { useCatalogErrorToast } from "@/features/public-catalog/useCatalogErrorToast";
-import { usePageScrollLock } from "@/hooks/usePageScrollLock";
+import { useLoadingScrollReset } from "@/hooks/useLoadingScrollReset";
 
 function SelectableVolume({
   volume,
@@ -155,7 +155,7 @@ function SelectionContent({ slug, editionNumber, mode }: { slug: string; edition
   const navigate = useNavigate();
   const state = useEditionSelection(slug, Number(editionNumber), mode);
   const { data, selectedIds, loading, error, saving, hasChanges } = state;
-  usePageScrollLock(loading);
+  useLoadingScrollReset(loading);
   useCatalogErrorToast(error, state.reload, "edition-volume-selection");
   const visibleVolumes = data?.volumes.filter((volume) => mode === "colecao" || (mode === "desejos" ? !volume.owned : volume.owned)) ?? [];
   const { wishlistVolumes, readVolumes } = collectionWarnings(data, selectedIds, mode);

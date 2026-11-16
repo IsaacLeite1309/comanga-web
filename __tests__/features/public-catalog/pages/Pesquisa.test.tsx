@@ -606,7 +606,7 @@ describe("Pesquisa", () => {
     expect(screen.getByText("Carregando Obras...")).toBeInTheDocument();
     expect(screen.getByRole("searchbox", { name: /Pesquisar (obras|edições)/i })).toBeEnabled();
     expect(screen.getByRole("tab", { name: "Edições" })).toBeEnabled();
-    expect(screen.getByRole("button", { name: "Filtros avançados" })).toBeDisabled();
+    expect(screen.getByRole("button", { name: "Filtros avançados" })).toBeEnabled();
     expect(screen.getByTestId("results-divider")).toBeInTheDocument();
     expect(screen.queryByText("1 obra encontrada")).not.toBeInTheDocument();
     expect(screen.queryByText("Título")).not.toBeInTheDocument();

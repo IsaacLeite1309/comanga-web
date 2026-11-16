@@ -3,11 +3,11 @@ import { usePesquisaCatalog } from '../hooks/usePesquisaCatalog';
 import { TabSelector, SearchInput, PrimaryFilters, AdvancedFilters } from '../components/PesquisaFilters';
 import { ResultsSummary, CatalogResults } from '../components/PesquisaResults';
 import { useCatalogErrorToast } from "@/features/public-catalog/useCatalogErrorToast";
-import { usePageScrollLock } from "@/hooks/usePageScrollLock";
+import { useLoadingScrollReset } from "@/hooks/useLoadingScrollReset";
 
 const Pesquisa = () => {
   const catalog = usePesquisaCatalog();
-  usePageScrollLock(catalog.loading);
+  useLoadingScrollReset(catalog.loading);
   useCatalogErrorToast(catalog.error, catalog.retryResults, "search");
   useCatalogErrorToast(catalog.optionsError ? "Não foi possível carregar as opções de filtro." : "", catalog.retryOptions, "search-options");
   return (

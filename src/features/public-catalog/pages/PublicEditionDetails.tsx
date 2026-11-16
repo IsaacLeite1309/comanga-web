@@ -6,7 +6,7 @@ import { ArrowLeft, BookOpen, ChevronRight, Heart, LibraryBig, type LucideIcon }
 import { Link, useLocation, useParams } from "react-router-dom";
 import { toast } from "sonner";
 import { useAuth } from "@/features/auth";
-import { LoadingState } from "@/components/shared/AsyncState";
+import { CatalogDetailsLoading } from "../CatalogDetailsLoading";
 import { BackLink } from "@/components/shared/BackLink";
 import { CatalogCover } from "@/features/public-catalog/CatalogCover";
 import { OwnedVolumeBadge } from "@/features/public-catalog/OwnedVolumeBadge";
@@ -340,7 +340,7 @@ function PublicEditionDetailsContent() {
   const isCollectionContext = location.pathname.startsWith("/colecao/");
   const navigationState = isCollectionContext ? { catalogOrigin: "collection" as const } : catalogNavigationState(location.state);
   const editionPath = `${isCollectionContext ? "/colecao" : "/obra"}/${encodeURIComponent(slug || "")}/edicao/${editionNumber}`;
-  if (loading) return <LoadingState message="Carregando edição..." fullPage />;
+  if (loading) return <CatalogDetailsLoading kind="edition" />;
   if (!data) {
     const returnTo = directReturnPath(location.state, navigationState.catalogOrigin === "collection" ? ["/colecao"] : navigationState.catalogOrigin === "search" ? ["/pesquisa"] : []);
     return <div className="page-gutter flex min-h-[calc(100dvh-5rem)] items-center justify-center py-12"><BackLink to={returnTo ?? "/pesquisa?tab=editions&sortBy=title&order=ASC&page=1"} preferHistory={Boolean(returnTo)} className="rounded-lg border border-border bg-input px-4 py-2 text-sm font-bold text-foreground">Voltar</BackLink></div>;
@@ -358,7 +358,7 @@ function PublicEditionDetailsContent() {
 }
 
 function PublicEditionDetails() {
-  return <PersonalCatalogSession><PublicEditionDetailsContent /></PersonalCatalogSession>;
+  return <PersonalCatalogSession fallback={<CatalogDetailsLoading kind="edition" />}><PublicEditionDetailsContent /></PersonalCatalogSession>;
 }
 
 export default PublicEditionDetails;

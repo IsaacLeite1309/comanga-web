@@ -13,7 +13,7 @@ import {
   ShoppingCart,
 } from "lucide-react";
 import { Link, useLocation, useParams } from "react-router-dom";
-import { LoadingState } from "@/components/shared/AsyncState";
+import { CatalogDetailsLoading } from "../CatalogDetailsLoading";
 import { BackLink } from "@/components/shared/BackLink";
 import { CatalogCover } from "@/features/public-catalog/CatalogCover";
 import {
@@ -327,7 +327,7 @@ function PublicVolumeDetailsContent() {
   const location = useLocation();
   const { volume, loading, error, refreshError, retry } = useVolumeDetails(Number(volumeNumber), slug, Number(editionNumber));
   useCatalogErrorToast(error, retry, "volume-details");
-  if (loading) return <LoadingState message="Carregando volume..." fullPage />;
+  if (loading) return <CatalogDetailsLoading kind="volume" />;
   if (!volume) {
     const navigationState = catalogNavigationState(location.state);
     const returnTo = directReturnPath(location.state, navigationState.catalogOrigin === "wishlist" ? ["/desejos"] : navigationState.catalogOrigin === "checklist" ? ["/lancamentos"] : []);
@@ -351,7 +351,7 @@ function PublicVolumeDetailsContent() {
 }
 
 function PublicVolumeDetails() {
-  return <PersonalCatalogSession><PublicVolumeDetailsContent /></PersonalCatalogSession>;
+  return <PersonalCatalogSession fallback={<CatalogDetailsLoading kind="volume" />}><PublicVolumeDetailsContent /></PersonalCatalogSession>;
 }
 
 export default PublicVolumeDetails;

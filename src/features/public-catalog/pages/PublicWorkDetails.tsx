@@ -15,7 +15,7 @@ import type {
   PublicVolumePreview,
   PublicWorkDetails as PublicWorkDetailsData,
 } from "@/features/public-catalog/publicCatalogTypes";
-import { LoadingState } from "@/components/shared/AsyncState";
+import { CatalogDetailsLoading } from "../CatalogDetailsLoading";
 import { BackLink } from "@/components/shared/BackLink";
 import { getApiError } from "@/lib/apiError";
 import { PUBLIC_CATALOG_QUERY_ROOT } from "@/lib/queryClient";
@@ -167,7 +167,7 @@ function PublicWorkDetailsContent() {
   const { work, loading, error, refreshError, retry } = useWorkDetails(slug);
   useCatalogErrorToast(error, retry, "work-details");
 
-  if (loading) return <LoadingState message="Carregando Obra..." fullPage />;
+  if (loading) return <CatalogDetailsLoading kind="work" />;
 
   if (error || !work) {
     return <div className="page-gutter flex min-h-[calc(100dvh-5rem)] items-center justify-center py-12"><BackLink to={root.path} className="rounded-lg border border-border bg-input px-4 py-2 text-sm font-bold text-foreground">Voltar</BackLink></div>;
@@ -285,7 +285,7 @@ function PublicWorkDetailsContent() {
 }
 
 function PublicWorkDetails() {
-  return <PersonalCatalogSession><PublicWorkDetailsContent /></PersonalCatalogSession>;
+  return <PersonalCatalogSession fallback={<CatalogDetailsLoading kind="work" />}><PublicWorkDetailsContent /></PersonalCatalogSession>;
 }
 
 export default PublicWorkDetails;

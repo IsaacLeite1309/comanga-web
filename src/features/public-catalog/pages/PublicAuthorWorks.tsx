@@ -14,6 +14,7 @@ import { getApiError } from "@/lib/apiError";
 import { PUBLIC_CATALOG_QUERY_ROOT } from "@/lib/queryClient";
 import { usePublicCatalogScope } from "@/features/public-catalog/usePublicCatalogScope";
 import { useCatalogErrorToast } from "@/features/public-catalog/useCatalogErrorToast";
+import { useLoadingScrollReset } from "@/hooks/useLoadingScrollReset";
 
 const PAGE_SIZE = 24;
 
@@ -48,6 +49,7 @@ function PublicAuthorWorks() {
   });
   const data: PublicAuthorWorksResponse | null = result.data ?? null;
   const loading = valid && result.isPending;
+  useLoadingScrollReset(loading);
   const error = !valid ? "Autor não encontrado." : result.isError && !data
     ? getApiError(result.error, "Não foi possível carregar as obras deste autor.") : "";
   useCatalogErrorToast(error, () => { void result.refetch(); }, "author-works");

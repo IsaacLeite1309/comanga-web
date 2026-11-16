@@ -50,7 +50,7 @@ describe("PublicCalendar", () => {
     renderCalendar();
     expect(screen.getByRole("status", { name: "Carregando lançamentos..." })).toBeInTheDocument();
     expect(screen.getByRole("searchbox", { name: "Pesquisar nos lançamentos" })).toBeEnabled();
-    expect(screen.getByRole("button", { name: "Mês atual" })).toBeDisabled();
+    expect(screen.getByRole("button", { name: "Mês atual" })).toBeEnabled();
     expect(screen.getByRole("button", { name: "Mês e ano" })).toBeDisabled();
     const results = await screen.findByRole("region", { name: "Volumes encontrados neste mês" });
     expect(screen.getByRole("searchbox", { name: "Pesquisar nos lançamentos" })).toBeEnabled();
@@ -189,14 +189,13 @@ describe("PublicCalendar", () => {
     let resolvePrevious!: (data: PublicCalendarResponse) => void;
     vi.mocked(listPublicCalendar).mockImplementationOnce(() => new Promise(resolve => { resolvePrevious = resolve; }));
     renderCalendar("/lancamentos?year=2026&month=12");
-    expect(screen.getByRole("button", { name: "Mês e ano" })).toBeDisabled();
-    await act(async () => resolvePrevious(response));
-    await waitForCalendarReady();
+    expect(screen.getByRole("button", { name: "Mês e ano" })).toBeEnabled();
     fireEvent.click(screen.getByRole("button", { name: "Mês e ano" }));
     fireEvent.change(screen.getByRole("textbox", { name: "Ano" }), { target: { value: "2027" } });
     fireEvent.click(screen.getByRole("button", { name: "Selecionar fevereiro de 2027" }));
     await screen.findByText("25 volumes encontrados");
     expect(screen.getByRole("button", { name: "Mês e ano" })).toHaveTextContent("fevereiro de 2027");
+    await act(async () => resolvePrevious(response));
     expect(screen.getByRole("button", { name: "Mês e ano" })).toHaveTextContent("fevereiro de 2027");
     expect(screen.getByText("25 volumes encontrados")).toBeInTheDocument();
   });
