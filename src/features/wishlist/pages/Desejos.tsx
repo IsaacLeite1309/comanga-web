@@ -8,7 +8,7 @@ import { SearchableSelect } from "@/components/forms/SearchableSelect";
 import { CatalogCover, CatalogPagination, CatalogResultsLoading, CatalogSearchClearButton, getPublicCatalogOptions, publicVolumeLabel, publicVolumePath, updatePersonalVolumeCache, usePublicCatalogScope, type PublicOption, type PublicPersonalVolumeState } from "@/features/public-catalog";
 import { addCollectionVolume, CollectionChangeDialog, GuestLibraryNotice, listWishlist, removeWishlistVolume, useCachedLibraryFilters, useLibraryPage, wishlistQueryPrefix, type WishlistResponse, type WishlistVolume } from "@/features/personal-library";
 import { PUBLIC_CATALOG_QUERY_ROOT } from "@/lib/queryClient";
-import { usePageScrollLock } from "@/hooks/usePageScrollLock";
+import { useLoadingScrollReset } from "@/hooks/useLoadingScrollReset";
 
 const DEFAULT_WISHLIST_FILTERS = { searchTerm: "", term: "", publisherId: "", order: "ASC" as "ASC" | "DESC" };
 
@@ -122,7 +122,7 @@ function AuthenticatedWishlist() {
     order,
   }), [term, publisherId, order]);
   const state = useLibraryPage(loadWishlist, wishlistQueryPrefix(scope[0], term, publisherId, order));
-  usePageScrollLock(state.loading);
+  useLoadingScrollReset(state.loading);
   const visibleData = visibleWishlistResponse(state.data, state.loading);
   const confirmVolume = findConfirmVolume(state.data, confirmVolumeId);
   const { setPage } = state;
@@ -139,7 +139,7 @@ function AuthenticatedWishlist() {
     state.setPage(1);
   };
   const wishlistIsEmpty = Boolean(state.data && state.data.volumes.length === 0 && !filtered);
-  const controlsDisabled = state.loading || wishlistIsEmpty;
+  const controlsDisabled = wishlistIsEmpty;
   const actionClass = "inline-flex min-h-10 min-w-0 items-center justify-center gap-1 rounded-lg border px-2 text-xs font-semibold transition-colors disabled:cursor-not-allowed disabled:opacity-60 sm:text-sm";
   const inactiveActionClass = "border-sidebar-foreground/30 bg-sidebar text-white hover:bg-sidebar-accent";
   const activeActionClass = "border-primary bg-primary text-primary-foreground hover:bg-primary/90";
@@ -170,7 +170,7 @@ function AuthenticatedWishlist() {
             <CatalogResultsLoading label="Carregando sua lista de desejos..." className="catalog-menu-covers-space" cardActions="wishlist" />
           </>}
           {visibleData && <>
-            <WishlistSummary total={visibleData.pagination.total} filtered={filtered} order={order} disabled={state.loading} onToggle={() => { state.setPage(1); setFilters(current => ({ order: current.order === "ASC" ? "DESC" : "ASC" })); }} />
+            <WishlistSummary total={visibleData.pagination.total} filtered={filtered} order={order} disabled={false} onToggle={() => { state.setPage(1); setFilters(current => ({ order: current.order === "ASC" ? "DESC" : "ASC" })); }} />
             {visibleData.volumes.length === 0 ? <EmptyWishlist filtered={filtered} onClearFilters={clearFilters} /> : <div className="grid grid-cols-2 gap-x-3 gap-y-7 sm:grid-cols-3 sm:gap-x-4 lg:grid-cols-4 xl:grid-cols-5 2xl:grid-cols-6">
               {visibleData.volumes.map((volume) => {
                 const label = publicVolumeLabel(volume);

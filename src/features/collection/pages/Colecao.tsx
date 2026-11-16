@@ -10,7 +10,7 @@ import { GuestLibraryNotice, collectionQueryPrefix, listCollection, useCachedLib
 import { usePublicCatalogScope } from "@/features/public-catalog";
 import { PUBLIC_CATALOG_QUERY_ROOT } from "@/lib/queryClient";
 import { CollectionEdition } from "../CollectionEdition";
-import { usePageScrollLock } from "@/hooks/usePageScrollLock";
+import { useLoadingScrollReset } from "@/hooks/useLoadingScrollReset";
 
 const DEFAULT_COLLECTION_FILTERS = { searchTerm: "", term: "", status: "" as "complete" | "incomplete" | "", publisherId: "", order: "ASC" as "ASC" | "DESC" };
 
@@ -29,8 +29,8 @@ function GuestCollection() {
   );
 }
 
-function shouldDisableCollectionControls(filtered: boolean, loading: boolean, collectionIsEmpty: boolean) {
-  return loading || (!filtered && collectionIsEmpty);
+function shouldDisableCollectionControls(filtered: boolean, collectionIsEmpty: boolean) {
+  return !filtered && collectionIsEmpty;
 }
 
 function hasCollectionFilters(term: string, status: string, publisherId: string) {
@@ -153,7 +153,7 @@ function AuthenticatedCollection() {
     ...(order === "DESC" ? { order } : {}),
   }), [term, status, publisherId, order]);
   const state = useLibraryPage(loadCollection, collectionQueryPrefix(scope[0], term, status, publisherId, order));
-  usePageScrollLock(state.loading);
+  useLoadingScrollReset(state.loading);
   const collectionData = state.data;
   useEffect(() => {
     if (!collectionData) return;
@@ -186,7 +186,7 @@ function AuthenticatedCollection() {
     state.setPage(1);
   };
   const collectionIsEmpty = isCollectionEmpty(state.data, filtered);
-  const controlsDisabled = shouldDisableCollectionControls(filtered, state.loading, collectionIsEmpty);
+  const controlsDisabled = shouldDisableCollectionControls(filtered, collectionIsEmpty);
   return (
     <div className="page-gutter catalog-menu-top-space flex min-w-0 flex-1 flex-col pb-4 sm:pb-6 xl:pb-10">
       <div className="mx-auto flex w-full max-w-7xl flex-1 flex-col">
