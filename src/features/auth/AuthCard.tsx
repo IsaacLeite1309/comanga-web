@@ -6,10 +6,13 @@ import { toast } from "sonner";
 import { api } from "@/services/api";
 import { useAuth } from "./useAuth";
 import { BrandLogo } from "@/components/BrandLogo";
+import { LegalFooter } from "@/components/legal/LegalFooter";
+import { termsOfUse } from "@/components/legal/legalDocuments";
 
 import { validatePassword } from "./passwordValidation";
 import { authReturnPath } from "./authReturnPath";
 import { BirthDateField } from "./BirthDateField";
+import { TermsAcceptanceField } from "./TermsAcceptanceField";
 
 /* ──────────────────────────── Tipos ──────────────────────────── */
 
@@ -32,10 +35,21 @@ interface RegisterData {
   email: string;
   password: string;
   confirmPassword: string;
+  acceptedTerms: boolean;
 }
 
 type LoginErrors = Record<keyof LoginData, string>;
 type RegisterErrors = Record<keyof RegisterData, string>;
+
+const emptyRegisterErrors: RegisterErrors = {
+  birthDate: "",
+  username: "",
+  email: "",
+  password: "",
+  confirmPassword: "",
+  acceptedTerms: "",
+};
+const emptyRegisterData: RegisterData = { ...emptyRegisterErrors, acceptedTerms: false };
 
 /* ──────────────────────────── Validação ──────────────────────── */
 
@@ -86,6 +100,7 @@ function validateRegisterForm(data: RegisterData): RegisterErrors {
     email: validateRegisterEmail(data.email),
     password: validatePassword(data.password),
     confirmPassword: validateConfirmPassword(data.password, data.confirmPassword),
+    acceptedTerms: data.acceptedTerms ? "" : "Aceite os Termos de Uso para concluir o cadastro.",
   };
 }
 
@@ -100,6 +115,10 @@ function hasErrors(errors: Record<string, string>): boolean {
   return Object.values(errors).some((msg) => msg !== "");
 }
 
+function focusAcceptanceField(acceptance: HTMLInputElement | null) {
+  acceptance?.focus({ preventScroll: true });
+  acceptance?.scrollIntoView?.({ block: "center" });
+}
 
 /* ──────────────────────── PasswordInput ──────────────────────── */
 
@@ -225,16 +244,20 @@ interface RegisterFormProps {
   data: RegisterData;
   errors: RegisterErrors;
   loading: boolean;
+  termsOutdated: boolean;
   onBirthDateChange: (value: string) => void;
+  onTermsChange: (checked: boolean) => void;
   onChange: (event: ChangeEvent<HTMLInputElement>) => void;
-  onSubmit: (event: FormEvent) => void;
+  onSubmit: (event: FormEvent<HTMLFormElement>) => void;
 }
 
 function RegisterForm({
   data,
   errors,
   loading,
+  termsOutdated,
   onBirthDateChange,
+  onTermsChange,
   onChange,
   onSubmit,
 }: RegisterFormProps) {
@@ -274,9 +297,15 @@ function RegisterForm({
           onChange={onChange}
           error={errors.confirmPassword}
         />
+        <TermsAcceptanceField
+          checked={data.acceptedTerms}
+          error={errors.acceptedTerms}
+          termsOutdated={termsOutdated}
+          onChange={onTermsChange}
+        />
         <button
           type="submit"
-          disabled={loading}
+          disabled={loading || termsOutdated}
           className="w-full h-12 rounded-xl bg-primary text-primary-foreground font-bold text-sm tracking-wide hover:opacity-90 transition-opacity disabled:opacity-50 disabled:cursor-not-allowed flex items-center justify-center gap-2"
         >
           {loading ? (
@@ -329,6 +358,7 @@ function AuthTabList() {
 }
 
 const REGISTRATION_SUCCESS_MESSAGE = "Cadastro realizado com sucesso! Ative sua conta clicando no link de ativação que te enviamos no e-mail.";
+const OUTDATED_TERMS_MESSAGE = "Os Termos de Uso foram atualizados. Atualize a página para ler e aceitar a versão atual.";
 
 function RegistrationSuccessDialog({ message, onClose }: { message: string; onClose: () => void }) {
   return (
@@ -363,20 +393,9 @@ export function AuthCard() {
   const [loginErrors, setLoginErrors] = useState<LoginErrors>({ email: "", password: "" });
 
   // Register state
-  const [registerData, setRegisterData] = useState<RegisterData>({
-    birthDate: "",
-    username: "",
-    email: "",
-    password: "",
-    confirmPassword: "",
-  });
-  const [registerErrors, setRegisterErrors] = useState<RegisterErrors>({
-    birthDate: "",
-    username: "",
-    email: "",
-    password: "",
-    confirmPassword: "",
-  });
+  const [registerData, setRegisterData] = useState(emptyRegisterData);
+  const [registerErrors, setRegisterErrors] = useState(emptyRegisterErrors);
+  const [termsOutdated, setTermsOutdated] = useState(false);
 
   /* ── Troca de tab com reset ── */
 
@@ -385,8 +404,8 @@ export function AuthCard() {
     navigate(newTab === "register" ? "/cadastrar" : "/entrar", { state: location.state });
     setLoginData({ email: "", password: "" });
     setLoginErrors({ email: "", password: "" });
-    setRegisterData({ birthDate: "", username: "", email: "", password: "", confirmPassword: "" });
-    setRegisterErrors({ birthDate: "", username: "", email: "", password: "", confirmPassword: "" });
+    setRegisterData(emptyRegisterData);
+    setRegisterErrors(emptyRegisterErrors);
   }
 
   function closeRegistrationNotice() {
@@ -413,6 +432,11 @@ export function AuthCard() {
     if (registerErrors[name as keyof RegisterErrors]) {
       setRegisterErrors((prev) => ({ ...prev, [name]: "" }));
     }
+  }
+
+  function handleTermsChange(acceptedTerms: boolean) {
+    setRegisterData((previous) => ({ ...previous, acceptedTerms }));
+    setRegisterErrors((previous) => ({ ...previous, acceptedTerms: "" }));
   }
 
   /* ── Submit Login ── */
@@ -451,37 +475,42 @@ export function AuthCard() {
 
   /* ── Submit Register ── */
 
-  async function handleRegister(e: FormEvent) {
+  async function handleRegister(e: FormEvent<HTMLFormElement>) {
     e.preventDefault();
+    if (termsOutdated) return;
 
     const errors = validateRegisterForm(registerData);
     setRegisterErrors(errors);
-    if (hasErrors(errors)) return;
+    const { acceptedTerms: termsError, ...fieldErrors } = errors;
+    const acceptance = e.currentTarget.querySelector<HTMLInputElement>('input[name="acceptedTerms"]');
+    if (hasErrors(fieldErrors)) return;
+    if (termsError) {
+      focusAcceptanceField(acceptance);
+      return;
+    }
 
     setLoading(true);
     try {
-      const response = await api.post("/auth/register", registerData);
+      const response = await api.post("/auth/register", { ...registerData, termsVersion: termsOfUse.version });
       const apiMessage = response.data.message;
       const message = typeof apiMessage === "string" && apiMessage.includes("não foi possível enviar") ? apiMessage : REGISTRATION_SUCCESS_MESSAGE;
 
       // Limpar formulário e ir para login
-      setRegisterData({ birthDate: "", username: "", email: "", password: "", confirmPassword: "" });
-      setRegisterErrors({ birthDate: "", username: "", email: "", password: "", confirmPassword: "" });
+      setRegisterData(emptyRegisterData);
+      setRegisterErrors(emptyRegisterErrors);
       setTab("login");
       navigate("/entrar", { replace: true, state: { ...location.state, registrationNotice: message } });
     } catch (error: unknown) {
-      if (isAxiosError(error) && error.response) {
-        const errorMsg = error.response.data?.error || "Erro no cadastro.";
-        const errorField = (error.response.data as { field?: keyof RegisterData })?.field;
-
-        // Se o back-end indicou o campo, pintamos ele de vermelho
-        if (errorField && errorField in registerErrors) {
-          setRegisterErrors((prev) => ({ ...prev, [errorField]: errorMsg }));
-        } else {
-          toast.error(errorMsg);
-        }
+      const { message: errorMsg, field: errorField } = getRegisterFailure(error);
+      if (errorField === "termsVersion" || errorField === "acceptedTerms") {
+        setRegisterData((previous) => ({ ...previous, acceptedTerms: false }));
+        if (errorField === "termsVersion") setTermsOutdated(true);
+        else setRegisterErrors((previous) => ({ ...previous, acceptedTerms: errorMsg }));
+        focusAcceptanceField(acceptance);
+      } else if (errorField && errorField in registerErrors) {
+        setRegisterErrors((prev) => ({ ...prev, [errorField]: errorMsg }));
       } else {
-        toast.error("Erro ao conectar com o servidor.");
+        toast.error(errorMsg);
       }
     } finally {
       setLoading(false);
@@ -492,7 +521,7 @@ export function AuthCard() {
     <div className="page-gutter flex-1 flex flex-col items-center justify-center py-8">
       <AuthHeader />
 
-      <div className="w-full max-w-md p-8 bg-background rounded-2xl border border-border">
+      <div className="w-full max-w-md min-w-0 p-5 sm:p-8 bg-background rounded-2xl border border-border">
         <Tabs value={tab} onValueChange={handleTabChange} className="w-full">
           <AuthTabList />
 
@@ -505,17 +534,20 @@ export function AuthCard() {
           />
           <RegisterForm
             data={registerData}
-            errors={registerErrors}
+            errors={termsOutdated ? { ...registerErrors, acceptedTerms: OUTDATED_TERMS_MESSAGE } : registerErrors}
             loading={loading}
+            termsOutdated={termsOutdated}
             onBirthDateChange={(value) => {
               setRegisterData((prev) => ({ ...prev, birthDate: value }));
               if (registerErrors.birthDate) setRegisterErrors((prev) => ({ ...prev, birthDate: "" }));
             }}
+            onTermsChange={handleTermsChange}
             onChange={handleRegisterChange}
             onSubmit={handleRegister}
           />
         </Tabs>
       </div>
+      <LegalFooter />
       {registrationNotice && <RegistrationSuccessDialog message={registrationNotice} onClose={closeRegistrationNotice} />}
     </div>
   );
@@ -525,4 +557,9 @@ export function AuthCard() {
 
 function isAxiosError(error: unknown): error is import("axios").AxiosError<{ error?: string; field?: string }> {
   return typeof error === "object" && error !== null && "isAxiosError" in error;
+}
+
+function getRegisterFailure(error: unknown) {
+  if (!isAxiosError(error) || !error.response) return { message: "Erro ao conectar com o servidor." };
+  return { message: error.response.data?.error || "Erro no cadastro.", field: error.response.data?.field };
 }

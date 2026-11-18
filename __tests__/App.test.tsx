@@ -1,4 +1,4 @@
-import { fireEvent, screen } from "@testing-library/react";
+import { act, fireEvent, screen, within } from "@testing-library/react";
 import { render } from "./support/queryRender";
 import { beforeEach, describe, expect, it, vi } from "vitest";
 import App from "@/App";
@@ -35,6 +35,45 @@ vi.mock("@/features/public-catalog", () => ({
 beforeEach(() => {
   vi.clearAllMocks();
   vi.mocked(api.get).mockResolvedValue({ data: { user: null } });
+});
+
+describe("documentos legais", () => {
+  const admin = { id: "1", username: "admin", profiles: ["Administrador"], active_profile: "Administrador" };
+
+  it.each([
+    ["/termos-de-uso", "Termos de Uso", null],
+    ["/politica-de-privacidade", "Política de Privacidade", null],
+    ["/termos-de-uso", "Termos de Uso", admin],
+    ["/politica-de-privacidade", "Política de Privacidade", admin],
+  ] as const)("abre %s diretamente e exibe %s com sessão %j", async (path, title, user) => {
+    vi.mocked(api.get).mockResolvedValue({ data: { user } });
+    window.history.replaceState({}, "", path);
+    await act(async () => { render(<App />); });
+
+    const article = screen.getByRole("article", { name: title });
+    expect(within(article).getByRole("heading", { level: 1, name: title })).toHaveFocus();
+    expect(within(article).getByText(/Versão 2026-11-18/)).toBeInTheDocument();
+    expect(within(article).getByText("18 de novembro de 2026")).toHaveAttribute("datetime", "2026-11-18");
+    expect(within(article).getByText(/Minuta para revisão/)).toBeInTheDocument();
+    expect(within(article).getAllByRole("heading", { level: 2 }).length).toBeGreaterThan(0);
+    expect(within(article).getByRole("link", { name: "suporte@comanga.com.br" })).toHaveAttribute("href", "mailto:suporte@comanga.com.br");
+    expect(document.title).toBe(`${title} | CoMangá`);
+    expect(window.location.pathname).toBe(path);
+  });
+
+  it("permite consultar ambos os documentos em outra aba pelo rodapé do perfil autenticado", async () => {
+    vi.mocked(api.get).mockResolvedValue({ data: { user: admin } });
+    window.history.replaceState({}, "", "/perfil/admin");
+    render(<App />);
+
+    const footer = within(await screen.findByRole("navigation", { name: "Documentos legais" }));
+    const terms = footer.getByRole("link", { name: "Termos de Uso (abre em nova aba)" });
+    const privacy = footer.getByRole("link", { name: "Política de Privacidade (abre em nova aba)" });
+    expect(terms).toHaveAttribute("href", "/termos-de-uso");
+    expect(privacy).toHaveAttribute("href", "/politica-de-privacidade");
+    expect(terms).toHaveAttribute("target", "_blank");
+    expect(privacy).toHaveAttribute("target", "_blank");
+  });
 });
 
 describe("navegação e acesso administrativo", () => {

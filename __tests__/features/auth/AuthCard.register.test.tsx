@@ -32,6 +32,10 @@ function renderRegister() {
   );
 }
 
+function getAcceptanceCheckbox() {
+  return screen.getByRole<HTMLInputElement>("checkbox", { name: "Li e aceito os Termos de Uso." });
+}
+
 function fillRegisterForm(data: {
   username?: string;
   email?: string;
@@ -83,9 +87,14 @@ describe("AuthCard cadastro", () => {
       </MemoryRouter>,
     );
     fillRegisterForm({ username: "novo_user", email: "novo@usuario.com", password: "SenhaForte123!", confirmPassword: "SenhaForte123!" });
+    fireEvent.click(getAcceptanceCheckbox());
     fireEvent.click(screen.getByRole("button", { name: "CADASTRAR" }));
 
     const dialog = await screen.findByRole("dialog", { name: "Aviso de cadastro" });
+    expect(api.post).toHaveBeenCalledWith("/auth/register", expect.objectContaining({
+      acceptedTerms: true,
+      termsVersion: "2026-11-18",
+    }));
     expect(screen.getByTestId("login-route")).toBeInTheDocument();
     expect(dialog).toHaveTextContent(expectedMessage);
     expect(within(dialog).queryByRole("heading")).not.toBeInTheDocument();
@@ -104,6 +113,75 @@ describe("AuthCard cadastro", () => {
     renderRegister();
 
     expect(screen.getByRole("tabpanel")).toHaveAttribute("tabindex", "-1");
+  });
+
+  it("impede um cadastro válido sem aceite e associa a mensagem ao campo", () => {
+    renderRegister();
+    fillRegisterForm({ username: "novo_user", email: "novo@usuario.com", password: "SenhaForte123!", confirmPassword: "SenhaForte123!" });
+    const checkbox = getAcceptanceCheckbox();
+
+    expect(checkbox).not.toBeChecked();
+    expect(checkbox).toBeRequired();
+    fireEvent.submit(checkbox.form!);
+
+    expect(api.post).not.toHaveBeenCalled();
+    expect(checkbox).toHaveFocus();
+    expect(checkbox).toHaveAttribute("aria-invalid", "true");
+    expect(checkbox).toHaveAccessibleDescription("Aceite os Termos de Uso para concluir o cadastro.");
+    expect(screen.getByRole("alert")).toHaveTextContent("Aceite os Termos de Uso para concluir o cadastro.");
+
+    fireEvent.click(screen.getByText("Li e aceito os Termos de Uso.", { selector: "label" }));
+    expect(checkbox).toBeChecked();
+    expect(checkbox).toHaveAttribute("aria-invalid", "false");
+    expect(screen.queryByRole("alert")).not.toBeInTheDocument();
+
+    fireEvent.click(checkbox);
+    fireEvent.click(screen.getByRole("button", { name: "CADASTRAR" }));
+    expect(api.post).not.toHaveBeenCalled();
+  });
+
+  it("mostra a rejeição da API junto ao campo de aceite", async () => {
+    const error = "Aceite os Termos de Uso para criar sua conta.";
+    vi.mocked(api.post).mockRejectedValueOnce({
+      isAxiosError: true,
+      response: { status: 400, data: { field: "acceptedTerms", error } },
+    });
+    renderRegister();
+    fillRegisterForm({ username: "novo_user", email: "novo@usuario.com", password: "SenhaForte123!", confirmPassword: "SenhaForte123!" });
+    const checkbox = getAcceptanceCheckbox();
+    fireEvent.click(checkbox);
+    fireEvent.click(screen.getByRole("button", { name: "CADASTRAR" }));
+
+    expect(await screen.findByRole("alert")).toHaveTextContent(error);
+    expect(checkbox).not.toBeChecked();
+    expect(checkbox).toHaveAccessibleDescription(error);
+    expect(screen.getByPlaceholderText("Nome de Usuário")).toHaveValue("novo_user");
+  });
+
+  it("bloqueia novo envio após a API rejeitar uma versão antiga dos termos", async () => {
+    vi.mocked(api.post).mockRejectedValueOnce({
+      isAxiosError: true,
+      response: { status: 400, data: { field: "termsVersion", error: "Versão desatualizada." } },
+    });
+    renderRegister();
+    fillRegisterForm({ username: "novo_user", email: "novo@usuario.com", password: "SenhaForte123!", confirmPassword: "SenhaForte123!" });
+    const checkbox = getAcceptanceCheckbox();
+    const submit = screen.getByRole("button", { name: "CADASTRAR" });
+    fireEvent.click(checkbox);
+    fireEvent.click(submit);
+
+    expect(await screen.findByRole("alert")).toHaveTextContent("Atualize a página para ler e aceitar a versão atual.");
+    expect(checkbox).toHaveFocus();
+    expect(checkbox).not.toBeChecked();
+    expect(checkbox).toHaveAttribute("aria-disabled", "true");
+    expect(screen.getByRole("button", { name: "Atualizar página" })).toBeEnabled();
+    expect(submit).toBeDisabled();
+
+    fireEvent.click(checkbox);
+    fireEvent.submit(checkbox.form!);
+    expect(checkbox).not.toBeChecked();
+    expect(screen.getByRole("alert")).toBeInTheDocument();
+    expect(api.post).toHaveBeenCalledTimes(1);
   });
 
   it("seleciona ano, mês e dia no calendário próprio", () => {
@@ -166,6 +244,7 @@ describe("AuthCard cadastro", () => {
       confirmPassword: "SenhaForte123!",
     });
 
+    fireEvent.click(getAcceptanceCheckbox());
     fireEvent.click(screen.getByRole("button", { name: "CADASTRAR" }));
 
     await waitFor(() => {
@@ -175,6 +254,8 @@ describe("AuthCard cadastro", () => {
         email: "existente@usuario.com",
         password: "SenhaForte123!",
         confirmPassword: "SenhaForte123!",
+        acceptedTerms: true,
+        termsVersion: "2026-11-18",
       });
     });
 
@@ -201,6 +282,7 @@ describe("AuthCard cadastro", () => {
       confirmPassword: "SenhaForte123!",
     });
 
+    fireEvent.click(getAcceptanceCheckbox());
     fireEvent.click(screen.getByRole("button", { name: "CADASTRAR" }));
 
     await waitFor(() => {
@@ -220,6 +302,7 @@ describe("AuthCard cadastro", () => {
       confirmPassword: "SenhaForte123!",
     });
 
+    fireEvent.click(getAcceptanceCheckbox());
     fireEvent.click(screen.getByRole("button", { name: "CADASTRAR" }));
 
     await waitFor(() => {
@@ -275,6 +358,7 @@ it("exige data válida e envia nascimento no cadastro", async () => {
   vi.mocked(api.post).mockResolvedValue({ data: { message: "Conta criada." } });
   renderRegister();
   fillRegisterForm({ username: "new_user", email: "new@example.com", password: "SenhaForte123!", confirmPassword: "SenhaForte123!" });
+  fireEvent.click(getAcceptanceCheckbox());
   fireEvent.change(screen.getByLabelText("Data de nascimento"), { target: { value: "" } });
   fireEvent.click(screen.getByRole("button", { name: "CADASTRAR" }));
   expect(await screen.findByRole("alert")).toHaveTextContent("data de nascimento válida");
