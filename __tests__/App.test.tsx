@@ -54,7 +54,7 @@ describe("documentos legais", () => {
     expect(within(article).getByRole("heading", { level: 1, name: title })).toHaveFocus();
     expect(within(article).getByText(/Versão 2026-11-18/)).toBeInTheDocument();
     expect(within(article).getByText("18 de novembro de 2026")).toHaveAttribute("datetime", "2026-11-18");
-    expect(within(article).getByText(/Minuta para revisão/)).toBeInTheDocument();
+    expect(article).not.toHaveTextContent(/minuta para revisão|para revisão antes da publicação/i);
     expect(within(article).getAllByRole("heading", { level: 2 }).length).toBeGreaterThan(0);
     expect(within(article).getByRole("link", { name: "suporte@comanga.com.br" })).toHaveAttribute("href", "mailto:suporte@comanga.com.br");
     expect(document.title).toBe(`${title} | CoMangá`);

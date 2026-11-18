@@ -21,7 +21,6 @@ export function LegalDocumentPage({ kind }: { kind: keyof typeof documents }) {
         <header className="mb-8 space-y-3">
           <h1 id="legal-document-title" ref={headingRef} tabIndex={-1} className="text-3xl font-bold text-foreground sm:text-4xl">{title}</h1>
           <p className="text-sm text-foreground">Versão {version} · <time dateTime={date}>{dateFormatter.format(new Date(date))}</time></p>
-          <p className="rounded-lg border border-border bg-card px-4 py-3 text-sm text-foreground">Minuta para revisão pelo responsável pelo CoMangá.</p>
         </header>
         <div className="space-y-7 leading-relaxed text-foreground">
           {sections.map((section) => (

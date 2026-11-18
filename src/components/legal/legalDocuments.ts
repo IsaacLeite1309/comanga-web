@@ -20,7 +20,6 @@ export const privacyPolicy: LegalDocument = {
       title: "A quem esta política se aplica",
       paragraphs: [
         "Esta política descreve como o CoMangá trata dados pessoais de visitantes e de pessoas com conta. Você pode consultar as partes públicas do catálogo sem criar uma conta.",
-        "Para revisão antes da publicação: confirmar a identidade do controlador, responsável pelas decisões sobre os dados pessoais, e seus dados de contato.",
       ],
     },
     {
@@ -44,7 +43,6 @@ export const privacyPolicy: LegalDocument = {
         "A infraestrutura documentada usa Vercel para entregar o site e encaminhar solicitações à API, Render para executar a API e Neon para armazenar o banco PostgreSQL que contém os registros de conta e das listas pessoais.",
         "A integração de e-mail envia ao Resend o endereço do destinatário, o nome de usuário e a mensagem com o link de ativação ou redefinição. O Cloudflare R2 armazena e entrega as capas do catálogo. A rotina documentada de backup prevê uma cópia do banco em um bucket privado no Cloudflare R2, executada pelo GitHub Actions quando configurada.",
         "Ao carregar o site, seu navegador faz solicitações ao Google Fonts para exibir a fonte da interface. Se você abrir um link de compra, seu navegador acessará a loja externa, que trata as informações daquela visita e da eventual compra conforme sua própria política.",
-        "Para revisão antes da publicação: confirmar os serviços ativos, regiões de armazenamento, eventuais transferências internacionais e suas garantias, e a base legal aplicável a cada finalidade.",
       ],
     },
     {
@@ -54,7 +52,6 @@ export const privacyPolicy: LegalDocument = {
         "Para excluir sua conta, abra Meu perfil, acesse Configurações avançadas, escolha Excluir conta e confirme sua senha atual. Quando a exclusão é concluída, o CoMangá remove do banco ativo a conta e seu registro de aceite, os dados das listas pessoais e os registros de sessão e recuperação vinculados. Todas as sessões da conta são encerradas.",
         "Se a conta for a última com acesso efetivo de administração, o sistema bloqueia a exclusão pelo perfil até que haja outro administrador. As capas incluídas por administradores podem permanecer no catálogo, e o vínculo com a conta excluída é removido do banco ativo.",
         "Cópias de segurança feitas antes da exclusão podem conter dados da conta até serem descartadas. Registros técnicos e informações mantidas por provedores seguem seus próprios prazos.",
-        "Para revisão antes da publicação: confirmar os prazos ou critérios de retenção de contas pendentes, aceites, sessões, registros de recuperação, logs, e-mails e backups. Confirmar também como as exclusões são reaplicadas se um backup for restaurado.",
       ],
     },
     {
@@ -64,12 +61,6 @@ export const privacyPolicy: LegalDocument = {
         "Escreva para o endereço abaixo para solicitar acesso, correção ou exclusão dos seus dados e tratar de outras questões de privacidade.",
       ],
       contactEmail: supportEmail,
-    },
-    {
-      title: "Crianças e adolescentes",
-      paragraphs: [
-        "Para revisão antes da publicação: confirmar a política de cadastro e atendimento de crianças e adolescentes, a forma de tratar seus dados e os controles de restrição etária, inclusive para contas administrativas.",
-      ],
     },
   ],
 };
@@ -97,7 +88,6 @@ export const termsOfUse: LegalDocument = {
       title: "Conteúdo adulto",
       paragraphs: [
         "O conteúdo classificado como adulto fica oculto na área pública por padrão. Em contas sem permissão administrativa, o acesso exige login, 18 anos completos conforme a data de nascimento informada e a ativação da preferência em Meu perfil. Contas com permissão administrativa têm acesso para a manutenção do catálogo.",
-        "Para revisão antes da publicação: confirmar as regras de cadastro de menores e os controles de acesso a conteúdo com restrição etária.",
       ],
     },
     {
@@ -111,7 +101,6 @@ export const termsOfUse: LegalDocument = {
       title: "Links de compra",
       paragraphs: [
         "Quando disponível, o botão de compra abre o site da loja. A loja é responsável pela oferta, preço, pagamento, entrega, trocas e devoluções. Alguns botões podem conter links de afiliados.",
-        "Para revisão antes da publicação: confirmar se há comissões por links de afiliados e como essa informação deve aparecer para o usuário.",
       ],
     },
     {
@@ -125,7 +114,6 @@ export const termsOfUse: LegalDocument = {
       title: "Responsável e contato",
       paragraphs: [
         "Use o e-mail abaixo para pedir ajuda com a conta, relatar problemas com o catálogo ou esclarecer dúvidas sobre estes Termos.",
-        "Para revisão antes da publicação: confirmar o responsável pelo serviço e como alterações destes Termos serão comunicadas.",
       ],
       contactEmail: supportEmail,
     },
