@@ -16,6 +16,7 @@ import { Link, useLocation, useParams } from "react-router-dom";
 import { CatalogDetailsLoading } from "../CatalogDetailsLoading";
 import { BackLink } from "@/components/shared/BackLink";
 import { CatalogCover } from "@/features/public-catalog/CatalogCover";
+import { CatalogErrorMessage } from "@/features/public-catalog/CatalogErrorMessage";
 import {
   formatPublicReleaseDate,
   publicVolumeLabel,
@@ -103,7 +104,7 @@ function VolumeBreadcrumb({ volume, volumeLabel, editionLabel }: VolumeSectionPr
   const editionPath = publicEditionPath(volume.edition.work.slug, volume.edition.chronologicalNumber);
   const returnTo = directReturnPath(location.state, navigationState.catalogOrigin === "wishlist" ? ["/desejos"] : navigationState.catalogOrigin === "checklist" ? ["/lancamentos"] : []);
   return (
-    <div className="page-gutter fixed inset-x-0 top-0 z-50 flex h-16 min-w-0 items-center gap-3 border-b border-border bg-background md:left-20 lg:left-56">
+    <div data-catalog-header className="page-gutter fixed inset-x-0 top-0 z-50 flex h-16 min-w-0 items-center gap-3 border-b border-border bg-background max-sm:gap-1 md:left-20 lg:left-56">
       <BackLink
         aria-label={`Voltar para ${returnTo ? root.label : editionLabel}`}
         to={returnTo ?? editionPath}
@@ -117,20 +118,20 @@ function VolumeBreadcrumb({ volume, volumeLabel, editionLabel }: VolumeSectionPr
       <nav className="flex min-w-0 items-center gap-1 text-base font-semibold leading-none" aria-label="Caminho de navegação">
         <Link
           to={root.path}
-          className="shrink-0 rounded-lg px-2 py-1 text-muted-foreground transition-colors hover:bg-sidebar-accent/30 hover:text-foreground"
+          className="shrink-0 rounded-lg px-2 py-1 text-muted-foreground transition-colors hover:bg-sidebar-accent/30 hover:text-foreground max-sm:hidden"
         >
           {root.label}
         </Link>
-        <ChevronRight className="h-5 w-5 shrink-0 text-muted-foreground" aria-hidden="true" />
+        <ChevronRight className="h-5 w-5 shrink-0 text-muted-foreground max-sm:hidden" aria-hidden="true" />
         <Link
           to={publicWorkPath(volume.edition.work.slug)}
           state={navigationState}
-          className="truncate rounded-lg px-2 py-1 text-muted-foreground transition-colors hover:bg-sidebar-accent/30 hover:text-foreground"
+          className="truncate rounded-lg px-2 py-1 text-muted-foreground transition-colors hover:bg-sidebar-accent/30 hover:text-foreground max-sm:hidden"
           title={volume.edition.work.title}
         >
           {volume.edition.work.title}
         </Link>
-        <ChevronRight className="h-5 w-5 shrink-0 text-muted-foreground" aria-hidden="true" />
+        <ChevronRight className="h-5 w-5 shrink-0 text-muted-foreground max-sm:hidden" aria-hidden="true" />
         <Link
           to={editionPath}
           state={navigationState}
@@ -139,7 +140,7 @@ function VolumeBreadcrumb({ volume, volumeLabel, editionLabel }: VolumeSectionPr
           {editionLabel}
         </Link>
         <ChevronRight className="h-5 w-5 shrink-0 text-muted-foreground" aria-hidden="true" />
-        <span className="truncate rounded-lg bg-sidebar-accent/30 px-2 py-1 text-primary" aria-current="page">
+        <span className="truncate rounded-lg bg-sidebar-accent/30 px-2 py-1 text-primary max-lg:shrink-0" aria-current="page">
           {volumeLabel}
         </span>
       </nav>
@@ -151,7 +152,7 @@ function VolumeCover({ volume, volumeLabel }: Omit<VolumeSectionProps, "editionL
   const navigationState = catalogNavigationState(useLocation().state);
   const hasNavigation = volume.previousVolume || volume.nextVolume;
   return (
-    <section className="relative isolate flex min-h-[34rem] items-center justify-center overflow-hidden border-b border-border p-8 sm:min-h-[42rem] sm:p-12 lg:fixed lg:bottom-0 lg:left-56 lg:top-16 lg:h-[calc(100dvh-4rem)] lg:w-[calc((100vw-14rem)*0.425)] lg:min-h-0 lg:border-b-0 lg:border-r">
+    <section className="relative isolate flex items-center justify-center overflow-hidden border-b border-border px-5 py-6 lg:fixed lg:bottom-0 lg:left-56 lg:top-16 lg:h-[calc(100dvh-4rem)] lg:w-[calc((100vw-14rem)*0.425)] lg:border-b-0 lg:border-r lg:p-12">
       {volume.coverUrl ? (
         <>
           <img src={volume.coverUrl} alt="" aria-hidden="true" className="absolute inset-0 -z-20 h-full w-full scale-110 object-cover opacity-45 blur-2xl" />
@@ -166,7 +167,7 @@ function VolumeCover({ volume, volumeLabel }: Omit<VolumeSectionProps, "editionL
           src={volume.coverUrl}
           alt={`Capa do ${volumeLabel} de ${volume.edition.work.title}`}
           eager
-          className="w-full max-w-sm shadow-2xl shadow-black/50 sm:max-w-md lg:max-w-[23rem]"
+          className="w-full max-w-[min(19rem,42dvh)] shadow-2xl shadow-black/50 lg:max-w-[23rem]"
         />
         {hasNavigation ? (
           <nav className="grid w-full max-w-sm grid-cols-2 gap-3 sm:max-w-md lg:max-w-[23rem]" aria-label="Navegação entre volumes">
@@ -174,7 +175,7 @@ function VolumeCover({ volume, volumeLabel }: Omit<VolumeSectionProps, "editionL
               <Link
                 to={publicVolumePath(volume.edition.work.slug, volume.edition.chronologicalNumber, volume.previousVolume.number)}
                 state={navigationState}
-                className="inline-flex min-h-12 w-fit items-center gap-2 rounded-full bg-sidebar px-5 py-3 text-base font-semibold text-white shadow-md transition-colors hover:bg-sidebar-accent"
+                className="inline-flex min-h-12 w-fit items-center gap-2 rounded-full bg-sidebar px-5 py-3 text-base font-semibold text-white shadow-md transition-colors hover:bg-sidebar-accent max-lg:max-w-full max-lg:px-3"
               >
                 <ArrowLeft className="h-5 w-5 shrink-0" aria-hidden="true" />
                 {publicVolumeLabel(volume.previousVolume)}
@@ -184,7 +185,7 @@ function VolumeCover({ volume, volumeLabel }: Omit<VolumeSectionProps, "editionL
               <Link
                 to={publicVolumePath(volume.edition.work.slug, volume.edition.chronologicalNumber, volume.nextVolume.number)}
                 state={navigationState}
-                className="col-start-2 inline-flex min-h-12 w-fit items-center gap-2 justify-self-end rounded-full bg-sidebar px-5 py-3 text-base font-semibold text-white shadow-md transition-colors hover:bg-sidebar-accent"
+                className="col-start-2 inline-flex min-h-12 w-fit items-center gap-2 justify-self-end rounded-full bg-sidebar px-5 py-3 text-base font-semibold text-white shadow-md transition-colors hover:bg-sidebar-accent max-lg:max-w-full max-lg:px-3"
               >
                 {publicVolumeLabel(volume.nextVolume)}
                 <ArrowRight className="h-5 w-5 shrink-0" aria-hidden="true" />
@@ -199,9 +200,9 @@ function VolumeCover({ volume, volumeLabel }: Omit<VolumeSectionProps, "editionL
 
 function PurchaseActions({ volume, onRefresh }: { volume: PublicVolume; onRefresh: () => void }) {
   const affiliateLink = volume.affiliateLink;
-  const purchasePlacement = "col-start-2 mt-0";
+  const purchasePlacement = "col-span-full mt-0 lg:col-span-1 lg:col-start-2";
   return (
-    <div className="grid grid-cols-2 gap-3">
+    <div className="grid grid-cols-2 gap-3 max-[399px]:grid-cols-1">
       <PersonalVolumeActions volume={volume} onRefresh={onRefresh} />
       {affiliateLink ? (
         <a
@@ -221,7 +222,7 @@ function PurchaseActions({ volume, onRefresh }: { volume: PublicVolume; onRefres
           >
             Comprar na <img src="/amazon-logo.svg" alt="Amazon" className="h-8 w-8 -translate-y-px object-contain opacity-55" />
           </button>
-          <div className="pointer-events-none absolute left-[21%] top-1/2 flex h-10 w-[58%] -translate-y-1/2 rotate-[4deg] items-center justify-center gap-1 whitespace-nowrap bg-red-500 px-1 text-base font-bold leading-none text-white shadow-sm shadow-black/30">
+          <div className="pointer-events-none absolute left-[21%] top-1/2 flex h-10 w-[58%] -translate-y-1/2 rotate-[4deg] items-center justify-center gap-1 whitespace-nowrap bg-red-500 px-1 text-base font-bold leading-none text-white shadow-sm shadow-black/30 max-lg:left-[5%] max-lg:w-[90%] max-lg:text-sm">
             Indisponível na <img src="/amazon-logo.svg" alt="" className="h-6 w-6 shrink-0 object-contain brightness-0 invert" />
           </div>
         </div>
@@ -234,11 +235,11 @@ function VolumeArticle({ volume, volumeLabel, editionLabel, onRefresh }: VolumeS
   const navigationState = catalogNavigationState(useLocation().state);
   const editionPath = publicEditionPath(volume.edition.work.slug, volume.edition.chronologicalNumber);
   return (
-    <article className="flex min-w-0 flex-col bg-card/30 lg:col-start-2 lg:row-start-1">
+    <article className="flex min-w-0 flex-col bg-card/30 max-lg:[overflow-wrap:anywhere] lg:col-start-2 lg:row-start-1">
       <div className="px-5 pb-0 pt-6 sm:px-8">
         <h1 className="text-2xl font-bold leading-tight text-foreground sm:text-3xl">{volumeLabel}</h1>
         <div className="mt-4 flex flex-wrap gap-x-7 gap-y-3">
-          <div>
+          <div className="max-lg:min-w-0 max-lg:max-w-full">
             <p className="text-sm font-bold uppercase tracking-wide text-muted-foreground">Obra</p>
             <Link
               to={publicWorkPath(volume.edition.work.slug)}
@@ -249,7 +250,7 @@ function VolumeArticle({ volume, volumeLabel, editionLabel, onRefresh }: VolumeS
               <p className="text-2xl font-bold text-primary">{volume.edition.work.title}</p>
             </Link>
           </div>
-          <div>
+          <div className="max-lg:min-w-0 max-lg:max-w-full">
             <p className="text-sm font-bold uppercase tracking-wide text-muted-foreground">Edição</p>
             <Link
               to={editionPath}
@@ -331,7 +332,12 @@ function PublicVolumeDetailsContent() {
   if (!volume) {
     const navigationState = catalogNavigationState(location.state);
     const returnTo = directReturnPath(location.state, navigationState.catalogOrigin === "wishlist" ? ["/desejos"] : navigationState.catalogOrigin === "checklist" ? ["/lancamentos"] : []);
-    return <div className="page-gutter flex min-h-[calc(100dvh-5rem)] items-center justify-center py-12"><BackLink to={returnTo ?? "/pesquisa?tab=editions&sortBy=title&order=ASC&page=1"} preferHistory={Boolean(returnTo)} className="rounded-lg border border-border bg-input px-4 py-2 text-sm font-bold text-foreground">Voltar</BackLink></div>;
+    return (
+      <div className="page-gutter flex min-h-[calc(100dvh-5rem)] flex-col items-center justify-center gap-4 py-12">
+        <CatalogErrorMessage message={error} />
+        <BackLink to={returnTo ?? "/pesquisa?tab=editions&sortBy=title&order=ASC&page=1"} preferHistory={Boolean(returnTo)} className="rounded-lg border border-border bg-input px-4 py-2 text-sm font-bold text-foreground">Voltar</BackLink>
+      </div>
+    );
   }
   const volumeLabel = publicVolumeLabel(volume);
   const editionLabel = `${volume.edition.chronologicalNumber}ª edição`;
