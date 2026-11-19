@@ -1,9 +1,9 @@
 import { ArrowLeft, ArrowRight, ChevronRight } from "lucide-react";
-import { useLocation, useParams } from "react-router-dom";
+import { useLocation, useMatch, useParams } from "react-router-dom";
 import { BackLink } from "@/components/shared/BackLink";
 import { useLoadingScrollReset } from "@/hooks/useLoadingScrollReset";
 import { catalogNavigationState, catalogRoot, directReturnPath } from "./publicCatalogNavigation";
-import { publicEditionPath, publicWorkPath } from "./publicCatalogPaths";
+import { collectionEditionRoute, publicEditionPath, publicWorkPath } from "./publicCatalogPaths";
 
 type CatalogDetailKind = "work" | "edition" | "volume";
 
@@ -13,10 +13,9 @@ function loadingParentPath(kind: CatalogDetailKind, slug: string, editionNumber:
   return collectionContext ? "/colecao" : publicWorkPath(slug);
 }
 
-function LoadingNavigation({ kind }: { kind: CatalogDetailKind }) {
+function LoadingNavigation({ kind, isCollectionContext }: { kind: CatalogDetailKind; isCollectionContext: boolean }) {
   const { slug = "", editionNumber = "" } = useParams();
   const location = useLocation();
-  const isCollectionContext = location.pathname.startsWith("/colecao/");
   const navigationState = isCollectionContext ? { catalogOrigin: "collection" as const } : catalogNavigationState(location.state);
   const root = catalogRoot(navigationState.catalogOrigin);
   const allowedPaths = kind === "edition"
@@ -29,7 +28,7 @@ function LoadingNavigation({ kind }: { kind: CatalogDetailKind }) {
   const pathItems = { work: 2, edition: 3, volume: 4 }[kind];
 
   return (
-    <div className="page-gutter fixed inset-x-0 top-0 z-50 flex h-16 min-w-0 items-center gap-3 border-b border-border bg-background md:left-20 lg:left-56">
+    <div data-catalog-header={isCollectionContext ? undefined : true} className="page-gutter fixed inset-x-0 top-0 z-50 flex h-16 min-w-0 items-center gap-3 border-b border-border bg-background md:left-20 lg:left-56">
       <BackLink to={returnTo ?? parentPath} preferHistory={Boolean(returnTo)} state={navigationState}
         className="inline-flex shrink-0 items-center gap-2 rounded-lg px-2 py-1 text-base font-bold leading-none text-foreground transition-colors hover:bg-sidebar-accent/30 hover:text-foreground">
         <ArrowLeft className="h-5 w-5 text-primary" aria-hidden="true" />
@@ -72,7 +71,7 @@ function VolumePreviews({ edition = false }: { edition?: boolean }) {
   return (
     <div className={edition ? "grid grid-cols-2 gap-x-3 gap-y-7 sm:grid-cols-3 sm:gap-x-4 lg:grid-cols-5" : "grid grid-cols-2 gap-3 sm:grid-cols-3 lg:grid-cols-5"}>
       {Array.from({ length: 5 }, (_, index) => (
-        <div key={index} className="min-w-0">
+        <div key={index} className={`min-w-0 ${!edition && index === 4 ? "hidden sm:block" : ""}`}>
           <Shape className="aspect-[2/3] rounded-lg border border-sidebar-foreground/15" />
           <Shape className="mt-2 h-4 w-3/4" />
           {edition && <Shape className="mt-1 h-3 w-1/2" />}
@@ -82,12 +81,13 @@ function VolumePreviews({ edition = false }: { edition?: boolean }) {
   );
 }
 
-function WorkOrEditionLoading({ kind }: { kind: "work" | "edition" }) {
+function WorkOrEditionLoading({ kind, isCollectionContext }: { kind: "work" | "edition"; isCollectionContext: boolean }) {
+  const isWork = kind === "work";
   return (
     <section className="mt-4 grid items-start gap-x-7 gap-y-7 border-b border-border pb-9 md:grid-cols-[13rem_minmax(0,1fr)] md:gap-y-0 lg:gap-x-10">
-      <div className="min-w-0">
+      <div className={`min-w-0 ${isWork ? "contents md:block" : ""}`}>
         <Shape className="mx-auto aspect-[2/3] w-full max-w-52 rounded-lg border border-sidebar-foreground/15 md:mx-0" />
-        <div className="relative mt-7 border-b border-border pb-7 md:border-b-0 md:pb-0 md:pr-7">
+        <div className={`relative mt-7 border-border md:pr-7 ${isWork ? "order-3 max-md:mt-0 max-md:border-t max-md:pt-7" : "border-b pb-7 md:border-b-0 md:pb-0"}`}>
           <span className="absolute bottom-0 right-0 top-0 hidden w-px bg-border md:block" />
           {kind === "work" ? <>
             <Metadata count={2} className="grid-cols-1" />
@@ -104,18 +104,20 @@ function WorkOrEditionLoading({ kind }: { kind: "work" | "edition" }) {
           </>}
         </div>
       </div>
-      <div className="min-w-0">
-        <div className="flex flex-wrap items-center gap-4">
-          <Shape className={kind === "work" ? "h-10 w-3/5 max-w-sm" : "h-10 w-40"} />
-          {kind === "edition" && <div className="ml-auto flex min-w-0 flex-wrap items-center justify-end gap-2">
-            <Shape className="mr-1 h-4 w-32" />
-            <Shape className="h-10 w-28 rounded-full" /><Shape className="h-10 w-28 rounded-full" />
-          </div>}
+      <div className={`min-w-0 ${isWork ? "contents md:block" : ""}`}>
+        <div className="order-2 min-w-0">
+          <div className={`flex flex-wrap items-center gap-4 ${isCollectionContext ? "" : "max-lg:flex-col max-lg:items-stretch"}`}>
+            <Shape className={isWork ? "h-10 w-3/5 max-w-sm" : "h-10 w-40"} />
+            {!isWork && <div className={`ml-auto flex min-w-0 flex-wrap items-center justify-end gap-2 ${isCollectionContext ? "" : "max-lg:ml-0 max-lg:justify-start"}`}>
+              <div className={`mr-1 ${isCollectionContext ? "" : "max-lg:basis-full"}`}><Shape className="h-4 w-32 max-w-full" /></div>
+              <Shape className="h-10 w-28 rounded-full" /><Shape className="h-10 w-28 rounded-full" />
+            </div>}
+          </div>
+          {isWork ? (
+            <div className="mt-6"><Shape className="mb-3 h-3 w-20" /><TextLines /></div>
+          ) : <Shape className="mt-3 h-6 w-2/3 max-w-sm" />}
         </div>
-        {kind === "work" ? (
-          <div className="mt-6"><Shape className="mb-3 h-3 w-20" /><TextLines /></div>
-        ) : <Shape className="mt-3 h-6 w-2/3 max-w-sm" />}
-        <div className={`border-t border-border pt-7 ${kind === "work" ? "mt-7" : "mt-5"}`}>
+        <div className={`order-4 border-t border-border pt-7 ${isWork ? "md:mt-7" : "mt-5"}`}>
           {kind === "work" && <>
             <Shape className="h-7 w-56 max-w-full" />
             <div className="mb-5 mt-5 py-3"><Shape className="h-5 w-3/5" /><Shape className="mt-1 h-4 w-2/5" /></div>
@@ -130,9 +132,9 @@ function WorkOrEditionLoading({ kind }: { kind: "work" | "edition" }) {
 function VolumeLoading() {
   return (
     <div className="-mx-4 grid min-h-[calc(100dvh-7.5rem)] w-[calc(100%+2rem)] sm:-mx-6 sm:w-[calc(100%+3rem)] xl:-mx-10 xl:w-[calc(100%+5rem)] lg:items-start lg:grid-cols-[minmax(22rem,0.85fr)_minmax(24rem,1.15fr)]">
-      <div className="flex min-h-[34rem] items-center justify-center border-b border-border bg-card/30 p-8 sm:min-h-[42rem] sm:p-12 lg:fixed lg:bottom-0 lg:left-56 lg:top-16 lg:h-[calc(100dvh-4rem)] lg:w-[calc((100vw-14rem)*0.425)] lg:min-h-0 lg:border-b-0 lg:border-r">
+      <div className="flex items-center justify-center border-b border-border bg-card/30 px-5 py-6 lg:fixed lg:bottom-0 lg:left-56 lg:top-16 lg:h-[calc(100dvh-4rem)] lg:w-[calc((100vw-14rem)*0.425)] lg:border-b-0 lg:border-r lg:p-12">
         <div className="flex w-full max-w-md flex-col items-center gap-6 lg:-translate-y-3">
-          <Shape className="aspect-[2/3] w-full max-w-sm rounded-lg sm:max-w-md lg:max-w-[23rem]" />
+          <Shape className="aspect-[2/3] w-full max-w-[min(19rem,42dvh)] rounded-lg lg:max-w-[23rem]" />
           <div className="grid w-full max-w-sm grid-cols-2 gap-3 sm:max-w-md lg:max-w-[23rem]">
             <div className="inline-flex min-h-12 w-fit max-w-full items-center gap-2 rounded-full bg-sidebar px-5 py-3 shadow-md">
               <ArrowLeft className="h-5 w-5 shrink-0 text-muted-foreground" />
@@ -151,8 +153,8 @@ function VolumeLoading() {
           <div className="grid gap-2"><Shape className="h-4 w-12" /><Shape className="h-7 w-40" /></div>
           <div className="grid gap-2"><Shape className="h-4 w-16" /><Shape className="h-7 w-52" /></div>
         </div>
-        <div className="my-6 grid grid-cols-2 gap-3 border-y border-border py-6">
-          {Array.from({ length: 4 }, (_, index) => <Shape key={index} className="h-[3.25rem] rounded-full" />)}
+        <div className="my-6 grid grid-cols-2 gap-3 border-y border-border py-6 max-[399px]:grid-cols-1">
+          {Array.from({ length: 4 }, (_, index) => <Shape key={index} className="h-[3.25rem] rounded-full max-lg:last:col-span-full" />)}
         </div>
         <Shape className="mb-4 h-4 w-24" /><TextLines />
         <div className="mt-6 border-t border-border pt-6">
@@ -173,14 +175,15 @@ function VolumeLoading() {
 
 export function CatalogDetailsLoading({ kind }: { kind: CatalogDetailKind }) {
   useLoadingScrollReset(true);
+  const isCollectionContext = Boolean(useMatch(collectionEditionRoute));
   const label = { work: "Carregando Obra...", edition: "Carregando edição...", volume: "Carregando volume..." }[kind];
   return (
     <div className={`page-gutter min-w-0 flex-1 bg-background pb-7 sm:pb-9 ${kind === "volume" ? "pt-16" : "pt-[4.5rem]"}`}>
-      <LoadingNavigation kind={kind} />
+      <LoadingNavigation kind={kind} isCollectionContext={isCollectionContext} />
       <div role="status" aria-label={label} aria-busy="true">
         <span className="sr-only">{label}</span>
         <div className="w-full" aria-hidden="true">
-          {kind === "volume" ? <VolumeLoading /> : <div className="mx-auto w-full max-w-7xl"><WorkOrEditionLoading kind={kind} /></div>}
+          {kind === "volume" ? <VolumeLoading /> : <div className="mx-auto w-full max-w-7xl"><WorkOrEditionLoading kind={kind} isCollectionContext={isCollectionContext} /></div>}
         </div>
       </div>
     </div>

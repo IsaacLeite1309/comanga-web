@@ -42,7 +42,7 @@ interface FilterFieldProps {
 function FilterField({ label, value, options, onChange, disabled, searchable = false }: FilterFieldProps) {
   return (
     <div className="min-w-0">
-      <span className="block truncate text-xs font-bold uppercase tracking-wide text-foreground sm:whitespace-nowrap" title={label}>
+      <span className="block text-xs font-bold uppercase tracking-wide text-foreground max-lg:[overflow-wrap:anywhere] lg:truncate" title={label}>
         {label}
       </span>
       <SearchableSelect
@@ -105,7 +105,7 @@ function SearchInput({ catalog }: { catalog: PesquisaCatalog }) {
 function PrimaryFilter({ label, value, options, onChange, disabled, searchable = false }: FilterFieldProps) {
   return (
     <div className="min-w-0 sm:w-[13.5rem] sm:shrink-0">
-      <span className="block truncate text-xs font-bold uppercase tracking-wide text-foreground" title={label}>{label}</span>
+      <span className="block text-xs font-bold uppercase tracking-wide text-foreground max-lg:[overflow-wrap:anywhere] lg:truncate" title={label}>{label}</span>
       <SearchableSelect
         ariaLabel={label}
         value={value}
@@ -189,7 +189,7 @@ function PrimaryFilters({ catalog }: { catalog: PesquisaCatalog }) {
 
 function WorkAdvancedFilters({ catalog }: { catalog: PesquisaCatalog }) {
   return (
-    <div className="grid grid-cols-2 gap-4 sm:grid-cols-[13.5rem_13.5rem] sm:gap-3">
+    <div className="grid grid-cols-2 gap-4 max-lg:items-end sm:grid-cols-[13.5rem_13.5rem] sm:gap-3">
       <FilterField
         label="País de Origem"
         value={catalog.country}
@@ -258,7 +258,7 @@ function WorkAdvancedFilters({ catalog }: { catalog: PesquisaCatalog }) {
 
 function EditionAdvancedFilters({ catalog }: { catalog: PesquisaCatalog }) {
   return (
-    <div className="grid grid-cols-2 gap-4 sm:grid-cols-[13.5rem_13.5rem] sm:gap-3">
+    <div className="grid grid-cols-2 gap-4 max-lg:items-end sm:grid-cols-[13.5rem_13.5rem] sm:gap-3">
       <FilterField
         label="Número da edição"
         value={catalog.chronologicalNumber ? String(catalog.chronologicalNumber) : ""}

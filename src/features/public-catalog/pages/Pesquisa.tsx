@@ -13,7 +13,7 @@ const Pesquisa = () => {
   return (
     <div className="page-gutter catalog-menu-search-top-space min-w-0 flex-1 pb-7 sm:pb-9">
       <div className="mx-auto w-full max-w-[100rem]">
-        <div className="relative z-30">
+        <div className="catalog-filters relative z-30">
           <div className="flex flex-col gap-3 xl:flex-row xl:items-end">
             <TabSelector catalog={catalog} />
             <fieldset className="flex min-w-0 flex-1 flex-col gap-3 border-0 p-0 xl:flex-row xl:items-end">

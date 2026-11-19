@@ -8,6 +8,7 @@ import { PublicWorkCard } from '@/features/public-catalog/PublicWorkCard';
 import type { PublicCatalogTab, PublicEditionSummary } from '@/features/public-catalog/publicCatalogTypes';
 import { type PesquisaCatalog } from '../hooks/usePesquisaCatalog';
 import { CatalogRefreshNotice } from '@/features/public-catalog/CatalogRefreshNotice';
+import { CatalogErrorMessage } from '@/features/public-catalog/CatalogErrorMessage';
 
 export { ResultsSummary, CatalogResults };
 
@@ -35,10 +36,10 @@ function EditionCard({ edition }: { edition: PublicEditionSummary }) {
           emptyLabel="Capa indisponível"
           className="transition-transform group-hover:-translate-y-1"
         />
-        <h2 className="mt-2 truncate text-sm font-normal text-foreground group-hover:text-primary sm:text-base" title={edition.work.title}>
+        <h2 className="mt-2 text-sm font-normal text-foreground group-hover:text-primary max-lg:[overflow-wrap:anywhere] sm:text-base lg:truncate" title={edition.work.title}>
           {edition.work.title}
         </h2>
-        <p className="mt-1 truncate text-xs text-muted-foreground" title={metadata}>{metadata}</p>
+        <p className="mt-1 text-xs text-muted-foreground max-lg:[overflow-wrap:anywhere] lg:truncate" title={metadata}>{metadata}</p>
       </Link>
     </article>
   );
@@ -85,6 +86,7 @@ function ResultCards({ catalog }: { catalog: PesquisaCatalog }) {
       <CatalogPagination
         pagination={catalog.pagination}
         onPageChange={(page) => catalog.changePage(page, catalog.pagination.totalPages)}
+        wrapOnSmallScreens
       />
     </>
   );
@@ -95,7 +97,7 @@ function CatalogResults({ catalog }: { catalog: PesquisaCatalog }) {
     return <CatalogResultsLoading label={catalog.tab === "works" ? "Carregando Obras..." : "Carregando Edições..."} />;
   }
   if (catalog.error) {
-    return null;
+    return <CatalogErrorMessage message={catalog.error} />;
   }
   const hasResults = catalog.tab === "works" ? catalog.works.length > 0 : catalog.editions.length > 0;
   if (hasResults) return <><CatalogRefreshNotice message={catalog.refreshError} onRetry={catalog.retryResults} /><ResultCards catalog={catalog} /></>;

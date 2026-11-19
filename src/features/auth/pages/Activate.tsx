@@ -77,7 +77,7 @@ const Activate = () => {
             <h2 className="text-2xl font-semibold text-foreground text-center">
               Conta ativada!
             </h2>
-            <p className="text-sm text-muted-foreground text-center">
+            <p className="text-sm text-muted-foreground text-center max-lg:[overflow-wrap:anywhere]">
               {message}
             </p>
             <Link
@@ -97,7 +97,7 @@ const Activate = () => {
             <h2 className="text-2xl font-semibold text-foreground text-center">
               Falha na ativação
             </h2>
-            <p className="text-sm text-red-400 text-center">
+            <p className="text-sm text-red-400 text-center max-lg:[overflow-wrap:anywhere]">
               {message}
             </p>
             <Link

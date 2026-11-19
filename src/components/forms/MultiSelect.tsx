@@ -298,6 +298,7 @@ function OptionsMenu({
           <button
             key={optionValue}
             type="button"
+            data-select-option
             title={option.label}
             disabled={optionDisabled}
             onClick={() => {

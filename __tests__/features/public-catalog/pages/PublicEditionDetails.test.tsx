@@ -124,6 +124,7 @@ function renderPage(entry = "/obra/monster/edicao/2?page=1") {
     <MemoryRouter initialEntries={[entry]}>
       <Routes>
         <Route path="/obra/:slug/edicao/:editionNumber" element={<><PublicEditionDetails /><LocationProbe /></>} />
+        <Route path="/colecao/:slug/edicao/:editionNumber" element={<><PublicEditionDetails /><LocationProbe /></>} />
       </Routes>
     </MemoryRouter>,
   );
@@ -192,6 +193,16 @@ describe("PublicEditionDetails", () => {
     await screen.findByRole("heading", { name: "2ª edição", level: 1 });
     expect(screen.getByRole("link", { name: "0/25 adquiridos" })).toHaveAttribute("href", "/obra/monster/edicao/2/selecionar/colecao");
     expect(screen.getByRole("link", { name: "0/25 desejados" })).toHaveAttribute("href", "/obra/monster/edicao/2/selecionar/desejos");
+  });
+
+  it.each([["obra", true], ["colecao", false], ["COLECAO", false]] as const)("aplica ajustes mobile somente à edição pública quando aberta por /%s", async (root, publicLayout) => {
+    const { container } = renderPage(`/${root}/monster/edicao/2`);
+    expect(screen.getByRole("status", { name: "Carregando edição..." })).toBeInTheDocument();
+    expect(Boolean(container.querySelector("[data-catalog-header]"))).toBe(publicLayout);
+
+    await screen.findByRole("heading", { name: "2ª edição", level: 1 });
+    expect(Boolean(container.querySelector("[data-catalog-header]"))).toBe(publicLayout);
+    expect(Boolean(container.querySelector("[data-public-edition]"))).toBe(publicLayout);
   });
 
   it("mostra o total adquirido da Edição em azul com o ícone de confirmação", async () => {
