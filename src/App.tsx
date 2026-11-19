@@ -22,6 +22,9 @@ import { ProtectedRoute } from "@/app/ProtectedRoute";
 import { PersonalRoute } from "@/app/PersonalRoute";
 import { GuestRoute } from "@/app/GuestRoute";
 import { PublicProfileRoute } from "@/app/PublicProfileRoute";
+import { LegalDocumentPage } from "@/app/LegalDocumentPage";
+import { LegalFooter } from "@/components/legal/LegalFooter";
+import { PRIVACY_POLICY_PATH, TERMS_OF_USE_PATH } from "@/components/legal/legalPaths";
 
 const AdminUsersPage = lazy(() => import("@/features/admin-users").then((module) => ({ default: module.AdminUsersPage })));
 const AdminOptionsPage = lazy(() => import("@/features/admin-catalog").then((module) => ({ default: module.AdminOptionsPage })));
@@ -52,6 +55,15 @@ function PublicPage({ children }: { children: React.ReactNode }) {
   return <PublicProfileRoute>{children}</PublicProfileRoute>;
 }
 
+function ProfileRoute() {
+  return (
+    <ProtectedRoute>
+      <ProfilePage />
+      <LegalFooter />
+    </ProtectedRoute>
+  );
+}
+
 function LibraryPage({ kind }: { kind: "collection" | "wishlist" }) {
   const { isAuthenticated } = useAuth();
   return (
@@ -67,6 +79,15 @@ function adminPage(page: React.ReactNode) {
   return <AdminRoute>{page}</AdminRoute>;
 }
 
+function MainContent({ children }: { children: React.ReactNode }) {
+  const { activeProfile } = useAuth();
+  return (
+    <main className={`min-w-0 flex-1 flex flex-col md:ml-20 pb-16 md:pb-0 ${activeProfile === "Administrador" ? "lg:ml-64" : "lg:ml-56"}`}>
+      {children}
+    </main>
+  );
+}
+
 const App = () => (
   <>
     <Sonner />
@@ -76,32 +97,19 @@ const App = () => (
         <DetailScrollReset />
         <div className="flex min-h-screen w-full max-w-full overflow-x-clip bg-background">
           <PublicNav />
-          <main className="min-w-0 flex-1 flex flex-col md:ml-20 lg:ml-56 pb-16 md:pb-0">
+          <MainContent>
             <Routes>
               <Route path="/recuperar-senha" element={<GuestPage><PasswordRecoveryPage /></GuestPage>} />
               <Route path="/redefinir-senha/:token?" element={<GuestPage><PasswordRecoveryPage reset /></GuestPage>} />
               <Route path="/" element={<Navigate to="/colecao" replace />} />
               <Route path="/entrar" element={<GuestPage><AuthPage /></GuestPage>} />
               <Route path="/cadastrar" element={<GuestPage><AuthPage /></GuestPage>} />
+              <Route path={TERMS_OF_USE_PATH} element={<LegalDocumentPage kind="terms" />} />
+              <Route path={PRIVACY_POLICY_PATH} element={<LegalDocumentPage kind="privacy" />} />
               <Route path="/activate/:token" element={<ActivatePage />} />
               <Route path="/reenvio" element={<GuestPage><ResendActivationPage /></GuestPage>} />
               
-              <Route 
-                path="/perfil/:username" 
-                element={
-                  <ProtectedRoute>
-                    <ProfilePage />
-                  </ProtectedRoute>
-                } 
-              />
-              <Route
-                path="/perfil"
-                element={
-                  <ProtectedRoute>
-                    <ProfilePage />
-                  </ProtectedRoute>
-                }
-              />
+              <Route path="/perfil/:username?" element={<ProfileRoute />} />
               
               <Route path="/pesquisa" element={<PublicPage><PublicCatalogPage /></PublicPage>} />
               <Route path="/lancamentos" element={<PublicPage><PublicChecklistPage /></PublicPage>} />
@@ -174,7 +182,7 @@ const App = () => (
               {/* ADD ALL CUSTOM ROUTES ABOVE THE CATCH-ALL "*" ROUTE */}
               <Route path="*" element={<NotFound />} />
             </Routes>
-          </main>
+          </MainContent>
         </div>
       </AuthProvider>
     </BrowserRouter>

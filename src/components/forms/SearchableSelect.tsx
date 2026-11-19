@@ -287,6 +287,7 @@ function OptionsMenu({
           <button
             key={optionValue}
             type="button"
+            data-select-option
             title={option.label}
             onClick={() => selectOption(optionValue)}
             className={`flex h-11 w-full items-center justify-between gap-2 px-3 text-left text-sm font-semibold transition-colors ${selected ? "bg-primary text-primary-foreground" : "text-foreground hover:bg-primary hover:text-primary-foreground"}`}

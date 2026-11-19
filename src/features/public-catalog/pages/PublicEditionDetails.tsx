@@ -3,12 +3,13 @@ import { CatalogRefreshNotice } from "../CatalogRefreshNotice";
 import { useQuery, useQueryClient } from "@tanstack/react-query";
 import { useEffect } from "react";
 import { ArrowLeft, BookOpen, ChevronRight, Heart, LibraryBig, type LucideIcon } from "lucide-react";
-import { Link, useLocation, useParams } from "react-router-dom";
+import { Link, useLocation, useMatch, useParams } from "react-router-dom";
 import { toast } from "sonner";
 import { useAuth } from "@/features/auth";
 import { CatalogDetailsLoading } from "../CatalogDetailsLoading";
 import { BackLink } from "@/components/shared/BackLink";
 import { CatalogCover } from "@/features/public-catalog/CatalogCover";
+import { CatalogErrorMessage } from "@/features/public-catalog/CatalogErrorMessage";
 import { OwnedVolumeBadge } from "@/features/public-catalog/OwnedVolumeBadge";
 import { WishedVolumeBadge } from "@/features/public-catalog/WishedVolumeBadge";
 import { ReadVolumeBadge } from "@/features/public-catalog/ReadVolumeBadge";
@@ -22,7 +23,7 @@ import type {
 import { getApiError } from "@/lib/apiError";
 import { PUBLIC_CATALOG_QUERY_ROOT } from "@/lib/queryClient";
 import { usePublicCatalogScope } from "@/features/public-catalog/usePublicCatalogScope";
-import { publicVolumePath, publicWorkPath } from "@/features/public-catalog/publicCatalogPaths";
+import { collectionEditionRoute, publicVolumePath, publicWorkPath } from "@/features/public-catalog/publicCatalogPaths";
 import { catalogNavigationState, catalogRoot, directReturnPath, type CatalogNavigationState } from "@/features/public-catalog/publicCatalogNavigation";
 import { useCatalogErrorToast } from "@/features/public-catalog/useCatalogErrorToast";
 
@@ -129,9 +130,9 @@ function EditionLibraryActions({ edition, editionPath, authenticated }: {
   const ownedCount = edition.personal?.ownedCount ?? 0;
   const missingCount = Math.max(0, edition.volumesCount - ownedCount);
   return (
-    <div className="ml-auto flex min-w-0 items-center justify-end gap-2 overflow-x-auto">
+    <div className="catalog-edition-actions ml-auto flex min-w-0 items-center justify-end gap-2 overflow-x-auto">
       <span className="mr-1 shrink-0 whitespace-nowrap text-base font-bold leading-none text-muted-foreground">Gerenciar volumes:</span>
-      <div className="grid w-max shrink-0 auto-cols-fr grid-flow-col gap-2">
+      <div className="catalog-edition-action-buttons grid w-max shrink-0 auto-cols-fr grid-flow-col gap-2">
         <EditionLibraryAction
           to={`${editionPath}/selecionar/colecao`}
           label="Coleção"
@@ -189,12 +190,13 @@ function EditionContent({ data, editionPath, isCollectionContext, navigationStat
   const { path: rootPath, label: rootLabel } = catalogRoot(navigationState.catalogOrigin);
   const returnTo = directReturnPath(location.state, navigationState.catalogOrigin === "collection" ? ["/colecao"] : navigationState.catalogOrigin === "search" ? ["/pesquisa"] : []);
   const backPath = returnTo ?? (isCollectionContext ? "/colecao" : workPath);
+  const publicLayout = isCollectionContext ? undefined : true;
 
   return (
-    <div className="page-gutter min-w-0 flex-1 pb-7 pt-[4.5rem] sm:pb-9">
+    <div data-public-edition={publicLayout} className="page-gutter min-w-0 flex-1 pb-7 pt-[4.5rem] sm:pb-9">
       <CatalogRefreshNotice message={refreshError} onRetry={onRetry} />
       <div className="mx-auto w-full max-w-7xl">
-        <div className="page-gutter fixed inset-x-0 top-0 z-50 flex h-16 min-w-0 items-center gap-3 border-b border-border bg-background md:left-20 lg:left-56">
+        <div data-catalog-header={publicLayout} className="page-gutter fixed inset-x-0 top-0 z-50 flex h-16 min-w-0 items-center gap-3 border-b border-border bg-background md:left-20 lg:left-56">
           <BackLink
             to={backPath}
             preferHistory={Boolean(returnTo)}
@@ -208,11 +210,11 @@ function EditionContent({ data, editionPath, isCollectionContext, navigationStat
           <nav className="flex min-w-0 items-center gap-1 text-base font-semibold leading-none" aria-label="Caminho de navegação">
             <Link
               to={rootPath}
-              className="shrink-0 rounded-lg px-2 py-1 text-muted-foreground transition-colors hover:bg-sidebar-accent/30 hover:text-foreground"
+              className="catalog-edition-root-crumb shrink-0 rounded-lg px-2 py-1 text-muted-foreground transition-colors hover:bg-sidebar-accent/30 hover:text-foreground"
             >
               {rootLabel}
             </Link>
-            <ChevronRight className="h-5 w-5 shrink-0 text-muted-foreground" aria-hidden="true" />
+            <ChevronRight className="catalog-edition-root-crumb h-5 w-5 shrink-0 text-muted-foreground" aria-hidden="true" />
             <Link
               to={workPath}
               state={navigationState}
@@ -222,7 +224,7 @@ function EditionContent({ data, editionPath, isCollectionContext, navigationStat
               {edition.work.title}
             </Link>
             <ChevronRight className="h-5 w-5 shrink-0 text-muted-foreground" aria-hidden="true" />
-            <span className="truncate rounded-lg bg-sidebar-accent/30 px-2 py-1 text-primary" aria-current="page">
+            <span className="catalog-edition-current-crumb truncate rounded-lg bg-sidebar-accent/30 px-2 py-1 text-primary" aria-current="page">
               {editionLabel}
             </span>
           </nav>
@@ -250,7 +252,7 @@ function EditionContent({ data, editionPath, isCollectionContext, navigationStat
                     aria-label={`Ver detalhes da obra ${edition.work.title}`}
                     className="-ml-3 -mt-1 flex w-[calc(100%+0.75rem)] flex-col items-start rounded-2xl bg-background px-3 py-1 text-left transition-colors hover:bg-sidebar-accent/30 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary focus-visible:ring-offset-2 focus-visible:ring-offset-background"
                   >
-                    <span className="break-words text-sm font-bold text-primary">{edition.work.title}</span>
+                    <span className="catalog-edition-work-title break-words text-sm font-bold text-primary">{edition.work.title}</span>
                   </Link>
                 </div>
               </section>
@@ -268,7 +270,7 @@ function EditionContent({ data, editionPath, isCollectionContext, navigationStat
           </div>
           <div className="contents md:col-start-2 md:block">
             <div className="order-2 min-w-0">
-              <div className="flex min-w-0 items-center gap-4">
+              <div className="catalog-edition-heading flex min-w-0 items-center gap-4">
                 <h1 className="shrink-0 text-3xl font-bold text-foreground sm:text-4xl">{editionLabel}</h1>
                 <EditionLibraryActions edition={edition} editionPath={editionPath} authenticated={Boolean(user)} />
               </div>
@@ -337,13 +339,18 @@ function PublicEditionDetailsContent() {
   const location = useLocation();
   const { data, loading, error, refreshError, retry } = useEditionDetails(Number(editionNumber), slug || "");
   useCatalogErrorToast(error, retry, "edition-details");
-  const isCollectionContext = location.pathname.startsWith("/colecao/");
+  const isCollectionContext = Boolean(useMatch(collectionEditionRoute));
   const navigationState = isCollectionContext ? { catalogOrigin: "collection" as const } : catalogNavigationState(location.state);
   const editionPath = `${isCollectionContext ? "/colecao" : "/obra"}/${encodeURIComponent(slug || "")}/edicao/${editionNumber}`;
   if (loading) return <CatalogDetailsLoading kind="edition" />;
   if (!data) {
     const returnTo = directReturnPath(location.state, navigationState.catalogOrigin === "collection" ? ["/colecao"] : navigationState.catalogOrigin === "search" ? ["/pesquisa"] : []);
-    return <div className="page-gutter flex min-h-[calc(100dvh-5rem)] items-center justify-center py-12"><BackLink to={returnTo ?? "/pesquisa?tab=editions&sortBy=title&order=ASC&page=1"} preferHistory={Boolean(returnTo)} className="rounded-lg border border-border bg-input px-4 py-2 text-sm font-bold text-foreground">Voltar</BackLink></div>;
+    return (
+      <div className="page-gutter flex min-h-[calc(100dvh-5rem)] flex-col items-center justify-center gap-4 py-12">
+        {!isCollectionContext && <CatalogErrorMessage message={error} />}
+        <BackLink to={returnTo ?? "/pesquisa?tab=editions&sortBy=title&order=ASC&page=1"} preferHistory={Boolean(returnTo)} className="rounded-lg border border-border bg-input px-4 py-2 text-sm font-bold text-foreground">Voltar</BackLink>
+      </div>
+    );
   }
   return (
     <EditionContent

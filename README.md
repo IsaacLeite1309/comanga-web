@@ -15,7 +15,7 @@ O `comanga-web` é uma Single Page Application construída com React, TypeScript
 Navegador -> React SPA/Vercel -> /api -> API Node.js/Render -> Neon e Cloudflare R2
 ```
 
-Em produção, `vercel.json` redireciona `/api/*` para a API hospedada na Render. O frontend nunca acessa diretamente o PostgreSQL, o R2 ou segredos de infraestrutura. O envio de e-mails pelo Resend é configurado somente na API.
+Em produção, `vercel.ts` encaminha `/api/*` para a API hospedada na Render. O frontend nunca acessa diretamente o PostgreSQL, o R2 ou segredos de infraestrutura. O envio de e-mails pelo Resend é configurado somente na API.
 
 ## Funcionalidades implementadas
 
@@ -130,7 +130,7 @@ A proteção de `develop` e `main` deve ser configurada pelo dono diretamente no
 - Testes cobrem componentes compartilhados, formulários, autenticação, páginas públicas, páginas administrativas e integração de serviços HTTP.
 - A interface trata carregamento, erros e estados vazios nas telas assíncronas relevantes.
 - GitHub Actions executa cobertura, lint e build em pull requests destinadas a `develop` e `main`.
-- O deploy é realizado na Vercel; a regra de rewrite do arquivo `vercel.json` mantém `/api` como URL estável para a SPA.
+- Na Vercel, `vercel.ts` mantém `/api` como URL estável para a SPA. Habilite a exposição das variáveis de sistema da Vercel e configure `COMANGA_PREVIEW_API_ORIGIN` no ambiente Preview com a origem HTTPS da API isolada de homologação. O Preview usa `/api` mesmo quando `VITE_API_URL` estiver configurada no projeto. Sem origem de homologação, a Vercel serve a SPA e seus arquivos estáticos e responde HTTP 503 às chamadas de API. Uma origem inválida interrompe o build. Antes de testar o cadastro, faça uma leitura em `/api/public/catalog-options` pelo Preview e confira o `x-request-id` retornado nos logs da API de homologação. O guia de publicação do cadastro com aceite está em `docs/operations/publicacao-cadastro-aceite.md` no repositório da API.
 
 ## Escopo ainda planejado
 

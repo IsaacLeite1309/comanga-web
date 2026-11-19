@@ -160,12 +160,25 @@ describe("PublicCalendar", () => {
     await waitFor(() => expect(screen.getByLabelText("Editora brasileira")).not.toBeDisabled());
   });
 
-  it.each(["month=13", "year=1899", "page=-1", "brazilianPublisherId=x", "month=", "order=INVALID", `term=${"a".repeat(256)}`])("trata parâmetro inválido %s sem consultar lançamentos nem mostrar ação manual", async query => {
+  it.each(["month=13", "year=1899", "page=-1", "brazilianPublisherId=x", "month=", "order=INVALID", `term=${"a".repeat(256)}`])("trata parâmetro inválido %s sem consultar lançamentos nem oferecer ação na notificação", async query => {
     renderCalendar(`/lancamentos?${query}`);
     await waitFor(() => expect(toast.error).toHaveBeenCalledWith(expect.any(String), expect.objectContaining({ id: "catalog-error-calendar-results" })));
     expect(listPublicCalendar).not.toHaveBeenCalled();
     const options = vi.mocked(toast.error).mock.calls.find(([, config]) => config?.id === "catalog-error-calendar-results")?.[1];
     expect(options).not.toHaveProperty("action");
+  });
+
+  it("permite restaurar o calendário quando um link contém filtros inválidos", async () => {
+    renderCalendar("/lancamentos?month=13&term=Monster");
+
+    expect(screen.getByText(/Parâmetros inválidos/)).toBeInTheDocument();
+    expect(listPublicCalendar).not.toHaveBeenCalled();
+    fireEvent.click(screen.getByRole("button", { name: "Restaurar calendário" }));
+
+    expect(await screen.findByRole("region", { name: "Volumes encontrados neste mês" })).toBeInTheDocument();
+    expect(currentParams().toString()).toBe("");
+    expect(listPublicCalendar).toHaveBeenLastCalledWith({ page: 1, limit: 24, order: "ASC" });
+    expect(screen.queryByText(/Parâmetros inválidos/)).not.toBeInTheDocument();
   });
 
   it.each(["1900-01", "2200-12"])("respeita o limite do período %s", async value => {

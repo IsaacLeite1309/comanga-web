@@ -4,6 +4,7 @@ import { useQuery, useQueryClient } from "@tanstack/react-query";
 import { ArrowLeft, ChevronRight } from "lucide-react";
 import { Link, useLocation, useParams } from "react-router-dom";
 import { CatalogCover } from "@/features/public-catalog/CatalogCover";
+import { CatalogErrorMessage } from "@/features/public-catalog/CatalogErrorMessage";
 import { CatalogRefreshNotice } from "@/features/public-catalog/CatalogRefreshNotice";
 import { OwnedVolumeBadge } from "@/features/public-catalog/OwnedVolumeBadge";
 import { WishedVolumeBadge } from "@/features/public-catalog/WishedVolumeBadge";
@@ -53,16 +54,17 @@ function StackedValues({ values }: { values: string[] }) {
   );
 }
 
-function VolumePreview({ volume, workSlug, workTitle, editionNumber }: {
+function VolumePreview({ volume, workSlug, workTitle, editionNumber, className = "" }: {
   volume: PublicVolumePreview;
   workSlug: string;
   workTitle: string;
   editionNumber: number;
+  className?: string;
 }) {
   const navigationState = catalogNavigationState(useLocation().state);
   const label = publicVolumeLabel(volume);
   return (
-    <article className="min-w-0">
+    <article className={`min-w-0 ${className}`}>
       <Link
         to={publicVolumePath(workSlug, editionNumber, volume.number)}
         state={navigationState}
@@ -102,7 +104,7 @@ function EditionCard({ edition, workSlug, workTitle }: { edition: PublicEditionD
         state={navigationState}
         className="-ml-3 flex w-[calc(100%+0.75rem)] flex-col items-start rounded-2xl bg-background px-3 py-3 text-left transition-colors hover:bg-sidebar-accent/30 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary focus-visible:ring-offset-2 focus-visible:ring-offset-background"
       >
-        <h3 className="flex flex-wrap items-center gap-2 text-base font-bold text-primary">
+        <h3 className="flex flex-wrap items-center gap-2 text-base font-bold text-primary max-lg:max-w-full">
           <span>{label}</span>
           <span aria-hidden="true">·</span>
           <span>{edition.brazilianPublisher.label}</span>
@@ -114,9 +116,10 @@ function EditionCard({ edition, workSlug, workTitle }: { edition: PublicEditionD
       {edition.volumes.length > 0 ? (
         <section className="mt-5" aria-label={`Prévia de volumes da ${label}`}>
           <div className="grid grid-cols-2 gap-3 sm:grid-cols-3 lg:grid-cols-5">
-            {edition.volumes.slice(0, 5).map((volume) => (
+            {edition.volumes.slice(0, 5).map((volume, index) => (
               <VolumePreview
                 key={volume.id}
+                className={index === 4 ? "hidden sm:block" : ""}
                 volume={volume}
                 workSlug={workSlug}
                 workTitle={workTitle}
@@ -170,14 +173,19 @@ function PublicWorkDetailsContent() {
   if (loading) return <CatalogDetailsLoading kind="work" />;
 
   if (error || !work) {
-    return <div className="page-gutter flex min-h-[calc(100dvh-5rem)] items-center justify-center py-12"><BackLink to={root.path} className="rounded-lg border border-border bg-input px-4 py-2 text-sm font-bold text-foreground">Voltar</BackLink></div>;
+    return (
+      <div className="page-gutter flex min-h-[calc(100dvh-5rem)] flex-col items-center justify-center gap-4 py-12">
+        <CatalogErrorMessage message={error} />
+        <BackLink to={root.path} className="rounded-lg border border-border bg-input px-4 py-2 text-sm font-bold text-foreground">Voltar</BackLink>
+      </div>
+    );
   }
 
   return (
-    <div className="page-gutter min-w-0 flex-1 pb-7 pt-[4.5rem] sm:pb-9">
+    <div className="page-gutter min-w-0 flex-1 pb-7 pt-[4.5rem] max-lg:[overflow-wrap:anywhere] sm:pb-9">
       <CatalogRefreshNotice message={refreshError} onRetry={retry} />
       <div className="mx-auto w-full max-w-7xl">
-        <div className="page-gutter fixed inset-x-0 top-0 z-50 flex h-16 min-w-0 items-center gap-3 border-b border-border bg-background md:left-20 lg:left-56">
+        <div data-catalog-header className="page-gutter fixed inset-x-0 top-0 z-50 flex h-16 min-w-0 items-center gap-3 border-b border-border bg-background md:left-20 lg:left-56">
           <BackLink
             to={root.path}
             className="inline-flex shrink-0 items-center gap-2 rounded-lg px-2 py-1 text-base font-bold leading-none text-foreground transition-colors hover:bg-sidebar-accent/30 hover:text-foreground"
@@ -201,7 +209,7 @@ function PublicWorkDetailsContent() {
         </div>
 
         <section className="mt-4 grid items-start gap-x-7 gap-y-7 border-b border-border pb-9 md:grid-cols-[13rem_minmax(0,1fr)] md:gap-y-0 lg:gap-x-10">
-          <div className="min-w-0 md:col-start-1">
+          <div className="contents min-w-0 md:col-start-1 md:block">
             <CatalogCover
               key={work.coverUrl || "empty"}
               src={work.coverUrl}
@@ -210,7 +218,7 @@ function PublicWorkDetailsContent() {
               className="order-1 mx-auto w-full max-w-52 md:mx-0"
             />
 
-            <aside className="relative mt-7 w-full border-b border-border pb-7 md:border-b-0 md:pb-0 md:pr-7" aria-label="Informações da obra">
+            <aside className="relative order-3 mt-7 w-full border-border max-md:mt-0 max-md:border-t max-md:pt-7 md:pr-7" aria-label="Informações da obra">
               <span className="absolute bottom-0 right-0 top-0 hidden w-px bg-border md:block" aria-hidden="true" />
               <dl className="grid gap-4">
                 <MetaItem label="Título original" value={work.originalTitle} />

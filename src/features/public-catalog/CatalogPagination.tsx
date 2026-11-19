@@ -6,12 +6,14 @@ type CatalogPaginationProps = {
   pagination: PublicPagination;
   onPageChange: (page: number) => void;
   ariaLabel?: string;
+  wrapOnSmallScreens?: boolean;
 };
 
 export function CatalogPagination({
   pagination,
   onPageChange,
   ariaLabel = "Paginação do catálogo",
+  wrapOnSmallScreens = false,
 }: CatalogPaginationProps) {
   if (pagination.totalPages <= 1) return null;
 
@@ -34,7 +36,12 @@ export function CatalogPagination({
       <span className="sr-only">
         Página {pagination.page} de {pagination.totalPages}
       </span>
-      <PageNumberNavigation page={pagination.page} totalPages={pagination.totalPages} onPageChange={changePage} />
+      <PageNumberNavigation
+        page={pagination.page}
+        totalPages={pagination.totalPages}
+        onPageChange={changePage}
+        className={wrapOnSmallScreens ? "max-lg:flex-wrap max-lg:overflow-visible max-lg:[&>button]:min-h-11 max-lg:[&>button]:min-w-11" : undefined}
+      />
       <button
         type="button"
         onClick={() => changePage(pagination.page + 1)}

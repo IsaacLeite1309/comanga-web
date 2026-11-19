@@ -613,6 +613,7 @@ describe("Pesquisa", () => {
 
     await act(async () => rejectRequest(new Error("indisponível")));
     await waitFor(() => expect(toast.error).toHaveBeenCalledWith("Não foi possível carregar as Obras. Tente novamente em instantes.", { id: "catalog-error-search" }));
+    expect(screen.getByText("Não foi possível carregar as Obras.")).toBeInTheDocument();
     expect(vi.mocked(toast.error).mock.lastCall?.[1]).not.toHaveProperty("action");
     expect(listPublicWorks).toHaveBeenCalledTimes(1);
   });

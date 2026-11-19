@@ -23,13 +23,13 @@ export function PublicWorkCard({
         className="group block rounded-lg outline-none focus-visible:ring-2 focus-visible:ring-primary"
       >
         <CatalogCover key={work.coverUrl || "empty"} src={work.coverUrl} alt={`Capa de ${work.title}`} className="transition-transform group-hover:-translate-y-1" />
-        <h2 className="mt-2 truncate text-sm font-normal text-foreground group-hover:text-primary sm:text-base" title={work.title}>
+        <h2 className="mt-2 text-sm font-normal text-foreground group-hover:text-primary max-lg:[overflow-wrap:anywhere] sm:text-base lg:truncate" title={work.title}>
           {work.title}
         </h2>
       </Link>
       {showAuthors ? (
         work.authors.length > 0 ? (
-          <p className="truncate text-xs font-normal text-muted-foreground">
+          <p className="text-xs font-normal text-muted-foreground max-lg:[overflow-wrap:anywhere] lg:truncate">
             {work.authors.map((author, index) => (
               <span key={author.id}>
                 {index > 0 ? ", " : null}
@@ -43,7 +43,7 @@ export function PublicWorkCard({
           <p className="truncate text-xs font-normal text-muted-foreground">Autor não informado</p>
         )
       ) : null}
-      {metadata ? <p className="mt-1 truncate text-xs text-muted-foreground" title={metadata}>{metadata}</p> : null}
+      {metadata ? <p className="mt-1 text-xs text-muted-foreground max-lg:[overflow-wrap:anywhere] lg:truncate" title={metadata}>{metadata}</p> : null}
     </article>
   );
 }
