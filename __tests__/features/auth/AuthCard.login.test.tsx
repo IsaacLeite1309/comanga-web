@@ -77,9 +77,10 @@ describe("AuthCard login", () => {
 
   it.each([
     [{ from: { pathname: "/colecao", search: "?page=2", hash: "#obra" } }, "Coleção retornada"],
-    [{ from: { pathname: "//externo.test" } }, "Perfil seguro"],
-    [undefined, "Perfil seguro"],
-  ])("retorna ao contexto seguro após entrar: %j", async (state, expected) => {
+    [{ from: { pathname: "/lista-de-desejos" } }, "Coleção retornada"],
+    [{ from: { pathname: "//externo.test" } }, "Coleção retornada"],
+    [undefined, "Coleção retornada"],
+  ])("abre a coleção após entrar: %j", async (state, expected) => {
     vi.mocked(api.post).mockResolvedValueOnce({ data: { user: { id: "1", username: "leitor" } } });
     render(<MemoryRouter initialEntries={[{ pathname: "/entrar", state }]}><Routes>
       <Route path="/entrar" element={<AuthCard />} />
@@ -89,6 +90,20 @@ describe("AuthCard login", () => {
     fillLoginForm("leitor@teste.com", "SenhaForte123!");
     fireEvent.click(screen.getByRole("button", { name: "ENTRAR" }));
     expect(await screen.findByText(expected)).toBeInTheDocument();
+  });
+
+  it("abre o perfil quando o login retorna o perfil administrador ativo", async () => {
+    vi.mocked(api.post).mockResolvedValueOnce({ data: { user: {
+      id: "1", username: "admin", profiles: ["Administrador", "Usuário Padrão"], active_profile: "Administrador",
+    } } });
+    render(<MemoryRouter initialEntries={["/entrar"]}><Routes>
+      <Route path="/entrar" element={<AuthCard />} />
+      <Route path="/perfil/admin" element={<div>Perfil administrador</div>} />
+      <Route path="/colecao" element={<div>Coleção</div>} />
+    </Routes></MemoryRouter>);
+    fillLoginForm("admin@teste.com", "SenhaForte123!");
+    fireEvent.click(screen.getByRole("button", { name: "ENTRAR" }));
+    expect(await screen.findByText("Perfil administrador")).toBeInTheDocument();
   });
 
   it("exibe erro exato para credenciais invalidas", async () => {

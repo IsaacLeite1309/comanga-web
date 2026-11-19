@@ -22,6 +22,9 @@ import { ProtectedRoute } from "@/app/ProtectedRoute";
 import { PersonalRoute } from "@/app/PersonalRoute";
 import { GuestRoute } from "@/app/GuestRoute";
 import { PublicProfileRoute } from "@/app/PublicProfileRoute";
+import { LegalDocumentPage } from "@/app/LegalDocumentPage";
+import { LegalFooter } from "@/components/legal/LegalFooter";
+import { PRIVACY_POLICY_PATH, TERMS_OF_USE_PATH } from "@/components/legal/legalPaths";
 
 const AdminUsersPage = lazy(() => import("@/features/admin-users").then((module) => ({ default: module.AdminUsersPage })));
 const AdminOptionsPage = lazy(() => import("@/features/admin-catalog").then((module) => ({ default: module.AdminOptionsPage })));
@@ -50,6 +53,15 @@ function GuestPage({ children }: { children: React.ReactNode }) {
 
 function PublicPage({ children }: { children: React.ReactNode }) {
   return <PublicProfileRoute>{children}</PublicProfileRoute>;
+}
+
+function ProfileRoute() {
+  return (
+    <ProtectedRoute>
+      <ProfilePage />
+      <LegalFooter />
+    </ProtectedRoute>
+  );
 }
 
 function LibraryPage({ kind }: { kind: "collection" | "wishlist" }) {
@@ -83,25 +95,12 @@ const App = () => (
               <Route path="/" element={<Navigate to="/colecao" replace />} />
               <Route path="/entrar" element={<GuestPage><AuthPage /></GuestPage>} />
               <Route path="/cadastrar" element={<GuestPage><AuthPage /></GuestPage>} />
+              <Route path={TERMS_OF_USE_PATH} element={<LegalDocumentPage kind="terms" />} />
+              <Route path={PRIVACY_POLICY_PATH} element={<LegalDocumentPage kind="privacy" />} />
               <Route path="/activate/:token" element={<ActivatePage />} />
               <Route path="/reenvio" element={<GuestPage><ResendActivationPage /></GuestPage>} />
               
-              <Route 
-                path="/perfil/:username" 
-                element={
-                  <ProtectedRoute>
-                    <ProfilePage />
-                  </ProtectedRoute>
-                } 
-              />
-              <Route
-                path="/perfil"
-                element={
-                  <ProtectedRoute>
-                    <ProfilePage />
-                  </ProtectedRoute>
-                }
-              />
+              <Route path="/perfil/:username?" element={<ProfileRoute />} />
               
               <Route path="/pesquisa" element={<PublicPage><PublicCatalogPage /></PublicPage>} />
               <Route path="/lancamentos" element={<PublicPage><PublicChecklistPage /></PublicPage>} />

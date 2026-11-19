@@ -63,6 +63,27 @@ describe("acessibilidade básica do acesso à conta", () => {
     expect(screen.getAllByRole("tabpanel")).toHaveLength(1);
   });
 
+  it.each(["/entrar", "/cadastrar"] as const)("não duplica os documentos legais no rodapé de %s", (rota) => {
+    renderAuthCard(rota);
+    expect(screen.queryByRole("navigation", { name: "Documentos legais" })).not.toBeInTheDocument();
+  });
+
+  it("abre os documentos em outra aba pelo formulário, preservando o cadastro", () => {
+    renderAuthCard("/cadastrar");
+    const painel = within(screen.getByRole("tabpanel"));
+    const username = painel.getByRole("textbox", { name: "Nome de Usuário" });
+    fireEvent.change(username, { target: { value: "leitora" } });
+
+    for (const name of ["Termos de Uso", "Política de Privacidade"]) {
+      const link = painel.getByRole("link", { name: `${name} (abre em nova aba)` });
+      expect(link).toHaveAttribute("target", "_blank");
+      expect(link).toHaveAttribute("rel", "noopener");
+      fireEvent.click(link);
+      expect(username).toHaveValue("leitora");
+      expect(painel.getByRole("checkbox")).not.toBeChecked();
+    }
+  });
+
   it("marca o campo inválido e anuncia a mensagem de erro do login", async () => {
     renderAuthCard();
 
