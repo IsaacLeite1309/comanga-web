@@ -140,7 +140,7 @@ function VolumeBreadcrumb({ volume, volumeLabel, editionLabel }: VolumeSectionPr
           {editionLabel}
         </Link>
         <ChevronRight className="h-5 w-5 shrink-0 text-muted-foreground" aria-hidden="true" />
-        <span className="truncate rounded-lg bg-sidebar-accent/30 px-2 py-1 text-primary max-lg:shrink-0" aria-current="page">
+        <span className="truncate rounded-lg bg-sidebar-accent/30 px-2 py-1 text-primary" aria-current="page">
           {volumeLabel}
         </span>
       </nav>
