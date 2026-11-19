@@ -135,7 +135,7 @@ export function PublicNav() {
         </div>
       </nav>
 
-      <nav className="hidden lg:flex fixed left-0 top-0 h-screen w-56 bg-sidebar border-r border-sidebar-foreground/30 flex-col justify-between py-6 px-4 z-50">
+      <nav className={cn("hidden lg:flex fixed left-0 top-0 h-screen bg-sidebar border-r border-sidebar-foreground/30 flex-col justify-between py-6 px-4 z-50", activeProfile === "Administrador" ? "w-64" : "w-56")}>
         <div className="flex flex-col gap-1">
           <div className="flex items-center gap-3 mb-8 px-3">
             <BrandLogo />

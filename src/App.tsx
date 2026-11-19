@@ -79,6 +79,15 @@ function adminPage(page: React.ReactNode) {
   return <AdminRoute>{page}</AdminRoute>;
 }
 
+function MainContent({ children }: { children: React.ReactNode }) {
+  const { activeProfile } = useAuth();
+  return (
+    <main className={`min-w-0 flex-1 flex flex-col md:ml-20 pb-16 md:pb-0 ${activeProfile === "Administrador" ? "lg:ml-64" : "lg:ml-56"}`}>
+      {children}
+    </main>
+  );
+}
+
 const App = () => (
   <>
     <Sonner />
@@ -88,7 +97,7 @@ const App = () => (
         <DetailScrollReset />
         <div className="flex min-h-screen w-full max-w-full overflow-x-clip bg-background">
           <PublicNav />
-          <main className="min-w-0 flex-1 flex flex-col md:ml-20 lg:ml-56 pb-16 md:pb-0">
+          <MainContent>
             <Routes>
               <Route path="/recuperar-senha" element={<GuestPage><PasswordRecoveryPage /></GuestPage>} />
               <Route path="/redefinir-senha/:token?" element={<GuestPage><PasswordRecoveryPage reset /></GuestPage>} />
@@ -173,7 +182,7 @@ const App = () => (
               {/* ADD ALL CUSTOM ROUTES ABOVE THE CATCH-ALL "*" ROUTE */}
               <Route path="*" element={<NotFound />} />
             </Routes>
-          </main>
+          </MainContent>
         </div>
       </AuthProvider>
     </BrowserRouter>
