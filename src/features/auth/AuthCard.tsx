@@ -245,6 +245,7 @@ interface RegisterFormProps {
   errors: RegisterErrors;
   loading: boolean;
   termsOutdated: boolean;
+  registrationUnavailable: boolean;
   onBirthDateChange: (value: string) => void;
   onTermsChange: (checked: boolean) => void;
   onChange: (event: ChangeEvent<HTMLInputElement>) => void;
@@ -256,6 +257,7 @@ function RegisterForm({
   errors,
   loading,
   termsOutdated,
+  registrationUnavailable,
   onBirthDateChange,
   onTermsChange,
   onChange,
@@ -303,6 +305,11 @@ function RegisterForm({
           termsOutdated={termsOutdated}
           onChange={onTermsChange}
         />
+        {registrationUnavailable && (
+          <p role="alert" className="text-sm text-destructive">
+            O cadastro está temporariamente indisponível. Atualize a página ou tente novamente em alguns instantes.
+          </p>
+        )}
         <button
           type="submit"
           disabled={loading || termsOutdated}
@@ -396,6 +403,7 @@ export function AuthCard() {
   const [registerData, setRegisterData] = useState(emptyRegisterData);
   const [registerErrors, setRegisterErrors] = useState(emptyRegisterErrors);
   const [termsOutdated, setTermsOutdated] = useState(false);
+  const [registrationUnavailable, setRegistrationUnavailable] = useState(false);
 
   /* ── Troca de tab com reset ── */
 
@@ -406,6 +414,7 @@ export function AuthCard() {
     setLoginErrors({ email: "", password: "" });
     setRegisterData(emptyRegisterData);
     setRegisterErrors(emptyRegisterErrors);
+    setRegistrationUnavailable(false);
   }
 
   function closeRegistrationNotice() {
@@ -489,11 +498,12 @@ export function AuthCard() {
       return;
     }
 
+    setRegistrationUnavailable(false);
     setLoading(true);
     try {
-      const response = await api.post("/auth/register", { ...registerData, termsVersion: termsOfUse.version });
-      const apiMessage = response.data.message;
-      const message = typeof apiMessage === "string" && apiMessage.includes("não foi possível enviar") ? apiMessage : REGISTRATION_SUCCESS_MESSAGE;
+      const message = await submitRegistration(registerData);
+      setRegistrationUnavailable(!message);
+      if (!message) return;
 
       // Limpar formulário e ir para login
       setRegisterData(emptyRegisterData);
@@ -537,6 +547,7 @@ export function AuthCard() {
             errors={termsOutdated ? { ...registerErrors, acceptedTerms: OUTDATED_TERMS_MESSAGE } : registerErrors}
             loading={loading}
             termsOutdated={termsOutdated}
+            registrationUnavailable={registrationUnavailable}
             onBirthDateChange={(value) => {
               setRegisterData((prev) => ({ ...prev, birthDate: value }));
               if (registerErrors.birthDate) setRegisterErrors((prev) => ({ ...prev, birthDate: "" }));
@@ -551,6 +562,18 @@ export function AuthCard() {
       {registrationNotice && <RegistrationSuccessDialog message={registrationNotice} onClose={closeRegistrationNotice} />}
     </div>
   );
+}
+
+async function submitRegistration(data: RegisterData): Promise<string | undefined> {
+  try {
+    const response = await api.post("/auth/register/v1", { ...data, termsVersion: termsOfUse.version });
+    const message = response.data?.message;
+    if (response.status !== 201 || typeof message !== "string") return undefined;
+    return message.includes("não foi possível enviar") ? message : REGISTRATION_SUCCESS_MESSAGE;
+  } catch (error) {
+    if (isAxiosError(error) && [404, 405, 503].includes(error.response?.status ?? 0)) return undefined;
+    throw error;
+  }
 }
 
 /* ── Type guard para AxiosError ── */

@@ -77,7 +77,7 @@ describe("AuthCard cadastro", () => {
     ["Conta criada com sucesso! Enviamos o e-mail de ativação.", "Cadastro realizado com sucesso! Ative sua conta clicando no link de ativação que te enviamos no e-mail."],
     ["Conta criada, mas não foi possível enviar o e-mail de ativação. Use a opção de reenvio.", "Conta criada, mas não foi possível enviar o e-mail de ativação. Use a opção de reenvio."],
   ])("mostra o aviso do cadastro em /entrar até fechar pelo X: %s", async (apiMessage, expectedMessage) => {
-    vi.mocked(api.post).mockResolvedValueOnce({ data: { message: apiMessage } });
+    vi.mocked(api.post).mockResolvedValueOnce({ status: 201, data: { message: apiMessage } });
     render(
       <MemoryRouter initialEntries={["/cadastrar"]}>
         <Routes>
@@ -91,7 +91,7 @@ describe("AuthCard cadastro", () => {
     fireEvent.click(screen.getByRole("button", { name: "CADASTRAR" }));
 
     const dialog = await screen.findByRole("dialog", { name: "Aviso de cadastro" });
-    expect(api.post).toHaveBeenCalledWith("/auth/register", expect.objectContaining({
+    expect(api.post).toHaveBeenCalledWith("/auth/register/v1", expect.objectContaining({
       acceptedTerms: true,
       termsVersion: "2026-11-18",
     }));
@@ -113,6 +113,41 @@ describe("AuthCard cadastro", () => {
     renderRegister();
 
     expect(screen.getByRole("tabpanel")).toHaveAttribute("tabindex", "-1");
+  });
+
+  it.each([404, 405, 503])("exibe orientação quando o cadastro versionado retorna %i e permite tentar novamente", async (status) => {
+    vi.mocked(api.post)
+      .mockRejectedValueOnce({ isAxiosError: true, response: { status, data: { error: "Indisponível." } } })
+      .mockResolvedValueOnce({ status: 201, data: { message: "Conta criada com sucesso!" } });
+    renderRegister();
+    fillRegisterForm({ username: "novo_user", email: "novo@usuario.com", password: "SenhaForte123!", confirmPassword: "SenhaForte123!" });
+    const acceptance = getAcceptanceCheckbox();
+    const submit = screen.getByRole("button", { name: "CADASTRAR" });
+    fireEvent.click(acceptance);
+    fireEvent.click(submit);
+
+    expect(await screen.findByRole("alert")).toHaveTextContent("Atualize a página ou tente novamente");
+    expect(acceptance).toBeChecked();
+    expect(api.post).toHaveBeenCalledTimes(1);
+    expect(api.post).toHaveBeenCalledWith("/auth/register/v1", expect.any(Object));
+    expect(screen.queryByRole("dialog", { name: "Aviso de cadastro" })).not.toBeInTheDocument();
+
+    fireEvent.click(submit);
+
+    expect(await screen.findByRole("dialog", { name: "Aviso de cadastro" })).toBeInTheDocument();
+    expect(api.post).toHaveBeenCalledTimes(2);
+    expect(api.post).toHaveBeenLastCalledWith("/auth/register/v1", expect.any(Object));
+  });
+
+  it("não confirma cadastro se o Preview responder com HTML da SPA", async () => {
+    vi.mocked(api.post).mockResolvedValueOnce({ status: 200, data: "<!doctype html>" });
+    renderRegister();
+    fillRegisterForm({ username: "novo_user", email: "novo@usuario.com", password: "SenhaForte123!", confirmPassword: "SenhaForte123!" });
+    fireEvent.click(getAcceptanceCheckbox());
+    fireEvent.click(screen.getByRole("button", { name: "CADASTRAR" }));
+
+    expect(await screen.findByRole("alert")).toHaveTextContent("Atualize a página ou tente novamente");
+    expect(screen.queryByRole("dialog", { name: "Aviso de cadastro" })).not.toBeInTheDocument();
   });
 
   it("impede um cadastro válido sem aceite e associa a mensagem ao campo", () => {
@@ -248,7 +283,7 @@ describe("AuthCard cadastro", () => {
     fireEvent.click(screen.getByRole("button", { name: "CADASTRAR" }));
 
     await waitFor(() => {
-      expect(api.post).toHaveBeenCalledWith("/auth/register", {
+      expect(api.post).toHaveBeenCalledWith("/auth/register/v1", {
         birthDate: "2000-01-01",
         username: "novo_user",
         email: "existente@usuario.com",
@@ -355,7 +390,7 @@ describe("AuthCard cadastro", () => {
 
 it("exige data válida e envia nascimento no cadastro", async () => {
   vi.clearAllMocks();
-  vi.mocked(api.post).mockResolvedValue({ data: { message: "Conta criada." } });
+  vi.mocked(api.post).mockResolvedValue({ status: 201, data: { message: "Conta criada." } });
   renderRegister();
   fillRegisterForm({ username: "new_user", email: "new@example.com", password: "SenhaForte123!", confirmPassword: "SenhaForte123!" });
   fireEvent.click(getAcceptanceCheckbox());
@@ -367,5 +402,5 @@ it("exige data válida e envia nascimento no cadastro", async () => {
   expect(await screen.findByRole("alert")).toHaveTextContent("não futura");
   fireEvent.change(screen.getByLabelText("Data de nascimento"), { target: { value: "2000-02-29" } });
   fireEvent.click(screen.getByRole("button", { name: "CADASTRAR" }));
-  await waitFor(() => expect(api.post).toHaveBeenCalledWith("/auth/register", expect.objectContaining({ birthDate: "2000-02-29" })));
+  await waitFor(() => expect(api.post).toHaveBeenCalledWith("/auth/register/v1", expect.objectContaining({ birthDate: "2000-02-29" })));
 });
