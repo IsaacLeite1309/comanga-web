@@ -54,16 +54,17 @@ function StackedValues({ values }: { values: string[] }) {
   );
 }
 
-function VolumePreview({ volume, workSlug, workTitle, editionNumber }: {
+function VolumePreview({ volume, workSlug, workTitle, editionNumber, className = "" }: {
   volume: PublicVolumePreview;
   workSlug: string;
   workTitle: string;
   editionNumber: number;
+  className?: string;
 }) {
   const navigationState = catalogNavigationState(useLocation().state);
   const label = publicVolumeLabel(volume);
   return (
-    <article className="min-w-0">
+    <article className={`min-w-0 ${className}`}>
       <Link
         to={publicVolumePath(workSlug, editionNumber, volume.number)}
         state={navigationState}
@@ -115,9 +116,10 @@ function EditionCard({ edition, workSlug, workTitle }: { edition: PublicEditionD
       {edition.volumes.length > 0 ? (
         <section className="mt-5" aria-label={`Prévia de volumes da ${label}`}>
           <div className="grid grid-cols-2 gap-3 sm:grid-cols-3 lg:grid-cols-5">
-            {edition.volumes.slice(0, 5).map((volume) => (
+            {edition.volumes.slice(0, 5).map((volume, index) => (
               <VolumePreview
                 key={volume.id}
+                className={index === 4 ? "hidden sm:block" : ""}
                 volume={volume}
                 workSlug={workSlug}
                 workTitle={workTitle}

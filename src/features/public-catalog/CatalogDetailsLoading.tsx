@@ -71,7 +71,7 @@ function VolumePreviews({ edition = false }: { edition?: boolean }) {
   return (
     <div className={edition ? "grid grid-cols-2 gap-x-3 gap-y-7 sm:grid-cols-3 sm:gap-x-4 lg:grid-cols-5" : "grid grid-cols-2 gap-3 sm:grid-cols-3 lg:grid-cols-5"}>
       {Array.from({ length: 5 }, (_, index) => (
-        <div key={index} className="min-w-0">
+        <div key={index} className={`min-w-0 ${!edition && index === 4 ? "hidden sm:block" : ""}`}>
           <Shape className="aspect-[2/3] rounded-lg border border-sidebar-foreground/15" />
           <Shape className="mt-2 h-4 w-3/4" />
           {edition && <Shape className="mt-1 h-3 w-1/2" />}
