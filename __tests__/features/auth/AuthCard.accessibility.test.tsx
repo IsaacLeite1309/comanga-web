@@ -63,12 +63,9 @@ describe("acessibilidade básica do acesso à conta", () => {
     expect(screen.getAllByRole("tabpanel")).toHaveLength(1);
   });
 
-  it.each(["/entrar", "/cadastrar"] as const)("oferece os documentos legais no rodapé de %s", (rota) => {
+  it.each(["/entrar", "/cadastrar"] as const)("não duplica os documentos legais no rodapé de %s", (rota) => {
     renderAuthCard(rota);
-    const footer = screen.getByRole("navigation", { name: "Documentos legais" });
-
-    expect(within(footer).getByRole("link", { name: "Termos de Uso (abre em nova aba)" })).toHaveAttribute("href", "/termos-de-uso");
-    expect(within(footer).getByRole("link", { name: "Política de Privacidade (abre em nova aba)" })).toHaveAttribute("href", "/politica-de-privacidade");
+    expect(screen.queryByRole("navigation", { name: "Documentos legais" })).not.toBeInTheDocument();
   });
 
   it("abre os documentos em outra aba pelo formulário, preservando o cadastro", () => {

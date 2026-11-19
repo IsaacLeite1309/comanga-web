@@ -5,12 +5,11 @@ import { Eye, EyeOff, Loader2, X } from "lucide-react";
 import { toast } from "sonner";
 import { api } from "@/services/api";
 import { useAuth } from "./useAuth";
+import { ADMIN_PROFILE, readActiveProfile } from "./authContextState";
 import { BrandLogo } from "@/components/BrandLogo";
-import { LegalFooter } from "@/components/legal/LegalFooter";
 import { termsOfUse } from "@/components/legal/legalDocuments";
 
 import { validatePassword } from "./passwordValidation";
-import { authReturnPath } from "./authReturnPath";
 import { BirthDateField } from "./BirthDateField";
 import { TermsAcceptanceField } from "./TermsAcceptanceField";
 
@@ -462,7 +461,8 @@ export function AuthCard() {
       const response = await api.post("/auth/login", loginData);
       login(response.data.user);
       toast.success("Login realizado com sucesso!");
-      navigate(authReturnPath(location.state, `/perfil/${encodeURIComponent(response.data.user.username)}`), { replace: true });
+      const user = response.data.user;
+      navigate(readActiveProfile(user) === ADMIN_PROFILE ? `/perfil/${encodeURIComponent(user.username)}` : "/colecao", { replace: true });
     } catch (error: unknown) {
       if (isAxiosError(error) && error.response) {
         const status = error.response.status;
@@ -558,7 +558,6 @@ export function AuthCard() {
           />
         </Tabs>
       </div>
-      <LegalFooter />
       {registrationNotice && <RegistrationSuccessDialog message={registrationNotice} onClose={closeRegistrationNotice} />}
     </div>
   );

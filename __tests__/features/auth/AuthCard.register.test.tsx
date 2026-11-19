@@ -33,7 +33,7 @@ function renderRegister() {
 }
 
 function getAcceptanceCheckbox() {
-  return screen.getByRole<HTMLInputElement>("checkbox", { name: "Li e aceito os Termos de Uso." });
+  return screen.getByRole<HTMLInputElement>("checkbox", { name: "Li e aceito os Termos de Uso e Política de privacidade." });
 }
 
 function fillRegisterForm(data: {
@@ -93,7 +93,7 @@ describe("AuthCard cadastro", () => {
     const dialog = await screen.findByRole("dialog", { name: "Aviso de cadastro" });
     expect(api.post).toHaveBeenCalledWith("/auth/register/v1", expect.objectContaining({
       acceptedTerms: true,
-      termsVersion: "2026-11-18",
+      termsVersion: "2026-11-19",
     }));
     expect(screen.getByTestId("login-route")).toBeInTheDocument();
     expect(dialog).toHaveTextContent(expectedMessage);
@@ -165,7 +165,7 @@ describe("AuthCard cadastro", () => {
     expect(checkbox).toHaveAccessibleDescription("Aceite os Termos de Uso para concluir o cadastro.");
     expect(screen.getByRole("alert")).toHaveTextContent("Aceite os Termos de Uso para concluir o cadastro.");
 
-    fireEvent.click(screen.getByText("Li e aceito os Termos de Uso.", { selector: "label" }));
+    fireEvent.click(checkbox.labels![0]);
     expect(checkbox).toBeChecked();
     expect(checkbox).toHaveAttribute("aria-invalid", "false");
     expect(screen.queryByRole("alert")).not.toBeInTheDocument();
@@ -290,7 +290,7 @@ describe("AuthCard cadastro", () => {
         password: "SenhaForte123!",
         confirmPassword: "SenhaForte123!",
         acceptedTerms: true,
-        termsVersion: "2026-11-18",
+        termsVersion: "2026-11-19",
       });
     });
 

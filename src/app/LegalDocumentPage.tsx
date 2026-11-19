@@ -2,10 +2,9 @@ import { useEffect, useRef } from "react";
 import { privacyPolicy, termsOfUse } from "@/components/legal/legalDocuments";
 
 const documents = { privacy: privacyPolicy, terms: termsOfUse };
-const dateFormatter = new Intl.DateTimeFormat("pt-BR", { dateStyle: "long", timeZone: "UTC" });
 
 export function LegalDocumentPage({ kind }: { kind: keyof typeof documents }) {
-  const { title, version, date, sections } = documents[kind];
+  const { title, sections } = documents[kind];
   const headingRef = useRef<HTMLHeadingElement>(null);
 
   useEffect(() => {
@@ -20,7 +19,6 @@ export function LegalDocumentPage({ kind }: { kind: keyof typeof documents }) {
       <article aria-labelledby="legal-document-title" className="mx-auto max-w-prose break-words">
         <header className="mb-8 space-y-3">
           <h1 id="legal-document-title" ref={headingRef} tabIndex={-1} className="text-3xl font-bold text-foreground sm:text-4xl">{title}</h1>
-          <p className="text-sm text-foreground">Versão {version} · <time dateTime={date}>{dateFormatter.format(new Date(date))}</time></p>
         </header>
         <div className="space-y-7 leading-relaxed text-foreground">
           {sections.map((section) => (
