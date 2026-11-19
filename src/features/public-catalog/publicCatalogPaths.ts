@@ -1,3 +1,5 @@
+export const collectionEditionRoute = "/colecao/:slug/edicao/:editionNumber";
+
 export function publicWorkPath(workSlug: string) {
   return `/obra/${encodeURIComponent(workSlug)}`;
 }

@@ -22,10 +22,12 @@ export function PageNumberNavigation({
   page,
   totalPages,
   onPageChange,
+  className = "",
 }: {
   page: number;
   totalPages: number;
   onPageChange: (page: number) => void;
+  className?: string;
 }) {
   const [editingGap, setEditingGap] = useState<string | null>(null);
   const [pageInput, setPageInput] = useState("");
@@ -42,7 +44,7 @@ export function PageNumberNavigation({
   }
 
   return (
-    <div className="flex max-w-full items-center justify-center gap-1 overflow-x-auto" aria-label="Páginas disponíveis">
+    <div className={`flex max-w-full items-center justify-center gap-1 overflow-x-auto ${className}`} aria-label="Páginas disponíveis">
       {visiblePageItems(currentPage, lastPage).map((item) => typeof item === "number" ? (
         <button
           key={item}

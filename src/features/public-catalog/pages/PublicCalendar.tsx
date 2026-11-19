@@ -10,6 +10,7 @@ import { addCollectionVolume, addWishlistVolume, CollectionChangeDialog, removeC
 import { getApiError } from "@/lib/apiError";
 import { PUBLIC_CATALOG_QUERY_ROOT } from "@/lib/queryClient";
 import { CatalogCover } from "@/features/public-catalog/CatalogCover";
+import { CatalogErrorMessage } from "@/features/public-catalog/CatalogErrorMessage";
 import { CatalogResultsLoading } from "@/features/public-catalog/CatalogResultsLoading";
 import { CatalogRefreshNotice } from "@/features/public-catalog/CatalogRefreshNotice";
 import { useCatalogErrorToast } from "@/features/public-catalog/useCatalogErrorToast";
@@ -328,7 +329,7 @@ function CalendarVolumeCard({ volume }: { volume: PublicCalendarVolume }) {
     <article className="min-w-0">
       <Link to={publicVolumePath(edition.work.slug, edition.chronologicalNumber, volume.number)} state={{ catalogOrigin: "checklist", returnTo: `${location.pathname}${location.search}` }} aria-label={`Ver ${label.toLowerCase()} de ${edition.work.title}`} className="group block rounded-lg outline-none focus-visible:ring-2 focus-visible:ring-primary">
         <CatalogCover key={volume.coverUrl || "empty"} src={volume.coverUrl} alt={`Capa de ${edition.work.title} — ${label}`} className="transition-transform group-hover:-translate-y-1" />
-        <h3 className="mt-2 truncate text-sm font-normal text-foreground group-hover:text-primary sm:text-base" title={edition.work.title}>{edition.work.title}</h3>
+        <h3 className="mt-2 text-sm font-normal text-foreground group-hover:text-primary max-lg:[overflow-wrap:anywhere] sm:text-base lg:truncate" title={edition.work.title}>{edition.work.title}</h3>
         <p className="mt-1 text-xs text-muted-foreground">{label} da {edition.chronologicalNumber}ª edição</p>
       </Link>
       <CalendarVolumeActions volume={volume} />
@@ -360,7 +361,12 @@ function CalendarResults({ calendar }: { calendar: CalendarState }) {
     </>
   );
   if (calendar.error) {
-    return null;
+    return (
+      <div className="mt-6 flex flex-col items-start gap-3 lg:hidden">
+        <CatalogErrorMessage message={calendar.error} />
+        {calendar.validationError && <button type="button" className={buttonClass} onClick={calendar.resetCalendar}>Restaurar calendário</button>}
+      </div>
+    );
   }
   if (!calendar.data) return null;
   const { volumes, pagination } = calendar.data;
@@ -387,7 +393,7 @@ function CalendarResults({ calendar }: { calendar: CalendarState }) {
       <section className="catalog-menu-covers-space grid grid-cols-2 gap-x-3 gap-y-7 sm:grid-cols-3 sm:gap-x-4 lg:grid-cols-4 xl:grid-cols-5 2xl:grid-cols-6" aria-label="Volumes encontrados neste mês">
         {volumes.map(volume => <CalendarVolumeCard key={volume.id} volume={volume} />)}
       </section>
-      <CatalogPagination pagination={pagination} onPageChange={calendar.changePage} ariaLabel="Paginação dos lançamentos" />
+      <CatalogPagination pagination={pagination} onPageChange={calendar.changePage} ariaLabel="Paginação dos lançamentos" wrapOnSmallScreens />
     </>
   );
 }
@@ -401,7 +407,7 @@ export default function PublicChecklist() {
     <div className="page-gutter catalog-menu-top-space min-w-0 flex-1 pb-7 sm:pb-9">
       <div className="mx-auto w-full max-w-[100rem]">
         <h1 className="sr-only">Lançamentos</h1>
-        <fieldset className="min-w-0 border-0 p-0">
+        <fieldset className="catalog-filters min-w-0 border-0 p-0">
           <div className="flex flex-col gap-4 xl:flex-row xl:items-end">
             <CalendarPeriod calendar={calendar} />
             <CalendarFilters calendar={calendar} />
