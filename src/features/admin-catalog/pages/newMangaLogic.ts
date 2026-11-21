@@ -1,4 +1,3 @@
-import { NATIVE_COUNTRY_OPTIONS } from "../domain/workOptions";
 import type {
   NewMangaDraft,
   OptionValue,
@@ -30,26 +29,6 @@ export function getOptionValue(option: OptionValue) {
   return option.value ?? String(option.id);
 }
 
-export function filterOptionsByDependency(options: OptionValue[], dependencyLabel: string) {
-  if (!dependencyLabel) return [];
-  const hasDependencies = options.some((option) => option.depends_on && option.depends_on.length > 0);
-  if (!hasDependencies) return options;
-  const normalizedLabel = normalizeSearchText(dependencyLabel);
-  return options.filter((option) => option.depends_on?.some(
-    (dependency) => normalizeSearchText(dependency.label) === normalizedLabel
-  ));
-}
-
-// Tipo de Obra oficial exige dependência de país completa: sem dependência com o
-// país escolhido o backend recusa a combinação, então o formulário não a oferece.
-export function filterWorkTypesByCountry(workTypes: OptionValue[], countryLabel: string) {
-  if (!countryLabel) return [];
-  const normalizedCountry = normalizeSearchText(countryLabel);
-  return workTypes.filter((workType) => workType.preservedCountry === countryLabel || workType.depends_on?.some(
-    (dependency) => normalizeSearchText(dependency.label) === normalizedCountry
-  ));
-}
-
 // Identidade estável do gênero adulto; o rótulo é só um último recurso.
 export const HENTAI_GENRE_CODE = "hentai";
 
@@ -65,23 +44,11 @@ export function isGenreWithoutDemography(genre: OptionValue) {
   return GENRES_WITHOUT_DEMOGRAPHY.has(normalizeSearchText(genre.label).replace(/[’']/g, "").replace(/\s+/g, "-"));
 }
 
-export function getDefaultWorkTypeLabels(countryName = "") {
-  const country = normalizeSearchText(countryName);
-  if (country.includes("coreia")) return ["manhwa"];
-  if (country.includes("china") || country.includes("taiwan")) return ["manhua"];
-  return ["manga", "mangá"];
-}
+export function getDefaultWorkTypeLabels() { return ["manga", "mangá"]; }
 
-export function getDefaultCountryAndType(options: WorkFormOptions) {
-  const japan = NATIVE_COUNTRY_OPTIONS.find((option) => option.value === "Japão");
-  const workTypes = japan
-    ? filterWorkTypesByCountry(options.workTypes, getOptionValue(japan))
-    : [];
-  const type = findOptionByLabels(workTypes, getDefaultWorkTypeLabels(japan?.label));
-  return {
-    country: japan ? getOptionValue(japan) : "",
-    typeId: type ? String(type.id) : "",
-  };
+export function getDefaultWorkType(options: WorkFormOptions) {
+  const type = findOptionByLabels(options.workTypes, getDefaultWorkTypeLabels());
+  return { typeId: type ? String(type.id) : "" };
 }
 
 export function draftFromWork(work: WorkDetail): NewMangaDraft {
@@ -96,7 +63,6 @@ export function draftFromWork(work: WorkDetail): NewMangaDraft {
     coverUrl: work.coverUrl || "",
     coverPending: false,
     typeId: work.type?.id ? String(work.type.id) : "",
-    country: work.country || "",
     originalPublisherIds: work.originalPublishers.map((publisher) => Number(publisher.id)),
     originalPublicationStatus: work.originalPublicationStatus || "",
     adultContent: work.adultContent,
@@ -122,7 +88,6 @@ export function getInvalidIdentificationFields(draft: NewMangaDraft) {
   if (!draft.title.trim()) fields.push("title");
   if (!draft.originalTitle.trim()) fields.push("originalTitle");
   if (!draft.romanizedTitle.trim()) fields.push("romanizedTitle");
-  if (!draft.country) fields.push("country");
   if (!draft.typeId) fields.push("typeId");
   return fields;
 }
@@ -199,7 +164,6 @@ export function buildWorkPayload(draft: NewMangaDraft, rules: PublicationRules) 
       : null,
     coverAssetId: draft.coverAssetId || null,
     typeId: Number(draft.typeId),
-    country: draft.country,
     originalPublisherIds: buildOrderedPayload(draft.originalPublisherIds),
     originalPublicationStatus: draft.originalPublicationStatus,
     adultContent: draft.adultContent,

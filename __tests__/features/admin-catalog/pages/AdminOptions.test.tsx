@@ -88,40 +88,12 @@ describe("AdminOptions", () => {
     });
   });
 
-  it("usa 5 valores por pagina nas categorias vinculadas a pais", async () => {
-    mockOptionsResponse([], {
-      limit: 5,
-      total: 0,
-      totalPages: 1,
-    });
-    mockOptionsResponse([
-      {
-        id: 20,
-        label: "Japão",
-        category: {
-          slug: "paises-origem",
-          name: "País de Origem",
-        },
-      },
-    ], {
-      limit: 100,
-      total: 1,
-      totalPages: 1,
-    });
-
-    render(<AdminOptions />);
-    selectCategory(/^autor$/i, null);
-
-    await waitFor(() => {
-      expect(api.get).toHaveBeenCalledWith("/admin/options/autores", {
-        params: {
-          order: "ASC",
-          page: 1,
-          limit: 5,
-        },
-      });
-    });
-  });
+  it('lista autores sem consultar países nem exigir país relacionado', async () => {
+   mockOptionsResponse([], {limit:6,total:0,totalPages:1});render(<AdminOptions />);selectCategory(/^autor$/i,null);
+   await waitFor(() => expect(api.get).toHaveBeenCalledWith('/admin/options/autores',{params:{order:'ASC',page:1,limit:6}}));
+   expect(screen.queryByText('País de origem relacionado')).not.toBeInTheDocument();
+   expect(vi.mocked(api.get).mock.calls.some(([url]) => String(url).includes('paises-origem'))).toBe(false);
+ });
 
   it("troca categoria e busca nova lista", async () => {
     mockOptionsResponse([]);

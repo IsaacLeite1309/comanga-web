@@ -1,6 +1,5 @@
 let rememberedSelectedCategory = "";
 let rememberedNewValue = "";
-let rememberedSelectedCountryIds: number[] = [];
 let rememberedSearchTerm = "";
 let rememberedSelectedForm: "obra" | "edicao" = "obra";
 
@@ -28,14 +27,6 @@ export function rememberAdminOptionsNewValue(value: string) {
   rememberedNewValue = value;
 }
 
-export function getRememberedAdminOptionsCountryIds() {
-  return [...rememberedSelectedCountryIds];
-}
-
-export function rememberAdminOptionsCountryIds(countryIds: number[]) {
-  rememberedSelectedCountryIds = [...countryIds];
-}
-
 export function getRememberedAdminOptionsSearchTerm() {
   return rememberedSearchTerm;
 }
@@ -47,7 +38,6 @@ export function rememberAdminOptionsSearchTerm(value: string) {
 export function resetAdminOptionsMemoryForTests() {
   rememberedSelectedCategory = "";
   rememberedNewValue = "";
-  rememberedSelectedCountryIds = [];
   rememberedSearchTerm = "";
   rememberedSelectedForm = "obra";
 }

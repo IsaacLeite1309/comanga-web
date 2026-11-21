@@ -40,66 +40,6 @@ function CategoryDropdown(props: CategoryDropdownProps) {
   );
 }
 
-function CountryChoices({ countries, selectedIds, onToggle }: {
-  countries: DomainOptionValue[];
-  selectedIds: number[];
-  onToggle: (id: number) => void;
-}) {
-  return (
-    <div className="mt-2 flex flex-wrap gap-2">
-      {countries.map((country) => {
-        const selected = selectedIds.includes(country.id);
-        return (
-          <button
-            key={country.id}
-            type="button"
-            onClick={() => onToggle(country.id)}
-            className={`rounded-lg border px-3 py-2 text-sm font-bold transition-colors ${
-              selected
-                ? "border-primary bg-primary text-primary-foreground"
-                : "border-border bg-input text-foreground hover:border-primary"
-            }`}
-          >
-            {country.label}
-          </button>
-        );
-      })}
-    </div>
-  );
-}
-
-function CountryField({ model }: { model: AdminOptionsPageModel }) {
-  if (!model.countryDependent) return null;
-  let content = <p className="mt-2 text-sm text-muted-foreground">Carregando países...</p>;
-
-  if (model.countryError) {
-    content = <p className="mt-2 text-sm text-red-400">{model.countryError}</p>;
-  } else if (!model.countryLoading && model.countryOptions.length === 0) {
-    content = (
-      <p className="mt-2 text-sm text-muted-foreground">
-        Cadastre países de origem antes de relacionar valores.
-      </p>
-    );
-  } else if (!model.countryLoading) {
-    content = (
-      <CountryChoices
-        countries={model.countryOptions}
-        selectedIds={model.selectedCountryIds}
-        onToggle={model.toggleNewValueCountry}
-      />
-    );
-  }
-
-  return (
-    <div className="sm:col-span-2">
-      <p className="text-xs font-bold uppercase tracking-wide text-muted-foreground">
-        País de origem relacionado
-      </p>
-      {content}
-    </div>
-  );
-}
-
 function NewOptionForm({ model }: { model: AdminOptionsPageModel }) {
   if (model.systemManagedCategory) {
     return (
@@ -150,7 +90,6 @@ function NewOptionForm({ model }: { model: AdminOptionsPageModel }) {
           Adicionar
         </button>
       </div>
-      <CountryField model={model} />
     </form>
   );
 }
@@ -265,18 +204,6 @@ function OptionEditor({ model, value }: { model: AdminOptionsPageModel; value: D
         className="h-10 w-full rounded-lg border border-border bg-input px-3 text-base text-foreground outline-none transition-colors hover:border-primary focus:border-primary"
         aria-label={`Editar ${value.label}`}
       />
-      {model.countryDependent && model.countryOptions.length > 0 && (
-        <div>
-          <p className="text-xs font-bold uppercase tracking-wide text-muted-foreground">
-            País de origem relacionado
-          </p>
-          <CountryChoices
-            countries={model.countryOptions}
-            selectedIds={model.editingCountryIds}
-            onToggle={model.toggleEditingCountry}
-          />
-        </div>
-      )}
     </div>
   );
 }
@@ -371,11 +298,6 @@ function OptionRow({ model, value }: { model: AdminOptionsPageModel; value: Doma
                 </span>
               )}
             </p>
-            {model.countryDependent && value.depends_on && value.depends_on.length > 0 && (
-              <p className="mt-1 text-xs font-semibold text-muted-foreground">
-                Países: {value.depends_on.map((dependency) => dependency.label).join(", ")}
-              </p>
-            )}
           </div>
         )}
       </div>

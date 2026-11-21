@@ -10,7 +10,7 @@ export function subscribePersonalLibraryUpdates(callback: () => void) {
 function updated() { window.dispatchEvent(new Event(UPDATED)); }
 export interface CollectionFilters {
   term?: string;
-  status?: "complete" | "incomplete";
+  status?: "complete" | "incomplete" | "up-to-date";
   brazilianPublisherId?: number;
   order?: "ASC" | "DESC";
 }

@@ -10,6 +10,7 @@ import type { PersonalVolume } from "@/features/personal-library";
 import { useEditionSelection, type SelectionMode } from "./useEditionSelection";
 import { useCatalogErrorToast } from "@/features/public-catalog/useCatalogErrorToast";
 import { useLoadingScrollReset } from "@/hooks/useLoadingScrollReset";
+import { directReturnPath } from "../publicCatalogNavigation";
 
 function SelectableVolume({
   volume,
@@ -110,12 +111,12 @@ function collectionWarnings(data: ReturnType<typeof useEditionSelection>["data"]
   };
 }
 
-function SelectionLoading({ editionPath }: { editionPath: string }) {
+function SelectionLoading({ returnPath }: { returnPath: string }) {
   return (
     <div className="min-w-0 flex-1 bg-background" role="status" aria-label="Carregando seleção de volumes">
       <header className="page-gutter sticky top-0 z-20 bg-background/95 backdrop-blur">
         <div className="mx-auto flex w-full max-w-7xl items-center justify-between gap-4 border-b border-border py-4">
-          <BackLink to={editionPath} className="text-sm font-bold text-primary hover:text-primary/80">Cancelar</BackLink>
+          <BackLink to={returnPath} className="text-sm font-bold text-primary hover:text-primary/80">Cancelar</BackLink>
           <p className="min-w-0 truncate text-center text-sm font-semibold text-foreground sm:text-base">Carregando...</p>
           <button type="button" disabled className="text-sm font-bold text-muted-foreground">OK</button>
         </div>
@@ -161,6 +162,7 @@ function SelectionContent({ slug, editionNumber, mode }: { slug: string; edition
   const { wishlistVolumes, readVolumes } = collectionWarnings(data, selectedIds, mode);
   const needsConfirmation = wishlistVolumes.length > 0 || readVolumes.length > 0;
   const editionPath = `${location.pathname.startsWith("/colecao/") ? "/colecao" : "/obra"}/${encodeURIComponent(slug)}/edicao/${editionNumber}`;
+  const returnPath = directReturnPath(location.state, ["/colecao"]) ?? editionPath;
   const toggleVolume = (volumeId: number) => state.setSelectedIds((current) => {
     const next = new Set(current);
     if (next.has(volumeId)) next.delete(volumeId); else next.add(volumeId);
@@ -169,19 +171,19 @@ function SelectionContent({ slug, editionNumber, mode }: { slug: string; edition
   const saveSelection = () => void state.save().then((saved) => {
     if (!saved) return;
     toast.success(mode === "colecao" ? "Coleção atualizada." : mode === "desejos" ? "Lista de desejos atualizada." : "Volumes lidos atualizados.");
-    navigate(editionPath);
+    navigate(returnPath);
   });
-  if (loading) return <SelectionLoading editionPath={editionPath} />;
+  if (loading) return <SelectionLoading returnPath={returnPath} />;
 
   if (error || !data) {
-    return <div className="page-gutter flex min-h-[calc(100dvh-5rem)] items-center justify-center py-12"><BackLink to={editionPath} className="inline-flex text-sm font-bold text-primary">Voltar à Edição</BackLink></div>;
+    return <div className="page-gutter flex min-h-[calc(100dvh-5rem)] items-center justify-center py-12"><BackLink to={returnPath} className="inline-flex text-sm font-bold text-primary">{returnPath === editionPath ? "Voltar à Edição" : "Voltar à coleção"}</BackLink></div>;
   }
 
   return (
     <div className="min-w-0 flex-1 bg-background">
       <header className="page-gutter sticky top-0 z-20 bg-background/95 backdrop-blur">
         <div className="mx-auto flex w-full max-w-7xl items-center justify-between gap-4 border-b border-border py-4">
-          <BackLink to={editionPath} className="text-sm font-bold text-primary hover:text-primary/80">Cancelar</BackLink>
+          <BackLink to={returnPath} className="text-sm font-bold text-primary hover:text-primary/80">Cancelar</BackLink>
           <p className="min-w-0 truncate text-center text-sm font-semibold text-foreground sm:text-base">
             {selectedIds.size} de {visibleVolumes.length} selecionados
           </p>

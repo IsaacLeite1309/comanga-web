@@ -11,7 +11,7 @@ export function PublicWorkCard({
   work: PublicWorkSummary;
   showAuthors?: boolean;
 }) {
-  const metadata = [work.type?.label, work.country].filter(Boolean).join(" · ");
+  const metadata = [work.type?.label].filter(Boolean).join(" · ");
   const navigationState = catalogNavigationState(useLocation().state);
 
   return (

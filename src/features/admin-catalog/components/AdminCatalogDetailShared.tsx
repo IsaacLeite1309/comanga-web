@@ -41,7 +41,7 @@ export function CatalogViewToggle({
   viewMode: CatalogViewMode;
   onChange: (viewMode: CatalogViewMode) => void;
 }) {
-  const buttonClassName = "inline-flex h-9 items-center gap-2 rounded-lg px-3 text-sm font-bold transition-colors";
+  const buttonClassName = "inline-flex h-9 w-9 items-center justify-center rounded-lg transition-colors";
   const activeClassName = "bg-primary text-primary-foreground";
   const idleClassName = "text-muted-foreground hover:text-foreground";
 
@@ -49,19 +49,23 @@ export function CatalogViewToggle({
     <div className="hidden rounded-xl border border-border bg-input p-1 md:inline-flex">
       <button
         type="button"
+        aria-label="Lista"
+        title="Lista"
+        aria-pressed={viewMode === "list"}
         onClick={() => onChange("list")}
         className={`${buttonClassName} ${viewMode === "list" ? activeClassName : idleClassName}`}
       >
-        <List className="h-3.5 w-3.5" />
-        Lista
+        <List className="h-3.5 w-3.5" aria-hidden="true" />
       </button>
       <button
         type="button"
+        aria-label="Grade"
+        title="Grade"
+        aria-pressed={viewMode === "grid"}
         onClick={() => onChange("grid")}
         className={`${buttonClassName} ${viewMode === "grid" ? activeClassName : idleClassName}`}
       >
-        <LayoutGrid className="h-3.5 w-3.5" />
-        Grade
+        <LayoutGrid className="h-3.5 w-3.5" aria-hidden="true" />
       </button>
     </div>
   );

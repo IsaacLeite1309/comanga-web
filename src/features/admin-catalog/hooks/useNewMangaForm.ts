@@ -6,7 +6,7 @@ import { emptyNewMangaDraft, getRememberedNewMangaDraft, resetNewMangaDraftMemor
 import { draftSignature, moveValue, toggleValue } from '../pages/newMangaLogic';
 import type { AuthorField, NewMangaDraft, NewMangaMode, NewMangaStep } from '../pages/newMangaTypes';
 
-import { useNewMangaOptions, useCountryOptions, getDerivedState, useDerivedRules } from './newMangaOptions';
+import { useNewMangaOptions, useFormOptions, getDerivedState, useDerivedRules } from './newMangaOptions';
 import { withoutCurrentStep, useDraftLifecycle, useDocumentSubmitShortcut, createStepActions } from './newMangaDraft';
 import { createSubmissionHandler } from './newMangaSubmission';
 
@@ -32,7 +32,7 @@ export function useNewMangaForm(mode: NewMangaMode, workId?: string) {
     [derived.effectiveDirectRelease, draft]
   );
 
-  useCountryOptions(optionState.allOptions, draft.country, setDraft, optionState.setOptions);
+  useFormOptions(optionState.allOptions, optionState.setOptions);
   useDerivedRules(derived, setDraft, setInvalidFields);
   useDraftLifecycle(
     mode,

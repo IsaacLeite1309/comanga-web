@@ -4,16 +4,7 @@ export interface OptionValue {
   value?: string;
   code?: string | null;
   systemManaged?: boolean;
-  preservedCountry?: string;
   position?: number;
-  depends_on?: Array<{
-    id: number;
-    label: string;
-    category: {
-      slug: string;
-      name: string;
-    };
-  }>;
 }
 
 export interface WorkFormOptions {
@@ -37,7 +28,6 @@ export interface WorkDetail {
   synopsis: string;
   coverAssetId?: string | null;
   coverUrl?: string | null;
-  country?: string | null;
   type?: OptionValue | null;
   adultContent: boolean;
   originalPublicationStartYear?: number | null;
@@ -76,7 +66,6 @@ export type NewMangaDraft = {
   coverUrl: string;
   coverPending: boolean;
   typeId: string;
-  country: string;
   originalPublisherIds: number[];
   originalPublicationStatus: string;
   adultContent: boolean;

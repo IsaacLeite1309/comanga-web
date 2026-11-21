@@ -1,11 +1,12 @@
 import { adminCachedGet, readAdminCachedResponse } from "@/services/adminCachedGet";
+import { availableWorkTypes } from "@/lib/workTypeOptions";
 import { useEffect, useMemo, useState } from "react";
 import { toast } from "sonner";
 import { api } from "@/services/api";
 import { getApiError } from "@/lib/apiError";
 import { clearAdminCache } from "@/lib/queryClient";
+import { NATIVE_DEMOGRAPHY_OPTIONS } from "../domain/workOptions";
 import {
-  COUNTRY_OPTIONS,
   FilterOption,
   OptionValue,
   WORKS_PAGE_SIZE,
@@ -18,13 +19,13 @@ import {
 } from "../pages/editMangasModel";
 
 const rememberedWorkFilters = {
-  searchTerm: "", typeId: "Todos", countryId: "Todos", visibility: "Todos" as WorkFilterVisibility,
+  searchTerm: "", typeId: "Todos", demography: "Todos", visibility: "Todos" as WorkFilterVisibility,
   viewMode: "list" as "list" | "grid", order: "ASC" as "ASC" | "DESC", page: 1,
 };
 
 export function resetEditMangasMemoryForTests() {
   Object.assign(rememberedWorkFilters, {
-    searchTerm: "", typeId: "Todos", countryId: "Todos", visibility: "Todos",
+    searchTerm: "", typeId: "Todos", demography: "Todos", visibility: "Todos",
     viewMode: "list", order: "ASC", page: 1,
   });
 }
@@ -34,7 +35,7 @@ function useWorkFilters() {
   const [searchTerm, setSearchTerm] = useState(rememberedWorkFilters.searchTerm);
   const [debouncedTerm, setDebouncedTerm] = useState(rememberedWorkFilters.searchTerm.trim());
   const [typeId, setTypeId] = useState(rememberedWorkFilters.typeId);
-  const [countryId, setCountryId] = useState(rememberedWorkFilters.countryId);
+  const [demography, setDemography] = useState(rememberedWorkFilters.demography);
   const [visibility, setVisibility] = useState<WorkFilterVisibility>(rememberedWorkFilters.visibility);
   const [viewMode, setViewMode] = useState<"list" | "grid">(rememberedWorkFilters.viewMode);
   const [isMobileGrid, setIsMobileGrid] = useState(false);
@@ -42,8 +43,8 @@ function useWorkFilters() {
   const [page, setPage] = useState(rememberedWorkFilters.page);
 
   useEffect(() => {
-    Object.assign(rememberedWorkFilters, { searchTerm, typeId, countryId, visibility, viewMode, order, page });
-  }, [searchTerm, typeId, countryId, visibility, viewMode, order, page]);
+    Object.assign(rememberedWorkFilters, { searchTerm, typeId, demography, visibility, viewMode, order, page });
+  }, [searchTerm, typeId, demography, visibility, viewMode, order, page]);
 
   useEffect(() => {
     async function loadFilterOptions() {
@@ -55,7 +56,7 @@ function useWorkFilters() {
             limit: 100,
           },
         });
-        setWorkTypes(response.data.values || []);
+        setWorkTypes(availableWorkTypes(response.data.values || []));
       } catch {
         toast.error("Erro ao carregar filtros de Obras.");
       }
@@ -86,30 +87,25 @@ function useWorkFilters() {
     { value: "Todos", label: "Todos os tipos" },
     ...workTypes.map((type) => ({ value: String(type.id), label: type.label })),
   ], [workTypes]);
-  const countryFilterOptions = useMemo<FilterOption[]>(() => [
-    { value: "Todos", label: "Todos os países" },
-    ...COUNTRY_OPTIONS,
-  ], []);
   const visibilityFilterOptions = useMemo<FilterOption[]>(() => (
     ["Todos", "Privado", "Público"].map((option) => ({
       value: option,
       label: option === "Todos" ? "Todas as visibilidades" : option,
     }))
   ), []);
+  const demographyFilterOptions = useMemo<FilterOption[]>(() => [
+    { value: "Todos", label: "Todas as demografias" },
+    ...NATIVE_DEMOGRAPHY_OPTIONS.map(option => ({ value: String(option.id), label: option.label })),
+  ], []);
   const requestParams = useMemo(() => ({
     ...(debouncedTerm ? { term: debouncedTerm } : {}),
     ...(typeId !== "Todos" ? { typeId: Number(typeId) } : {}),
-    ...(countryId !== "Todos" ? { country: countryId } : {}),
+    ...(demography !== "Todos" ? { demography } : {}),
     ...(visibility !== "Todos" ? { visibility } : {}),
     order,
     page,
     limit: WORKS_PAGE_SIZE,
-  }), [countryId, debouncedTerm, order, page, typeId, visibility]);
-
-  function changeCountry(value: string) {
-    setCountryId(value);
-    setPage(1);
-  }
+  }), [debouncedTerm, order, page, typeId, demography, visibility]);
 
   function changeType(value: string) {
     setTypeId(value);
@@ -121,18 +117,23 @@ function useWorkFilters() {
     setPage(1);
   }
 
+  function changeDemography(value: string) {
+    setDemography(value);
+    setPage(1);
+  }
+
   function toggleTitleSort() {
     setOrder((current) => current === "ASC" ? "DESC" : "ASC");
     setPage(1);
   }
 
   return {
-    changeCountry,
     changeType,
+    changeDemography,
     changeVisibility,
-    countryFilterOptions,
-    countryId,
     debouncedTerm,
+    demography,
+    demographyFilterOptions,
     isMobileGrid,
     order,
     page,
@@ -263,7 +264,7 @@ export function useEditMangasPage() {
   const hasWorks = data.works.length > 0;
   const hasActiveFilters = Boolean(filters.debouncedTerm)
     || filters.typeId !== "Todos"
-    || filters.countryId !== "Todos"
+    || filters.demography !== "Todos"
     || filters.visibility !== "Todos";
   const emptyWorksMessage = hasActiveFilters
     ? "Nenhuma Obra encontrada com os filtros aplicados."
