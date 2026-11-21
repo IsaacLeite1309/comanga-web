@@ -74,11 +74,6 @@ const optionLists: Record<string, Array<{
     { id: 9, label: "Manga", depends_on: [{ id: 5, label: "Japao", category: { slug: "paises-origem", name: "Paises" } }] },
     { id: 20, label: "Artbook", depends_on: [{ id: 5, label: "Japao", category: { slug: "paises-origem", name: "Paises" } }] },
     { id: 21, label: "Databook", depends_on: [{ id: 5, label: "Japao", category: { slug: "paises-origem", name: "Paises" } }] },
-    { id: 14, label: "Manhwa", depends_on: [{ id: 11, label: "Coreia do Sul", category: { slug: "paises-origem", name: "Paises" } }] },
-    { id: 15, label: "Manhua", depends_on: [
-      { id: 12, label: "China", category: { slug: "paises-origem", name: "Paises" } },
-      { id: 13, label: "Taiwan", category: { slug: "paises-origem", name: "Paises" } },
-    ] },
   ],
   "revistas-serializacao": [
     { id: 10, label: "Weekly Shonen Jump", depends_on: [{ id: 5, label: "Japao", category: { slug: "paises-origem", name: "Paises" } }] },
@@ -106,7 +101,7 @@ const workDetail = {
   synopsis: "Um ninja busca reconhecimento na própria vila.",
   coverAssetId: "7f28c7f0-c94f-46e8-b61c-6ea716f8f28e",
   coverUrl: "https://cdn.comanga.test/naruto.jpg",
-  country: "Japão",
+
   type: { id: 9, label: "Manga" },
   adultContent: false,
   originalPublicationStartYear: 1999,
@@ -176,7 +171,6 @@ async function fillIdentificationFields() {
   fireEvent.change(screen.getByLabelText(/^t.*tulo romanizado$/i), { target: { value: "Naruto" } });
   await waitFor(() => {
     expect(api.get).toHaveBeenCalledWith("/admin/works/form-options");
-    expect(screen.getByLabelText(/pa.*s de origem/i)).toHaveTextContent("Japão");
     expect(screen.getByLabelText(/tipo de obra/i)).toHaveTextContent("Manga");
   });
 
@@ -276,7 +270,6 @@ describe("NewManga", () => {
       expect(api.post).toHaveBeenCalledWith("/admin/works", expect.objectContaining({
         title: "Naruto",
         typeId: 9,
-        country: "Japão",
         originalPublisherIds: [{ id: 19, position: 0 }],
         originalPublicationStatus: "Completa",
         originalPublicationStartYear: 1999,
@@ -364,183 +357,22 @@ describe("NewManga", () => {
     expect(api.post).not.toHaveBeenCalled();
   });
 
-  it("altera automaticamente o tipo de obra conforme o pais de origem", async () => {
-    renderNewManga();
-
-    expect(await screen.findByRole("heading", { name: /novo mang/i })).toBeInTheDocument();
-
-    await waitFor(() => {
-      expect(screen.getByLabelText(/tipo de obra/i)).toHaveTextContent("Manga");
-    });
-
-    await chooseDropdown(/pa.*s de origem/i, /coreia do sul/i);
-
-    await waitFor(() => {
-      expect(screen.getByLabelText(/tipo de obra/i)).toHaveTextContent("Manhwa");
-    });
-
-    await chooseDropdown(/pa.*s de origem/i, /^china$/i);
-
-    await waitFor(() => {
-      expect(screen.getByLabelText(/tipo de obra/i)).toHaveTextContent("Manhua");
-    });
-  });
-
-  it("oferece apenas tipos de obra compativeis com o pais selecionado", async () => {
-    renderNewManga();
-
-    expect(await screen.findByRole("heading", { name: /novo mang/i })).toBeInTheDocument();
-    await waitFor(() => {
-      expect(screen.getByLabelText(/tipo de obra/i)).toHaveTextContent("Manga");
-    });
-
+  it("abre o cadastro sem país de origem e oferece os tipos atuais", async () => {
+    renderNewManga(); await screen.findByRole("heading", { name: /novo mang/i });
+    expect(screen.queryByLabelText(/pa.*s de origem/i)).not.toBeInTheDocument();
+    await waitFor(() => expect(screen.getByLabelText(/tipo de obra/i)).toHaveTextContent("Manga"));
     fireEvent.click(screen.getByLabelText(/tipo de obra/i));
-    expect(screen.getByRole("button", { name: "Manga" })).toBeInTheDocument();
     expect(screen.getByRole("button", { name: "Artbook" })).toBeInTheDocument();
-    expect(screen.queryByRole("button", { name: "Manhwa" })).not.toBeInTheDocument();
-    expect(screen.queryByRole("button", { name: "Manhua" })).not.toBeInTheDocument();
-
-    await chooseDropdown(/pa.*s de origem/i, /coreia do sul/i);
-    await waitFor(() => {
-      expect(screen.getByLabelText(/tipo de obra/i)).toHaveTextContent("Manhwa");
-    });
-
-    fireEvent.click(screen.getByLabelText(/tipo de obra/i));
-    expect(screen.getByRole("button", { name: "Manhwa" })).toBeInTheDocument();
-    expect(screen.queryByRole("button", { name: "Manga" })).not.toBeInTheDocument();
-    expect(screen.queryByRole("button", { name: "Artbook" })).not.toBeInTheDocument();
+    expect(screen.queryByRole("button", { name: /manhwa|manhua/i })).not.toBeInTheDocument();
   });
 
-  it("filtra autores conforme o pais de origem selecionado", async () => {
-    renderNewManga();
 
-    expect(await screen.findByRole("heading", { name: /novo mang/i })).toBeInTheDocument();
-    await fillIdentificationFields();
 
-    fireEvent.click(screen.getByRole("button", { name: /continuar/i }));
+  it("disponibiliza autores sem restrição por país", async () => {
+    renderNewManga(); await screen.findByRole("heading", { name: /novo mang/i }); await goToAuthorsStep();
     fireEvent.click(screen.getByLabelText(/^autor$/i));
-
-    expect(screen.getByRole("button", { name: /masashi kishimoto/i })).toBeInTheDocument();
-    expect(screen.queryByRole("button", { name: /^siu$/i })).not.toBeInTheDocument();
-
-    fireEvent.click(screen.getByRole("button", { name: /voltar/i }));
-    await chooseDropdown(/pa.*s de origem/i, /coreia do sul/i);
-    fireEvent.click(screen.getByRole("button", { name: /continuar/i }));
-    fireEvent.click(screen.getByLabelText(/^autor$/i));
-
-    expect(screen.getByRole("button", { name: /^siu$/i })).toBeInTheDocument();
-    expect(screen.queryByRole("button", { name: /masashi kishimoto/i })).not.toBeInTheDocument();
-  });
-
-  it("exibe campos nativos na ordem definida pelo formulario", async () => {
-    renderNewManga();
-
-    expect(await screen.findByRole("heading", { name: /novo mang/i })).toBeInTheDocument();
-
-    expect(screen.getByLabelText(/pa.*s de origem/i)).toHaveTextContent(/jap/i);
-    fireEvent.click(screen.getByLabelText(/pa.*s de origem/i));
-    expect(screen.getAllByRole("button", { name: /coreia do sul|china|taiwan/i }).map((button) => button.textContent)).toEqual([
-      "Coreia do Sul",
-      "China",
-      "Taiwan",
-    ]);
-    fireEvent.click(screen.getByRole("button", { name: /fechar pa.*s de origem/i }));
-    await goToAuthorsStep();
-    await chooseDropdown(/^autor$/i, /masashi kishimoto/i);
-    fireEvent.click(screen.getByLabelText(/selecionar papel/i));
-    expect(screen.getAllByRole("button", { name: /hist.*ria|arte|criador original|ilustrador|design de personagens/i }).map((button) => button.textContent)).toEqual([
-      "História e Arte",
-      "História",
-      "Arte",
-      "Criador Original",
-      "História Original",
-      "História e ilustrações",
-      "Ilustrador",
-      "Design de Personagens",
-    ]);
-  });
-
-  it("impede a combinação redundante de História e Arte para um autor", async () => {
-    renderNewManga();
-
-    await screen.findByRole("heading", { name: /novo mang/i });
-    await goToAuthorsStep();
-    await chooseDropdown(/^autor$/i, /masashi kishimoto/i);
-    fireEvent.click(screen.getByLabelText(/selecionar papel/i));
-    fireEvent.click(screen.getByRole("button", { name: "História e Arte" }));
-
-    fireEvent.click(screen.getByLabelText(/selecionar papel/i));
-    expect(screen.getByRole("button", { name: "História" })).toBeDisabled();
-    expect(screen.getByRole("button", { name: "Arte" })).toBeDisabled();
-    expect(screen.getByRole("button", { name: "Criador Original" })).toBeEnabled();
-  });
-
-  it("impede História e Arte selecionadas separadamente para o mesmo autor", async () => {
-    renderNewManga();
-
-    await screen.findByRole("heading", { name: /novo mang/i });
-    await goToAuthorsStep();
-    await chooseDropdown(/^autor$/i, /masashi kishimoto/i);
-    fireEvent.click(screen.getByLabelText(/selecionar papel/i));
-    fireEvent.click(screen.getByRole("button", { name: "História" }));
-
-    fireEvent.click(screen.getByLabelText(/selecionar papel/i));
-    expect(screen.getByRole("button", { name: "História e Arte" })).toBeDisabled();
-    expect(screen.getByRole("button", { name: "Arte" })).toBeDisabled();
-  });
-
-  it("desabilita demografia e revista quando lancamento direto esta ativo", async () => {
-    vi.mocked(api.post).mockResolvedValueOnce({ data: { work: { id: 1, slug: "naruto", title: "Naruto" } } });
-
-    renderNewManga();
-
-    expect(await screen.findByRole("heading", { name: /novo mang/i })).toBeInTheDocument();
-    await goToPublicationStep();
-    await fillPublicationFields();
-
-    fireEvent.click(screen.getByRole("switch", { name: /lan.*amento direto/i }));
-
-    expect(screen.getByLabelText(/selecionar demografias/i)).toBeDisabled();
-    expect(screen.getByLabelText(/selecionar demografias/i)).toHaveTextContent("Incompatível");
-    expect(screen.getByLabelText(/selecionar pré-publicação/i)).toBeDisabled();
-    expect(screen.getByLabelText(/selecionar pré-publicação/i)).toHaveTextContent("Incompatível");
-
-    fireEvent.click(screen.getByRole("button", { name: /continuar/i }));
-    await fillMediaFields();
-    fireEvent.click(screen.getByRole("button", { name: /^salvar$/i }));
-
-    await waitFor(() => {
-      expect(api.post).toHaveBeenCalledWith("/admin/works", expect.objectContaining({
-        directRelease: true,
-        demographies: [],
-        magazineIds: [],
-      }));
-    });
-  }, 30000);
-
-  it("desabilita demografia quando o tipo de obra nao e manga", async () => {
-    renderNewManga();
-
-    expect(await screen.findByRole("heading", { name: /novo mang/i })).toBeInTheDocument();
-    await fillIdentificationFields();
-
-    await waitFor(() => {
-      expect(screen.getByLabelText(/tipo de obra/i)).toHaveTextContent("Manga");
-    });
-
-    await chooseDropdown(/pa.*s de origem/i, /coreia do sul/i);
-
-    await waitFor(() => {
-      expect(screen.getByLabelText(/tipo de obra/i)).toHaveTextContent("Manhwa");
-    });
-
-    fireEvent.click(screen.getByRole("button", { name: /continuar/i }));
-    await fillAuthorsFields(/^siu$/i);
-    fireEvent.click(screen.getByRole("button", { name: /continuar/i }));
-
-    expect(screen.getByLabelText(/selecionar demografias/i)).toBeDisabled();
-    expect(screen.getByLabelText(/selecionar demografias/i)).toHaveTextContent("Incompatível");
-    expect(screen.getByLabelText(/selecionar pré-publicação/i)).not.toBeDisabled();
+    expect(screen.getByRole("button", { name: /Masashi Kishimoto/i })).toBeInTheDocument();
+    expect(screen.getByRole("button", { name: /^SIU$/i })).toBeInTheDocument();
   });
 
   it.each(["Boys’ Love", "Girls’ Love"])("limpa a demografia ao selecionar %s e a libera ao remover", async (genre) => {
@@ -794,7 +626,7 @@ describe("NewManga", () => {
     renderNewManga();
 
     expect(await screen.findByRole("heading", { name: /novo mang/i })).toBeInTheDocument();
-    fireEvent.click(screen.getByLabelText(/pa.*s de origem/i));
+    fireEvent.click(screen.getByLabelText(/tipo de obra/i));
     fireEvent.change(screen.getByPlaceholderText(/digite para buscar/i), { target: { value: "inexistente" } });
 
     expect(screen.getByText(/nenhum resultado encontrado/i)).toBeInTheDocument();

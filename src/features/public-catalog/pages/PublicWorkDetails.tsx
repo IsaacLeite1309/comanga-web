@@ -244,7 +244,6 @@ function PublicWorkDetailsContent() {
               </section>
 
               <dl className="mt-2 grid grid-cols-2 gap-x-4 gap-y-4 md:grid-cols-1">
-                <MetaItem label="País de Origem" value={work.country} />
                 <MetaItem label="Tipo de obra" value={work.type.label} />
                 <MetaItem label="Publicação original" value={publicationPeriod(work)} />
                 <MetaItem label="Status Original" value={formatPublicationStatus(work.originalPublicationStatus)} />

@@ -1,9 +1,10 @@
-import { ArrowDownAZ, ArrowUpAZ, Check, ChevronDown, LayoutGrid, List, Loader2, Pencil, Search, Settings, Trash2 } from "lucide-react";
+import { ArrowDownAZ, ArrowUpAZ, Check, ChevronDown, Loader2, Pencil, Plus, Search, Settings, Trash2 } from "lucide-react";
 import { Link } from "react-router-dom";
 import { EmptyState, LoadingState } from "@/components/shared/AsyncState";
 import { PageNumberNavigation } from "@/components/shared/PageNumberNavigation";
 import { useDropdown } from "@/hooks/useDropdown";
 import { CatalogVisibilityAction } from "./CatalogVisibility";
+import { CatalogViewToggle } from "./AdminCatalogDetailShared";
 import { workAdminPath, workEditAdminPath } from "../domain/catalogPaths";
 import { EditMangasPageModel } from "../hooks/useEditMangasPage";
 import { FilterOption, formatEditionsCount, WorkSummary } from "../pages/editMangasModel";
@@ -27,11 +28,14 @@ function FilterDropdown({ label, value, options, onChange }: {
       <button
         type="button"
         onClick={toggleDropdown}
-        className="flex min-h-12 w-full items-center justify-between gap-3 rounded-xl border border-border bg-input px-3 py-2 text-left text-base font-semibold text-foreground outline-none transition-colors hover:border-primary focus:border-primary"
+        className="flex h-12 w-full items-center justify-between gap-2 rounded-xl border border-border bg-input px-3 py-2 text-left text-base font-semibold text-foreground outline-none transition-colors hover:border-primary focus:border-primary"
         aria-expanded={isOpen}
         aria-label={label}
       >
-        <span className="min-w-0 break-words">{selectedOption?.label}</span>
+        <span className="relative min-w-0" title={selectedOption?.label}>
+          <span className="invisible block whitespace-nowrap" aria-hidden="true">{options[0]?.label}</span>
+          <span className="absolute inset-0 truncate">{selectedOption?.label}</span>
+        </span>
         <ChevronDown className={`h-3.5 w-3.5 shrink-0 text-muted-foreground transition-transform ${isOpen ? "rotate-180" : ""}`} />
       </button>
       {isOpen && (
@@ -60,42 +64,9 @@ function FilterDropdown({ label, value, options, onChange }: {
   );
 }
 
-function ViewModePicker({ model }: { model: EditMangasPageModel }) {
-  return (
-    <div className="hidden justify-end md:flex">
-      <div className="inline-flex rounded-xl border border-border bg-card p-1">
-        <button
-          type="button"
-          onClick={() => model.setViewMode("list")}
-          className={`inline-flex h-10 items-center gap-2 rounded-lg px-3 text-sm font-bold transition-colors ${
-            model.viewMode === "list"
-              ? "bg-primary text-primary-foreground"
-              : "text-muted-foreground hover:text-foreground"
-          }`}
-        >
-          <List className="h-3.5 w-3.5" />
-          Lista
-        </button>
-        <button
-          type="button"
-          onClick={() => model.setViewMode("grid")}
-          className={`inline-flex h-10 items-center gap-2 rounded-lg px-3 text-sm font-bold transition-colors ${
-            model.viewMode === "grid"
-              ? "bg-primary text-primary-foreground"
-              : "text-muted-foreground hover:text-foreground"
-          }`}
-        >
-          <LayoutGrid className="h-3.5 w-3.5" />
-          Grade
-        </button>
-      </div>
-    </div>
-  );
-}
-
 function WorkFilters({ model }: { model: EditMangasPageModel }) {
   return (
-    <section className="grid gap-3 rounded-xl border border-border bg-card p-4 sm:grid-cols-2 xl:grid-cols-[minmax(0,1fr)_180px_180px_240px]">
+    <section className="grid gap-3 rounded-xl border border-border bg-card p-4 sm:grid-cols-2 xl:grid-cols-[minmax(0,1fr)_max-content_max-content_max-content]">
       <label className="relative min-w-0">
         <Search className="pointer-events-none absolute left-3 top-1/2 h-5 w-5 -translate-y-1/2 text-muted-foreground" />
         <input
@@ -112,10 +83,10 @@ function WorkFilters({ model }: { model: EditMangasPageModel }) {
         onChange={model.changeType}
       />
       <FilterDropdown
-        label="Filtrar por país"
-        value={model.countryId}
-        options={model.countryFilterOptions}
-        onChange={model.changeCountry}
+        label="Filtrar por demografia"
+        value={model.demography}
+        options={model.demographyFilterOptions}
+        onChange={model.changeDemography}
       />
       <FilterDropdown
         label="Filtrar por visibilidade"
@@ -224,11 +195,10 @@ function SortHeader({ model }: { model: EditMangasPageModel }) {
 
 function WorksListHeader({ model }: { model: EditMangasPageModel }) {
   return (
-    <div className="grid grid-cols-[72px_minmax(0,1fr)_auto] items-center gap-3 border-b border-border bg-muted/20 py-3 pl-5 pr-3 text-xs font-bold uppercase tracking-wide text-muted-foreground md:grid-cols-[72px_minmax(0,1.45fr)_minmax(0,1fr)_minmax(0,0.72fr)_minmax(0,0.72fr)_minmax(0,0.55fr)_118px_76px_76px_76px]">
+    <div className="grid grid-cols-[72px_minmax(0,1fr)_auto] items-center gap-3 border-b border-border bg-muted/20 py-3 pl-5 pr-3 text-xs font-bold uppercase tracking-wide text-muted-foreground md:grid-cols-[72px_minmax(0,1.45fr)_minmax(0,1fr)_minmax(0,0.72fr)_minmax(0,0.55fr)_118px_76px_76px_76px]">
       <span className="justify-self-start">Capa</span>
       <SortHeader model={model} />
       <span className="hidden justify-self-start md:block">AUTOR</span>
-      <span className="hidden justify-self-start md:block">PAÍS DE ORIGEM</span>
       <span className="hidden justify-self-start md:block">TIPO DE OBRA</span>
       <span className="hidden justify-self-start md:block">EDIÇÕES</span>
       <span className="hidden justify-self-start md:block">VISIBILIDADE</span>
@@ -247,9 +217,6 @@ function WorkTitle({ model, work }: { model: EditMangasPageModel; work: WorkSumm
         <span className="rounded-full bg-muted px-2 py-1 text-xs font-semibold text-muted-foreground">
           {work.type?.label || "Tipo não informado"}
         </span>
-        <span className="rounded-full bg-muted px-2 py-1 text-xs font-semibold text-muted-foreground">
-          {work.country || "País não informado"}
-        </span>
         <CatalogVisibilityAction
           visibility={work.visibility}
           ariaLabel={`Alterar visibilidade compacta de ${work.title}`}
@@ -264,14 +231,11 @@ function WorkTitle({ model, work }: { model: EditMangasPageModel; work: WorkSumm
 
 function WorkListRow({ model, work }: { model: EditMangasPageModel; work: WorkSummary }) {
   return (
-    <article className="grid grid-cols-[72px_minmax(0,1fr)_auto] gap-3 border-b border-border py-4 pl-5 pr-3 last:border-b-0 md:grid-cols-[72px_minmax(0,1.45fr)_minmax(0,1fr)_minmax(0,0.72fr)_minmax(0,0.72fr)_minmax(0,0.55fr)_118px_76px_76px_76px] md:items-center">
+    <article className="grid grid-cols-[72px_minmax(0,1fr)_auto] gap-3 border-b border-border py-4 pl-5 pr-3 last:border-b-0 md:grid-cols-[72px_minmax(0,1.45fr)_minmax(0,1fr)_minmax(0,0.72fr)_minmax(0,0.55fr)_118px_76px_76px_76px] md:items-center">
       <WorkCover work={work} />
       <WorkTitle model={model} work={work} />
       <div className="hidden min-w-0 break-words text-sm font-semibold text-muted-foreground md:block">
         {(work.authors || []).map((author) => author.label).join(", ") || "Sem autor"}
-      </div>
-      <div className="hidden min-w-0 break-words text-sm font-semibold text-muted-foreground md:block">
-        {work.country || "-"}
       </div>
       <div className="hidden min-w-0 break-words text-sm font-semibold text-muted-foreground md:block">
         {work.type?.label || "-"}
@@ -398,14 +362,17 @@ export function EditMangasView({ model }: { model: EditMangasPageModel }) {
               Localize Obras cadastradas, revise metadados e controle a visibilidade no catálogo.
             </p>
           </div>
-          <Link
-            to="/admin/novo-manga"
-            className="inline-flex items-center rounded-lg bg-primary px-4 py-2 text-sm font-bold text-primary-foreground hover:bg-primary/90"
-          >
-            + Obra
-          </Link>
+          <div className="flex shrink-0 items-center gap-2">
+            <CatalogViewToggle viewMode={model.viewMode} onChange={model.setViewMode} />
+            <Link
+              to="/admin/novo-manga"
+              className="inline-flex h-10 items-center justify-center gap-2 rounded-lg bg-primary px-4 text-sm font-bold text-primary-foreground transition-opacity hover:opacity-90"
+            >
+              <Plus className="h-3.5 w-3.5" aria-hidden="true" />
+              Nova obra
+            </Link>
+          </div>
         </div>
-        <ViewModePicker model={model} />
         <WorkFilters model={model} />
         <WorksGrid model={model} />
         <WorksList model={model} />

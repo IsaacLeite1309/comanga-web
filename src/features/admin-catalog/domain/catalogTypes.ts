@@ -14,7 +14,6 @@ export interface WorkSummary {
   coverUrl?: string | null;
   visibility: CatalogVisibility;
   type?: OptionValue | null;
-  country?: string | null;
   authors?: OptionValue[];
   editionsCount?: number;
 }

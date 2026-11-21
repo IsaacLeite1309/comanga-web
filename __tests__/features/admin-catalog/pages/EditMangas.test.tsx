@@ -5,6 +5,7 @@ import EditMangas from "@/features/admin-catalog/pages/EditMangas";
 import { MemoryRouter } from "react-router-dom";
 import { api } from "@/services/api";
 import { toast } from "sonner";
+import { clearAdminCache } from "@/lib/queryClient";
 
 vi.mock("@/services/api", () => ({
   api: {
@@ -35,7 +36,7 @@ const worksResponse = {
       coverUrl: "https://cdn.comanga.test/naruto.jpg",
       visibility: "Privado",
       type: { id: 1, label: "Mangá" },
-      country: "Japão",
+
       authors: [{ id: 4, label: "Masashi Kishimoto" }],
       editionsCount: 0,
     },
@@ -85,10 +86,10 @@ describe("EditMangas", () => {
     renderEditMangas();
 
     expect(await screen.findByRole("heading", { name: /gerenciar mang.s/i })).toBeInTheDocument();
-    expect(screen.getByRole("link", { name: "+ Obra" })).toHaveAttribute("href", "/admin/novo-manga");
+    expect(screen.getByRole("link", { name: "Nova obra" })).toHaveAttribute("href", "/admin/novo-manga");
     expect((await screen.findAllByText("Naruto"))[0]).toBeInTheDocument();
     expect(screen.getByText("Masashi Kishimoto")).toBeInTheDocument();
-    expect(screen.getAllByText("Japão")[0]).toBeInTheDocument();
+    expect(screen.queryByText("Japão")).not.toBeInTheDocument();
     expect(screen.getAllByText("Mangá")[0]).toBeInTheDocument();
     expect(screen.getByAltText("Capa de Naruto")).toHaveAttribute("src", "https://cdn.comanga.test/naruto.jpg");
     expect(screen.getByRole("link", { name: /editar naruto/i })).toHaveAttribute("href", "/admin/gerenciar-mangas/obras/naruto/editar");
@@ -126,6 +127,25 @@ describe("EditMangas", () => {
         params: expect.objectContaining({ order: "DESC" }),
       }));
     });
+  });
+
+  it("filtra por demografia, volta à primeira página e preserva a seleção ao retornar", async () => {
+    mockInitialLoad({ ...worksResponse, pagination: { page: 1, limit: 8, total: 9, totalPages: 2 } });
+    vi.mocked(api.get).mockResolvedValue({ data: worksResponse });
+    const view = renderEditMangas();
+    await screen.findAllByText("Naruto");
+    fireEvent.click(screen.getByRole("button", { name: /próxima/i }));
+    await waitFor(() => expect(api.get).toHaveBeenLastCalledWith("/admin/works", expect.objectContaining({ params: expect.objectContaining({ page: 2 }) })));
+    fireEvent.click(screen.getByRole("button", { name: "Filtrar por demografia" }));
+    fireEvent.click(screen.getByRole("button", { name: "Seinen" }));
+    await waitFor(() => expect(api.get).toHaveBeenLastCalledWith("/admin/works", expect.objectContaining({ params: expect.objectContaining({ demography: "Seinen", page: 1 }) })));
+    view.unmount();
+    renderEditMangas();
+    expect(screen.getByRole("button", { name: "Filtrar por demografia" })).toHaveTextContent("Seinen");
+    clearAdminCache();
+    fireEvent.click(screen.getByRole("button", { name: "Filtrar por demografia" }));
+    fireEvent.click(screen.getByRole("button", { name: "Todas as demografias" }));
+    await waitFor(() => expect(api.get).toHaveBeenLastCalledWith("/admin/works", expect.objectContaining({ params: expect.not.objectContaining({ demography: expect.anything() }) })));
   });
 
   it("altera visibilidade e atualiza a lista", async () => {
@@ -208,7 +228,6 @@ describe("EditMangas", () => {
         originalTitle: null,
         coverUrl: null,
         type: null,
-        country: null,
         authors: [],
         editionsCount: 1,
         visibility: "Público",
@@ -223,7 +242,7 @@ describe("EditMangas", () => {
     expect(screen.getByRole("heading", { name: "Naruto" })).toBeInTheDocument();
   });
 
-  it("aplica filtros de tipo, pais e visibilidade", async () => {
+  it("aplica filtros de tipo e visibilidade sem país", async () => {
     mockInitialLoad();
     vi.mocked(api.get).mockResolvedValue({ data: worksResponse });
     renderEditMangas();
@@ -231,13 +250,11 @@ describe("EditMangas", () => {
 
     fireEvent.click(screen.getByLabelText(/filtrar por tipo/i));
     fireEvent.click(screen.getByRole("button", { name: /^mangá$/i }));
-    fireEvent.click(screen.getByLabelText(/filtrar por pa.s/i));
-    fireEvent.click(screen.getByRole("button", { name: /^japão$/i }));
     fireEvent.click(screen.getByLabelText(/filtrar por visibilidade/i));
     fireEvent.click(screen.getByRole("button", { name: /^privado$/i }));
 
     await waitFor(() => expect(api.get).toHaveBeenCalledWith("/admin/works", expect.objectContaining({
-      params: expect.objectContaining({ typeId: 1, country: "Japão", visibility: "Privado" }),
+      params: expect.objectContaining({ typeId: 1, visibility: "Privado" }),
     })));
   });
 

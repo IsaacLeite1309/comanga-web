@@ -17,7 +17,6 @@ export interface WorkDetail {
   title: string;
   originalTitle?: string | null;
   coverUrl?: string | null;
-  country?: string | null;
   type?: OptionValue | null;
   visibility: CatalogVisibility;
   authors: Array<{

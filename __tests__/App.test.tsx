@@ -1,4 +1,4 @@
-import { act, fireEvent, screen, within } from "@testing-library/react";
+import { act, fireEvent, screen, waitFor, within } from "@testing-library/react";
 import { render } from "./support/queryRender";
 import { beforeEach, describe, expect, it, vi } from "vitest";
 import App from "@/App";
@@ -21,6 +21,14 @@ vi.mock("@/features/auth", async () => {
   };
 });
 vi.mock("@/features/profile", () => ({ ProfilePage: () => "Meu perfil" }));
+vi.mock("@/features/collection", async original => {
+  const { CollectionPage } = await original<typeof import("@/features/collection")>();
+  return {
+    CollectionPage: ({ isAuthenticated }: { isAuthenticated: boolean }) => isAuthenticated
+      ? <div>Coleção autenticada</div>
+      : <CollectionPage isAuthenticated={false} />,
+  };
+});
 vi.mock("@/features/admin-users", () => ({ AdminUsersPage: () => "Administrar usuários" }));
 vi.mock("@/features/public-catalog", () => ({
   PublicCatalogPage: () => "Catálogo público",
@@ -196,14 +204,22 @@ describe("navegação e acesso administrativo", () => {
     expect(await screen.findByText("Meu perfil")).toBeInTheDocument();
   });
 
-  it("redireciona usuários autenticados das páginas de visitante para o perfil", async () => {
+  it.each([
+    ["Usuário Padrão", "/colecao"],
+    ["Administrador", "/perfil/leitor"],
+  ])("redireciona o perfil %s das páginas de visitante para %s", async (activeProfile, destination) => {
     vi.mocked(api.get).mockResolvedValue({
-      data: { user: { id: "1", username: "leitor", profiles: ["Usuário Padrão"], active_profile: "Usuário Padrão" } },
+      data: { user: { id: "1", username: "leitor", profiles: ["Usuário Padrão", "Administrador"], active_profile: activeProfile } },
     });
     window.history.replaceState({}, "", "/entrar");
     render(<App />);
 
-    expect(await screen.findByText("Meu perfil")).toBeInTheDocument();
+    await waitFor(() => expect(window.location.pathname).toBe(destination));
+    if (activeProfile === "Usuário Padrão") {
+      expect(await screen.findByText("Coleção autenticada")).toBeInTheDocument();
+    } else {
+      expect(await screen.findByRole("navigation", { name: "Documentos legais" })).toBeInTheDocument();
+    }
     expect(screen.queryByText("Entrar na conta")).not.toBeInTheDocument();
   });
 

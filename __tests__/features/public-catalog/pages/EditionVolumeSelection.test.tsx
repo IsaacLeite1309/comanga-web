@@ -65,14 +65,15 @@ const response = {
   pagination: { page: 1, limit: 50, total: 2, totalPages: 1 },
 };
 
-function renderPage(mode: "colecao" | "desejos" | "lidos" = "colecao", editionNumber = "1") {
+function renderPage(mode: "colecao" | "desejos" | "lidos" = "colecao", editionNumber = "1", state?: unknown) {
   return render(
-    <MemoryRouter initialEntries={[`/obra/monster/edicao/${editionNumber}/selecionar/${mode}`]}>
+    <MemoryRouter initialEntries={[{ pathname: `/obra/monster/edicao/${editionNumber}/selecionar/${mode}`, state }]}>
       <Routes>
         <Route path="/obra/:slug/edicao/:editionNumber/selecionar/colecao" element={<EditionVolumeSelection mode="colecao" />} />
         <Route path="/obra/:slug/edicao/:editionNumber/selecionar/desejos" element={<EditionVolumeSelection mode="desejos" />} />
         <Route path="/obra/:slug/edicao/:editionNumber/selecionar/lidos" element={<EditionVolumeSelection mode="lidos" />} />
         <Route path="/obra/:slug/edicao/:editionNumber" element={<div>Edição</div>} />
+        <Route path="/colecao" element={<div>Coleção</div>} />
       </Routes>
     </MemoryRouter>,
   );
@@ -90,6 +91,24 @@ describe("EditionVolumeSelection", () => {
     vi.mocked(syncCollectionEdition).mockResolvedValue({ editionId: 20, addedVolumeIds: [30], removedVolumeIds: [] });
     vi.mocked(syncWishlist).mockResolvedValue([]);
     vi.mocked(syncReading).mockResolvedValue({});
+  });
+  it.each(["colecao", "desejos", "lidos"] as const)("retorna à coleção ao salvar %s quando o seletor foi aberto por ela", async mode => {
+    vi.mocked(getCompleteCollectionEdition).mockResolvedValue(personal([30]));
+    renderPage(mode, "1", { catalogOrigin: "collection", returnTo: "/colecao?page=2" });
+    const cancel = screen.getByRole("link", { name: "Cancelar" });
+    expect(cancel).toHaveAttribute("href", "/colecao?page=2");
+    const volume = mode === "lidos" ? "Selecionar Volume 1" : "Selecionar Volume 2";
+    fireEvent.click(await screen.findByRole("button", { name: volume }));
+    fireEvent.click(screen.getByRole("button", { name: "OK" }));
+    expect(await screen.findByText("Coleção")).toBeInTheDocument();
+    expect(screen.queryByText("Edição")).not.toBeInTheDocument();
+  });
+  it("cancela para a coleção durante o carregamento sem salvar", async () => {
+    vi.mocked(getPublicEditionDetails).mockReturnValue(new Promise(() => {}));
+    renderPage("colecao", "1", { returnTo: "/colecao" });
+    fireEvent.click(screen.getByRole("link", { name: "Cancelar" }));
+    expect(await screen.findByText("Coleção")).toBeInTheDocument();
+    expect(syncCollectionEdition).not.toHaveBeenCalled();
   });
   it("carrega seleção persistida, modifica e salva um delta atômico antes de voltar", async () => {
     vi.mocked(getCompleteCollectionEdition).mockResolvedValueOnce(personal([30])).mockResolvedValueOnce(personal([31]));

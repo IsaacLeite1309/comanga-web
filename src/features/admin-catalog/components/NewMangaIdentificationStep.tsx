@@ -1,5 +1,4 @@
 import { InputField, SelectField } from '@/components/forms/FormFields';
-import { NATIVE_COUNTRY_OPTIONS } from '../domain/workOptions';
 
 import { errorMessage, type ControllerProps } from './newMangaSectionShared';
 
@@ -44,8 +43,7 @@ export function IdentificationStep({ controller }: ControllerProps) {
         <InputField label="Título romanizado" value={draft.romanizedTitle} onChange={(value) => { controller.updateDraft("romanizedTitle", value); controller.clearInvalidField("romanizedTitle"); }} required invalid={controller.isInvalidField("romanizedTitle")} errorMessage={errorMessage(controller, "romanizedTitle")} placeholder="Digite" />
       </div>
       <div className="grid gap-4 md:w-1/2 md:grid-cols-2">
-        <SelectField label="País de origem" value={draft.country} onChange={(value) => { controller.updateDraft("country", value); controller.clearInvalidFields(["country", "typeId"]); }} onOpen={() => controller.clearInvalidField("country")} options={NATIVE_COUNTRY_OPTIONS} required invalid={controller.isInvalidField("country")} errorMessage={errorMessage(controller, "country")} searchable />
-        <SelectField label="Tipo de obra" value={draft.typeId} onChange={(value) => { controller.updateDraft("typeId", value); controller.clearInvalidField("typeId"); }} onOpen={() => controller.clearInvalidField("typeId")} options={controller.options.workTypes} required disabled={!draft.country} placeholder={draft.country ? "Selecione" : "Selecione o país primeiro"} invalid={controller.isInvalidField("typeId")} errorMessage={errorMessage(controller, "typeId")} searchable />
+        <SelectField label="Tipo de obra" value={draft.typeId} onChange={(value) => { controller.updateDraft("typeId", value); controller.clearInvalidField("typeId"); }} onOpen={() => controller.clearInvalidField("typeId")} options={controller.options.workTypes} required placeholder="Selecione" invalid={controller.isInvalidField("typeId")} errorMessage={errorMessage(controller, "typeId")} searchable />
       </div>
     </section>
   );

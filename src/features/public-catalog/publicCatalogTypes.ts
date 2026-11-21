@@ -12,15 +12,10 @@ export interface PublicOption {
   slug?: string | null;
 }
 
-// A API declara a que países cada Tipo de Obra pertence para o filtro restringir a lista.
-export interface PublicWorkTypeOption extends PublicOption {
-  countryIds: number[];
-  countries: string[];
-}
+export type PublicWorkTypeOption = PublicOption;
 
 export interface PublicCatalogOptions {
   workTypes: PublicWorkTypeOption[];
-  countries: string[];
   demographics: string[];
   genres: PublicOption[];
   originalPublishers: PublicOption[];
@@ -40,7 +35,6 @@ export interface PublicWorkSummary {
   romanizedTitle?: string | null;
   coverUrl?: string | null;
   type?: PublicOption | null;
-  country?: string | null;
   authors: PublicOption[];
 }
 
@@ -109,7 +103,6 @@ export interface PublicWorkDetails {
   romanizedTitle?: string | null;
   coverUrl?: string | null;
   type: PublicOption;
-  country: string;
   originalPublicationStartYear?: number | null;
   originalPublicationEndYear?: number | null;
   directRelease: boolean;
@@ -210,7 +203,6 @@ export interface PublicVolumeDetailsResponse {
 export interface PublicWorksQuery {
   term?: string;
   typeId?: number;
-  country?: string;
   demographics?: string[];
   genreIds?: number[];
   originalPublisherId?: number;
