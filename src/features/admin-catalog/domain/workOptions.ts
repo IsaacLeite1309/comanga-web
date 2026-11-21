@@ -39,13 +39,6 @@ export function sortAuthorsByCredit<T extends { authorId: string; roles: string[
   });
 }
 
-export const NATIVE_COUNTRY_OPTIONS: OptionValue[] = [
-  { id: "Japão", value: "Japão", label: "Japão" },
-  { id: "Coreia do Sul", value: "Coreia do Sul", label: "Coreia do Sul" },
-  { id: "China", value: "China", label: "China" },
-  { id: "Taiwan", value: "Taiwan", label: "Taiwan" },
-];
-
 export const NATIVE_ORIGINAL_STATUS_OPTIONS: OptionValue[] = [
   { id: "Completa", value: "Completa", label: "Completa" },
   { id: "Em andamento", value: "Em andamento", label: "Em andamento" },

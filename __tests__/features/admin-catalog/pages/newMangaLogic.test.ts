@@ -1,67 +1,15 @@
 import { describe, expect, it } from "vitest";
 import {
-  filterOptionsByDependency,
-  filterWorkTypesByCountry,
-  getDefaultCountryAndType,
+  getDefaultWorkType,
   isHentaiGenre,
   isGenreWithoutDemography,
 } from "@/features/admin-catalog/pages/newMangaLogic";
-import type { OptionValue, WorkFormOptions } from "@/features/admin-catalog/pages/newMangaTypes";
+import type { WorkFormOptions } from "@/features/admin-catalog/pages/newMangaTypes";
 
-const countryCategory = { slug: "paises-origem", name: "País de origem" };
-
-function workType(id: number, label: string, countries: string[]): OptionValue {
-  return {
-    id,
-    label,
-    depends_on: countries.map((country, index) => ({
-      id: 100 + index,
-      label: country,
-      category: countryCategory,
-    })),
-  };
-}
-
-const officialTypes: OptionValue[] = [
-  workType(1, "Mangá", ["Japão"]),
-  workType(2, "Manhwa", ["Coreia do Sul"]),
-  workType(3, "Manhua", ["China", "Taiwan"]),
-  workType(4, "Novel", ["China", "Coreia do Sul", "Japão", "Taiwan"]),
-  { id: 5, label: "Tipo legado sem dependência" },
-];
-
-describe("tipos de Obra restritos pelo país", () => {
-  it("oferece apenas os tipos declarados para o país escolhido", () => {
-    expect(filterWorkTypesByCountry(officialTypes, "Japão").map((type) => type.label))
-      .toEqual(["Mangá", "Novel"]);
-    expect(filterWorkTypesByCountry(officialTypes, "Coreia do Sul").map((type) => type.label))
-      .toEqual(["Manhwa", "Novel"]);
-    expect(filterWorkTypesByCountry(officialTypes, "Taiwan").map((type) => type.label))
-      .toEqual(["Manhua", "Novel"]);
-  });
-
-  it("nunca oferece tipo sem dependência de país, ao contrário das demais listas", () => {
-    expect(filterWorkTypesByCountry(officialTypes, "Japão").some((type) => type.id === 5)).toBe(false);
-    // Autores, editoras e revistas mantêm a regra antiga: sem dependência, valem para todos.
-    expect(filterOptionsByDependency([{ id: 9, label: "Autor livre" }], "Japão")).toEqual([
-      { id: 9, label: "Autor livre" },
-    ]);
-  });
-
-  it("sem país escolhido não oferece nenhum tipo", () => {
-    expect(filterWorkTypesByCountry(officialTypes, "")).toEqual([]);
-  });
-
-  it("propõe Mangá como padrão para o Japão", () => {
-    const options: WorkFormOptions = {
-      authors: [],
-      workTypes: officialTypes,
-      genres: [],
-      magazines: [],
-      originalPublishers: [],
-    };
-
-    expect(getDefaultCountryAndType(options)).toEqual({ country: "Japão", typeId: "1" });
+describe("tipo padrão sem país", () => {
+  it("seleciona Mangá entre os tipos disponíveis sem exigir país ou dependências", () => {
+    const options: WorkFormOptions = { authors: [], workTypes: [{ id: 1, label: "Mangá" }, { id: 4, label: "Novel" }], genres: [], magazines: [], originalPublishers: [] };
+    expect(getDefaultWorkType(options)).toEqual({ typeId: "1" });
   });
 });
 

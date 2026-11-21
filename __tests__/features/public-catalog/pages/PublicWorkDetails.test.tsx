@@ -22,7 +22,7 @@ const work = {
   romanizedTitle: "Monsutā",
   coverUrl: "https://cdn.comanga.test/monster.jpg",
   type: { id: 2, label: "Mangá" },
-  country: "Japão",
+
   originalPublicationStartYear: 1994,
   originalPublicationEndYear: 2001,
   directRelease: false,
@@ -146,9 +146,9 @@ describe("PublicWorkDetails", () => {
     expect(screen.getByText("Monsutā")).toBeInTheDocument();
     expect(screen.getByText("Monsutā")).not.toBe(screen.getByText("MONSTER"));
     expect(screen.getByText("Tipo de obra")).toBeInTheDocument();
-    expect(screen.getByText("País de Origem")).toBeInTheDocument();
+    expect(screen.queryByText("País de Origem")).not.toBeInTheDocument();
     expect(screen.getByText("Mangá").tagName).toBe("DD");
-    expect(screen.getByText("Japão").tagName).toBe("DD");
+    expect(screen.queryByText("Japão")).not.toBeInTheDocument();
     expect(screen.getByText("Naoki Urasawa")).toBeInTheDocument();
     expect(screen.getByRole("link", { name: "Ver Obras de Naoki Urasawa" })).toHaveAttribute("href", "/autor/naoki-urasawa");
     expect(screen.getByText("Roteiro · Arte")).toBeInTheDocument();

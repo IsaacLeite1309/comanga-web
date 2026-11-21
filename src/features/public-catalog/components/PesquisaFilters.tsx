@@ -191,13 +191,6 @@ function WorkAdvancedFilters({ catalog }: { catalog: PesquisaCatalog }) {
   return (
     <div className="grid grid-cols-2 gap-4 max-lg:items-end sm:grid-cols-[13.5rem_13.5rem] sm:gap-3">
       <FilterField
-        label="País de Origem"
-        value={catalog.country}
-        options={stringOptions(catalog.options.countries)}
-        onChange={(value) => catalog.updateParam("country", value)}
-        disabled={catalog.optionsLoading}
-      />
-      <FilterField
         label="Editora original"
         value={catalog.originalPublisherId ? String(catalog.originalPublisherId) : ""}
         options={catalog.options.originalPublishers}
@@ -225,6 +218,19 @@ function WorkAdvancedFilters({ catalog }: { catalog: PesquisaCatalog }) {
         tone="panel"
         focusStyle="border"
       />
+      <MultiSelect
+        label="Gêneros"
+        options={catalog.options.genres}
+        selectedIds={catalog.genreIds}
+        onToggle={(value) => catalog.toggleCsvParam("genreIds", catalog.genreIds, Number(value))}
+        disabled={catalog.optionsLoading}
+        searchable
+        placeholder="Todos"
+        onClear={() => catalog.updateParam("genreIds", undefined)}
+        textSize="sm"
+        tone="panel"
+        focusStyle="border"
+      />
       <FilterField
         label="Início da publicação original"
         value={catalog.originalPublicationStartYear ? String(catalog.originalPublicationStartYear) : ""}
@@ -239,19 +245,6 @@ function WorkAdvancedFilters({ catalog }: { catalog: PesquisaCatalog }) {
         onChange={(value) => catalog.updateParam("originalPublicationEndYear", value)}
         searchable
       />
-      <MultiSelect
-        label="Gêneros"
-        options={catalog.options.genres}
-        selectedIds={catalog.genreIds}
-        onToggle={(value) => catalog.toggleCsvParam("genreIds", catalog.genreIds, Number(value))}
-        disabled={catalog.optionsLoading}
-        searchable
-        placeholder="Todos"
-        onClear={() => catalog.updateParam("genreIds", undefined)}
-        textSize="sm"
-        tone="panel"
-        focusStyle="border"
-      />
     </div>
   );
 }
@@ -259,6 +252,20 @@ function WorkAdvancedFilters({ catalog }: { catalog: PesquisaCatalog }) {
 function EditionAdvancedFilters({ catalog }: { catalog: PesquisaCatalog }) {
   return (
     <div className="grid grid-cols-2 gap-4 max-lg:items-end sm:grid-cols-[13.5rem_13.5rem] sm:gap-3">
+      <FilterField
+        label="Início da publicação no Brasil"
+        value={catalog.brazilPublicationStartYear ? String(catalog.brazilPublicationStartYear) : ""}
+        options={PUBLICATION_YEAR_OPTIONS}
+        onChange={(value) => catalog.updateParam("brazilPublicationStartYear", value)}
+        searchable
+      />
+      <FilterField
+        label="Fim da publicação no Brasil"
+        value={catalog.brazilPublicationEndYear ? String(catalog.brazilPublicationEndYear) : ""}
+        options={PUBLICATION_YEAR_OPTIONS}
+        onChange={(value) => catalog.updateParam("brazilPublicationEndYear", value)}
+        searchable
+      />
       <FilterField
         label="Número da edição"
         value={catalog.chronologicalNumber ? String(catalog.chronologicalNumber) : ""}
@@ -278,20 +285,6 @@ function EditionAdvancedFilters({ catalog }: { catalog: PesquisaCatalog }) {
         options={catalog.options.formats}
         onChange={(value) => catalog.updateParam("formatId", value)}
         disabled={catalog.optionsLoading}
-      />
-      <FilterField
-        label="Início da publicação no Brasil"
-        value={catalog.brazilPublicationStartYear ? String(catalog.brazilPublicationStartYear) : ""}
-        options={PUBLICATION_YEAR_OPTIONS}
-        onChange={(value) => catalog.updateParam("brazilPublicationStartYear", value)}
-        searchable
-      />
-      <FilterField
-        label="Fim da publicação no Brasil"
-        value={catalog.brazilPublicationEndYear ? String(catalog.brazilPublicationEndYear) : ""}
-        options={PUBLICATION_YEAR_OPTIONS}
-        onChange={(value) => catalog.updateParam("brazilPublicationEndYear", value)}
-        searchable
       />
     </div>
   );

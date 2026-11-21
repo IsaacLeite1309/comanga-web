@@ -1,10 +1,11 @@
 import { adminCachedGet } from "@/services/adminCachedGet";
+import { availableWorkTypes } from "@/lib/workTypeOptions";
 import { useEffect, useRef, useState, type Dispatch, type SetStateAction } from 'react';
 import { getApiError } from '@/lib/apiError';
-import { draftFromWork, emptyOptions, filterOptionsByDependency, filterWorkTypesByCountry, findOptionByLabels, getDefaultCountryAndType, getDefaultWorkTypeLabels, isHentaiGenre, isGenreWithoutDemography, normalizeSearchText } from '../pages/newMangaLogic';
+import { draftFromWork, emptyOptions, getDefaultWorkType, getDefaultWorkTypeLabels, isHentaiGenre, isGenreWithoutDemography, normalizeSearchText } from '../pages/newMangaLogic';
 import type { NewMangaDraft, NewMangaMode, NewMangaStep, WorkDetailResponse, WorkFormOptions, WorkFormOptionsResponse } from '../pages/newMangaTypes';
 
-export { useNewMangaOptions, useCountryOptions, getDerivedState, useDerivedRules };
+export { useNewMangaOptions, useFormOptions, getDerivedState, useDerivedRules };
 export type { DerivedState };
 
 type SetDraft = Dispatch<SetStateAction<NewMangaDraft>>;
@@ -32,7 +33,7 @@ function useNewMangaOptions(
           isEditMode && workId ? adminCachedGet<WorkDetailResponse>(`/admin/works/${workId}`) : Promise.resolve(null),
         ]);
         if (!isMounted) return;
-        const formOptions = preserveLinkedOptions(optionsResponse.data.options, workResponse?.data.work);
+        const formOptions = preserveLinkedOptions({ ...optionsResponse.data.options, workTypes: availableWorkTypes(optionsResponse.data.options.workTypes) }, workResponse?.data.work);
         setAllOptions(formOptions);
         setOptions({ ...emptyOptions, genres: formOptions.genres });
         if (workResponse?.data.work) {
@@ -40,9 +41,9 @@ function useNewMangaOptions(
           setCurrentStep("identification");
           return;
         }
-        setDraft((current) => current.country
+        setDraft((current) => formOptions.workTypes.some(type => String(type.id) === current.typeId)
           ? current
-          : { ...current, ...getDefaultCountryAndType(formOptions) });
+          : { ...current, ...getDefaultWorkType(formOptions) });
       } catch (error) {
         if (isMounted) setOptionsError(getApiError(error, "Erro ao carregar listas de cadastro."));
       } finally {
@@ -61,7 +62,7 @@ function preserveLinkedOptions(options: WorkFormOptions, work?: WorkDetailRespon
   if (!work) return options;
   const workTypes = [...options.workTypes];
   if (work.type && !workTypes.some(type => Number(type.id) === Number(work.type?.id))) {
-    workTypes.push({ ...work.type, preservedCountry: work.country || "" });
+    workTypes.push(work.type);
   }
   const genres = [...options.genres];
   for (const genre of work.genres) {
@@ -70,62 +71,18 @@ function preserveLinkedOptions(options: WorkFormOptions, work?: WorkDetailRespon
   return { ...options, workTypes, genres };
 }
 
-function availableOptions(allOptions: WorkFormOptions, country: string) {
-  function relatedOrAll(values: WorkFormOptions[keyof WorkFormOptions]) {
-    const related = filterOptionsByDependency(values, country);
-    return related.length > 0 ? related : values;
-  }
-  return {
-    authors: relatedOrAll(allOptions.authors),
-    // Tipos oficiais são restritos ao país; sem dependência não há combinação válida.
-    workTypes: filterWorkTypesByCountry(allOptions.workTypes, country),
-    genres: allOptions.genres,
-    magazines: relatedOrAll(allOptions.magazines),
-    originalPublishers: relatedOrAll(allOptions.originalPublishers),
-  };
-}
-
-function useCountryOptions(
+function useFormOptions(
   allOptions: WorkFormOptions,
-  country: string,
-  setDraft: SetDraft,
   setOptions: Dispatch<SetStateAction<WorkFormOptions>>
 ) {
-  useEffect(() => {
-    if (!country) {
-      setOptions((current) => ({ ...current, authors: [], workTypes: [], magazines: [], originalPublishers: [] }));
-      setDraft((current) => ({ ...current, typeId: "", originalPublisherIds: [], magazineIds: [] }));
-      return;
-    }
-    const hasOptions = allOptions.authors.length + allOptions.workTypes.length
-      + allOptions.magazines.length + allOptions.originalPublishers.length > 0;
-    if (!hasOptions) return;
-    const nextOptions = availableOptions(allOptions, country);
-    const defaultType = findOptionByLabels(nextOptions.workTypes, getDefaultWorkTypeLabels(country));
-    setOptions(nextOptions);
-    setDraft((current) => ({
-      ...current,
-      typeId: nextOptions.workTypes.some((type) => String(type.id) === current.typeId)
-        ? current.typeId
-        : defaultType ? String(defaultType.id) : "",
-      authors: current.authors.map((author) => (
-        author.authorId && !nextOptions.authors.some((candidate) => String(candidate.id) === author.authorId)
-          ? { ...author, authorId: "" }
-          : author
-      )),
-      magazineIds: current.magazineIds.filter((id) => nextOptions.magazines.some((option) => option.id === id)),
-      originalPublisherIds: current.originalPublisherIds.filter(
-        (id) => nextOptions.originalPublishers.some((option) => option.id === id)
-      ),
-    }));
-  }, [allOptions, country, setDraft, setOptions]);
+  useEffect(() => { setOptions(allOptions); }, [allOptions, setOptions]);
 }
 
 function getDerivedState(draft: NewMangaDraft, options: WorkFormOptions, allOptions: WorkFormOptions) {
   const workTypeName = options.workTypes.find((type) => String(type.id) === draft.typeId)?.label
     || allOptions.workTypes.find((type) => String(type.id) === draft.typeId)?.label;
   const normalizedType = workTypeName ? normalizeSearchText(workTypeName) : "";
-  const isManga = workTypeName ? getDefaultWorkTypeLabels("").includes(normalizedType) : true;
+  const isManga = workTypeName ? getDefaultWorkTypeLabels().includes(normalizedType) : true;
   const directReleaseBlockedByWorkType = ["artbook", "databook"].includes(normalizedType);
   const effectiveDirectRelease = draft.directRelease || directReleaseBlockedByWorkType;
   const isOpenOriginalPublication = ["em andamento", "hiato"].some(

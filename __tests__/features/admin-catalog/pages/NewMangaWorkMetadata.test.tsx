@@ -56,7 +56,7 @@ const workDetail = {
   synopsis: "Um ninja busca reconhecimento na própria vila.",
   coverAssetId: "7f28c7f0-c94f-46e8-b61c-6ea716f8f28e",
   coverUrl: "https://cdn.comanga.test/naruto.jpg",
-  country: "Japão",
+
   type: { id: 9, label: "Manga" },
   adultContent: false,
   originalPublicationStartYear: 1999,

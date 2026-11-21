@@ -12,7 +12,7 @@ import { PUBLIC_CATALOG_QUERY_ROOT } from "@/lib/queryClient";
 import { CollectionEdition } from "../CollectionEdition";
 import { useLoadingScrollReset } from "@/hooks/useLoadingScrollReset";
 
-const DEFAULT_COLLECTION_FILTERS = { searchTerm: "", term: "", status: "" as "complete" | "incomplete" | "", publisherId: "", order: "ASC" as "ASC" | "DESC" };
+const DEFAULT_COLLECTION_FILTERS = { searchTerm: "", term: "", status: "" as "complete" | "incomplete" | "up-to-date" | "", publisherId: "", order: "ASC" as "ASC" | "DESC" };
 
 export default function Colecao({ isAuthenticated }: { isAuthenticated: boolean }) {
   return isAuthenticated ? <AuthenticatedCollection /> : <GuestCollection />;
@@ -210,7 +210,7 @@ function AuthenticatedCollection() {
           </label>
           <div className="min-w-0 sm:w-[13.5rem] sm:shrink-0">
             <span className="text-xs font-bold uppercase tracking-wide">Status da coleção</span>
-            <SearchableSelect ariaLabel="Status da coleção" value={status} options={[{ value: "complete", label: "Completa" }, { value: "incomplete", label: "Incompleta" }]} onChange={value => { state.setPage(1); setFilters({ status: value as "complete" | "incomplete" | "" }); }} disabled={controlsDisabled} placeholder="Todos" clearable allowEmptyOption={false} tone="sidebar" textSize="sm" focusStyle="border" />
+            <SearchableSelect ariaLabel="Status da coleção" value={status} options={[{ value: "complete", label: "Completa" }, { value: "incomplete", label: "Incompleta" }, { value: "up-to-date", label: "Em dia" }]} onChange={value => { state.setPage(1); setFilters({ status: value as "complete" | "incomplete" | "up-to-date" | "" }); }} disabled={controlsDisabled} placeholder="Todos" clearable allowEmptyOption={false} tone="sidebar" textSize="sm" focusStyle="border" />
           </div>
           <div className="min-w-0 sm:w-[13.5rem] sm:shrink-0">
             <span className="text-xs font-bold uppercase tracking-wide">Editora brasileira</span>

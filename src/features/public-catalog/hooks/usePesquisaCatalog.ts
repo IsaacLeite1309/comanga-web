@@ -32,7 +32,6 @@ const PREFETCH_CONCURRENCY = 3;
 const PREFETCH_VOLUME_LIMIT = 48;
 const EMPTY_OPTIONS: PublicCatalogOptions = {
   workTypes: [],
-  countries: [],
   demographics: [],
   genres: [],
   originalPublishers: [],
@@ -51,7 +50,6 @@ const EMPTY_PAGINATION: PublicPagination = {
 };
 const WORK_FILTER_KEYS = [
   "typeId",
-  "country",
   "demographics",
   "genreIds",
   "originalPublisherId",
@@ -70,7 +68,6 @@ const EDITION_FILTER_KEYS = [
   "brazilPublicationEndYear",
 ];
 const ADVANCED_FILTER_KEYS = [
-  "country",
   "demographics",
   "genreIds",
   "originalPublisherId",
@@ -118,7 +115,6 @@ function readCatalogParams(params: URLSearchParams) {
     page: positiveInteger(params.get("page")),
     sortBy: "title" as const,
     typeId: optionalInteger(params.get("typeId")),
-    country: params.get("country") ?? "",
     demographics: csvValues(params.get("demographics")),
     genreIds: numericCsvValues(params.get("genreIds")),
     originalPublisherId: optionalInteger(params.get("originalPublisherId")),
@@ -160,7 +156,6 @@ function buildWorkQuery(params: CatalogParams): PublicWorksQuery {
   return {
     ...(params.urlTerm.trim() ? { term: params.urlTerm.trim() } : {}),
     ...(params.typeId ? { typeId: params.typeId } : {}),
-    ...(params.country ? { country: params.country } : {}),
     ...(params.demographics.length ? { demographics: params.demographics } : {}),
     ...(params.genreIds.length ? { genreIds: params.genreIds } : {}),
     ...(params.originalPublisherId ? { originalPublisherId: params.originalPublisherId } : {}),
@@ -192,7 +187,7 @@ function buildEditionQuery(params: CatalogParams): PublicEditionsQuery {
   };
 }
 
-function useCatalogLocation(workTypes: PublicCatalogOptions["workTypes"]) {
+function useCatalogLocation() {
   const [searchParams, setSearchParams] = useSearchParams();
   const serializedParams = searchParams.toString();
   const params = useMemo(() => readCatalogParams(new URLSearchParams(serializedParams)), [serializedParams]);
@@ -200,13 +195,14 @@ function useCatalogLocation(workTypes: PublicCatalogOptions["workTypes"]) {
 
   useEffect(() => {
     const canonical = new URLSearchParams(searchParams);
+    canonical.delete("country");
     const defaults = {
       tab: params.tab,
       sortBy: params.sortBy,
       order: params.order,
       page: String(params.page),
     };
-    const changed = Object.entries(defaults).some(([key, value]) => canonical.get(key) !== value);
+    const changed = searchParams.has("country") || Object.entries(defaults).some(([key, value]) => canonical.get(key) !== value);
     Object.entries(defaults).forEach(([key, value]) => canonical.set(key, value));
     if (changed) setSearchParams(canonical, { replace: true });
   }, [params.order, params.page, params.sortBy, params.tab, searchParams, setSearchParams]);
@@ -231,10 +227,7 @@ function useCatalogLocation(workTypes: PublicCatalogOptions["workTypes"]) {
     const next = new URLSearchParams(searchParams);
     if (value === undefined || value === "") next.delete(key);
     else next.set(key, String(value));
-    if (key === "country" && value && params.typeId
-      && !filterWorkTypesByCountry(workTypes, String(value)).some(type => type.id === params.typeId)) {
-      next.delete("typeId");
-    }
+
     next.set("page", "1");
     setSearchParams(next);
   }
@@ -312,18 +305,6 @@ function useCatalogOptions() {
     optionsError: result.isError && !result.data,
     retryOptions: () => { void result.refetch(); },
   };
-}
-
-// Com um país escolhido, só os Tipos de Obra declarados pela API para ele continuam
-// disponíveis; sem país, a lista completa é oferecida.
-export function filterWorkTypesByCountry(
-  workTypes: PublicCatalogOptions["workTypes"],
-  country: string
-) {
-  if (!country) return workTypes;
-  return workTypes.filter((workType) => (
-    !workType.countries || workType.countries.length === 0 || workType.countries.includes(country)
-  ));
 }
 
 function useCatalogResults(location: ReturnType<typeof useCatalogLocation>) {
@@ -437,7 +418,6 @@ function useAdvancedFilters(searchParams: URLSearchParams) {
 export function advancedFilterCount(params: CatalogParams) {
   if (params.tab === "works") {
     return params.demographics.length + params.genreIds.length + [
-      params.country,
       params.originalPublisherId,
       params.serializationMagazineId,
       params.originalPublicationStartYear,
@@ -455,12 +435,12 @@ export function advancedFilterCount(params: CatalogParams) {
 
 export function usePesquisaCatalog() {
   const optionState = useCatalogOptions();
-  const location = useCatalogLocation(optionState.options.workTypes);
+  const location = useCatalogLocation();
   const resultState = useCatalogResults(location);
   const advancedFilters = useAdvancedFilters(location.searchParams);
   const workTypeOptions = useMemo(
-    () => filterWorkTypesByCountry(optionState.options.workTypes, location.params.country),
-    [location.params.country, optionState.options.workTypes]
+    () => optionState.options.workTypes,
+    [optionState.options.workTypes]
   );
   return { ...location, ...optionState, ...resultState, ...advancedFilters, workTypeOptions };
 }

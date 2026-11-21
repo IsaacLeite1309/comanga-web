@@ -24,7 +24,7 @@ const response = {
       originalTitle: "MONSTER",
       coverUrl: "https://cdn.comanga.test/monster.jpg",
       type: { id: 2, label: "Mangá" },
-      country: "Japão",
+
       authors: [{ id: 5, label: "Naoki Urasawa" }],
       authorRoles: ["História e Arte"],
     },
@@ -35,7 +35,7 @@ const response = {
       originalTitle: null,
       coverUrl: null,
       type: { id: 2, label: "Mangá" },
-      country: "Japão",
+
       authors: [{ id: 5, label: "Naoki Urasawa" }],
       authorRoles: ["Arte"],
     },
