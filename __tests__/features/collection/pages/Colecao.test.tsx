@@ -34,7 +34,7 @@ describe("Estante conectada à API", () => {
     expect(heading.nextElementSibling).toHaveTextContent("1/60 volumes adquiridos · 0/1 volumes lidos · 3/59 volumes faltantes desejados");
     const manage = within(edition).getByRole("button", { name: "Gerenciar volumes" });
     expect(manage).toHaveAttribute("aria-expanded", "false");
-    expect(manage).toHaveClass("h-12", "rounded-lg", "bg-sidebar", "text-sm");
+    expect(manage).toHaveClass("h-9", "rounded-lg", "bg-sidebar", "text-sm");
     expect(within(edition).queryByRole("link", { name: "1/60 adquiridos" })).not.toBeInTheDocument();
     fireEvent.click(manage);
     expect(manage).toHaveAttribute("aria-expanded", "true");
