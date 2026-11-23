@@ -49,7 +49,7 @@ export async function listPublicEditions(query: PublicEditionsQuery) {
 
 export async function getPublicCatalogOptions() {
   const response = await api.get<{ options: PublicCatalogOptions }>("/public/catalog-options");
-  return response.data.options;
+  return { ...response.data.options, workTypes: availableWorkTypes(response.data.options.workTypes) };
 }
 
 export async function getPublicWorkDetails(slug: string) {
@@ -79,3 +79,4 @@ export async function getPublicVolumeDetails(workSlug: string, editionNumber: nu
   const response = await api.get<PublicVolumeDetailsResponse>(`/public/works/${encodeURIComponent(workSlug)}/editions/${editionNumber}/volumes/${volumeNumber}`);
   return response.data.volume;
 }
+import { availableWorkTypes } from "@/lib/workTypeOptions";

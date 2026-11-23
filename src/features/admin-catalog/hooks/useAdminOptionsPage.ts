@@ -7,24 +7,20 @@ import { clearAdminCache } from "@/lib/queryClient";
 
 import {
   getRememberedAdminOptionsCategory,
-  getRememberedAdminOptionsCountryIds,
   getRememberedAdminOptionsForm,
   getRememberedAdminOptionsNewValue,
   getRememberedAdminOptionsSearchTerm,
   rememberAdminOptionsCategory,
-  rememberAdminOptionsCountryIds,
   rememberAdminOptionsForm,
   rememberAdminOptionsNewValue,
   rememberAdminOptionsSearchTerm,
 } from "../pages/adminOptionsMemory";
 import {
   CATEGORIES,
-  COUNTRY_CATEGORY_SLUG,
   DEFAULT_PAGE_SIZE,
   DomainOptionValue,
   getCategoryForm,
   getPageSizeForCategory,
-  isCountryDependent,
   isSystemManagedCategory,
   OptionForm,
   OptionsPagination,
@@ -43,7 +39,6 @@ function useAdminOptionsSelection() {
   const [selectedCategory, setSelectedCategory] = useState(getRememberedAdminOptionsCategory);
   const [newValue, setNewValue] = useState(getRememberedAdminOptionsNewValue);
   const [newValueError, setNewValueError] = useState("");
-  const [selectedCountryIds, setSelectedCountryIds] = useState<number[]>(getRememberedAdminOptionsCountryIds);
   const [searchTerm, setSearchTerm] = useState(getRememberedAdminOptionsSearchTerm);
   const [debouncedSearchTerm, setDebouncedSearchTerm] = useState(getRememberedAdminOptionsSearchTerm().trim());
   const [order, setOrder] = useState<SortOrder>("ASC");
@@ -61,11 +56,6 @@ function useAdminOptionsSelection() {
     return () => window.clearTimeout(timer);
   }, [searchTerm]);
 
-  useEffect(() => {
-    if (isCountryDependent(selectedCategory)) return;
-    setSelectedCountryIds([]);
-    rememberAdminOptionsCountryIds([]);
-  }, [selectedCategory]);
 
   function clearCategoryState() {
     rememberAdminOptionsCategory("");
@@ -73,8 +63,6 @@ function useAdminOptionsSelection() {
     setNewValue("");
     rememberAdminOptionsNewValue("");
     setNewValueError("");
-    setSelectedCountryIds([]);
-    rememberAdminOptionsCountryIds([]);
     setSearchTerm("");
     rememberAdminOptionsSearchTerm("");
     setDebouncedSearchTerm("");
@@ -103,21 +91,9 @@ function useAdminOptionsSelection() {
     rememberAdminOptionsSearchTerm(value);
   }
 
-  function toggleNewValueCountry(countryId: number) {
-    setSelectedCountryIds((current) => {
-      const next = current.includes(countryId)
-        ? current.filter((id) => id !== countryId)
-        : [...current, countryId];
-      rememberAdminOptionsCountryIds(next);
-      return next;
-    });
-  }
-
   function clearNewValue() {
     setNewValue("");
     rememberAdminOptionsNewValue("");
-    setSelectedCountryIds([]);
-    rememberAdminOptionsCountryIds([]);
   }
 
   return {
@@ -135,11 +111,9 @@ function useAdminOptionsSelection() {
     order,
     searchTerm,
     selectedCategory,
-    selectedCountryIds,
     selectedForm,
     setNewValueError,
     setOrder,
-    toggleNewValueCountry,
   };
 }
 
@@ -150,7 +124,7 @@ function useAdminOptionsData(selection: Selection) {
   const initialParams = initialCategory ? {
     ...(selection.debouncedSearchTerm ? { term: selection.debouncedSearchTerm } : {}),
     ...(isSystemManagedCategory(initialCategory) ? { includeInactive: "true" } : {}),
-    order: selection.order, page: rememberedOptionsPage, limit: getPageSizeForCategory(initialCategory),
+    order: selection.order, page: rememberedOptionsPage, limit: getPageSizeForCategory(),
   } : null;
   const initial = initialParams
     ? readAdminCachedResponse<OptionsResponse>(`/admin/options/${initialCategory}`, { params: initialParams })?.data
@@ -158,9 +132,6 @@ function useAdminOptionsData(selection: Selection) {
   const [values, setValues] = useState<DomainOptionValue[]>(initial?.values ?? []);
   const [loading, setLoading] = useState(!initial);
   const [error, setError] = useState("");
-  const [countryOptions, setCountryOptions] = useState<DomainOptionValue[]>([]);
-  const [countryLoading, setCountryLoading] = useState(false);
-  const [countryError, setCountryError] = useState("");
   const [page, setPage] = useState(rememberedOptionsPage);
   const [pagination, setPagination] = useState<OptionsPagination>(initial?.pagination ?? {
     page: 1,
@@ -168,10 +139,9 @@ function useAdminOptionsData(selection: Selection) {
     total: 0,
     totalPages: 1,
   });
-  const countryDependent = isCountryDependent(selection.selectedCategory);
   const systemManagedCategory = isSystemManagedCategory(selection.selectedCategory);
   const pageSize = selection.selectedCategory
-    ? getPageSizeForCategory(selection.selectedCategory)
+    ? getPageSizeForCategory()
     : DEFAULT_PAGE_SIZE;
 
   const fetchOptions = useCallback(async (
@@ -183,7 +153,7 @@ function useAdminOptionsData(selection: Selection) {
     const params = {
       ...(term ? { term } : {}),
       ...(isSystemManagedCategory(categorySlug) ? { includeInactive: "true" } : {}),
-      order: sortOrder, page: currentPage, limit: getPageSizeForCategory(categorySlug),
+      order: sortOrder, page: currentPage, limit: getPageSizeForCategory(),
     };
     const cached = readAdminCachedResponse<OptionsResponse>(`/admin/options/${categorySlug}`, { params })?.data;
     if (cached) {
@@ -242,44 +212,9 @@ function useAdminOptionsData(selection: Selection) {
   }, [filterKey, pageSize]);
   useEffect(() => { rememberedOptionsPage = page; }, [page]);
 
-  useEffect(() => {
-    if (!countryDependent) {
-      setCountryError("");
-      return;
-    }
-    let active = true;
-    async function fetchCountries() {
-      setCountryLoading(true);
-      setCountryError("");
-      try {
-        const response = await adminCachedGet<OptionsResponse>(`/admin/options/${COUNTRY_CATEGORY_SLUG}`, {
-          params: {
-            order: "ASC",
-            page: 1,
-            limit: 100,
-          },
-        });
-        if (active) setCountryOptions(response.data.values);
-      } catch (requestError) {
-        if (active) {
-          setCountryError(getApiError(requestError, "Erro ao carregar países de origem."));
-        }
-      } finally {
-        if (active) setCountryLoading(false);
-      }
-    }
-    void fetchCountries();
-    return () => {
-      active = false;
-    };
-  }, [countryDependent]);
 
   return {
-    countryDependent,
     systemManagedCategory,
-    countryError,
-    countryLoading,
-    countryOptions,
     error,
     fetchOptions,
     loading,
@@ -295,39 +230,27 @@ function useAdminOptionsData(selection: Selection) {
 function useEditingState() {
   const [editingId, setEditingId] = useState<number | null>(null);
   const [editingValue, setEditingValue] = useState("");
-  const [editingCountryIds, setEditingCountryIds] = useState<number[]>([]);
   const [savingEditId, setSavingEditId] = useState<number | null>(null);
 
   function cancelEditing() {
     setEditingId(null);
     setEditingValue("");
-    setEditingCountryIds([]);
   }
 
   function startEditing(value: DomainOptionValue) {
     setEditingId(value.id);
     setEditingValue(value.label);
-    setEditingCountryIds(value.depends_on?.map((dependency) => dependency.id) || []);
-  }
-
-  function toggleEditingCountry(countryId: number) {
-    setEditingCountryIds((current) => (
-      current.includes(countryId) ? current.filter((id) => id !== countryId) : [...current, countryId]
-    ));
   }
 
   return {
     cancelEditing,
-    editingCountryIds,
     editingId,
     editingValue,
     savingEditId,
-    setEditingCountryIds,
     setEditingId,
     setEditingValue,
     setSavingEditId,
     startEditing,
-    toggleEditingCountry,
   };
 }
 
@@ -354,16 +277,12 @@ function useAdminOptionMutations(selection: Selection, data: Data, editing: Edit
     if (!selection.selectedCategory) {
       return selection.setNewValueError("Selecione uma categoria.");
     }
-    if (data.countryDependent && selection.selectedCountryIds.length === 0) {
-      return selection.setNewValueError("Selecione ao menos um país de origem relacionado.");
-    }
     selection.setNewValueError("");
     setSaving(true);
     try {
       await api.post<{ value: DomainOptionValue; values?: DomainOptionValue[] }>("/admin/options", {
         category: selection.selectedCategory,
         label,
-        ...(data.countryDependent ? { dependsOnValueIds: selection.selectedCountryIds } : {}),
       });
       clearAdminCache();
       selection.clearNewValue();
@@ -389,14 +308,10 @@ function useAdminOptionMutations(selection: Selection, data: Data, editing: Edit
     if (!label) {
       return toast.error("Informe o texto do novo valor.");
     }
-    if (data.countryDependent && editing.editingCountryIds.length === 0) {
-      return toast.error("Selecione ao menos um país de origem relacionado.");
-    }
     editing.setSavingEditId(value.id);
     try {
       await api.patch<{ value: DomainOptionValue }>(`/admin/options/${value.id}`, {
         label,
-        ...(data.countryDependent ? { dependsOnValueIds: editing.editingCountryIds } : {}),
       });
       clearAdminCache();
       editing.cancelEditing();
@@ -485,7 +400,6 @@ export function useAdminOptionsPage() {
   const mutations = useAdminOptionMutations(selection, data, editing);
   const statusMutations = useOptionStatusMutations(selection, data);
   const {
-    setEditingCountryIds,
     setEditingId,
     setEditingValue,
   } = editing;
@@ -493,10 +407,8 @@ export function useAdminOptionsPage() {
   useEffect(() => {
     setEditingId(null);
     setEditingValue("");
-    setEditingCountryIds([]);
   }, [
     data.page,
-    setEditingCountryIds,
     setEditingId,
     setEditingValue,
     selection.debouncedSearchTerm,

@@ -2,7 +2,6 @@ import { describe, expect, it } from "vitest";
 import {
   isAuthorRoleDisabled, sortAuthorsByCredit,
   NATIVE_AUTHOR_ROLE_OPTIONS,
-  NATIVE_COUNTRY_OPTIONS,
   NATIVE_DEMOGRAPHY_OPTIONS,
   NATIVE_ORIGINAL_STATUS_OPTIONS,
 } from "@/features/admin-catalog/domain/workOptions";
@@ -46,7 +45,6 @@ describe("opções nativas de Obra", () => {
   });
 
   it("preserva a ordem e a grafia oficial dos demais valores nativos", () => {
-    expect(values(NATIVE_COUNTRY_OPTIONS)).toEqual(["Japão", "Coreia do Sul", "China", "Taiwan"]);
     expect(values(NATIVE_ORIGINAL_STATUS_OPTIONS)).toEqual([
       "Completa",
       "Em andamento",

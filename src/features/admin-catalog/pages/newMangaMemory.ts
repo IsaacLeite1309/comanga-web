@@ -15,7 +15,6 @@ export type RememberedNewMangaDraft = {
   coverUrl: string;
   coverPending: boolean;
   typeId: string;
-  country: string;
   originalPublisherIds: number[];
   originalPublicationStatus: string;
   adultContent: boolean;
@@ -38,7 +37,6 @@ export const emptyNewMangaDraft: RememberedNewMangaDraft = {
   coverUrl: "",
   coverPending: false,
   typeId: "",
-  country: "",
   originalPublisherIds: [],
   originalPublicationStatus: "",
   adultContent: false,

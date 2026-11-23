@@ -21,7 +21,7 @@ vi.mock("sonner", () => ({ toast: { error: vi.fn() } }));
 const options = {
   workTypes: [
     { id: 1, label: "Mangá", countryIds: [10], countries: ["Japão"] },
-    { id: 2, label: "Manhwa", countryIds: [11], countries: ["Coreia do Sul"] },
+    { id: 2, label: "Novel" },
   ],
   countries: ["Japão", "Coreia do Sul"],
   demographics: ["Shonen", "Seinen"],
@@ -44,7 +44,6 @@ const worksResponse = {
       originalTitle: "MONSTER",
       coverUrl: "https://cdn.comanga.test/monster.jpg",
       type: { id: 1, label: "Mangá" },
-      country: "Japão",
       authors: [{ id: 4, label: "Naoki Urasawa" }],
     },
   ],
@@ -142,7 +141,7 @@ describe("Pesquisa", () => {
     expect(screen.getByLabelText("Tipo de Obra")).toHaveClass("rounded-lg", "hover:border-primary");
 
     fireEvent.click(screen.getByRole("button", { name: /filtros avançados/i }));
-    expect(screen.getByLabelText("País de Origem")).toHaveClass("rounded-lg", "hover:border-primary");
+    expect(screen.getByLabelText("Editora original")).toHaveClass("rounded-lg", "hover:border-primary");
     expect(screen.getByRole("button", { name: "Selecionar Demografia" })).toHaveClass("rounded-lg", "hover:border-primary");
 
     fireEvent.click(screen.getByLabelText("Editora original"));
@@ -177,7 +176,7 @@ describe("Pesquisa", () => {
     expect(screen.queryByText("Explore o catálogo completo de obras e edições")).not.toBeInTheDocument();
     expect(await screen.findByRole("heading", { name: "Monster" })).toBeInTheDocument();
     expect(screen.queryByText("Naoki Urasawa")).not.toBeInTheDocument();
-    expect(screen.getByText("Mangá · Japão")).toHaveClass("mt-1");
+    expect(screen.getByText("Mangá")).toHaveClass("mt-1");
     expect(screen.getByText("1 obra encontrada")).toBeInTheDocument();
 
     const cover = screen.getByAltText("Capa de Monster");
@@ -197,66 +196,24 @@ describe("Pesquisa", () => {
     }));
   });
 
-  it("atualiza os Tipos de Obra ao trocar o país de origem", async () => {
-    renderCatalog();
-    await screen.findByRole("heading", { name: "Monster" });
-
+  it("oferece tipos sem filtro de país e não mostra tipos retirados", async () => {
+    renderCatalog(); await screen.findByRole("heading", { name: "Monster" });
     fireEvent.click(screen.getByLabelText("Tipo de Obra"));
     expect(screen.getByRole("button", { name: "Mangá" })).toBeInTheDocument();
-    expect(screen.getByRole("button", { name: "Manhwa" })).toBeInTheDocument();
-    fireEvent.keyDown(document, { key: "Escape" });
-
+    expect(screen.getByRole("button", { name: "Novel" })).toBeInTheDocument();
+    expect(screen.queryByRole("button", { name: /manhwa|manhua/i })).not.toBeInTheDocument();
     fireEvent.click(screen.getByRole("button", { name: /filtros avançados/i }));
-    fireEvent.click(screen.getByLabelText("País de Origem"));
-    fireEvent.click(screen.getByRole("button", { name: "Coreia do Sul" }));
+    expect(screen.queryByLabelText("País de Origem")).not.toBeInTheDocument();
+ });
 
-    await waitFor(() => expect(currentParams().get("country")).toBe("Coreia do Sul"));
-    await waitForCatalogReady();
-    fireEvent.click(screen.getByLabelText("Tipo de Obra"));
-    expect(screen.getByRole("button", { name: "Manhwa" })).toBeInTheDocument();
-    expect(screen.queryByRole("button", { name: "Mangá" })).not.toBeInTheDocument();
-  });
-
-  it("limpa o tipo incompatível na URL e na consulta ao mudar o país", async () => {
-    renderCatalog("/pesquisa?tab=works&typeId=1&country=Japão&page=3");
-    await screen.findByRole("heading", { name: "Monster" });
-    vi.mocked(listPublicWorks).mockClear();
-
-    fireEvent.click(screen.getByLabelText("País de Origem"));
-    fireEvent.click(screen.getByRole("button", { name: "Coreia do Sul" }));
-
-    await waitFor(() => expect(currentParams().get("country")).toBe("Coreia do Sul"));
-    expect(currentParams().has("typeId")).toBe(false);
-    expect(currentParams().get("page")).toBe("1");
-    expect(screen.getByLabelText("Tipo de Obra")).toHaveTextContent("Todos");
-    await waitFor(() => expect(listPublicWorks).toHaveBeenCalled());
-    for (const [query] of vi.mocked(listPublicWorks).mock.calls) {
-      expect(query).toMatchObject({ country: "Coreia do Sul", page: 1 });
-      expect(query.typeId).toBeUndefined();
-    }
-  });
-
-  it("preserva um tipo compatível ao trocar ou remover o país", async () => {
-    vi.mocked(getPublicCatalogOptions).mockResolvedValue({ ...options, workTypes: [
-      ...options.workTypes, { id: 3, label: "Novel", countries: ["Japão", "Coreia do Sul"], countryIds: [10, 11] },
-    ] });
-    renderCatalog("/pesquisa?tab=works&typeId=3&country=Japão");
-    await screen.findByRole("heading", { name: "Monster" });
-    fireEvent.click(screen.getByLabelText("País de Origem"));
-    fireEvent.click(screen.getByRole("button", { name: "Coreia do Sul" }));
-    await waitFor(() => expect(listPublicWorks).toHaveBeenLastCalledWith(
-      expect.objectContaining({ typeId: 3, country: "Coreia do Sul", page: 1 }),
-    ));
-    expect(currentParams().get("typeId")).toBe("3");
-    expect(screen.getByLabelText("Tipo de Obra")).toHaveTextContent("Novel");
-
-    await waitForCatalogReady();
-    fireEvent.click(screen.getByRole("button", { name: "Limpar País de Origem" }));
+  it("remove país de URLs antigas preservando o tipo selecionado", async () => {
+    renderCatalog("/pesquisa?tab=works&typeId=1&country=Japão&page=3"); await screen.findByRole("heading", { name: "Monster" });
     await waitFor(() => expect(currentParams().has("country")).toBe(false));
-    expect(currentParams().get("typeId")).toBe("3");
-    expect(vi.mocked(listPublicWorks).mock.lastCall?.[0].typeId).toBe(3);
-    expect(vi.mocked(listPublicWorks).mock.lastCall?.[0].country).toBeUndefined();
-  });
+    expect(currentParams().get("typeId")).toBe("1");
+    expect(vi.mocked(listPublicWorks).mock.lastCall?.[0]).not.toHaveProperty("country");
+ });
+
+
 
   it("aplica debounce à busca e reflete o termo na URL", async () => {
     renderCatalog();
@@ -308,15 +265,7 @@ describe("Pesquisa", () => {
     expect(screen.queryByRole("button", { name: "Limpar pesquisa" })).not.toBeInTheDocument();
   });
 
-  it("restringe os Tipos de Obra ao país selecionado", async () => {
-    renderCatalog("/pesquisa?tab=works&country=Coreia+do+Sul");
-    await screen.findByRole("heading", { name: "Monster" });
 
-    fireEvent.click(screen.getByLabelText("Tipo de Obra"));
-
-    expect(screen.getByRole("button", { name: "Manhwa" })).toBeInTheDocument();
-    expect(screen.queryByRole("button", { name: "Mangá" })).not.toBeInTheDocument();
-  });
 
   it("oferece todos os Tipos de Obra quando nenhum país está selecionado", async () => {
     renderCatalog("/pesquisa?tab=works");
@@ -325,7 +274,7 @@ describe("Pesquisa", () => {
     fireEvent.click(screen.getByLabelText("Tipo de Obra"));
 
     expect(screen.getByRole("button", { name: "Mangá" })).toBeInTheDocument();
-    expect(screen.getByRole("button", { name: "Manhwa" })).toBeInTheDocument();
+    expect(screen.getByRole("button", { name: "Novel" })).toBeInTheDocument();
   });
 
   it("apresenta gêneros e tipos de Edição na ordem recebida da API", async () => {
@@ -370,8 +319,6 @@ describe("Pesquisa", () => {
     fireEvent.click(screen.getByRole("button", { name: "Em andamento" }));
     await waitForCatalogReady();
     fireEvent.click(screen.getByRole("button", { name: /filtros avançados/i }));
-    fireEvent.click(screen.getByLabelText("País de Origem"));
-    fireEvent.click(screen.getByRole("button", { name: "Japão" }));
     await waitForCatalogReady();
     fireEvent.click(screen.getByLabelText("Editora original"));
     fireEvent.click(screen.getByRole("button", { name: "Shueisha" }));
@@ -393,7 +340,6 @@ describe("Pesquisa", () => {
 
     await waitFor(() => expect(listPublicWorks).toHaveBeenCalledWith(expect.objectContaining({
       typeId: 1,
-      country: "Japão",
       demographics: ["Seinen"],
       genreIds: [7],
       originalPublisherId: 8,
@@ -406,7 +352,7 @@ describe("Pesquisa", () => {
 
     const params = currentParams();
     expect(params.get("typeId")).toBe("1");
-    expect(params.get("country")).toBe("Japão");
+    expect(params.has("country")).toBe(false);
     expect(params.get("demographics")).toBe("Seinen");
     expect(params.get("genreIds")).toBe("7");
     expect(params.get("originalPublisherId")).toBe("8");
@@ -481,7 +427,7 @@ describe("Pesquisa", () => {
     fireEvent.click(screen.getByRole("button", { name: /filtros avançados/i }));
     expect(screen.getByRole("region", { name: "Filtros avançados" })).toBeInTheDocument();
 
-    fireEvent.pointerDown(screen.getByLabelText("País de Origem"));
+    fireEvent.pointerDown(screen.getByLabelText("Editora original"));
     expect(screen.getByRole("region", { name: "Filtros avançados" })).toBeInTheDocument();
 
     fireEvent.pointerDown(screen.getByRole("searchbox", { name: /Pesquisar (obras|edições)/i }));

@@ -31,7 +31,7 @@ const workDetail = {
     coverUrl: "https://cdn.comanga.test/naruto.jpg",
     visibility: "Privado",
     type: { id: 1, label: "Mangá" },
-    country: "Japão",
+
     authors: [
       {
         author: { id: 4, label: "Masashi Kishimoto" },

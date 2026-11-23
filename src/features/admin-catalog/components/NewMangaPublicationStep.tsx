@@ -17,7 +17,6 @@ function PublisherAndMagazineFields({ controller }: ControllerProps) {
           controller.clearInvalidField("originalPublisherIds");
         }}
         onOpen={() => controller.clearInvalidField("originalPublisherIds")}
-        disabled={!draft.country}
         disabledMessage="Incompatível"
         required
         invalid={controller.isInvalidField("originalPublisherIds")}
@@ -36,9 +35,7 @@ function PublisherAndMagazineFields({ controller }: ControllerProps) {
         }}
         onOpen={() => controller.clearInvalidField("magazineIds")}
         disabled={controller.effectiveDirectRelease}
-        emptyMessage={draft.country
-          ? `Nenhuma pré-publicação relacionada a ${draft.country}.`
-          : "Selecione o país de origem para carregar opções de pré-publicação."}
+        emptyMessage="Nenhuma pré-publicação cadastrada."
         disabledMessage="Incompatível"
         required={!controller.effectiveDirectRelease}
         invalid={controller.isInvalidField("magazineIds")}

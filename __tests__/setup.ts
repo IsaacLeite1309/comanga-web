@@ -4,6 +4,8 @@ import { clearAdminDraftStorage } from "@/lib/adminDraftStorage";
 import { queryClient } from "@/lib/queryClient";
 
 beforeEach(() => {
+  // O jsdom não implementa rolagem; a simulação continua permitindo verificar as chamadas.
+  Object.defineProperty(window, "scrollTo", { configurable: true, writable: true, value: vi.fn() });
   queryClient.clear();
   clearAdminDraftStorage();
 });

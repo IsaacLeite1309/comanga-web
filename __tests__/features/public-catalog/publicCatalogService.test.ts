@@ -35,7 +35,7 @@ describe("publicCatalogService", () => {
     await listPublicWorks({
       term: "monster",
       typeId: 2,
-      country: "Japão",
+
       demographics: ["Seinen", "Josei"],
       genreIds: [7, 9],
       originalPublisherId: 10,
@@ -51,7 +51,7 @@ describe("publicCatalogService", () => {
       params: {
         term: "monster",
         typeId: 2,
-        country: "Japão",
+
         demographics: "Seinen,Josei",
         genreIds: "7,9",
         originalPublisherId: 10,

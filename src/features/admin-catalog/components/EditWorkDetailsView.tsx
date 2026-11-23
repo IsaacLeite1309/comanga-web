@@ -75,11 +75,6 @@ export function WorkSummary({
             />
             <DetailInfoBlock label="Autor" value={authorsText} withIconLayout={false} />
             <DetailInfoBlock
-              label="País de origem"
-              value={work.country || "País não informado"}
-              withIconLayout={false}
-            />
-            <DetailInfoBlock
               label="Visibilidade"
               value={work.visibility}
               badgeClassName={visibilityActionClassName(work.visibility)}
