@@ -5,6 +5,7 @@ import { VisibilityIcon } from "./CatalogVisibility";
 import { visibilityActionClassName } from "./catalogVisibilityStyles";
 import {
   CatalogPaginationControls,
+  CatalogGridPagination,
   CatalogViewToggle,
   DeleteCatalogItemDialog,
   DetailInfoBlock,
@@ -312,9 +313,7 @@ function VolumesGrid({
           />
         ))}
       </div>
-      <div className="overflow-hidden rounded-xl border border-border">
-        <CatalogPaginationControls pagination={collection.pagination} itemsLabel="Volumes" />
-      </div>
+      <CatalogGridPagination pagination={collection.pagination} itemsLabel="Volumes" />
     </>
   );
 }

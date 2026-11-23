@@ -10,14 +10,15 @@ import { AdminCatalogBreadcrumb } from "../components/AdminCatalogBreadcrumb";
 import type { AdminCatalogLocationState } from "../domain/adminCatalogDetails";
 import { useCatalogDetailView } from "../hooks/useCatalogDetailView";
 import { useEditionDetails } from "../hooks/useEditionDetails";
+import { CATALOG_GRID_PAGE_SIZE, VOLUMES_PAGE_SIZE } from "../domain/catalogPagination";
 
 const EditionDetails = () => {
   const { workSlug = "", editionId = "" } = useParams();
   const location = useLocation();
   const state = location.state as AdminCatalogLocationState | null;
   const workPath = useMemo(() => workAdminPath(workSlug), [workSlug]);
-  const details = useEditionDetails(workSlug, editionId);
-  const view = useCatalogDetailView(details.volumes.length);
+  const view = useCatalogDetailView();
+  const details = useEditionDetails(workSlug, editionId, view.isGridView ? CATALOG_GRID_PAGE_SIZE : VOLUMES_PAGE_SIZE);
 
   if (details.loading) {
     return <DetailLoading message="Carregando dados da Edição..." />;
@@ -54,7 +55,7 @@ const EditionDetails = () => {
           collection={volumesCollection}
           navigation={navigation}
           viewMode={view.viewMode}
-          showGridView={view.showGridView}
+          showGridView={view.isGridView && details.volumes.length > 0}
           actions={volumeActions}
           onViewModeChange={view.setViewMode}
         />

@@ -117,13 +117,19 @@ function renderEditWork() {
   );
 }
 
+async function renderEditWorkList() {
+  const view = renderEditWork();
+  fireEvent.click(await screen.findByRole("button", { name: "Lista" }));
+  return view;
+}
+
 describe("EditWork", () => {
   beforeEach(() => {
     resetCatalogPagesForTests();
     vi.clearAllMocks();
   });
 
-  it("mostra a previa estatica da obra e suas edicoes em tabela", async () => {
+  it("mostra a prévia da obra e abre suas edições em grade por padrão", async () => {
     vi.mocked(api.get)
       .mockResolvedValueOnce({ data: workDetail })
       .mockResolvedValueOnce({ data: editionsResponse });
@@ -131,8 +137,10 @@ describe("EditWork", () => {
     renderEditWork();
 
     expect(await screen.findByText("1ª edição")).toBeInTheDocument();
+    const grid = screen.getByRole("button", { name: "Grade" });
+    expect(grid).toHaveAttribute("aria-pressed", "true");
+    expect(grid.nextElementSibling).toBe(screen.getByRole("button", { name: "Lista" }));
     expect(screen.getAllByText("1ª edição")[0]).toBeInTheDocument();
-    expect(screen.getAllByText("0 volumes")[0]).toBeInTheDocument();
     expect(screen.getByRole("link", { name: /adicionar edição/i })).toHaveAttribute("href", "/admin/gerenciar-mangas/obras/naruto/edicoes/nova");
     expect(screen.getByRole("link", { name: /editar 1ª edição/i })).toHaveAttribute("href", "/admin/gerenciar-mangas/obras/naruto/edicoes/1/editar");
     expect(screen.getByRole("link", { name: /gerenciar volumes da 1ª edição/i })).toHaveAttribute("href", "/admin/gerenciar-mangas/obras/naruto/edicoes/1/volumes");
@@ -192,7 +200,7 @@ describe("EditWork", () => {
         },
       });
 
-    renderEditWork();
+    await renderEditWorkList();
     await screen.findByRole("heading", { name: "Edições" });
     expect(screen.getAllByText("1 volume").length).toBeGreaterThan(0);
     fireEvent.click(screen.getByRole("button", { name: /grade/i }));
@@ -248,6 +256,7 @@ describe("EditWork", () => {
     await waitFor(() => expect(toast.error).toHaveBeenCalledWith(
       "Essa Edição não possui o Volume 1 com capa interna válida, não pode ser publicada!",
     ));
+    fireEvent.click(screen.getByRole("button", { name: "Lista" }));
     expect(screen.getAllByText("Privado").length).toBeGreaterThan(0);
   });
 
@@ -323,7 +332,7 @@ describe("EditWork - paginação de Edições", () => {
   it("solicita a primeira página com o tamanho de página administrativo e a ordem decrescente", async () => {
     arrangeEditions((page) => Promise.resolve({ data: editionsPage(page, 10) }));
 
-    renderEditWork();
+    await renderEditWorkList();
     await screen.findByRole("heading", { name: "Edições" });
 
     await waitFor(() => expect(api.get).toHaveBeenCalledWith("/admin/works/10/editions", {
@@ -336,7 +345,7 @@ describe("EditWork - paginação de Edições", () => {
   it("navega para a próxima página sem acumular os registros da página anterior", async () => {
     arrangeEditions((page) => Promise.resolve({ data: editionsPage(page, 10) }));
 
-    renderEditWork();
+    await renderEditWorkList();
     expect(await screen.findByText("Exibindo 8 de 10 Edições")).toBeInTheDocument();
     expect(screen.getAllByText("10ª edição").length).toBeGreaterThan(0);
 
@@ -354,7 +363,7 @@ describe("EditWork - paginação de Edições", () => {
   it("desabilita Anterior na primeira página e Próxima na última", async () => {
     arrangeEditions((page) => Promise.resolve({ data: editionsPage(page, 10) }));
 
-    renderEditWork();
+    await renderEditWorkList();
     await screen.findByText("Exibindo 8 de 10 Edições");
 
     expect(screen.getByRole("button", { name: "Página anterior de Edições" })).toBeDisabled();
@@ -370,7 +379,7 @@ describe("EditWork - paginação de Edições", () => {
   it("volta para a página anterior preservando a ordenação determinística", async () => {
     arrangeEditions((page) => Promise.resolve({ data: editionsPage(page, 10) }));
 
-    renderEditWork();
+    await renderEditWorkList();
     await screen.findByText("Exibindo 8 de 10 Edições");
     fireEvent.click(screen.getByRole("button", { name: "Próxima página de Edições" }));
     await screen.findByText("Exibindo 2 de 10 Edições");
@@ -385,7 +394,7 @@ describe("EditWork - paginação de Edições", () => {
   it("mantém a página atual ao alternar entre lista e grade", async () => {
     arrangeEditions((page) => Promise.resolve({ data: editionsPage(page, 10) }));
 
-    renderEditWork();
+    await renderEditWorkList();
     await screen.findByText("Exibindo 8 de 10 Edições");
     fireEvent.click(screen.getByRole("button", { name: "Próxima página de Edições" }));
     await screen.findByText("Exibindo 2 de 10 Edições");
@@ -394,7 +403,7 @@ describe("EditWork - paginação de Edições", () => {
     fireEvent.click(screen.getByRole("button", { name: /grade/i }));
 
     expect(screen.getByText("Exibindo 2 de 10 Edições")).toBeInTheDocument();
-    expect(screen.getByText("2 / 2")).toBeInTheDocument();
+    expect(screen.getByRole("button", { name: "Página 2" })).toHaveAttribute("aria-current", "page");
     expect(screen.getByRole("button", { name: "Próxima página de Edições" })).toBeDisabled();
     expect(vi.mocked(api.get).mock.calls.length).toBe(requestsBeforeToggle);
   });
@@ -408,7 +417,7 @@ describe("EditWork - paginação de Edições", () => {
     vi.mocked(api.patch).mockResolvedValue({ data: { edition: {
       ...editionsPage(2, 10).editions[0], visibility: "Público",
     } } });
-    renderEditWork();
+    await renderEditWorkList();
     await screen.findByText("Exibindo 8 de 10 Edições");
     fireEvent.click(screen.getByRole("button", { name: "Próxima página de Edições" }));
     await screen.findByText("Exibindo 2 de 10 Edições");
@@ -423,7 +432,7 @@ describe("EditWork - paginação de Edições", () => {
   it("desabilita a navegação quando a API devolve totalPages igual a zero", async () => {
     arrangeEditions(() => Promise.resolve({ data: emptyEditionsResponse }));
 
-    renderEditWork();
+    await renderEditWorkList();
 
     expect(await screen.findByText("Exibindo 0 de 0 Edições")).toBeInTheDocument();
     expect(screen.getByText("1 / 1")).toBeInTheDocument();
@@ -440,7 +449,7 @@ describe("EditWork - paginação de Edições", () => {
       return Promise.resolve({ data: {} });
     });
 
-    renderEditWork();
+    await renderEditWorkList();
     await screen.findByText("Exibindo 8 de 9 Edições");
     fireEvent.click(screen.getByRole("button", { name: "Próxima página de Edições" }));
     await screen.findByText("Exibindo 1 de 9 Edições");
@@ -463,7 +472,7 @@ describe("EditWork - paginação de Edições", () => {
       return Promise.resolve({ data: {} });
     });
 
-    renderEditWork();
+    await renderEditWorkList();
     await screen.findByText("Exibindo 8 de 10 Edições");
     fireEvent.click(screen.getByRole("button", { name: "Próxima página de Edições" }));
     await screen.findByText("Exibindo 2 de 10 Edições");
@@ -482,7 +491,7 @@ describe("EditWork - paginação de Edições", () => {
     });
     arrangeEditions((page) => (page === 2 ? secondPage : Promise.resolve({ data: editionsPage(page, 20) })));
 
-    renderEditWork();
+    await renderEditWorkList();
     await screen.findByText("Exibindo 8 de 20 Edições");
     fireEvent.click(screen.getByRole("button", { name: "Próxima página de Edições" }));
     fireEvent.click(screen.getByRole("button", { name: "Próxima página de Edições" }));
@@ -502,7 +511,7 @@ describe("EditWork - paginação de Edições", () => {
       response: { data: { error: "Falha ao consultar Edições." } },
     }));
 
-    renderEditWork();
+    await renderEditWorkList();
 
     expect(await screen.findByText("Falha ao consultar Edições.")).toBeInTheDocument();
     expect(screen.getByRole("heading", { name: "Edições" })).toBeInTheDocument();
