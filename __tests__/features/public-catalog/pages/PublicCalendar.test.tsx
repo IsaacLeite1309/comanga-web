@@ -77,7 +77,7 @@ describe("PublicCalendar", () => {
     expect(screen.queryByRole("button", { name: "Pesquisar" })).not.toBeInTheDocument();
   });
 
-  it("usa dois botões pessoais e Amazon abaixo, como na lista de desejos, e avisa visitantes", async () => {
+  it("usa apenas dois botões pessoais, sem Amazon, e avisa visitantes", async () => {
     renderCalendar();
     const cover = await screen.findByRole("link", { name: "Ver volume 2 de Monster" });
     const card = within(cover.closest("article")!);
@@ -88,14 +88,11 @@ describe("PublicCalendar", () => {
     expect(wishlist.parentElement).toBe(collection.parentElement);
     expect(collection).toHaveClass("bg-sidebar", "min-h-10");
     expect(wishlist).toHaveClass("bg-sidebar", "min-h-10");
-    const amazon = card.getByRole("link", { name: "Comprar na Amazon" });
-    expect(amazon).toHaveAttribute("href", "https://amazon.example.test/monster");
-    expect(amazon).toHaveAttribute("rel", "noreferrer noopener");
-    expect(collection.parentElement?.nextElementSibling).toBe(amazon);
+    expect(collection.parentElement?.nextElementSibling).toBeNull();
+    expect(screen.queryByRole("link", { name: "Comprar na Amazon" })).not.toBeInTheDocument();
+    expect(screen.queryByRole("button", { name: "Comprar na Amazon" })).not.toBeInTheDocument();
     expect(card.queryByRole("button", { name: /como lido/ })).not.toBeInTheDocument();
-    const unavailableCard = within(screen.getByRole("link", { name: "Ver volume único de Pluto" }).closest("article")!);
-    expect(unavailableCard.getByRole("button", { name: "Comprar na Amazon" })).toBeDisabled();
-    expect(unavailableCard.getByText("Indisponível na")).toBeInTheDocument();
+    expect(screen.queryByText("Indisponível na")).not.toBeInTheDocument();
     fireEvent.click(collection);
     expect(toast.warning).toHaveBeenCalledWith("Faça login para poder adicionar este volume à sua coleção.");
     fireEvent.click(wishlist);

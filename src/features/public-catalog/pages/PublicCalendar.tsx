@@ -9,7 +9,6 @@ import { EmptyState, FilteredEmptyState } from "@/components/shared/AsyncState";
 import { addCollectionVolume, addWishlistVolume, CollectionChangeDialog, removeCollectionVolume, removeWishlistVolume } from "@/features/personal-library";
 import { getApiError } from "@/lib/apiError";
 import { PUBLIC_CATALOG_QUERY_ROOT } from "@/lib/queryClient";
-import { VolumeAmazonButton } from "@/features/public-catalog/VolumeAmazonButton";
 import { CatalogCover } from "@/features/public-catalog/CatalogCover";
 import { CatalogErrorMessage } from "@/features/public-catalog/CatalogErrorMessage";
 import { CatalogResultsLoading } from "@/features/public-catalog/CatalogResultsLoading";
@@ -300,7 +299,6 @@ function CalendarVolumeCard({ volume }: { volume: PublicCalendarVolume }) {
         <p className="mt-1 text-xs text-muted-foreground">{label} da {edition.chronologicalNumber}ª edição</p>
       </Link>
       <CalendarVolumeActions volume={volume} />
-      <VolumeAmazonButton affiliateLink={volume.affiliateLink} />
     </article>
   );
 }
