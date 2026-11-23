@@ -60,7 +60,7 @@ function useEditionSummary(workSlug: string, editionNumber: string | number | un
   return { edition, loading, error, refresh: () => setRevision(current => current + 1) };
 }
 
-export function useEditionDetails(workSlug: string, editionNumber: string | number | undefined) {
+export function useEditionDetails(workSlug: string, editionNumber: string | number | undefined, pageSize = VOLUMES_PAGE_SIZE) {
   const { edition, loading, error, refresh } = useEditionSummary(workSlug, editionNumber);
   const editionId = edition?.id;
   const [deletingVolume, setDeletingVolume] = useState<VolumeDetail | null>(null);
@@ -80,8 +80,8 @@ export function useEditionDetails(workSlug: string, editionNumber: string | numb
 
   const volumesList = useCatalogPagedList<VolumeDetail>({
     enabled: Boolean(editionId),
-    listKey: `edition:${editionId}:volumes`,
-    pageSize: VOLUMES_PAGE_SIZE,
+    listKey: `edition:${editionId}:volumes:${pageSize}`,
+    pageSize,
     errorMessage: "Erro ao listar Volumes.",
     loadPage: loadVolumesPage,
   });

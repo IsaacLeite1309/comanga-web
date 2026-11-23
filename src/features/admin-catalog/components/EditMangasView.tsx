@@ -4,7 +4,7 @@ import { EmptyState, LoadingState } from "@/components/shared/AsyncState";
 import { PageNumberNavigation } from "@/components/shared/PageNumberNavigation";
 import { useDropdown } from "@/hooks/useDropdown";
 import { CatalogVisibilityAction } from "./CatalogVisibility";
-import { CatalogViewToggle } from "./AdminCatalogDetailShared";
+import { CatalogGridPagination, CatalogViewToggle } from "./AdminCatalogDetailShared";
 import { workAdminPath, workEditAdminPath } from "../domain/catalogPaths";
 import { EditMangasPageModel } from "../hooks/useEditMangasPage";
 import { FilterOption, formatEditionsCount, WorkSummary } from "../pages/editMangasModel";
@@ -157,24 +157,30 @@ function WorkManageActions({ model, work, compact = false }: {
 function WorksGrid({ model }: { model: EditMangasPageModel }) {
   if (!model.showGridView) return null;
   return (
-    <section className="grid gap-3 grid-cols-2 sm:grid-cols-3 lg:grid-cols-6">
-      {model.works.map((work) => (
-        <article key={work.id} className="rounded-lg border border-border bg-card p-2">
-          <WorkCover work={work} compact />
-          <h2 className="mt-2 truncate text-center text-sm font-bold text-foreground">{work.title}</h2>
-          <div className="mt-2 grid grid-cols-4 gap-1.5">
-            <CatalogVisibilityAction
-              visibility={work.visibility}
-              ariaLabel={`Alterar visibilidade de ${work.title}`}
-              onClick={() => void model.toggleVisibility(work)}
-              loading={model.updatingVisibilityId === work.id}
-              showLabel={false}
-              className="h-8 w-full rounded-md"
-            />
-            <WorkManageActions model={model} work={work} compact />
-          </div>
-        </article>
-      ))}
+    <section className="space-y-4">
+      <div className="grid gap-3 grid-cols-2 sm:grid-cols-3 lg:grid-cols-6">
+        {model.works.map((work) => (
+          <article key={work.id} className="rounded-lg border border-border bg-card p-2">
+            <WorkCover work={work} compact />
+            <h2 className="mt-2 truncate text-center text-sm font-bold text-foreground">{work.title}</h2>
+            <div className="mt-2 grid grid-cols-4 gap-1.5">
+              <CatalogVisibilityAction
+                visibility={work.visibility}
+                ariaLabel={`Alterar visibilidade de ${work.title}`}
+                onClick={() => void model.toggleVisibility(work)}
+                loading={model.updatingVisibilityId === work.id}
+                showLabel={false}
+                className="h-8 w-full rounded-md"
+              />
+              <WorkManageActions model={model} work={work} compact />
+            </div>
+          </article>
+        ))}
+      </div>
+      <CatalogGridPagination
+        pagination={{ visible: model.showPagination, page: model.page, totalPages: model.pagination.totalPages, total: model.pagination.total, shown: model.works.length, goToPage: model.setPage }}
+        itemsLabel="Obras"
+      />
     </section>
   );
 }

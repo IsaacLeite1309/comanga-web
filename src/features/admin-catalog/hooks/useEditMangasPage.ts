@@ -6,6 +6,7 @@ import { api } from "@/services/api";
 import { getApiError } from "@/lib/apiError";
 import { clearAdminCache } from "@/lib/queryClient";
 import { NATIVE_DEMOGRAPHY_OPTIONS } from "../domain/workOptions";
+import { CATALOG_GRID_PAGE_SIZE } from "../domain/catalogPagination";
 import {
   FilterOption,
   OptionValue,
@@ -20,13 +21,13 @@ import {
 
 const rememberedWorkFilters = {
   searchTerm: "", typeId: "Todos", demography: "Todos", visibility: "Todos" as WorkFilterVisibility,
-  viewMode: "list" as "list" | "grid", order: "ASC" as "ASC" | "DESC", page: 1,
+  viewMode: "grid" as "list" | "grid", order: "ASC" as "ASC" | "DESC", page: 1,
 };
 
-export function resetEditMangasMemoryForTests() {
+export function resetEditMangasMemoryForTests(viewMode: "list" | "grid" = "grid") {
   Object.assign(rememberedWorkFilters, {
     searchTerm: "", typeId: "Todos", demography: "Todos", visibility: "Todos",
-    viewMode: "list", order: "ASC", page: 1,
+    viewMode, order: "ASC", page: 1,
   });
 }
 
@@ -38,7 +39,7 @@ function useWorkFilters() {
   const [demography, setDemography] = useState(rememberedWorkFilters.demography);
   const [visibility, setVisibility] = useState<WorkFilterVisibility>(rememberedWorkFilters.visibility);
   const [viewMode, setViewMode] = useState<"list" | "grid">(rememberedWorkFilters.viewMode);
-  const [isMobileGrid, setIsMobileGrid] = useState(false);
+  const [isMobileGrid, setIsMobileGrid] = useState(() => window.matchMedia("(max-width: 767px)").matches);
   const [order, setOrder] = useState<"ASC" | "DESC">(rememberedWorkFilters.order);
   const [page, setPage] = useState(rememberedWorkFilters.page);
 
@@ -77,7 +78,12 @@ function useWorkFilters() {
 
   useEffect(() => {
     const mediaQuery = window.matchMedia("(max-width: 767px)");
-    const syncMobileView = () => setIsMobileGrid(mediaQuery.matches);
+    let previousMatches = mediaQuery.matches;
+    const syncMobileView = () => {
+      if (mediaQuery.matches !== previousMatches) setPage(1);
+      previousMatches = mediaQuery.matches;
+      setIsMobileGrid(mediaQuery.matches);
+    };
     syncMobileView();
     mediaQuery.addEventListener("change", syncMobileView);
     return () => mediaQuery.removeEventListener("change", syncMobileView);
@@ -104,8 +110,14 @@ function useWorkFilters() {
     ...(visibility !== "Todos" ? { visibility } : {}),
     order,
     page,
-    limit: WORKS_PAGE_SIZE,
-  }), [debouncedTerm, order, page, typeId, demography, visibility]);
+    limit: isMobileGrid || viewMode === "grid" ? CATALOG_GRID_PAGE_SIZE : WORKS_PAGE_SIZE,
+  }), [debouncedTerm, order, page, typeId, demography, visibility, isMobileGrid, viewMode]);
+
+  function changeViewMode(nextViewMode: "list" | "grid") {
+    if (nextViewMode === viewMode) return;
+    setViewMode(nextViewMode);
+    setPage(1);
+  }
 
   function changeType(value: string) {
     setTypeId(value);
@@ -141,7 +153,7 @@ function useWorkFilters() {
     searchTerm,
     setPage,
     setSearchTerm,
-    setViewMode,
+    setViewMode: changeViewMode,
     toggleTitleSort,
     typeFilterOptions,
     typeId,
@@ -158,7 +170,7 @@ function useWorksData(filters: Filters) {
   const [works, setWorks] = useState<WorkSummary[]>(initial?.works ?? []);
   const [pagination, setPagination] = useState<WorksPagination>(initial?.pagination ?? {
     page: 1,
-    limit: WORKS_PAGE_SIZE,
+    limit: filters.requestParams.limit,
     total: 0,
     totalPages: 1,
   });

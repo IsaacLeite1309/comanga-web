@@ -59,9 +59,9 @@ const volumesResponse = {
   pagination: { page: 1, limit: VOLUMES_PAGE_SIZE, total: 1, totalPages: 1 },
 };
 
-function volumesPage(page: number, total: number) {
-  const firstIndex = (page - 1) * VOLUMES_PAGE_SIZE;
-  const size = Math.max(Math.min(VOLUMES_PAGE_SIZE, total - firstIndex), 0);
+function volumesPage(page: number, total: number, limit = VOLUMES_PAGE_SIZE) {
+  const firstIndex = (page - 1) * limit;
+  const size = Math.max(Math.min(limit, total - firstIndex), 0);
 
   return {
     volumes: Array.from({ length: size }, (_, offset) => ({
@@ -71,19 +71,19 @@ function volumesPage(page: number, total: number) {
     })),
     pagination: {
       page,
-      limit: VOLUMES_PAGE_SIZE,
+      limit,
       total,
-      totalPages: Math.ceil(total / VOLUMES_PAGE_SIZE),
+      totalPages: Math.ceil(total / limit),
     },
   };
 }
 
 type VolumesRequestConfig = { params?: { page?: number; limit?: number; order?: string } };
 
-function arrangeVolumes(respond: (page: number) => Promise<unknown>) {
+function arrangeVolumes(respond: (page: number, limit: number) => Promise<unknown>) {
   vi.mocked(api.get).mockImplementation((url: string, config?: VolumesRequestConfig) => {
     if (url === "/admin/works/slug/Naruto/editions/1") return Promise.resolve({ data: editionResponse });
-    if (url === "/admin/editions/20/volumes") return respond(config?.params?.page ?? 0);
+    if (url === "/admin/editions/20/volumes") return respond(config?.params?.page ?? 0, config?.params?.limit ?? VOLUMES_PAGE_SIZE);
     return Promise.reject(new Error(`URL inesperada: ${url}`));
   });
 }
@@ -96,6 +96,12 @@ function renderEditionDetails(path = "/admin/gerenciar-mangas/obras/Naruto/edico
       </Routes>
     </MemoryRouter>
   );
+}
+
+async function renderEditionDetailsList() {
+  const view = renderEditionDetails();
+  fireEvent.click(await screen.findByRole("button", { name: "Lista" }));
+  return view;
 }
 
 describe("EditionDetails", () => {
@@ -120,7 +126,8 @@ describe("EditionDetails", () => {
       .mockResolvedValueOnce({ data: { edition: { ...editionResponse.edition, volumesCount: 1 } } })
       .mockResolvedValueOnce({ data: volumesResponse });
 
-    renderEditionDetails();
+    vi.mocked(api.get).mockResolvedValue({ data: volumesResponse });
+    await renderEditionDetailsList();
 
     expect(await screen.findByText("Volume 1")).toBeInTheDocument();
     expect(screen.getByText("208")).toBeInTheDocument();
@@ -132,7 +139,7 @@ describe("EditionDetails", () => {
   it("alterna para grade e mostra volume unico sem capa", async () => {
     vi.mocked(api.get)
       .mockResolvedValueOnce({ data: { edition: { ...editionResponse.edition, coverUrl: null, volumesCount: 1 } } })
-      .mockResolvedValueOnce({
+      .mockResolvedValue({
         data: {
           volumes: [{
             ...volumesResponse.volumes[0],
@@ -151,7 +158,7 @@ describe("EditionDetails", () => {
     fireEvent.click(screen.getByRole("button", { name: /grade/i }));
 
     // O Volume mantém capa própria obrigatória; a Edição aponta a origem da capa derivada.
-    expect(screen.getAllByText("Sem capa").length).toBeGreaterThan(0);
+    expect((await screen.findAllByText("Sem capa")).length).toBeGreaterThan(0);
     expect(screen.queryByText("Sem capa (cadastre o Volume 1)")).not.toBeInTheDocument();
     expect(screen.getByText(/volume .nico/i)).toBeInTheDocument();
     expect(screen.queryByRole("link", { name: "Adicionar volume" })).not.toBeInTheDocument();
@@ -231,10 +238,23 @@ describe("EditionDetails - paginação de Volumes", () => {
     vi.resetAllMocks();
   });
 
+  it("abre por padrão com Grade antes de Lista e carrega 24 volumes", async () => {
+    arrangeVolumes((page, limit) => Promise.resolve({ data: volumesPage(page, 30, limit) }));
+    renderEditionDetails();
+    await screen.findByText("Exibindo 24 de 30 Volumes");
+    const grid = screen.getByRole("button", { name: "Grade" });
+    const list = screen.getByRole("button", { name: "Lista" });
+    expect(grid).toHaveAttribute("aria-pressed", "true");
+    expect(list).toHaveAttribute("aria-pressed", "false");
+    expect(grid.nextElementSibling).toBe(list);
+    expect(screen.getAllByText(/^Volume \d+$/)).toHaveLength(24);
+    expect(api.get).toHaveBeenLastCalledWith("/admin/editions/20/volumes", { params: { order: "ASC", page: 1, limit: 24 } });
+  });
+
   it("solicita a primeira página com o tamanho de página administrativo e a ordem crescente", async () => {
     arrangeVolumes((page) => Promise.resolve({ data: volumesPage(page, 10) }));
 
-    renderEditionDetails();
+    await renderEditionDetailsList();
     await screen.findByRole("heading", { name: /^Volumes$/i });
 
     await waitFor(() => expect(api.get).toHaveBeenCalledWith("/admin/editions/20/volumes", {
@@ -247,7 +267,7 @@ describe("EditionDetails - paginação de Volumes", () => {
   it("navega para a próxima página sem acumular os registros da página anterior", async () => {
     arrangeVolumes((page) => Promise.resolve({ data: volumesPage(page, 10) }));
 
-    renderEditionDetails();
+    await renderEditionDetailsList();
     expect(await screen.findByText("Exibindo 8 de 10 Volumes")).toBeInTheDocument();
     expect(screen.getByText("Volume 1")).toBeInTheDocument();
 
@@ -264,7 +284,7 @@ describe("EditionDetails - paginação de Volumes", () => {
   it("desabilita os controles nos limites da navegação", async () => {
     arrangeVolumes((page) => Promise.resolve({ data: volumesPage(page, 10) }));
 
-    renderEditionDetails();
+    await renderEditionDetailsList();
     await screen.findByText("Exibindo 8 de 10 Volumes");
 
     expect(screen.getByRole("button", { name: "Página anterior de Volumes" })).toBeDisabled();
@@ -277,26 +297,51 @@ describe("EditionDetails - paginação de Volumes", () => {
     expect(screen.getByRole("button", { name: "Próxima página de Volumes" })).toBeDisabled();
   });
 
-  it("mantém a página atual ao alternar entre lista e grade", async () => {
-    arrangeVolumes((page) => Promise.resolve({ data: volumesPage(page, 10) }));
+  it("carrega 24 volumes na grade, pagina os restantes e preserva a página da lista no cache", async () => {
+    arrangeVolumes((page, limit) => Promise.resolve({ data: volumesPage(page, 30, limit) }));
 
-    renderEditionDetails();
-    await screen.findByText("Exibindo 8 de 10 Volumes");
+    await renderEditionDetailsList();
+    await screen.findByText("Exibindo 8 de 30 Volumes");
     fireEvent.click(screen.getByRole("button", { name: "Próxima página de Volumes" }));
-    await screen.findByText("Exibindo 2 de 10 Volumes");
-    const requestsBeforeToggle = vi.mocked(api.get).mock.calls.length;
+    await screen.findByText("Volume 9");
 
     fireEvent.click(screen.getByRole("button", { name: /grade/i }));
 
-    expect(screen.getByText("Exibindo 2 de 10 Volumes")).toBeInTheDocument();
-    expect(screen.getByText("2 / 2")).toBeInTheDocument();
-    expect(vi.mocked(api.get).mock.calls.length).toBe(requestsBeforeToggle);
+    await screen.findByText("Exibindo 24 de 30 Volumes");
+    expect(screen.getAllByText(/^Volume \d+$/)).toHaveLength(24);
+    expect(api.get).toHaveBeenCalledWith("/admin/editions/20/volumes", { params: { order: "ASC", page: 1, limit: 24 } });
+    expect(screen.getByRole("button", { name: "Página anterior de Volumes" })).toBeDisabled();
+    fireEvent.click(screen.getByRole("button", { name: "Página 2" }));
+    await screen.findByText("Exibindo 6 de 30 Volumes");
+    expect(screen.getByText("Volume 30")).toBeInTheDocument();
+    expect(screen.queryByText("Volume 1")).not.toBeInTheDocument();
+    expect(screen.getByRole("button", { name: "Próxima página de Volumes" })).toBeDisabled();
+    const requestsBeforeList = vi.mocked(api.get).mock.calls.length;
+    fireEvent.click(screen.getByRole("button", { name: "Lista" }));
+    await screen.findByText("2 / 4");
+    expect(screen.getByText("Volume 9")).toBeInTheDocument();
+    expect(screen.queryByText("Volume 25")).not.toBeInTheDocument();
+    expect(vi.mocked(api.get).mock.calls.length).toBe(requestsBeforeList);
+  });
+
+  it("carrega até 24 volumes desde a primeira requisição na grade mobile", async () => {
+    const originalMatchMedia = window.matchMedia;
+    const media = vi.spyOn(window, "matchMedia").mockImplementation(query => ({ ...originalMatchMedia(query), matches: true }));
+    try {
+      arrangeVolumes((page, limit) => Promise.resolve({ data: volumesPage(page, 30, limit) }));
+      renderEditionDetails();
+      await screen.findByText("Exibindo 24 de 30 Volumes");
+      expect(screen.getAllByText(/^Volume \d+$/)).toHaveLength(24);
+      const volumeRequests = vi.mocked(api.get).mock.calls.filter(([url]) => url === "/admin/editions/20/volumes");
+      expect(volumeRequests).toHaveLength(1);
+      expect(volumeRequests[0][1]).toEqual({ params: { order: "ASC", page: 1, limit: 24 } });
+    } finally { media.mockRestore(); }
   });
 
   it("trata a resposta vazia com totalPages igual a zero", async () => {
     arrangeVolumes(() => Promise.resolve({ data: emptyVolumesResponse }));
 
-    renderEditionDetails();
+    await renderEditionDetailsList();
 
     expect(await screen.findByText("Exibindo 0 de 0 Volumes")).toBeInTheDocument();
     expect(screen.getByText("1 / 1")).toBeInTheDocument();
@@ -313,7 +358,7 @@ describe("EditionDetails - paginação de Volumes", () => {
       return Promise.resolve({ data: {} });
     });
 
-    renderEditionDetails();
+    await renderEditionDetailsList();
     await screen.findByText("Exibindo 8 de 9 Volumes");
     fireEvent.click(screen.getByRole("button", { name: "Próxima página de Volumes" }));
     await screen.findByText("Exibindo 1 de 9 Volumes");
@@ -335,7 +380,7 @@ describe("EditionDetails - paginação de Volumes", () => {
     });
     arrangeVolumes((page) => (page === 2 ? secondPage : Promise.resolve({ data: volumesPage(page, 20) })));
 
-    renderEditionDetails();
+    await renderEditionDetailsList();
     await screen.findByText("Exibindo 8 de 20 Volumes");
     fireEvent.click(screen.getByRole("button", { name: "Próxima página de Volumes" }));
     fireEvent.click(screen.getByRole("button", { name: "Próxima página de Volumes" }));
@@ -355,7 +400,7 @@ describe("EditionDetails - paginação de Volumes", () => {
       response: { data: { error: "Falha ao consultar Volumes." } },
     }));
 
-    renderEditionDetails();
+    await renderEditionDetailsList();
 
     expect(await screen.findByText("Falha ao consultar Volumes.")).toBeInTheDocument();
     expect(screen.getByRole("heading", { name: /^Volumes$/i })).toBeInTheDocument();
@@ -369,7 +414,7 @@ describe("EditionDetails - paginação de Volumes", () => {
           coverUrl: removed ? null : editionResponse.edition.coverUrl } },
     }));
     vi.mocked(api.delete).mockImplementation(async () => { removed = true; return { data: {} }; });
-    renderEditionDetails();
+    await renderEditionDetailsList();
     await screen.findByText("Volume 1");
     fireEvent.click(screen.getByRole("button", { name: /excluir volume 1/i }));
     fireEvent.click(screen.getByRole("button", { name: /confirmar exclus/i }));
@@ -378,12 +423,12 @@ describe("EditionDetails - paginação de Volumes", () => {
 
   it("preserva a página da Edição ao sair para um formulário e retornar", async () => {
     arrangeVolumes(page => Promise.resolve({ data: volumesPage(page, 18) }));
-    const firstVisit = renderEditionDetails();
+    const firstVisit = await renderEditionDetailsList();
     await screen.findByText("Volume 1");
     fireEvent.click(screen.getByRole("button", { name: /próxima página de volumes/i }));
     await screen.findByText("Volume 9");
     firstVisit.unmount();
-    renderEditionDetails();
+    await renderEditionDetailsList();
     expect(await screen.findByText("Volume 9")).toBeInTheDocument();
     expect(screen.getByText("2 / 3")).toBeInTheDocument();
   });

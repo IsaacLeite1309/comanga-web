@@ -5,6 +5,7 @@ import { CatalogVisibilityAction } from "./CatalogVisibility";
 import { visibilityActionClassName } from "./catalogVisibilityStyles";
 import {
   CatalogPaginationControls,
+  CatalogGridPagination,
   CatalogViewToggle,
   DeleteCatalogItemDialog,
   DetailInfoBlock,
@@ -348,9 +349,7 @@ function EditionsGrid({
           />
         ))}
       </div>
-      <div className="overflow-hidden rounded-xl border border-border">
-        <CatalogPaginationControls pagination={collection.pagination} itemsLabel="Edições" />
-      </div>
+      <CatalogGridPagination pagination={collection.pagination} itemsLabel="Edições" />
     </>
   );
 }

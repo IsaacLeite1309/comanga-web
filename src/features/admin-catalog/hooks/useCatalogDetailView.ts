@@ -2,9 +2,9 @@ import { useEffect, useState } from "react";
 
 export type CatalogViewMode = "list" | "grid";
 
-export function useCatalogDetailView(itemCount: number) {
-  const [viewMode, setViewMode] = useState<CatalogViewMode>("list");
-  const [isMobileGrid, setIsMobileGrid] = useState(false);
+export function useCatalogDetailView(itemCount = 0) {
+  const [viewMode, setViewMode] = useState<CatalogViewMode>("grid");
+  const [isMobileGrid, setIsMobileGrid] = useState(() => window.matchMedia("(max-width: 767px)").matches);
 
   useEffect(() => {
     const mediaQuery = window.matchMedia("(max-width: 767px)");
@@ -15,9 +15,11 @@ export function useCatalogDetailView(itemCount: number) {
     return () => mediaQuery.removeEventListener("change", syncMobileView);
   }, []);
 
+  const isGridView = isMobileGrid || viewMode === "grid";
   return {
     viewMode,
     setViewMode,
-    showGridView: itemCount > 0 && (isMobileGrid || viewMode === "grid"),
+    isGridView,
+    showGridView: itemCount > 0 && isGridView,
   };
 }
