@@ -26,7 +26,7 @@ export function CatalogResultsLoading({ label, className = "", cardActions }: Ca
                 <div key={actionIndex} className="catalog-skeleton-shape h-10 rounded-lg border border-sidebar-foreground/20" />
               ))}
             </div>}
-            {cardActions && <div className="catalog-skeleton-shape mt-3 h-10 rounded-lg border border-sidebar-foreground/20" />}
+            {cardActions === "wishlist" && <div className="catalog-skeleton-shape mt-3 h-10 rounded-lg border border-sidebar-foreground/20" />}
           </div>
         ))}
       </div>
