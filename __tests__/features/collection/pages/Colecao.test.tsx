@@ -11,7 +11,7 @@ vi.mock("@/features/personal-library", async (original) => ({ ...(await original
 vi.mock("@/features/auth", () => ({ useAuth: () => ({ user: { id: "test-user", conteudo_adulto: false, active_profile: "Usuário Padrão" } }) }));
 vi.mock("sonner", () => ({ toast: { error: vi.fn() } }));
 function response(read = false, total = 1): CollectionResponse {
-  return { works: [{ work: { id: 8, slug: "monster", title: "Monster" }, editions: [{ edition: { id: 20, chronologicalNumber: 1, brazilPublicationStatus: "Completa", brazilianPublisher: { id: 1, label: "Panini" } }, progress: { owned: total, total: 60, read: read ? 1 : 0, wished: 3 }, volumes: [{ id: 30, number: 1, singleVolume: false, read }], volumesPagination: { page: 1, limit: 50, total, totalPages: Math.ceil(total / 50) } }] }], totals: { editions: 1, volumes: total }, pagination: { page: 1, limit: 12, total: 1, totalPages: 1 } };
+  return { works: [{ work: { id: 8, slug: "monster", title: "Monster" }, editions: [{ edition: { id: 20, chronologicalNumber: 1, brazilPublicationStatus: "Completa", brazilianPublisher: { id: 1, label: "Panini" } }, progress: { owned: total, total: 60, read: read ? 1 : 0, wished: 3 }, volumes: [{ id: 30, number: 1, singleVolume: false, read }], volumesPagination: { page: 1, limit: 11, total, totalPages: Math.ceil(total / 11) } }] }], totals: { editions: 1, volumes: total }, pagination: { page: 1, limit: 12, total: 1, totalPages: 1 } };
 }
 function mount() {
   const queryClient = new QueryClient({ defaultOptions: { queries: { retry: false } } });

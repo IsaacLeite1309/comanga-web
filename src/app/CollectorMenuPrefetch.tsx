@@ -55,7 +55,10 @@ export function CollectorMenuPrefetch() {
   useEffect(() => {
     if (!collector || !isAuthenticated) return;
     return subscribePersonalLibraryUpdates(() => {
-      void queryClient.invalidateQueries({ queryKey: PERSONAL_LIBRARY_QUERY_ROOT });
+      // Descarta resultados antigos e cancela buscas anteriores antes de pré-carregar.
+      // Os filtros ficam em chaves separadas e são preservados.
+      void queryClient.resetQueries({ queryKey: [...PERSONAL_LIBRARY_QUERY_ROOT, scope[0], "collection"] });
+      void queryClient.invalidateQueries({ queryKey: [...PERSONAL_LIBRARY_QUERY_ROOT, scope[0], "wishlist"] });
       void queryClient.prefetchQuery({
         queryKey: [...collectionQueryPrefix(scope[0], "", "", ""), 1],
         queryFn: () => listCollection(1),

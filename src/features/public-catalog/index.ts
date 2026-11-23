@@ -6,6 +6,7 @@ export { default as PublicWorkDetailsPage } from "./pages/PublicWorkDetails";
 export { default as EditionVolumeSelectionPage } from "./pages/EditionVolumeSelection";
 export { default as PublicVolumeDetailsPage } from "./pages/PublicVolumeDetails";
 
+export { VolumeAmazonButton } from "./VolumeAmazonButton";
 export { CatalogCover } from "./CatalogCover";
 export { CatalogResultsLoading } from "./CatalogResultsLoading";
 export { CatalogPagination } from "./CatalogPagination";

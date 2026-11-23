@@ -1,14 +1,15 @@
 import { useEffect, useRef, useState } from "react";
 import { useQueryClient, type QueryClient } from "@tanstack/react-query";
-import { ArrowDownAZ, ArrowUpAZ, BookOpen, CalendarDays, ChevronLeft, ChevronRight, Heart, LibraryBig, LoaderCircle, Search } from "lucide-react";
+import { ArrowDownAZ, ArrowUpAZ, CalendarDays, ChevronLeft, ChevronRight, Heart, LibraryBig, LoaderCircle, Search } from "lucide-react";
 import { Link, useLocation } from "react-router-dom";
 import { toast } from "sonner";
 import { useAuth } from "@/features/auth";
 import { SearchableSelect } from "@/components/forms/SearchableSelect";
 import { EmptyState, FilteredEmptyState } from "@/components/shared/AsyncState";
-import { addCollectionVolume, addWishlistVolume, CollectionChangeDialog, removeCollectionVolume, removeWishlistVolume, updateVolumeReading } from "@/features/personal-library";
+import { addCollectionVolume, addWishlistVolume, CollectionChangeDialog, removeCollectionVolume, removeWishlistVolume } from "@/features/personal-library";
 import { getApiError } from "@/lib/apiError";
 import { PUBLIC_CATALOG_QUERY_ROOT } from "@/lib/queryClient";
+import { VolumeAmazonButton } from "@/features/public-catalog/VolumeAmazonButton";
 import { CatalogCover } from "@/features/public-catalog/CatalogCover";
 import { CatalogErrorMessage } from "@/features/public-catalog/CatalogErrorMessage";
 import { CatalogResultsLoading } from "@/features/public-catalog/CatalogResultsLoading";
@@ -175,26 +176,18 @@ async function saveCalendarPersonalState({ queryClient, scope, volume, previous,
 type CalendarActionButtonProps = {
   personal: PublicPersonalVolumeState;
   busy: boolean;
-  busyAction: "collection" | "reading" | "wishlist" | null;
+  busyAction: "collection" | "wishlist" | null;
   label: string;
 };
 
-const calendarActionClass = "inline-flex h-10 min-w-0 items-center justify-center gap-1 rounded-lg border px-2 text-xs font-bold transition-colors disabled:cursor-not-allowed disabled:opacity-60 sm:text-sm";
+const calendarActionClass = "inline-flex min-h-10 min-w-0 items-center justify-center gap-1 rounded-lg border px-2 text-xs font-semibold transition-colors disabled:cursor-not-allowed disabled:opacity-60 sm:text-sm";
 const calendarInactiveClass = "border-sidebar-foreground/30 bg-sidebar text-white hover:bg-sidebar-accent";
-const calendarActiveClass = "border-primary bg-primary text-primary-foreground";
+const calendarActiveClass = "border-primary bg-primary text-primary-foreground hover:bg-primary/90";
 
 function CalendarCollectionButton({ personal, busy, busyAction, label, onClick }: CalendarActionButtonProps & { onClick: () => void }) {
   return (
     <button type="button" disabled={busy} aria-label={`${personal.owned ? "Remover" : "Adicionar"} ${label} ${personal.owned ? "da" : "à"} coleção`} aria-pressed={personal.owned} onClick={onClick} className={`${calendarActionClass} ${personal.owned ? calendarActiveClass : calendarInactiveClass}`}>
-      {busy && busyAction === "collection" ? <LoaderCircle className="h-4 w-4 animate-spin" aria-hidden="true" /> : <LibraryBig className="h-4 w-4" fill={personal.owned ? "currentColor" : "none"} aria-hidden="true" />}
-    </button>
-  );
-}
-
-function CalendarReadingButton({ personal, busy, busyAction, label, onClick }: CalendarActionButtonProps & { onClick: () => void }) {
-  return (
-    <button type="button" disabled={busy} aria-label={`Marcar ${label} como ${personal.read ? "não lido" : "lido"}`} aria-pressed={personal.read ?? false} aria-disabled={!personal.owned} onClick={onClick} className={`${calendarActionClass} ${!personal.owned ? "cursor-not-allowed opacity-60" : ""} ${personal.read ? calendarActiveClass : calendarInactiveClass}`}>
-      {busy && busyAction === "reading" ? <LoaderCircle className="h-4 w-4 animate-spin" aria-hidden="true" /> : <BookOpen className="h-4 w-4" fill={personal.read ? "currentColor" : "none"} aria-hidden="true" />}
+      {busy && busyAction === "collection" ? <LoaderCircle className="h-4 w-4 animate-spin" aria-hidden="true" /> : <LibraryBig className="h-4 w-4 shrink-0" fill={personal.owned ? "currentColor" : "none"} aria-hidden="true" />}
     </button>
   );
 }
@@ -202,20 +195,18 @@ function CalendarReadingButton({ personal, busy, busyAction, label, onClick }: C
 function CalendarWishlistButton({ personal, busy, busyAction, label, onClick }: CalendarActionButtonProps & { onClick: () => void }) {
   return (
     <button type="button" disabled={busy} aria-label={`${personal.wished ? "Remover" : "Adicionar"} ${label} ${personal.wished ? "da" : "à"} lista de desejos`} aria-pressed={personal.wished} aria-disabled={personal.owned} onClick={onClick} className={`${calendarActionClass} ${personal.owned ? "cursor-not-allowed opacity-60" : ""} ${personal.wished ? calendarActiveClass : calendarInactiveClass}`}>
-      {busy && busyAction === "wishlist" ? <LoaderCircle className="h-4 w-4 animate-spin" aria-hidden="true" /> : <Heart className="h-4 w-4" fill={personal.wished ? "currentColor" : "none"} aria-hidden="true" />}
+      {busy && busyAction === "wishlist" ? <LoaderCircle className="h-4 w-4 animate-spin" aria-hidden="true" /> : <Heart className="h-4 w-4 shrink-0" fill={personal.wished ? "currentColor" : "none"} aria-hidden="true" />}
     </button>
   );
 }
 
-function CalendarVolumeActionButtons({ personal, busy, busyAction, label, onCollectionClick, onReadingClick, onWishlistClick }: CalendarActionButtonProps & {
+function CalendarVolumeActionButtons({ personal, busy, busyAction, label, onCollectionClick, onWishlistClick }: CalendarActionButtonProps & {
   onCollectionClick: () => void;
-  onReadingClick: () => void;
   onWishlistClick: () => void;
 }) {
   return (
-    <div className="mt-3 grid grid-cols-3 gap-2">
+    <div className="mt-3 grid grid-cols-2 gap-2">
       <CalendarCollectionButton personal={personal} busy={busy} busyAction={busyAction} label={label} onClick={onCollectionClick} />
-      <CalendarReadingButton personal={personal} busy={busy} busyAction={busyAction} label={label} onClick={onReadingClick} />
       <CalendarWishlistButton personal={personal} busy={busy} busyAction={busyAction} label={label} onClick={onWishlistClick} />
     </div>
   );
@@ -226,7 +217,7 @@ function CalendarVolumeActions({ volume }: { volume: PublicCalendarVolume }) {
   const scope = usePublicCatalogScope();
   const { user } = useAuth();
   const [busy, setBusy] = useState(false);
-  const [busyAction, setBusyAction] = useState<"collection" | "reading" | "wishlist" | null>(null);
+  const [busyAction, setBusyAction] = useState<"collection" | "wishlist" | null>(null);
   const [confirmingCollection, setConfirmingCollection] = useState(false);
   const personal = volume.personal ?? { owned: false, read: null, wished: false };
   const label = publicVolumeLabel(volume);
@@ -259,18 +250,6 @@ function CalendarVolumeActions({ volume }: { volume: PublicCalendarVolume }) {
     setBusyAction(null);
   }
 
-  async function toggleReading() {
-    if (!personal.owned) return;
-    setBusy(true);
-    setBusyAction("reading");
-    await saveCalendarPersonalState({ queryClient, scope, volume, previous: personal,
-      operation: () => updateVolumeReading(volume.id, !personal.read),
-      successMessage: personal.read ? "Volume marcado como não lido." : "Volume marcado como lido.",
-      errorMessage: "Não foi possível atualizar o estado de leitura." });
-    setBusy(false);
-    setBusyAction(null);
-  }
-
   function handleCollectionClick() {
     if (!user) {
       toast.warning("Faça login para poder adicionar este volume à sua coleção.");
@@ -295,21 +274,9 @@ function CalendarVolumeActions({ volume }: { volume: PublicCalendarVolume }) {
     void toggleWishlist();
   }
 
-  function handleReadingClick() {
-    if (!personal.owned) {
-      toast.warning("Adicione o volume à coleção para poder marcá-lo como lido.");
-      return;
-    }
-    if (!user) {
-      toast.warning("Faça login para atualizar sua coleção.");
-      return;
-    }
-    void toggleReading();
-  }
-
   return (
     <>
-      <CalendarVolumeActionButtons personal={personal} busy={busy} busyAction={busyAction} label={label} onCollectionClick={handleCollectionClick} onReadingClick={handleReadingClick} onWishlistClick={handleWishlistClick} />
+      <CalendarVolumeActionButtons personal={personal} busy={busy} busyAction={busyAction} label={label} onCollectionClick={handleCollectionClick} onWishlistClick={handleWishlistClick} />
       {confirmingCollection && <CollectionChangeDialog
         wishlistVolumes={personal.wished && !personal.owned ? [label] : []}
         readVolumes={personal.owned && personal.read ? [label] : []}
@@ -333,6 +300,7 @@ function CalendarVolumeCard({ volume }: { volume: PublicCalendarVolume }) {
         <p className="mt-1 text-xs text-muted-foreground">{label} da {edition.chronologicalNumber}ª edição</p>
       </Link>
       <CalendarVolumeActions volume={volume} />
+      <VolumeAmazonButton affiliateLink={volume.affiliateLink} />
     </article>
   );
 }
