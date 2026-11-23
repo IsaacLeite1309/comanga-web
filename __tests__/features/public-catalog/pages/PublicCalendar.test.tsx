@@ -6,17 +6,25 @@ import PublicCalendar from "@/features/public-catalog/pages/PublicCalendar";
 import { getPublicCatalogOptions, listPublicCalendar } from "@/features/public-catalog/publicCatalogService";
 import type { PublicCalendarResponse } from "@/features/public-catalog/publicCatalogTypes";
 import { toast } from "sonner";
+import { useAuth, type AuthUser } from "@/features/auth";
+import { addCollectionVolume, removeCollectionVolume } from "@/features/personal-library";
 
 vi.mock("@/features/public-catalog/publicCatalogService", () => ({ getPublicCatalogOptions: vi.fn(), listPublicCalendar: vi.fn() }));
-vi.mock("@/features/auth", () => ({ useAuth: () => ({ user: null, loading: false }) }));
-vi.mock("sonner", () => ({ toast: { error: vi.fn() } }));
+vi.mock("@/features/auth", () => ({ useAuth: vi.fn(() => ({ user: null, loading: false })) }));
+vi.mock("sonner", () => ({ toast: { error: vi.fn(), warning: vi.fn(), success: vi.fn() } }));
+
+vi.mock("@/features/personal-library", async importOriginal => ({
+  ...await importOriginal<typeof import("@/features/personal-library")>(),
+  addCollectionVolume: vi.fn(),
+  removeCollectionVolume: vi.fn(),
+}));
 
 const response: PublicCalendarResponse = {
   year: 2026,
   month: 12,
   volumes: [
-    { id: 1, number: 2, singleVolume: false, coverUrl: "https://cdn.comanga.test/monster.jpg", releaseDatePrecision: "Completa", releaseYear: 2026, releaseMonth: 12, releaseDay: 9, edition: { id: 2, chronologicalNumber: 1, brazilianPublisher: { id: 3, label: "Panini" }, work: { id: 4, slug: "monster", title: "Monster", originalTitle: "MONSTER" } } },
-    { id: 5, number: 1, singleVolume: true, coverUrl: null, releaseDatePrecision: "Mes e ano", releaseYear: 2026, releaseMonth: 12, releaseDay: null, edition: { id: 6, chronologicalNumber: 2, brazilianPublisher: { id: 3, label: "Panini" }, work: { id: 7, slug: "pluto", title: "Pluto" } } },
+    { id: 1, affiliateLink: "https://amazon.example.test/monster", number: 2, singleVolume: false, coverUrl: "https://cdn.comanga.test/monster.jpg", releaseDatePrecision: "Completa", releaseYear: 2026, releaseMonth: 12, releaseDay: 9, edition: { id: 2, chronologicalNumber: 1, brazilianPublisher: { id: 3, label: "Panini" }, work: { id: 4, slug: "monster", title: "Monster", originalTitle: "MONSTER" } } },
+    { id: 5, affiliateLink: null, number: 1, singleVolume: true, coverUrl: null, releaseDatePrecision: "Mes e ano", releaseYear: 2026, releaseMonth: 12, releaseDay: null, edition: { id: 6, chronologicalNumber: 2, brazilianPublisher: { id: 3, label: "Panini" }, work: { id: 7, slug: "pluto", title: "Pluto" } } },
   ],
   pagination: { page: 1, limit: 24, total: 25, totalPages: 2 },
 };
@@ -42,6 +50,7 @@ async function waitForCalendarReady() {
 describe("PublicCalendar", () => {
   beforeEach(() => {
     vi.clearAllMocks();
+    vi.mocked(useAuth).mockReturnValue({ user: null, loading: false } as ReturnType<typeof useAuth>);
     vi.mocked(listPublicCalendar).mockImplementation(async query => ({ ...response, year: query.year ?? response.year, month: query.month ?? response.month, pagination: { ...response.pagination, page: query.page } }));
     vi.mocked(getPublicCatalogOptions).mockResolvedValue({ brazilianPublishers: [{ id: 3, label: "Panini" }] } as Awaited<ReturnType<typeof getPublicCatalogOptions>>);
   });
@@ -66,6 +75,50 @@ describe("PublicCalendar", () => {
     expect(screen.queryByText("Dia não informado")).not.toBeInTheDocument();
     expect(screen.queryByText("Consulte os Volumes previstos para cada mês, ordenados pelo título da Obra.")).not.toBeInTheDocument();
     expect(screen.queryByRole("button", { name: "Pesquisar" })).not.toBeInTheDocument();
+  });
+
+  it("usa dois botões pessoais e Amazon abaixo, como na lista de desejos, e avisa visitantes", async () => {
+    renderCalendar();
+    const cover = await screen.findByRole("link", { name: "Ver volume 2 de Monster" });
+    const card = within(cover.closest("article")!);
+    const collection = card.getByRole("button", { name: "Adicionar Volume 2 à coleção" });
+    const wishlist = card.getByRole("button", { name: "Adicionar Volume 2 à lista de desejos" });
+    expect(collection.parentElement).toHaveClass("grid-cols-2");
+    expect(collection.parentElement?.children).toHaveLength(2);
+    expect(wishlist.parentElement).toBe(collection.parentElement);
+    expect(collection).toHaveClass("bg-sidebar", "min-h-10");
+    expect(wishlist).toHaveClass("bg-sidebar", "min-h-10");
+    const amazon = card.getByRole("link", { name: "Comprar na Amazon" });
+    expect(amazon).toHaveAttribute("href", "https://amazon.example.test/monster");
+    expect(amazon).toHaveAttribute("rel", "noreferrer noopener");
+    expect(collection.parentElement?.nextElementSibling).toBe(amazon);
+    expect(card.queryByRole("button", { name: /como lido/ })).not.toBeInTheDocument();
+    const unavailableCard = within(screen.getByRole("link", { name: "Ver volume único de Pluto" }).closest("article")!);
+    expect(unavailableCard.getByRole("button", { name: "Comprar na Amazon" })).toBeDisabled();
+    expect(unavailableCard.getByText("Indisponível na")).toBeInTheDocument();
+    fireEvent.click(collection);
+    expect(toast.warning).toHaveBeenCalledWith("Faça login para poder adicionar este volume à sua coleção.");
+    fireEvent.click(wishlist);
+    expect(toast.warning).toHaveBeenCalledWith("Faça login para poder adicionar este volume à sua lista de desejos.");
+  });
+
+  it.each([false, true])("mantém confirmação ao adicionar desejado ou remover adquirido e lido: %s", async owned => {
+    vi.mocked(useAuth).mockReturnValue({ user: { id: "reader" } as AuthUser, loading: false } as ReturnType<typeof useAuth>);
+    vi.mocked(listPublicCalendar).mockResolvedValue({ ...response, volumes: [{ ...response.volumes[0], personal: { owned, read: owned ? true : null, wished: !owned } }] });
+    vi.mocked(addCollectionVolume).mockResolvedValue({ volumeId: 1, owned: true, read: false, wished: false });
+    vi.mocked(removeCollectionVolume).mockResolvedValue(undefined);
+    renderCalendar();
+    const collection = await screen.findByRole("button", { name: owned ? "Remover Volume 2 da coleção" : "Adicionar Volume 2 à coleção" });
+    const wishlist = screen.getByRole("button", { name: owned ? "Adicionar Volume 2 à lista de desejos" : "Remover Volume 2 da lista de desejos" });
+    expect(owned ? collection : wishlist).toHaveClass("bg-primary", "text-primary-foreground");
+    if (!owned) expect(wishlist.querySelector("svg")).toHaveAttribute("fill", "currentColor");
+    fireEvent.click(collection);
+    const dialog = screen.getByRole("dialog");
+    expect(addCollectionVolume).not.toHaveBeenCalled();
+    expect(removeCollectionVolume).not.toHaveBeenCalled();
+    fireEvent.click(within(dialog).getByRole("button", { name: owned ? "Remover" : "Adicionar" }));
+    await waitFor(() => expect(owned ? removeCollectionVolume : addCollectionVolume).toHaveBeenCalledWith(1));
+    await waitFor(() => expect(toast.success).toHaveBeenCalledWith(owned ? "Volume removido da coleção." : "Volume adicionado à coleção."));
   });
 
   it("leva o contexto do checklist ao abrir um Volume", async () => {

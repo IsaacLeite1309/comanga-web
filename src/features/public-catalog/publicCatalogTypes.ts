@@ -242,6 +242,7 @@ export interface PublicCalendarQuery {
 }
 
 export interface PublicCalendarVolume extends PublicVolumePreview {
+  affiliateLink?: string | null;
   edition: {
     id: number;
     chronologicalNumber: number;

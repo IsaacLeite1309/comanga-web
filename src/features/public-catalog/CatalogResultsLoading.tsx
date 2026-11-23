@@ -21,12 +21,12 @@ export function CatalogResultsLoading({ label, className = "", cardActions }: Ca
             <div className="catalog-skeleton-shape aspect-[2/3] rounded-lg border border-sidebar-foreground/15" />
             <div className="catalog-skeleton-shape mt-2 h-4 w-3/4 max-w-full rounded" />
             <div className="catalog-skeleton-shape mt-2 h-3 w-1/2 max-w-full rounded opacity-80" />
-            {cardActions && <div className={`mt-3 grid ${cardActions === "calendar" ? "grid-cols-3" : "grid-cols-2"} gap-2`}>
-              {Array.from({ length: cardActions === "calendar" ? 3 : 2 }, (_, actionIndex) => (
+            {cardActions && <div className="mt-3 grid grid-cols-2 gap-2">
+              {Array.from({ length: 2 }, (_, actionIndex) => (
                 <div key={actionIndex} className="catalog-skeleton-shape h-10 rounded-lg border border-sidebar-foreground/20" />
               ))}
             </div>}
-            {cardActions === "wishlist" && <div className="catalog-skeleton-shape mt-3 h-10 rounded-lg border border-sidebar-foreground/20" />}
+            {cardActions && <div className="catalog-skeleton-shape mt-3 h-10 rounded-lg border border-sidebar-foreground/20" />}
           </div>
         ))}
       </div>
