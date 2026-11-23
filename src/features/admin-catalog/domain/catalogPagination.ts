@@ -3,6 +3,7 @@
 // A API aceita no máximo 50 itens por página nesses endpoints.
 export const EDITIONS_PAGE_SIZE = 8;
 export const VOLUMES_PAGE_SIZE = 8;
+export const CATALOG_GRID_PAGE_SIZE = 24;
 
 // Ordens fixadas pelo requisito: Edições em ordem decrescente e Volumes em ordem crescente.
 export const EDITIONS_LIST_ORDER = "DESC";

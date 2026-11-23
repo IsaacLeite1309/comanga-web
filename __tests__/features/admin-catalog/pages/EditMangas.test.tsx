@@ -1,4 +1,4 @@
-﻿import { fireEvent, render, screen, waitFor } from "@testing-library/react";
+﻿import { fireEvent, render, screen, waitFor, within } from "@testing-library/react";
 import { beforeEach, describe, expect, it, vi } from "vitest";
 import { resetEditMangasMemoryForTests } from "@/features/admin-catalog/hooks/useEditMangasPage";
 import EditMangas from "@/features/admin-catalog/pages/EditMangas";
@@ -55,6 +55,18 @@ function mockInitialLoad(response = worksResponse) {
     .mockResolvedValueOnce({ data: response });
 }
 
+function mockPagedWorks(total: number) {
+  vi.mocked(api.get).mockImplementation(async (url, config) => {
+    if (url === "/admin/options/tipos-obra") return { data: workTypeOptions };
+    const { page = 1, limit = 8 } = (config?.params as { page?: number; limit?: number } | undefined) ?? {};
+    const start = (page - 1) * limit;
+    return { data: {
+      works: Array.from({ length: Math.min(limit, total - start) }, (_, i) => ({ ...worksResponse.works[0], id: start + i + 1, slug: `obra-${start + i + 1}`, title: `Obra ${start + i + 1}` })),
+      pagination: { page, limit, total, totalPages: Math.ceil(total / limit) },
+    } };
+  });
+}
+
 function renderEditMangas() {
   return render(
     <MemoryRouter>
@@ -65,7 +77,7 @@ function renderEditMangas() {
 
 describe("EditMangas", () => {
   beforeEach(() => {
-    resetEditMangasMemoryForTests();
+    resetEditMangasMemoryForTests("list");
     vi.clearAllMocks();
   });
 
@@ -78,6 +90,19 @@ describe("EditMangas", () => {
     expect(screen.queryByText(/Exibindo/i)).not.toBeInTheDocument();
     expect(screen.queryByRole("button", { name: /anterior/i })).not.toBeInTheDocument();
     expect(screen.queryByRole("button", { name: /próxima/i })).not.toBeInTheDocument();
+  });
+
+  it("começa pela grade com 24 obras e coloca Grade antes de Lista", async () => {
+    resetEditMangasMemoryForTests();
+    mockPagedWorks(30);
+    renderEditMangas();
+    await screen.findByText("Exibindo 24 de 30 Obras");
+    const grid = screen.getByRole("button", { name: "Grade" });
+    const list = screen.getByRole("button", { name: "Lista" });
+    expect(grid).toHaveAttribute("aria-pressed", "true");
+    expect(list).toHaveAttribute("aria-pressed", "false");
+    expect(grid.nextElementSibling).toBe(list);
+    expect(screen.getAllByRole("heading", { name: /^Obra \d+$/ })).toHaveLength(24);
   });
 
   it("lista obras com capa, metadados e filtros iniciais", async () => {
@@ -221,7 +246,7 @@ describe("EditMangas", () => {
   });
 
   it("alterna para grade e renderiza fallbacks", async () => {
-    mockInitialLoad({
+    const fallbackResponse = {
       ...worksResponse,
       works: [{
         ...worksResponse.works[0],
@@ -232,14 +257,68 @@ describe("EditMangas", () => {
         editionsCount: 1,
         visibility: "Público",
       }],
-    });
+    };
+    mockInitialLoad(fallbackResponse);
+    vi.mocked(api.get).mockResolvedValue({ data: fallbackResponse });
     renderEditMangas();
 
     await screen.findAllByText("Naruto");
     fireEvent.click(screen.getByRole("button", { name: /grade/i }));
 
-    expect(screen.getByText("Sem capa")).toBeInTheDocument();
+    expect(await screen.findByText("Sem capa")).toBeInTheDocument();
     expect(screen.getByRole("heading", { name: "Naruto" })).toBeInTheDocument();
+  });
+
+  it("carrega até 24 obras por página na grade e mantém 8 na lista", async () => {
+    mockPagedWorks(30);
+    renderEditMangas();
+    await screen.findByText("Exibindo 8 de 30 Obras");
+    fireEvent.click(screen.getByRole("button", { name: /próxima/i }));
+    await screen.findByRole("heading", { name: "Obra 9" });
+    fireEvent.click(screen.getByRole("button", { name: "Grade" }));
+    await screen.findByText("Exibindo 24 de 30 Obras");
+    expect(screen.getAllByRole("heading", { name: /^Obra \d+$/ })).toHaveLength(24);
+    expect(api.get).toHaveBeenLastCalledWith("/admin/works", expect.objectContaining({ params: expect.objectContaining({ page: 1, limit: 24 }) }));
+    fireEvent.click(screen.getByRole("button", { name: /próxima/i }));
+    await screen.findByText("Exibindo 6 de 30 Obras");
+    expect(screen.getAllByRole("heading", { name: /^Obra \d+$/ })).toHaveLength(6);
+    expect(screen.queryByRole("heading", { name: "Obra 1" })).not.toBeInTheDocument();
+    fireEvent.click(screen.getByRole("button", { name: "Lista" }));
+    await screen.findByText("Exibindo 8 de 30 Obras");
+    expect(screen.getAllByRole("heading", { name: /^Obra \d+$/ })).toHaveLength(8);
+  });
+
+  it("navega na grade pelos números e pelos pontos, respeitando a última página", async () => {
+    mockPagedWorks(300);
+    renderEditMangas();
+    await screen.findByText("Exibindo 8 de 300 Obras");
+    fireEvent.click(screen.getByRole("button", { name: "Grade" }));
+    await screen.findByText("Exibindo 24 de 300 Obras");
+    const navigation = screen.getByRole("navigation", { name: "Paginação de Obras" });
+    expect(within(navigation).getByRole("button", { name: "Página anterior de Obras" })).toBeDisabled();
+    fireEvent.click(within(navigation).getByRole("button", { name: "Página 3" }));
+    await screen.findByRole("heading", { name: "Obra 49" });
+    expect(window.scrollTo).toHaveBeenCalledWith({ top: 0, behavior: "auto" });
+    fireEvent.click(screen.getByRole("button", { name: "Ir para outra página" }));
+    const input = screen.getByRole("textbox", { name: "Número da página" });
+    fireEvent.change(input, { target: { value: "999" } });
+    fireEvent.keyDown(input, { key: "Enter" });
+    await screen.findByText("Exibindo 12 de 300 Obras");
+    expect(api.get).toHaveBeenLastCalledWith("/admin/works", expect.objectContaining({ params: expect.objectContaining({ page: 13, limit: 24 }) }));
+    expect(screen.getByRole("button", { name: "Próxima página de Obras" })).toBeDisabled();
+  });
+
+  it("usa o limite de 24 desde a primeira requisição na grade mobile", async () => {
+    const originalMatchMedia = window.matchMedia;
+    const media = vi.spyOn(window, "matchMedia").mockImplementation(query => ({ ...originalMatchMedia(query), matches: true }));
+    try {
+      mockInitialLoad(worksResponse);
+      renderEditMangas();
+      await screen.findByRole("heading", { name: "Naruto" });
+      const workRequests = vi.mocked(api.get).mock.calls.filter(([url]) => url === "/admin/works");
+      expect(workRequests).toHaveLength(1);
+      expect(workRequests[0][1]).toEqual(expect.objectContaining({ params: expect.objectContaining({ page: 1, limit: 24 }) }));
+    } finally { media.mockRestore(); }
   });
 
   it("aplica filtros de tipo e visibilidade sem país", async () => {

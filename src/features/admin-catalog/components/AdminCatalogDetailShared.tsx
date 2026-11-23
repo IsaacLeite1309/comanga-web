@@ -1,5 +1,6 @@
 import type React from "react";
 import { PageNumberNavigation } from "@/components/shared/PageNumberNavigation";
+import { CatalogPagination } from "@/components/shared/CatalogPagination";
 import { LayoutGrid, List, Loader2 } from "lucide-react";
 import type { CatalogViewMode } from "../hooks/useCatalogDetailView";
 import type { CatalogPaginationView } from "../hooks/useCatalogPagedList";
@@ -49,16 +50,6 @@ export function CatalogViewToggle({
     <div className="hidden rounded-xl border border-border bg-input p-1 md:inline-flex">
       <button
         type="button"
-        aria-label="Lista"
-        title="Lista"
-        aria-pressed={viewMode === "list"}
-        onClick={() => onChange("list")}
-        className={`${buttonClassName} ${viewMode === "list" ? activeClassName : idleClassName}`}
-      >
-        <List className="h-3.5 w-3.5" aria-hidden="true" />
-      </button>
-      <button
-        type="button"
         aria-label="Grade"
         title="Grade"
         aria-pressed={viewMode === "grid"}
@@ -67,7 +58,37 @@ export function CatalogViewToggle({
       >
         <LayoutGrid className="h-3.5 w-3.5" aria-hidden="true" />
       </button>
+      <button
+        type="button"
+        aria-label="Lista"
+        title="Lista"
+        aria-pressed={viewMode === "list"}
+        onClick={() => onChange("list")}
+        className={`${buttonClassName} ${viewMode === "list" ? activeClassName : idleClassName}`}
+      >
+        <List className="h-3.5 w-3.5" aria-hidden="true" />
+      </button>
     </div>
+  );
+}
+
+export function CatalogGridPagination({ pagination, itemsLabel }: {
+  pagination: Pick<CatalogPaginationView, "visible" | "page" | "totalPages" | "total" | "shown" | "goToPage">;
+  itemsLabel: string;
+}) {
+  if (!pagination.visible) return null;
+  return (
+    <>
+      <CatalogPagination
+        pagination={pagination}
+        onPageChange={pagination.goToPage}
+        ariaLabel={`Paginação de ${itemsLabel}`}
+        previousPageLabel={`Página anterior de ${itemsLabel}`}
+        nextPageLabel={`Próxima página de ${itemsLabel}`}
+        wrapOnSmallScreens
+      />
+      <p className="mt-3 text-center text-sm text-muted-foreground">Exibindo {pagination.shown} de {pagination.total} {itemsLabel}</p>
+    </>
   );
 }
 
