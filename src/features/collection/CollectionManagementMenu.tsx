@@ -1,18 +1,20 @@
 import { useId, useRef } from "react";
 import { BookOpen, ChevronDown, Heart, LibraryBig } from "lucide-react";
-import { Link } from "react-router-dom";
+import { Link, useNavigate } from "react-router-dom";
 import { useDropdown } from "@/hooks/useDropdown";
 import type { CollectionProgress } from "@/features/personal-library";
 
-export function CollectionManagementMenu({ path, progress, navigationState, editionLabel }: {
+export function CollectionManagementMenu({ path, progress, navigationState, collectionPage, editionLabel }: {
   path: string;
   progress: CollectionProgress;
   navigationState: { catalogOrigin: string; returnTo: string };
+  collectionPage: number;
   editionLabel: string;
 }) {
   const { isOpen, toggleDropdown, closeDropdown, rootProps } = useDropdown();
   const panelId = useId();
   const trigger = useRef<HTMLButtonElement>(null);
+  const navigate = useNavigate();
   const missingCount = Math.max(0, progress.total - progress.owned);
   const actions = [
     { mode: "colecao", count: progress.owned, total: progress.total, label: "adquiridos", Icon: LibraryBig },
@@ -54,7 +56,15 @@ export function CollectionManagementMenu({ path, progress, navigationState, edit
               key={mode}
               to={`${path}/selecionar/${mode}`}
               state={navigationState}
-              onClick={closeDropdown}
+              onClick={event => {
+                closeDropdown();
+                if (event.button !== 0 || event.metaKey || event.ctrlKey || event.shiftKey || event.altKey) return;
+                event.preventDefault();
+                navigate(`${path}/selecionar/${mode}`, { state: {
+                  ...navigationState,
+                  collectionReturn: { page: collectionPage, scrollY: window.scrollY },
+                } });
+              }}
               className="group flex min-h-11 items-center gap-3 px-3 py-2 text-sm font-semibold text-foreground transition-colors hover:bg-primary hover:text-primary-foreground focus-visible:bg-primary focus-visible:text-primary-foreground focus-visible:outline-none"
             >
               <Icon className="h-4 w-4 shrink-0" aria-hidden="true" />

@@ -1,6 +1,7 @@
 import type { QueryClient } from "@tanstack/react-query";
 import { PUBLIC_CATALOG_QUERY_ROOT } from "@/lib/queryClient";
 import type {
+  PublicCalendarResponse,
   PublicEditionDetailsResponse,
   PublicPersonalSummary,
   PublicPersonalVolumeState,
@@ -73,6 +74,13 @@ export function updatePersonalVolumeCache(
   change: PersonalVolumeCacheChange,
 ) {
   const key = [...PUBLIC_CATALOG_QUERY_ROOT, scope] as const;
+  const calendarKey = [...key, "calendar"];
+  // Uma busca iniciada antes da alteração não pode restaurar o estado anterior.
+  void queryClient.cancelQueries({ queryKey: calendarKey });
+  queryClient.setQueriesData<PublicCalendarResponse>(
+    { queryKey: calendarKey },
+    (response) => response ? { ...response, volumes: response.volumes.map((volume) => updatePreview(volume, change)) } : response,
+  );
   queryClient.setQueryData<PublicWorkDetails>([...key, "work", change.workSlug], (work) => updateWork(work, change));
   queryClient.setQueriesData<PublicEditionDetailsResponse>(
     { queryKey: [...key, "edition", change.workSlug, change.editionNumber] },

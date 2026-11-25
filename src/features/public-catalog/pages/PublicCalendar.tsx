@@ -8,7 +8,6 @@ import { SearchableSelect } from "@/components/forms/SearchableSelect";
 import { EmptyState, FilteredEmptyState } from "@/components/shared/AsyncState";
 import { addCollectionVolume, addWishlistVolume, CollectionChangeDialog, removeCollectionVolume, removeWishlistVolume } from "@/features/personal-library";
 import { getApiError } from "@/lib/apiError";
-import { PUBLIC_CATALOG_QUERY_ROOT } from "@/lib/queryClient";
 import { CatalogCover } from "@/features/public-catalog/CatalogCover";
 import { CatalogErrorMessage } from "@/features/public-catalog/CatalogErrorMessage";
 import { CatalogResultsLoading } from "@/features/public-catalog/CatalogResultsLoading";
@@ -20,7 +19,7 @@ import { publicVolumeLabel } from "@/features/public-catalog/publicCatalogFormat
 import { publicVolumePath } from "@/features/public-catalog/publicCatalogPaths";
 import { usePublicCatalogScope } from "@/features/public-catalog/usePublicCatalogScope";
 import { updatePersonalVolumeCache } from "@/features/public-catalog/updatePersonalVolumeCache";
-import type { PublicCalendarResponse, PublicCalendarVolume, PublicPersonalVolumeState } from "@/features/public-catalog/publicCatalogTypes";
+import type { PublicCalendarVolume, PublicPersonalVolumeState } from "@/features/public-catalog/publicCatalogTypes";
 import { usePublicCalendar, type CalendarState } from "./usePublicCalendar";
 import { useLoadingScrollReset } from "@/hooks/useLoadingScrollReset";
 
@@ -135,16 +134,6 @@ function CalendarFilters({ calendar }: { calendar: CalendarState }) {
   );
 }
 
-function updateCalendarPersonalCache(queryClient: QueryClient, scope: readonly [string, boolean, string], volumeId: number, personal: PublicPersonalVolumeState) {
-  queryClient.setQueriesData<PublicCalendarResponse>(
-    { queryKey: [...PUBLIC_CATALOG_QUERY_ROOT, scope, "calendar"] },
-    (response) => response ? {
-      ...response,
-      volumes: response.volumes.map((volume) => volume.id === volumeId ? { ...volume, personal } : volume),
-    } : response,
-  );
-}
-
 async function saveCalendarPersonalState({ queryClient, scope, volume, previous, operation, successMessage, errorMessage }: {
   queryClient: QueryClient;
   scope: readonly [string, boolean, string];
@@ -165,7 +154,6 @@ async function saveCalendarPersonalState({ queryClient, scope, volume, previous,
       previous,
       next,
     });
-    updateCalendarPersonalCache(queryClient, scope, volume.id, next);
     toast.success(successMessage);
   } catch (error) {
     toast.error(getApiError(error, errorMessage));

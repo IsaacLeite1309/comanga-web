@@ -4,12 +4,12 @@ import { Link, MemoryRouter, Route, Routes } from "react-router-dom";
 import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
 import { CollectorMenuPrefetch } from "@/app/CollectorMenuPrefetch";
 import Colecao from "@/features/collection/pages/Colecao";
-import { addCollectionVolume, collectionQueryPrefix, syncCollectionEdition, type CollectionResponse } from "@/features/personal-library";
-import { PERSONAL_LIBRARY_QUERY_ROOT } from "@/lib/queryClient";
+import { addCollectionVolume, addWishlistVolume, removeWishlistVolume, syncWishlist, collectionQueryPrefix, syncCollectionEdition, type CollectionResponse } from "@/features/personal-library";
+import { PERSONAL_LIBRARY_QUERY_ROOT, PUBLIC_CATALOG_QUERY_ROOT } from "@/lib/queryClient";
 import { api } from "@/services/api";
 
 const mocks = vi.hoisted(() => ({ scope: ["cache-user", false, "Usuário Padrão"] as const }));
-vi.mock("@/services/api", () => ({ api: { get: vi.fn(), put: vi.fn() } }));
+vi.mock("@/services/api", () => ({ api: { get: vi.fn(), put: vi.fn(), delete: vi.fn() } }));
 vi.mock("@/features/auth", () => ({ useAuth: () => ({
   user: { id: mocks.scope[0] }, isAuthenticated: true, activeProfile: "Usuário Padrão", loading: false,
 }) }));
@@ -77,6 +77,22 @@ function mount(client: QueryClient, path = "/origem") {
 }
 
 describe("atualização do cache do menu coleção", () => {
+  it.each([
+    ["adicionar aos desejos", () => addWishlistVolume(7)],
+    ["remover dos desejos", () => removeWishlistVolume(7)],
+    ["salvar selecionador de desejos", () => syncWishlist(20, { addVolumeIds: [7], removeVolumeIds: [] })],
+  ])("invalida lançamentos após %s em outro menu, preservando outros leitores", async (_, operation) => {
+    const client = createClient();
+    const calendarKey = [...PUBLIC_CATALOG_QUERY_ROOT, mocks.scope, "calendar", { page: 2 }];
+    const otherUserKey = [...PUBLIC_CATALOG_QUERY_ROOT, ["other-user", false, "Usuário Padrão"], "calendar"];
+    client.setQueryData(calendarKey, { volumes: [] });
+    client.setQueryData(otherUserKey, { volumes: [] });
+    arrangeCollectionFetch(Promise.resolve(newCollection));
+    mount(client);
+    await act(async () => { await operation(); });
+    expect(client.getQueryState(calendarKey)?.isInvalidated).toBe(true);
+    expect(client.getQueryState(otherUserKey)?.isInvalidated).toBe(false);
+  });
   beforeEach(() => {
     vi.clearAllMocks();
     vi.mocked(api.put).mockReset().mockResolvedValue({ data: { volumeId: 7, owned: true, read: false, wished: false } });
