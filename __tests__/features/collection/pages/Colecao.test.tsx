@@ -22,7 +22,11 @@ describe("Estante conectada à API", () => {
   it("separa o cabeçalho e o gerenciamento da faixa clicável das capas", async () => {
     mount();
     expect(screen.getByRole("heading", { name: "Sua coleção" })).toHaveClass("sr-only");
-    expect(screen.getByRole("status")).toHaveTextContent("Carregando sua coleção");
+    const loading = screen.getByRole("status", { name: "Carregando sua coleção" });
+    expect(loading).toHaveTextContent("Carregando sua coleção");
+    expect(loading.querySelectorAll(".aspect-\\[2\\/3\\]")).toHaveLength(33);
+    expect(loading.querySelectorAll(".h-9.w-40")).toHaveLength(3);
+    expect(loading.querySelector(".h-56")).not.toBeInTheDocument();
     expect(screen.getByRole("searchbox", { name: "Pesquisar na coleção" })).toBeEnabled();
     const heading = await screen.findByRole("heading", { name: "Monster · 1ª edição · Coleção incompleta" });
     expect(heading).toHaveClass("text-white");

@@ -55,6 +55,9 @@ export function CollectorMenuPrefetch() {
   useEffect(() => {
     if (!collector || !isAuthenticated) return;
     return subscribePersonalLibraryUpdates(() => {
+      const calendarKey = [...PUBLIC_CATALOG_QUERY_ROOT, scope, "calendar"];
+      void queryClient.cancelQueries({ queryKey: calendarKey });
+      void queryClient.invalidateQueries({ queryKey: calendarKey });
       // Descarta resultados antigos e cancela buscas anteriores antes de pré-carregar.
       // Os filtros ficam em chaves separadas e são preservados.
       void queryClient.resetQueries({ queryKey: [...PERSONAL_LIBRARY_QUERY_ROOT, scope[0], "collection"] });

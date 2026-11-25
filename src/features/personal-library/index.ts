@@ -5,3 +5,4 @@ export { useCachedLibraryFilters } from "./useCachedLibraryFilters";
 export { collectionQueryPrefix, wishlistQueryPrefix } from "./personalLibraryQueryKeys";
 export { GuestLibraryNotice } from "./GuestLibraryNotice";
 export { CollectionChangeDialog } from "./CollectionChangeDialog";
+export { readCollectionReturn, type CollectionReturn } from "./collectionReturn";

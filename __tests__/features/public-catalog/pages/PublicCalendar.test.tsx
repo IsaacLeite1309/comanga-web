@@ -7,7 +7,7 @@ import { getPublicCatalogOptions, listPublicCalendar } from "@/features/public-c
 import type { PublicCalendarResponse } from "@/features/public-catalog/publicCatalogTypes";
 import { toast } from "sonner";
 import { useAuth, type AuthUser } from "@/features/auth";
-import { addCollectionVolume, removeCollectionVolume } from "@/features/personal-library";
+import { addCollectionVolume, removeCollectionVolume, addWishlistVolume, removeWishlistVolume } from "@/features/personal-library";
 
 vi.mock("@/features/public-catalog/publicCatalogService", () => ({ getPublicCatalogOptions: vi.fn(), listPublicCalendar: vi.fn() }));
 vi.mock("@/features/auth", () => ({ useAuth: vi.fn(() => ({ user: null, loading: false })) }));
@@ -17,6 +17,8 @@ vi.mock("@/features/personal-library", async importOriginal => ({
   ...await importOriginal<typeof import("@/features/personal-library")>(),
   addCollectionVolume: vi.fn(),
   removeCollectionVolume: vi.fn(),
+  addWishlistVolume: vi.fn(),
+  removeWishlistVolume: vi.fn(),
 }));
 
 const response: PublicCalendarResponse = {
@@ -116,6 +118,29 @@ describe("PublicCalendar", () => {
     fireEvent.click(within(dialog).getByRole("button", { name: owned ? "Remover" : "Adicionar" }));
     await waitFor(() => expect(owned ? removeCollectionVolume : addCollectionVolume).toHaveBeenCalledWith(1));
     await waitFor(() => expect(toast.success).toHaveBeenCalledWith(owned ? "Volume removido da coleção." : "Volume adicionado à coleção."));
+  });
+
+  it.each([true, false])("atualiza o botão de desejos imediatamente ao definir desejado=%s", async wished => {
+    vi.mocked(useAuth).mockReturnValue({ user: { id: "reader" } as AuthUser, loading: false } as ReturnType<typeof useAuth>);
+    vi.mocked(listPublicCalendar).mockResolvedValue({ ...response, volumes: [{ ...response.volumes[0], personal: { owned: false, read: null, wished: !wished } }] });
+    vi.mocked(addWishlistVolume).mockResolvedValue({ volumeId: 1, owned: false, read: null, wished: true });
+    vi.mocked(removeWishlistVolume).mockResolvedValue(undefined);
+    renderCalendar();
+    fireEvent.click(await screen.findByRole("button", { name: wished ? "Adicionar Volume 2 à lista de desejos" : "Remover Volume 2 da lista de desejos" }));
+    const updated = await screen.findByRole("button", { name: wished ? "Remover Volume 2 da lista de desejos" : "Adicionar Volume 2 à lista de desejos", pressed: wished });
+    expect(updated).toHaveClass(wished ? "bg-primary" : "bg-sidebar");
+    expect(updated.querySelector("svg")).toHaveAttribute("fill", wished ? "currentColor" : "none");
+    expect(wished ? addWishlistVolume : removeWishlistVolume).toHaveBeenCalledWith(1);
+    expect(toast.success).toHaveBeenCalledWith(wished ? "Volume adicionado à lista de desejos." : "Volume removido da lista de desejos.");
+  });
+
+  it("mantém o estado anterior se a alteração dos desejos falhar", async () => {
+    vi.mocked(useAuth).mockReturnValue({ user: { id: "reader" } as AuthUser, loading: false } as ReturnType<typeof useAuth>);
+    vi.mocked(addWishlistVolume).mockRejectedValueOnce(new Error("offline"));
+    renderCalendar();
+    fireEvent.click(await screen.findByRole("button", { name: "Adicionar Volume 2 à lista de desejos" }));
+    await waitFor(() => expect(toast.error).toHaveBeenCalled());
+    expect(screen.getByRole("button", { name: "Adicionar Volume 2 à lista de desejos", pressed: false })).toBeEnabled();
   });
 
   it("leva o contexto do checklist ao abrir um Volume", async () => {
