@@ -1,12 +1,12 @@
-import { useCallback, useEffect } from "react";
+import { useCallback, useEffect, useLayoutEffect, useRef } from "react";
 import { useQuery, useQueryClient } from "@tanstack/react-query";
 import { ArrowDownAZ, ArrowUpAZ, Search } from "lucide-react";
-import { Link } from "react-router-dom";
+import { Link, useLocation } from "react-router-dom";
 import { toast } from "sonner";
 import { FilteredEmptyState } from "@/components/shared/AsyncState";
 import { SearchableSelect } from "@/components/forms/SearchableSelect";
 import { CatalogPagination, CatalogSearchClearButton, getPublicCatalogOptions, prefetchListedEditions, type PublicOption } from "@/features/public-catalog";
-import { GuestLibraryNotice, collectionQueryPrefix, listCollection, useCachedLibraryFilters, useLibraryPage, type CollectionResponse } from "@/features/personal-library";
+import { GuestLibraryNotice, collectionQueryPrefix, listCollection, readCollectionReturn, useCachedLibraryFilters, useLibraryPage, type CollectionResponse } from "@/features/personal-library";
 import { usePublicCatalogScope } from "@/features/public-catalog";
 import { PUBLIC_CATALOG_QUERY_ROOT } from "@/lib/queryClient";
 import { CollectionEdition } from "../CollectionEdition";
@@ -93,10 +93,25 @@ function CollectionLoading() {
       <span className="sr-only">Carregando sua coleção...</span>
       {Array.from({ length: 3 }, (_, editionIndex) => (
         <section key={editionIndex} className="border-b border-border pb-3 pt-6 first:pt-0" aria-hidden="true">
-          <div
-            className="catalog-skeleton-card catalog-skeleton-shape h-56 rounded-2xl border border-sidebar-foreground/15"
-            style={{ animationDelay: `${editionIndex * 220}ms` }}
-          />
+          <div className="catalog-skeleton-card" style={{ animationDelay: `${editionIndex * 220}ms` }}>
+            <div className="flex min-w-0 flex-wrap items-center gap-x-6 gap-y-2 py-3">
+              <div className="min-w-0 flex-[1_1_24rem]">
+                <div className="catalog-skeleton-shape h-6 w-3/4 max-w-lg rounded" />
+                <div className="catalog-skeleton-shape mt-1 h-4 w-full max-w-xl rounded" />
+              </div>
+              <div className="catalog-skeleton-shape ml-auto h-9 w-40 max-w-full shrink-0 rounded-lg" />
+            </div>
+            <div className="-ml-3 flex w-[calc(100%+0.75rem)] items-center gap-3 px-3 py-3">
+              <div className="flex min-w-0 flex-1 gap-3 overflow-hidden">
+                {Array.from({ length: 11 }, (_, volumeIndex) => (
+                  <div key={volumeIndex} className="catalog-skeleton-shape aspect-[2/3] w-24 shrink-0 rounded-lg border border-sidebar-foreground/15" />
+                ))}
+              </div>
+              <div className="flex h-6 w-6 shrink-0 items-center justify-center">
+                <div className="catalog-skeleton-shape h-3 w-2 rounded" />
+              </div>
+            </div>
+          </div>
         </section>
       ))}
     </div>
@@ -124,14 +139,21 @@ function CollectionResults({ data, loading, filtered, onPageChange, onClearFilte
       </div>
     ) : data.works.map(({ work, editions }) => (
       <section key={work.id} aria-label={`Coleção de ${work.title}`}>
-        {editions.map((item) => <CollectionEdition key={item.edition.id} item={item} work={work} />)}
+        {editions.map((item) => <CollectionEdition key={item.edition.id} item={item} work={work} collectionPage={data.pagination.page} />)}
       </section>
     ))}
     <CatalogPagination pagination={data.pagination} onPageChange={onPageChange} ariaLabel="Paginação da coleção" />
   </>;
 }
 
+function useCollectionReturnPosition() {
+  const location = useLocation();
+  const returnPosition = useRef(readCollectionReturn(location.state?.collectionReturn));
+  return { returnPosition, initialPage: returnPosition.current?.page ?? 1 };
+}
+
 function AuthenticatedCollection() {
+  const { returnPosition, initialPage } = useCollectionReturnPosition();
   const queryClient = useQueryClient();
   const scope = usePublicCatalogScope();
   const [filters, setFilters] = useCachedLibraryFilters(scope[0], "collection", DEFAULT_COLLECTION_FILTERS);
@@ -152,8 +174,13 @@ function AuthenticatedCollection() {
     ...(publisherId ? { brazilianPublisherId: Number(publisherId) } : {}),
     ...(order === "DESC" ? { order } : {}),
   }), [term, status, publisherId, order]);
-  const state = useLibraryPage(loadCollection, collectionQueryPrefix(scope[0], term, status, publisherId, order));
+  const state = useLibraryPage(loadCollection, collectionQueryPrefix(scope[0], term, status, publisherId, order), initialPage);
   useLoadingScrollReset(state.loading);
+  useLayoutEffect(() => {
+    if (state.loading || !state.data || !returnPosition.current) return;
+    window.scrollTo({ top: returnPosition.current.scrollY, behavior: "instant" });
+    returnPosition.current = undefined;
+  }, [state.loading, state.data, returnPosition]);
   const collectionData = state.data;
   useEffect(() => {
     if (!collectionData) return;

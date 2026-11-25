@@ -8,8 +8,9 @@ import { useMinimumQueryLoading } from "@/hooks/useMinimumQueryLoading";
 export function useLibraryPage<T extends { pagination: PersonalPagination }>(
   loader: (page: number) => Promise<T>,
   queryKeyPrefix: readonly unknown[],
+  initialPage = 1,
 ) {
-  const [page, setPage] = useState(1);
+  const [page, setPage] = useState(initialPage);
   const [busy, setBusy] = useState(false);
   const alive = useRef(true);
   const queryClient = useQueryClient();

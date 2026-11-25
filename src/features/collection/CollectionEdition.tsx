@@ -7,7 +7,7 @@ import { getCompleteCollectionEdition, type CollectedEdition, type PersonalWork 
 import { getApiError } from "@/lib/apiError";
 import { CollectionManagementMenu } from "./CollectionManagementMenu";
 
-export function CollectionEdition({ item, work }: { item: CollectedEdition; work: PersonalWork }) {
+export function CollectionEdition({ item, work, collectionPage }: { item: CollectedEdition; work: PersonalWork; collectionPage: number }) {
   const location = useLocation();
   const [expanded, setExpanded] = useState<CollectedEdition["volumes"] | null>(null);
   const [loading, setLoading] = useState(false);
@@ -43,7 +43,7 @@ export function CollectionEdition({ item, work }: { item: CollectedEdition; work
           </h2>
           <p className="mt-1 text-sm text-muted-foreground">{item.progress.owned}/{item.progress.total} volumes adquiridos · {item.progress.read}/{item.progress.owned} {item.progress.read === 1 ? "volume lido" : "volumes lidos"}{missingCount > 0 && <> · {item.progress.wished}/{missingCount} {item.progress.wished === 1 ? "volume faltante desejado" : "volumes faltantes desejados"}</>}</p>
         </div>
-        <CollectionManagementMenu path={path} progress={item.progress} navigationState={navigationState} editionLabel={`${editionTitle} de ${work.title}`} />
+        <CollectionManagementMenu path={path} progress={item.progress} navigationState={navigationState} collectionPage={collectionPage} editionLabel={`${editionTitle} de ${work.title}`} />
       </div>
       <Link
         to={path}

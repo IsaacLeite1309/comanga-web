@@ -5,7 +5,7 @@ import { useLocation, useNavigate, useParams } from "react-router-dom";
 import { toast } from "sonner";
 import { CatalogCover } from "../CatalogCover";
 import { publicVolumeLabel } from "../publicCatalogFormatters";
-import { CollectionChangeDialog } from "@/features/personal-library";
+import { CollectionChangeDialog, readCollectionReturn, type CollectionReturn } from "@/features/personal-library";
 import type { PersonalVolume } from "@/features/personal-library";
 import { useEditionSelection, type SelectionMode } from "./useEditionSelection";
 import { useCatalogErrorToast } from "@/features/public-catalog/useCatalogErrorToast";
@@ -111,12 +111,16 @@ function collectionWarnings(data: ReturnType<typeof useEditionSelection>["data"]
   };
 }
 
-function SelectionLoading({ returnPath }: { returnPath: string }) {
+function collectionCancelState(state: { collectionReturn?: unknown } | null, collectionPath: string | null) {
+  return collectionPath ? { collectionReturn: readCollectionReturn(state?.collectionReturn) } : undefined;
+}
+
+function SelectionLoading({ returnPath, returnState }: { returnPath: string; returnState?: { collectionReturn?: CollectionReturn } }) {
   return (
     <div className="min-w-0 flex-1 bg-background" role="status" aria-label="Carregando seleção de volumes">
       <header className="page-gutter sticky top-0 z-20 bg-background/95 backdrop-blur">
         <div className="mx-auto flex w-full max-w-7xl items-center justify-between gap-4 border-b border-border py-4">
-          <BackLink to={returnPath} className="text-sm font-bold text-primary hover:text-primary/80">Cancelar</BackLink>
+          <BackLink to={returnPath} state={returnState} className="text-sm font-bold text-primary hover:text-primary/80">Cancelar</BackLink>
           <p className="min-w-0 truncate text-center text-sm font-semibold text-foreground sm:text-base">Carregando...</p>
           <button type="button" disabled className="text-sm font-bold text-muted-foreground">OK</button>
         </div>
@@ -162,7 +166,9 @@ function SelectionContent({ slug, editionNumber, mode }: { slug: string; edition
   const { wishlistVolumes, readVolumes } = collectionWarnings(data, selectedIds, mode);
   const needsConfirmation = wishlistVolumes.length > 0 || readVolumes.length > 0;
   const editionPath = `${location.pathname.startsWith("/colecao/") ? "/colecao" : "/obra"}/${encodeURIComponent(slug)}/edicao/${editionNumber}`;
-  const returnPath = directReturnPath(location.state, ["/colecao"]) ?? editionPath;
+  const collectionPath = directReturnPath(location.state, ["/colecao"]);
+  const returnPath = collectionPath ?? editionPath;
+  const returnState = collectionCancelState(location.state, collectionPath);
   const toggleVolume = (volumeId: number) => state.setSelectedIds((current) => {
     const next = new Set(current);
     if (next.has(volumeId)) next.delete(volumeId); else next.add(volumeId);
@@ -173,17 +179,17 @@ function SelectionContent({ slug, editionNumber, mode }: { slug: string; edition
     toast.success(mode === "colecao" ? "Coleção atualizada." : mode === "desejos" ? "Lista de desejos atualizada." : "Volumes lidos atualizados.");
     navigate(returnPath);
   });
-  if (loading) return <SelectionLoading returnPath={returnPath} />;
+  if (loading) return <SelectionLoading returnPath={returnPath} returnState={returnState} />;
 
   if (error || !data) {
-    return <div className="page-gutter flex min-h-[calc(100dvh-5rem)] items-center justify-center py-12"><BackLink to={returnPath} className="inline-flex text-sm font-bold text-primary">{returnPath === editionPath ? "Voltar à Edição" : "Voltar à coleção"}</BackLink></div>;
+    return <div className="page-gutter flex min-h-[calc(100dvh-5rem)] items-center justify-center py-12"><BackLink to={returnPath} state={returnState} className="inline-flex text-sm font-bold text-primary">{returnPath === editionPath ? "Voltar à Edição" : "Voltar à coleção"}</BackLink></div>;
   }
 
   return (
     <div className="min-w-0 flex-1 bg-background">
       <header className="page-gutter sticky top-0 z-20 bg-background/95 backdrop-blur">
         <div className="mx-auto flex w-full max-w-7xl items-center justify-between gap-4 border-b border-border py-4">
-          <BackLink to={returnPath} className="text-sm font-bold text-primary hover:text-primary/80">Cancelar</BackLink>
+          <BackLink to={returnPath} state={returnState} className="text-sm font-bold text-primary hover:text-primary/80">Cancelar</BackLink>
           <p className="min-w-0 truncate text-center text-sm font-semibold text-foreground sm:text-base">
             {selectedIds.size} de {visibleVolumes.length} selecionados
           </p>
