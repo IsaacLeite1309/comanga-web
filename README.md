@@ -1,11 +1,15 @@
 # CoMangá Web
 
-Frontend do CoMangá, uma SPA para catalogação e consulta de coleções físicas de mangás. A aplicação oferece autenticação, administração do catálogo e navegação pública por Obras, Edições, Volumes e Autores.
+Frontend do CoMangá, uma SPA para catalogação e consulta de coleções físicas de mangás, light novels, novels, databooks e artbooks. A aplicação oferece autenticação, administração do catálogo e navegação pública por Obras, Edições, Volumes e Autores.
 
 ![React](https://img.shields.io/badge/React-18-61DAFB?logo=react&logoColor=black)
 ![TypeScript](https://img.shields.io/badge/TypeScript-5.8-3178C6?logo=typescript&logoColor=white)
 ![Vite](https://img.shields.io/badge/Vite-8-646CFF?logo=vite&logoColor=white)
 ![Tailwind CSS](https://img.shields.io/badge/Tailwind_CSS-3-06B6D4?logo=tailwindcss&logoColor=white)
+
+Site: [comanga.com.br](https://comanga.com.br).
+
+Versão do sistema: **1.0**.
 
 ## Visão geral
 
@@ -41,28 +45,28 @@ Em produção, `vercel.ts` encaminha `/api/*` para a API hospedada na Render. O 
 - Gestão de usuários e opções de domínio.
 - Cadastro e edição de Obras, Edições e Volumes.
 - Consulta administrativa da estrutura Obra -> Edição -> Volume.
-- Importação e substituição de capas internas obrigatórias por URL, com feedback de interface. Capas já associadas não podem ser removidas sem substituição.
+- Importação e substituição de capas de Obras e Volumes por URL. A capa da Edição é derivada do Volume 1.
 
-As páginas de Coleção, Checklist e Lista de Desejos existem como navegação/estrutura visual, mas Estante Digital e Lista de Desejos ainda não possuem suas regras e integrações finais implementadas.
+A aplicação oferece coleção e lista de desejos para contas autenticadas e uma página pública de lançamentos.
 
 ## Rotas principais
 
 | Área | Rotas |
 | --- | --- |
 | Conta | `/entrar`, `/cadastrar`, `/activate/:token`, `/reenvio`, `/recuperar-senha`, `/redefinir-senha/:token`, `/perfil/:username` |
-| Catálogo público | `/pesquisa`, `/obras/:slug`, `/edicoes/:editionId`, `/volumes/:volumeId`, `/autores/:authorId` |
-| Área pessoal | `/colecao`, `/checklist`, `/desejos` |
+| Catálogo público | `/pesquisa`, `/obra/:slug`, `/obra/:slug/edicao/:editionNumber`, `/obra/:slug/edicao/:editionNumber/volume/:volumeNumber`, `/autor/:authorSlug`, `/lancamentos` |
+| Área pessoal | `/colecao`, `/desejos` |
 | Administração | `/admin/novo-manga`, `/admin/gerenciar-mangas`, `/admin/opcoes`, `/admin/users` e rotas aninhadas de Edições/Volumes |
 
 ## Stack e organização
 
 - React 18, TypeScript e Vite.
 - React Router para navegação da SPA.
-- Axios para integração HTTP.
+- Axios para integração HTTP e TanStack Query para consultas e cache.
 - Tailwind CSS, Radix UI, Lucide e Sonner para interface e feedback.
 - Vitest e React Testing Library para testes.
 
-O código é organizado por funcionalidade em `src/features`: `auth`, `profile`, `admin-catalog`, `admin-media`, `admin-users`, `public-catalog`, `collection` e `wishlist`. Cada feature é responsável pelas suas páginas, componentes específicos, estado e regras, expondo sua API pública por `index.ts`. Os testes ficam em `__tests__/`, com a mesma estrutura relativa de `src/`, seguindo o padrão do repositório da API. As duas últimas preservam as telas provisórias e não representam funcionalidades de coleção/desejos concluídas.
+O código é organizado por funcionalidade em `src/features`: `auth`, `profile`, `admin-catalog`, `admin-media`, `admin-users`, `public-catalog`, `collection` e `wishlist`. Cada feature é responsável pelas suas páginas, componentes específicos, estado e regras, expondo sua API pública por `index.ts`. Os testes ficam em `__tests__/`, com a mesma estrutura relativa de `src/`, seguindo o padrão do repositório da API. Coleção e lista de desejos integram as funcionalidades pessoais à API.
 
 `src/App.tsx` e `src/app` compõem rotas, navegação e proteção de páginas. O contexto de autenticação pertence a `features/auth`. Componentes reutilizáveis ficam em `src/components`, o cliente HTTP em `src/services` e utilitários transversais em `src/lib`; essa base compartilhada não depende das features.
 
@@ -116,7 +120,7 @@ Use Node.js 22 e `npm ci` para instalar as versões do lockfile.
 
 - `npm run check`: fronteiras arquiteturais, lint sem avisos, build e cobertura mínima de 80% em cada métrica.
 - `npm run test:architecture`: regressões da configuração arquitetural do ESLint em projetos temporários.
-- `npm run check:online`: auditoria de todas as dependências, incluindo ferramentas de desenvolvimento.
+- `npm run check:online`: auditoria das dependências de produção.
 - `npm run typecheck`: valida o código da aplicação, testes e configurações TypeScript; também faz parte do build.
 
 A cobertura inclui páginas, componentes, hooks e rotas. Apenas declarações de tipos, testes, configuração de testes e o ponto de montagem `main.tsx` ficam fora da medição. As páginas administrativas são carregadas sob demanda para reduzir o JavaScript inicial.
@@ -132,9 +136,9 @@ A proteção de `develop` e `main` deve ser configurada pelo dono diretamente no
 - GitHub Actions executa cobertura, lint e build em pull requests destinadas a `develop` e `main`.
 - Na Vercel, `vercel.ts` mantém `/api` como URL estável para a SPA. Habilite a exposição das variáveis de sistema da Vercel e configure `COMANGA_PREVIEW_API_ORIGIN` no ambiente Preview com a origem HTTPS da API isolada de homologação. O Preview usa `/api` mesmo quando `VITE_API_URL` estiver configurada no projeto. Sem origem de homologação, a Vercel serve a SPA e seus arquivos estáticos e responde HTTP 503 às chamadas de API. Uma origem inválida interrompe o build. Antes de testar o cadastro, faça uma leitura em `/api/public/catalog-options` pelo Preview e confira o `x-request-id` retornado nos logs da API de homologação. O guia de publicação do cadastro com aceite está em `docs/operations/publicacao-cadastro-aceite.md` no repositório da API.
 
-## Escopo ainda planejado
+## Documentação e requisitos
 
-Calendário público, Estante Digital funcional, Lista de Desejos funcional, dados de posse/desejo no catálogo e a futura arquitetura distribuída ainda serão desenvolvidos. A referência de requisitos e cartões está em [`comanga-docs`](https://github.com/IsaacLeite1309/comanga-docs).
+A referência de requisitos e cartões está em [`comanga-docs`](https://github.com/IsaacLeite1309/comanga-docs).
 
 ## Repositórios relacionados
 
@@ -143,16 +147,16 @@ Calendário público, Estante Digital funcional, Lista de Desejos funcional, dad
 
 ## Perfis e conta
 
-Contas com múltiplos perfis podem escolher o perfil ativo na tela de perfil. As rotas administrativas exigem perfil Administrador ativo; possuir a atribuição não basta durante uso como Usuário Padrão. A mesma tela permite alterar username e senha, mantendo a sessão atual e revogando as outras na troca autenticada. Requer os endpoints de perfis/conta da API e a migration `20260920120000_perfis_de_acesso`.
+Contas com múltiplos perfis podem escolher o perfil ativo na tela de perfil. As rotas administrativas exigem perfil Administrador ativo; possuir a atribuição não basta durante uso como Usuário Padrão. A mesma tela permite alterar username e senha, mantendo a sessão atual e revogando as outras na troca autenticada.
 
 ## Metadados e créditos da Obra
 
-Cadastro e edição exigem título romanizado e sinopse própria; o título original continua opcional. A ficha pública distingue títulos e usa a sinopse da Obra. Autores podem ser reordenados por controles acessíveis e o backend preserva a ordem do array. Requer a frente correspondente da API e revisão editorial dos valores preenchidos pelo backfill.
+Cadastro e edição exigem título romanizado e sinopse própria; o título original continua opcional. A ficha pública distingue títulos e usa a sinopse da Obra. Autores podem ser reordenados por controles acessíveis e o backend preserva a ordem do array. Os valores preenchidos pelo backfill devem passar por revisão editorial.
 
 ## Capa da Edição
 
-A Edição usa a capa do Volume de número 1 e não oferece importação de capa própria. Sem essa origem, exibe estado vazio e permanece privada até ter um Volume 1 com capa. Excluir um Volume atualiza também a capa e a contagem do resumo da Edição. Requer a API correspondente; coordenar a publicação com a migration que remove editions.cover_asset_id.
+A Edição usa a capa do Volume de número 1 e não oferece importação de capa própria. Sem essa origem, exibe estado vazio e permanece privada até ter um Volume 1 com capa. Excluir um Volume atualiza também a capa e a contagem do resumo da Edição.
 
 ## Gerenciamento e miolo da Edição
 
-O gerenciamento usa caminhos explícitos: `/admin/gerenciar-mangas/obras/:slug/edicoes` para as Edições da Obra e `/admin/gerenciar-mangas/obras/:slug/edicoes/:editionId/volumes` para os Volumes. Os formulários de Edição incluem o campo pesquisável obrigatório `Miolo`, alimentado pelas opções administrativas da categoria correspondente.
+O gerenciamento usa caminhos explícitos: `/admin/gerenciar-mangas/obras/:slug/edicoes` para as Edições da Obra e `/admin/gerenciar-mangas/obras/:slug/edicoes/:editionId/volumes` para os Volumes. Os formulários de Edição incluem o campo de seleção múltipla pesquisável `Miolo`, que pode ficar vazio, alimentado pelas opções administrativas da categoria correspondente.
